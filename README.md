@@ -4,25 +4,12 @@
 
 ![Qwen Code Screenshot](./docs/assets/qwen-screenshot.png)
 
-[![npm version](https://img.shields.io/npm/v/@qwen-code/qwen-code.svg)](https://www.npmjs.com/package/@qwen-code/qwen-code)
-[![License](https://img.shields.io/github/license/QwenLM/qwen-code.svg)](./LICENSE)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen.svg)](https://nodejs.org/)
-[![Downloads](https://img.shields.io/npm/dm/@qwen-code/qwen-code.svg)](https://www.npmjs.com/package/@qwen-code/qwen-code)
 
 **AI-powered command-line workflow tool for developers**
 
 [Installation](#installation) • [Quick Start](#quick-start) • [Features](#key-features) • [Documentation](./docs/) • [Contributing](./CONTRIBUTING.md)
 
-</div>
-
-<div align="center">
-  
-  <a href="https://qwenlm.github.io/qwen-code-docs/de/">Deutsch</a> | 
-  <a href="https://qwenlm.github.io/qwen-code-docs/fr">français</a> | 
-  <a href="https://qwenlm.github.io/qwen-code-docs/ja/">日本語</a> | 
-  <a href="https://qwenlm.github.io/qwen-code-docs/ru">Русский</a> | 
-  <a href="https://qwenlm.github.io/qwen-code-docs/zh/">中文</a>
-  
 </div>
 
 Qwen Code is a powerful command-line AI workflow tool adapted from [**Gemini CLI**](https://github.com/google-gemini/gemini-cli) ([details](./README.gemini.md)), specifically optimized for [Qwen3-Coder](https://github.com/QwenLM/Qwen3-Coder) models. It enhances your development workflow with advanced code understanding, automated tasks, and intelligent assistance.
@@ -63,7 +50,7 @@ For detailed setup instructions, see [Authorization](#authorization).
 Ensure you have [Node.js version 20](https://nodejs.org/en/download) or higher installed.
 
 ```bash
-curl -qL https://www.npmjs.com/install.sh | sh
+curl -qL https://www.npmjs.com/install.sh | sudo sh
 ```
 
 ### Install from npm
@@ -76,10 +63,14 @@ qwen --version
 ### Install from source
 
 ```bash
-git clone https://github.com/QwenLM/qwen-code.git
-cd qwen-code
+git clone git@github.com:yanfeng98/fork-qwen-code.git
+cd fork-qwen-code
 npm install
 npm install -g .
+
+# install in development mode
+npm run build
+npm run start
 ```
 
 ### Install globally with Homebrew (macOS/Linux)
