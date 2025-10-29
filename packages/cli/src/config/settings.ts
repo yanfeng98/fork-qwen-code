@@ -183,13 +183,6 @@ export interface SettingsError {
   path: string;
 }
 
-export interface SettingsFile {
-  settings: Settings;
-  originalSettings: Settings;
-  path: string;
-  rawJson?: string;
-}
-
 function setNestedProperty(
   obj: Record<string, unknown>,
   path: string,
@@ -383,71 +376,6 @@ function mergeSettings(
   ) as Settings;
 }
 
-export class LoadedSettings {
-  constructor(
-    system: SettingsFile,
-    systemDefaults: SettingsFile,
-    user: SettingsFile,
-    workspace: SettingsFile,
-    isTrusted: boolean,
-    migratedInMemorScopes: Set<SettingScope>,
-  ) {
-    this.system = system;
-    this.systemDefaults = systemDefaults;
-    this.user = user;
-    this.workspace = workspace;
-    this.isTrusted = isTrusted;
-    this.migratedInMemorScopes = migratedInMemorScopes;
-    this._merged = this.computeMergedSettings();
-  }
-
-  readonly system: SettingsFile;
-  readonly systemDefaults: SettingsFile;
-  readonly user: SettingsFile;
-  readonly workspace: SettingsFile;
-  readonly isTrusted: boolean;
-  readonly migratedInMemorScopes: Set<SettingScope>;
-
-  private _merged: Settings;
-
-  get merged(): Settings {
-    return this._merged;
-  }
-
-  private computeMergedSettings(): Settings {
-    return mergeSettings(
-      this.system.settings,
-      this.systemDefaults.settings,
-      this.user.settings,
-      this.workspace.settings,
-      this.isTrusted,
-    );
-  }
-
-  forScope(scope: SettingScope): SettingsFile {
-    switch (scope) {
-      case SettingScope.User:
-        return this.user;
-      case SettingScope.Workspace:
-        return this.workspace;
-      case SettingScope.System:
-        return this.system;
-      case SettingScope.SystemDefaults:
-        return this.systemDefaults;
-      default:
-        throw new Error(`Invalid scope: ${scope}`);
-    }
-  }
-
-  setValue(scope: SettingScope, key: string, value: unknown): void {
-    const settingsFile = this.forScope(scope);
-    setNestedProperty(settingsFile.settings, key, value);
-    setNestedProperty(settingsFile.originalSettings, key, value);
-    this._merged = this.computeMergedSettings();
-    saveSettings(settingsFile);
-  }
-}
-
 function findEnvFile(startDir: string): string | null {
   let currentDir = path.resolve(startDir);
   while (true) {
@@ -541,10 +469,78 @@ export function loadEnvironment(settings: Settings): void {
   }
 }
 
-/**
- * Loads settings from user and workspace directories.
- * Project settings override user settings.
- */
+export interface SettingsFile {
+  settings: Settings;
+  originalSettings: Settings;
+  path: string;
+  rawJson?: string;
+}
+
+export class LoadedSettings {
+  constructor(
+    system: SettingsFile,
+    systemDefaults: SettingsFile,
+    user: SettingsFile,
+    workspace: SettingsFile,
+    isTrusted: boolean,
+    migratedInMemorScopes: Set<SettingScope>,
+  ) {
+    this.system = system;
+    this.systemDefaults = systemDefaults;
+    this.user = user;
+    this.workspace = workspace;
+    this.isTrusted = isTrusted;
+    this.migratedInMemorScopes = migratedInMemorScopes;
+    this._merged = this.computeMergedSettings();
+  }
+
+  readonly system: SettingsFile;
+  readonly systemDefaults: SettingsFile;
+  readonly user: SettingsFile;
+  readonly workspace: SettingsFile;
+  readonly isTrusted: boolean;
+  readonly migratedInMemorScopes: Set<SettingScope>;
+
+  private _merged: Settings;
+
+  get merged(): Settings {
+    return this._merged;
+  }
+
+  private computeMergedSettings(): Settings {
+    return mergeSettings(
+      this.system.settings,
+      this.systemDefaults.settings,
+      this.user.settings,
+      this.workspace.settings,
+      this.isTrusted,
+    );
+  }
+
+  forScope(scope: SettingScope): SettingsFile {
+    switch (scope) {
+      case SettingScope.User:
+        return this.user;
+      case SettingScope.Workspace:
+        return this.workspace;
+      case SettingScope.System:
+        return this.system;
+      case SettingScope.SystemDefaults:
+        return this.systemDefaults;
+      default:
+        throw new Error(`Invalid scope: ${scope}`);
+    }
+  }
+
+  setValue(scope: SettingScope, key: string, value: unknown): void {
+    const settingsFile = this.forScope(scope);
+    setNestedProperty(settingsFile.settings, key, value);
+    setNestedProperty(settingsFile.originalSettings, key, value);
+    this._merged = this.computeMergedSettings();
+    saveSettings(settingsFile);
+  }
+}
+
 export function loadSettings(
   workspaceDir: string = process.cwd(),
 ): LoadedSettings {

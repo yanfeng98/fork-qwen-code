@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import type {
   MCPServerConfig,
   BugCommandSettings,
@@ -1132,10 +1126,6 @@ const SETTINGS_SCHEMA = {
 
 export type SettingsSchemaType = typeof SETTINGS_SCHEMA;
 
-export function getSettingsSchema(): SettingsSchemaType {
-  return SETTINGS_SCHEMA;
-}
-
 type InferSettings<T extends SettingsSchema> = {
   -readonly [K in keyof T]?: T[K] extends { properties: SettingsSchema }
     ? InferSettings<T[K]['properties']>
@@ -1149,6 +1139,10 @@ type InferSettings<T extends SettingsSchema> = {
 };
 
 export type Settings = InferSettings<SettingsSchemaType>;
+
+export function getSettingsSchema(): SettingsSchemaType {
+  return SETTINGS_SCHEMA;
+}
 
 export interface FooterSettings {
   hideCWD?: boolean;
