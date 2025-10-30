@@ -32,21 +32,6 @@ import { customDeepMerge, type MergeableObject } from '../utils/deepMerge.js';
 import { updateSettingsFilePreservingFormat } from '../utils/commentJson.js';
 import { disableExtension } from './extension.js';
 
-function getMergeStrategyForPath(path: string[]): MergeStrategy | undefined {
-  let current: SettingDefinition | undefined = undefined;
-  let currentSchema: SettingsSchema | undefined = getSettingsSchema();
-
-  for (const key of path) {
-    if (!currentSchema || !currentSchema[key]) {
-      return undefined;
-    }
-    current = currentSchema[key];
-    currentSchema = current.properties;
-  }
-
-  return current?.mergeStrategy;
-}
-
 export type { Settings, MemoryImportFormat };
 
 export const SETTINGS_DIRECTORY_NAME = '.qwen';
@@ -157,13 +142,6 @@ export function getSystemDefaultsPath(): string {
 }
 
 export type { DnsResolutionOrder } from './settingsSchema.js';
-
-export enum SettingScope {
-  User = 'User',
-  Workspace = 'Workspace',
-  System = 'System',
-  SystemDefaults = 'SystemDefaults',
-}
 
 export interface CheckpointingSettings {
   enabled?: boolean;
@@ -351,31 +329,6 @@ export function migrateSettingsToV1(
   return v1Settings;
 }
 
-function mergeSettings(
-  system: Settings,
-  systemDefaults: Settings,
-  user: Settings,
-  workspace: Settings,
-  isTrusted: boolean,
-): Settings {
-  const safeWorkspace = isTrusted ? workspace : ({} as Settings);
-
-  // Settings are merged with the following precedence (last one wins for
-  // single values):
-  // 1. System Defaults
-  // 2. User Settings
-  // 3. Workspace Settings
-  // 4. System Settings (as overrides)
-  return customDeepMerge(
-    getMergeStrategyForPath,
-    {}, // Start with an empty object
-    systemDefaults,
-    user,
-    safeWorkspace,
-    system,
-  ) as Settings;
-}
-
 function findEnvFile(startDir: string): string | null {
   let currentDir = path.resolve(startDir);
   while (true) {
@@ -476,6 +429,13 @@ export interface SettingsFile {
   rawJson?: string;
 }
 
+export enum SettingScope {
+  User = 'User',
+  Workspace = 'Workspace',
+  System = 'System',
+  SystemDefaults = 'SystemDefaults',
+}
+
 export class LoadedSettings {
   constructor(
     system: SettingsFile,
@@ -507,14 +467,12 @@ export class LoadedSettings {
     return this._merged;
   }
 
-  private computeMergedSettings(): Settings {
-    return mergeSettings(
-      this.system.settings,
-      this.systemDefaults.settings,
-      this.user.settings,
-      this.workspace.settings,
-      this.isTrusted,
-    );
+  setValue(scope: SettingScope, key: string, value: unknown): void {
+    const settingsFile = this.forScope(scope);
+    setNestedProperty(settingsFile.settings, key, value);
+    setNestedProperty(settingsFile.originalSettings, key, value);
+    this._merged = this.computeMergedSettings();
+    saveSettings(settingsFile);
   }
 
   forScope(scope: SettingScope): SettingsFile {
@@ -532,12 +490,14 @@ export class LoadedSettings {
     }
   }
 
-  setValue(scope: SettingScope, key: string, value: unknown): void {
-    const settingsFile = this.forScope(scope);
-    setNestedProperty(settingsFile.settings, key, value);
-    setNestedProperty(settingsFile.originalSettings, key, value);
-    this._merged = this.computeMergedSettings();
-    saveSettings(settingsFile);
+  private computeMergedSettings(): Settings {
+    return mergeSettings(
+      this.system.settings,
+      this.systemDefaults.settings,
+      this.user.settings,
+      this.workspace.settings,
+      this.isTrusted,
+    );
   }
 }
 
@@ -734,6 +694,46 @@ export function loadSettings(
     isTrusted,
     migratedInMemorScopes,
   );
+}
+
+function mergeSettings(
+  system: Settings,
+  systemDefaults: Settings,
+  user: Settings,
+  workspace: Settings,
+  isTrusted: boolean,
+): Settings {
+  const safeWorkspace = isTrusted ? workspace : ({} as Settings);
+
+  // Settings are merged with the following precedence (last one wins for
+  // single values):
+  // 1. System Defaults
+  // 2. User Settings
+  // 3. Workspace Settings
+  // 4. System Settings (as overrides)
+  return customDeepMerge(
+    getMergeStrategyForPath,
+    {}, // Start with an empty object
+    systemDefaults,
+    user,
+    safeWorkspace,
+    system,
+  ) as Settings;
+}
+
+function getMergeStrategyForPath(path: string[]): MergeStrategy | undefined {
+  let current: SettingDefinition | undefined = undefined;
+  let currentSchema: SettingsSchema | undefined = getSettingsSchema();
+
+  for (const key of path) {
+    if (!currentSchema || !currentSchema[key]) {
+      return undefined;
+    }
+    current = currentSchema[key];
+    currentSchema = current.properties;
+  }
+
+  return current?.mergeStrategy;
 }
 
 export function migrateDeprecatedSettings(

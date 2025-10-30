@@ -27,16 +27,6 @@ export type SettingsValue =
   | object
   | undefined;
 
-/**
- * Setting datatypes that "toggle" through a fixed list of options
- * (e.g. an enum or true/false) rather than allowing for free form input
- * (like a number or string).
- */
-export const TOGGLE_TYPES: ReadonlySet<SettingsType | undefined> = new Set([
-  'boolean',
-  'enum',
-]);
-
 export interface SettingEnumOption {
   value: string | number;
   label: string;
@@ -77,11 +67,6 @@ export interface SettingsSchema {
 export type MemoryImportFormat = 'tree' | 'flat';
 export type DnsResolutionOrder = 'ipv4first' | 'verbatim';
 
-/**
- * The canonical schema for all settings.
- * The structure of this object defines the structure of the `Settings` type.
- * `as const` is crucial for TypeScript to infer the most specific types possible.
- */
 const SETTINGS_SCHEMA = {
   // Maintained for compatibility/criticality
   mcpServers: {
@@ -1149,3 +1134,8 @@ export interface FooterSettings {
   hideSandboxStatus?: boolean;
   hideModelInfo?: boolean;
 }
+
+export const TOGGLE_TYPES: ReadonlySet<SettingsType | undefined> = new Set([
+  'boolean',
+  'enum',
+]);

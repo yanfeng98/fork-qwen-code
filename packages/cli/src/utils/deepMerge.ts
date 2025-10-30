@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { MergeStrategy } from '../config/settingsSchema.js';
 
 export type Mergeable =
@@ -17,8 +11,19 @@ export type Mergeable =
 
 export type MergeableObject = Record<string, Mergeable>;
 
-function isPlainObject(item: unknown): item is MergeableObject {
-  return !!item && typeof item === 'object' && !Array.isArray(item);
+export function customDeepMerge(
+  getMergeStrategyForPath: (path: string[]) => MergeStrategy | undefined,
+  ...sources: MergeableObject[]
+): MergeableObject {
+  const result: MergeableObject = {};
+
+  for (const source of sources) {
+    if (source) {
+      mergeRecursively(result, source, getMergeStrategyForPath);
+    }
+  }
+
+  return result;
 }
 
 function mergeRecursively(
@@ -74,17 +79,6 @@ function mergeRecursively(
   return target;
 }
 
-export function customDeepMerge(
-  getMergeStrategyForPath: (path: string[]) => MergeStrategy | undefined,
-  ...sources: MergeableObject[]
-): MergeableObject {
-  const result: MergeableObject = {};
-
-  for (const source of sources) {
-    if (source) {
-      mergeRecursively(result, source, getMergeStrategyForPath);
-    }
-  }
-
-  return result;
+function isPlainObject(item: unknown): item is MergeableObject {
+  return !!item && typeof item === 'object' && !Array.isArray(item);
 }
