@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import * as path from 'node:path';
 import * as os from 'node:os';
 import * as crypto from 'node:crypto';
@@ -20,6 +14,18 @@ export class Storage {
 
   constructor(targetDir: string) {
     this.targetDir = targetDir;
+  }
+
+  getWorkspaceSettingsPath(): string {
+    return path.join(this.getQwenDir(), 'settings.json');
+  }
+
+  getQwenDir(): string {
+    return path.join(this.targetDir, QWEN_DIR);
+  }
+
+  getExtensionsDir(): string {
+    return path.join(this.getQwenDir(), 'extensions');
   }
 
   static getGlobalQwenDir(): string {
@@ -62,10 +68,6 @@ export class Storage {
     return path.join(Storage.getGlobalQwenDir(), BIN_DIR_NAME);
   }
 
-  getQwenDir(): string {
-    return path.join(this.targetDir, QWEN_DIR);
-  }
-
   getProjectTempDir(): string {
     const hash = this.getFilePathHash(this.getProjectRoot());
     const tempDir = Storage.getGlobalTempDir();
@@ -94,20 +96,12 @@ export class Storage {
     return path.join(historyDir, hash);
   }
 
-  getWorkspaceSettingsPath(): string {
-    return path.join(this.getQwenDir(), 'settings.json');
-  }
-
   getProjectCommandsDir(): string {
     return path.join(this.getQwenDir(), 'commands');
   }
 
   getProjectTempCheckpointsDir(): string {
     return path.join(this.getProjectTempDir(), 'checkpoints');
-  }
-
-  getExtensionsDir(): string {
-    return path.join(this.getQwenDir(), 'extensions');
   }
 
   getExtensionsConfigPath(): string {

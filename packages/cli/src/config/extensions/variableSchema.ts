@@ -1,8 +1,7 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
+export interface LoadExtensionContext {
+  extensionDir: string;
+  workspaceDir: string;
+}
 
 export interface VariableDefinition {
   type: 'string';
@@ -13,11 +12,6 @@ export interface VariableDefinition {
 
 export interface VariableSchema {
   [key: string]: VariableDefinition;
-}
-
-export interface LoadExtensionContext {
-  extensionDir: string;
-  workspaceDir: string;
 }
 
 const PATH_SEPARATOR_DEFINITION = {

@@ -188,12 +188,6 @@ export function saveTrustedFolders(
   }
 }
 
-/** Is folder trust feature enabled per the current applied settings */
-export function isFolderTrustEnabled(settings: Settings): boolean {
-  const folderTrustSetting = settings.security?.folderTrust?.enabled ?? false;
-  return folderTrustSetting;
-}
-
 function getWorkspaceTrustFromLocalConfig(
   trustConfig?: Record<string, TrustLevel>,
 ): TrustResult {
@@ -234,4 +228,9 @@ export function isWorkspaceTrusted(
 
   // Fall back to the local user configuration
   return getWorkspaceTrustFromLocalConfig(trustConfig);
+}
+
+export function isFolderTrustEnabled(settings: Settings): boolean {
+  const folderTrustSetting = settings.security?.folderTrust?.enabled ?? false;
+  return folderTrustSetting;
 }

@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 // Node built-ins
 import type { EventEmitter } from 'node:events';
 import * as path from 'node:path';

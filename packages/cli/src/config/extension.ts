@@ -73,6 +73,11 @@ export class ExtensionStorage {
     this.extensionName = extensionName;
   }
 
+  static getUserExtensionsDir(): string {
+    const storage = new Storage(os.homedir());
+    return storage.getExtensionsDir();
+  }
+
   getExtensionDir(): string {
     return path.join(
       ExtensionStorage.getUserExtensionsDir(),
@@ -82,11 +87,6 @@ export class ExtensionStorage {
 
   getConfigPath(): string {
     return path.join(this.getExtensionDir(), EXTENSIONS_CONFIG_FILENAME);
-  }
-
-  static getUserExtensionsDir(): string {
-    const storage = new Storage(os.homedir());
-    return storage.getExtensionsDir();
   }
 
   static async createTmpDir(): Promise<string> {
@@ -127,20 +127,6 @@ export async function performWorkspaceExtensionMigration(
     }
   }
   return failedInstallNames;
-}
-
-function getTelemetryConfig(cwd: string) {
-  const settings = loadSettings(cwd);
-  const config = new Config({
-    telemetry: settings.merged.telemetry,
-    interactive: false,
-    sessionId: randomUUID(),
-    targetDir: cwd,
-    cwd,
-    model: '',
-    debugMode: false,
-  });
-  return config;
 }
 
 export function loadExtensions(
@@ -202,84 +188,6 @@ export function loadExtensionsFromDir(dir: string): Extension[] {
     }
   }
   return extensions;
-}
-
-export function loadExtension(context: LoadExtensionContext): Extension | null {
-  const { extensionDir, workspaceDir } = context;
-  if (!fs.statSync(extensionDir).isDirectory()) {
-    return null;
-  }
-
-  const installMetadata = loadInstallMetadata(extensionDir);
-  let effectiveExtensionPath = extensionDir;
-
-  if (installMetadata?.type === 'link') {
-    effectiveExtensionPath = installMetadata.source;
-  }
-
-  try {
-    let config = loadExtensionConfig({
-      extensionDir: effectiveExtensionPath,
-      workspaceDir,
-    });
-
-    config = resolveEnvVarsInObject(config);
-
-    if (config.mcpServers) {
-      config.mcpServers = Object.fromEntries(
-        Object.entries(config.mcpServers).map(([key, value]) => [
-          key,
-          filterMcpConfig(value),
-        ]),
-      );
-    }
-
-    const contextFiles = getContextFileNames(config)
-      .map((contextFileName) =>
-        path.join(effectiveExtensionPath, contextFileName),
-      )
-      .filter((contextFilePath) => fs.existsSync(contextFilePath));
-
-    return {
-      path: effectiveExtensionPath,
-      config,
-      contextFiles,
-      installMetadata,
-    };
-  } catch (e) {
-    console.error(
-      `Warning: Skipping extension in ${effectiveExtensionPath}: ${getErrorMessage(
-        e,
-      )}`,
-    );
-    return null;
-  }
-}
-
-export function loadExtensionByName(
-  name: string,
-  workspaceDir: string = process.cwd(),
-): Extension | null {
-  const userExtensionsDir = ExtensionStorage.getUserExtensionsDir();
-  if (!fs.existsSync(userExtensionsDir)) {
-    return null;
-  }
-
-  for (const subdir of fs.readdirSync(userExtensionsDir)) {
-    const extensionDir = path.join(userExtensionsDir, subdir);
-    if (!fs.statSync(extensionDir).isDirectory()) {
-      continue;
-    }
-    const extension = loadExtension({ extensionDir, workspaceDir });
-    if (
-      extension &&
-      extension.config.name.toLowerCase() === name.toLowerCase()
-    ) {
-      return extension;
-    }
-  }
-
-  return null;
 }
 
 function filterMcpConfig(original: MCPServerConfig): MCPServerConfig {
@@ -764,6 +672,98 @@ export function disableExtension(
   const scopePath = scope === SettingScope.Workspace ? cwd : os.homedir();
   manager.disable(name, true, scopePath);
   logExtensionDisable(config, new ExtensionDisableEvent(name, scope));
+}
+
+function getTelemetryConfig(cwd: string) {
+  const settings = loadSettings(cwd);
+  const config = new Config({
+    telemetry: settings.merged.telemetry,
+    interactive: false,
+    sessionId: randomUUID(),
+    targetDir: cwd,
+    cwd,
+    model: '',
+    debugMode: false,
+  });
+  return config;
+}
+
+export function loadExtensionByName(
+  name: string,
+  workspaceDir: string = process.cwd(),
+): Extension | null {
+  const userExtensionsDir = ExtensionStorage.getUserExtensionsDir();
+  if (!fs.existsSync(userExtensionsDir)) {
+    return null;
+  }
+
+  for (const subdir of fs.readdirSync(userExtensionsDir)) {
+    const extensionDir = path.join(userExtensionsDir, subdir);
+    if (!fs.statSync(extensionDir).isDirectory()) {
+      continue;
+    }
+    const extension = loadExtension({ extensionDir, workspaceDir });
+    if (
+      extension &&
+      extension.config.name.toLowerCase() === name.toLowerCase()
+    ) {
+      return extension;
+    }
+  }
+
+  return null;
+}
+
+export function loadExtension(context: LoadExtensionContext): Extension | null {
+  const { extensionDir, workspaceDir } = context;
+  if (!fs.statSync(extensionDir).isDirectory()) {
+    return null;
+  }
+
+  const installMetadata = loadInstallMetadata(extensionDir);
+  let effectiveExtensionPath = extensionDir;
+
+  if (installMetadata?.type === 'link') {
+    effectiveExtensionPath = installMetadata.source;
+  }
+
+  try {
+    let config = loadExtensionConfig({
+      extensionDir: effectiveExtensionPath,
+      workspaceDir,
+    });
+
+    config = resolveEnvVarsInObject(config);
+
+    if (config.mcpServers) {
+      config.mcpServers = Object.fromEntries(
+        Object.entries(config.mcpServers).map(([key, value]) => [
+          key,
+          filterMcpConfig(value),
+        ]),
+      );
+    }
+
+    const contextFiles = getContextFileNames(config)
+      .map((contextFileName) =>
+        path.join(effectiveExtensionPath, contextFileName),
+      )
+      .filter((contextFilePath) => fs.existsSync(contextFilePath));
+
+    return {
+      path: effectiveExtensionPath,
+      config,
+      contextFiles,
+      installMetadata,
+    };
+  } catch (e) {
+    console.error(
+      `Warning: Skipping extension in ${effectiveExtensionPath}: ${getErrorMessage(
+        e,
+      )}`,
+    );
+    return null;
+  }
 }
 
 export function enableExtension(

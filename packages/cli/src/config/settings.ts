@@ -118,28 +118,9 @@ const MIGRATION_MAP: Record<string, string> = {
   visionModelPreview: 'experimental.visionModelPreview',
 };
 
-export function getSystemSettingsPath(): string {
-  if (process.env['QWEN_CODE_SYSTEM_SETTINGS_PATH']) {
-    return process.env['QWEN_CODE_SYSTEM_SETTINGS_PATH'];
-  }
-  if (platform() === 'darwin') {
-    return '/Library/Application Support/QwenCode/settings.json';
-  } else if (platform() === 'win32') {
-    return 'C:\\ProgramData\\qwen-code\\settings.json';
-  } else {
-    return '/etc/qwen-code/settings.json';
-  }
-}
-
-export function getSystemDefaultsPath(): string {
-  if (process.env['QWEN_CODE_SYSTEM_DEFAULTS_PATH']) {
-    return process.env['QWEN_CODE_SYSTEM_DEFAULTS_PATH'];
-  }
-  return path.join(
-    path.dirname(getSystemSettingsPath()),
-    'system-defaults.json',
-  );
-}
+const KNOWN_V2_CONTAINERS = new Set(
+  Object.values(MIGRATION_MAP).map((path) => path.split('.')[0]),
+);
 
 export type { DnsResolutionOrder } from './settingsSchema.js';
 
@@ -161,106 +142,6 @@ export interface SettingsError {
   path: string;
 }
 
-function setNestedProperty(
-  obj: Record<string, unknown>,
-  path: string,
-  value: unknown,
-) {
-  const keys = path.split('.');
-  const lastKey = keys.pop();
-  if (!lastKey) return;
-
-  let current: Record<string, unknown> = obj;
-  for (const key of keys) {
-    if (current[key] === undefined) {
-      current[key] = {};
-    }
-    const next = current[key];
-    if (typeof next === 'object' && next !== null) {
-      current = next as Record<string, unknown>;
-    } else {
-      // This path is invalid, so we stop.
-      return;
-    }
-  }
-  current[lastKey] = value;
-}
-
-export function needsMigration(settings: Record<string, unknown>): boolean {
-  // A file needs migration if it contains any top-level key that is moved to a
-  // nested location in V2.
-  const hasV1Keys = Object.entries(MIGRATION_MAP).some(([v1Key, v2Path]) => {
-    if (v1Key === v2Path || !(v1Key in settings)) {
-      return false;
-    }
-    // If a key exists that is both a V1 key and a V2 container (like 'model'),
-    // we need to check the type. If it's an object, it's a V2 container and not
-    // a V1 key that needs migration.
-    if (
-      KNOWN_V2_CONTAINERS.has(v1Key) &&
-      typeof settings[v1Key] === 'object' &&
-      settings[v1Key] !== null
-    ) {
-      return false;
-    }
-    return true;
-  });
-
-  return hasV1Keys;
-}
-
-function migrateSettingsToV2(
-  flatSettings: Record<string, unknown>,
-): Record<string, unknown> | null {
-  if (!needsMigration(flatSettings)) {
-    return null;
-  }
-
-  const v2Settings: Record<string, unknown> = {};
-  const flatKeys = new Set(Object.keys(flatSettings));
-
-  for (const [oldKey, newPath] of Object.entries(MIGRATION_MAP)) {
-    if (flatKeys.has(oldKey)) {
-      setNestedProperty(v2Settings, newPath, flatSettings[oldKey]);
-      flatKeys.delete(oldKey);
-    }
-  }
-
-  // Preserve mcpServers at the top level
-  if (flatSettings['mcpServers']) {
-    v2Settings['mcpServers'] = flatSettings['mcpServers'];
-    flatKeys.delete('mcpServers');
-  }
-
-  // Carry over any unrecognized keys
-  for (const remainingKey of flatKeys) {
-    const existingValue = v2Settings[remainingKey];
-    const newValue = flatSettings[remainingKey];
-
-    if (
-      typeof existingValue === 'object' &&
-      existingValue !== null &&
-      !Array.isArray(existingValue) &&
-      typeof newValue === 'object' &&
-      newValue !== null &&
-      !Array.isArray(newValue)
-    ) {
-      const pathAwareGetStrategy = (path: string[]) =>
-        getMergeStrategyForPath([remainingKey, ...path]);
-      v2Settings[remainingKey] = customDeepMerge(
-        pathAwareGetStrategy,
-        {},
-        newValue as MergeableObject,
-        existingValue as MergeableObject,
-      );
-    } else {
-      v2Settings[remainingKey] = newValue;
-    }
-  }
-
-  return v2Settings;
-}
-
 function getNestedProperty(
   obj: Record<string, unknown>,
   path: string,
@@ -278,11 +159,6 @@ function getNestedProperty(
 
 const REVERSE_MIGRATION_MAP: Record<string, string> = Object.fromEntries(
   Object.entries(MIGRATION_MAP).map(([key, value]) => [value, key]),
-);
-
-// Dynamically determine the top-level keys from the V2 settings structure.
-const KNOWN_V2_CONTAINERS = new Set(
-  Object.values(MIGRATION_MAP).map((path) => path.split('.')[0]),
 );
 
 export function migrateSettingsToV1(
@@ -327,99 +203,6 @@ export function migrateSettingsToV1(
   }
 
   return v1Settings;
-}
-
-function findEnvFile(startDir: string): string | null {
-  let currentDir = path.resolve(startDir);
-  while (true) {
-    // prefer gemini-specific .env under QWEN_DIR
-    const geminiEnvPath = path.join(currentDir, QWEN_DIR, '.env');
-    if (fs.existsSync(geminiEnvPath)) {
-      return geminiEnvPath;
-    }
-    const envPath = path.join(currentDir, '.env');
-    if (fs.existsSync(envPath)) {
-      return envPath;
-    }
-    const parentDir = path.dirname(currentDir);
-    if (parentDir === currentDir || !parentDir) {
-      // check .env under home as fallback, again preferring gemini-specific .env
-      const homeGeminiEnvPath = path.join(homedir(), QWEN_DIR, '.env');
-      if (fs.existsSync(homeGeminiEnvPath)) {
-        return homeGeminiEnvPath;
-      }
-      const homeEnvPath = path.join(homedir(), '.env');
-      if (fs.existsSync(homeEnvPath)) {
-        return homeEnvPath;
-      }
-      return null;
-    }
-    currentDir = parentDir;
-  }
-}
-
-export function setUpCloudShellEnvironment(envFilePath: string | null): void {
-  // Special handling for GOOGLE_CLOUD_PROJECT in Cloud Shell:
-  // Because GOOGLE_CLOUD_PROJECT in Cloud Shell tracks the project
-  // set by the user using "gcloud config set project" we do not want to
-  // use its value. So, unless the user overrides GOOGLE_CLOUD_PROJECT in
-  // one of the .env files, we set the Cloud Shell-specific default here.
-  if (envFilePath && fs.existsSync(envFilePath)) {
-    const envFileContent = fs.readFileSync(envFilePath);
-    const parsedEnv = dotenv.parse(envFileContent);
-    if (parsedEnv['GOOGLE_CLOUD_PROJECT']) {
-      // .env file takes precedence in Cloud Shell
-      process.env['GOOGLE_CLOUD_PROJECT'] = parsedEnv['GOOGLE_CLOUD_PROJECT'];
-    } else {
-      // If not in .env, set to default and override global
-      process.env['GOOGLE_CLOUD_PROJECT'] = 'cloudshell-gca';
-    }
-  } else {
-    // If no .env file, set to default and override global
-    process.env['GOOGLE_CLOUD_PROJECT'] = 'cloudshell-gca';
-  }
-}
-
-export function loadEnvironment(settings: Settings): void {
-  const envFilePath = findEnvFile(process.cwd());
-
-  if (!isWorkspaceTrusted(settings).isTrusted) {
-    return;
-  }
-
-  // Cloud Shell environment variable handling
-  if (process.env['CLOUD_SHELL'] === 'true') {
-    setUpCloudShellEnvironment(envFilePath);
-  }
-
-  if (envFilePath) {
-    // Manually parse and load environment variables to handle exclusions correctly.
-    // This avoids modifying environment variables that were already set from the shell.
-    try {
-      const envFileContent = fs.readFileSync(envFilePath, 'utf-8');
-      const parsedEnv = dotenv.parse(envFileContent);
-
-      const excludedVars =
-        settings?.advanced?.excludedEnvVars || DEFAULT_EXCLUDED_ENV_VARS;
-      const isProjectEnvFile = !envFilePath.includes(QWEN_DIR);
-
-      for (const key in parsedEnv) {
-        if (Object.hasOwn(parsedEnv, key)) {
-          // If it's a project .env file, skip loading excluded variables.
-          if (isProjectEnvFile && excludedVars.includes(key)) {
-            continue;
-          }
-
-          // Load variable only if it's not already set in the environment.
-          if (!Object.hasOwn(process.env, key)) {
-            process.env[key] = parsedEnv[key];
-          }
-        }
-      }
-    } catch (_e) {
-      // Errors are ignored to match the behavior of `dotenv.config({ quiet: true })`.
-    }
-  }
 }
 
 export interface SettingsFile {
@@ -513,19 +296,16 @@ export function loadSettings(
   const systemDefaultsPath = getSystemDefaultsPath();
   const migratedInMemorScopes = new Set<SettingScope>();
 
-  // Resolve paths to their canonical representation to handle symlinks
   const resolvedWorkspaceDir = path.resolve(workspaceDir);
   const resolvedHomeDir = path.resolve(homedir());
 
   let realWorkspaceDir = resolvedWorkspaceDir;
   try {
-    // fs.realpathSync gets the "true" path, resolving any symlinks
     realWorkspaceDir = fs.realpathSync(resolvedWorkspaceDir);
   } catch (_e) {
     // This is okay. The path might not exist yet, and that's a valid state.
   }
 
-  // We expect homedir to always exist and be resolvable.
   const realHomeDir = fs.realpathSync(resolvedHomeDir);
 
   const workspaceSettingsPath = new Storage(
@@ -614,13 +394,11 @@ export function loadSettings(
   const userOriginalSettings = structuredClone(userResult.settings);
   const workspaceOriginalSettings = structuredClone(workspaceResult.settings);
 
-  // Environment variables for runtime use
   systemSettings = resolveEnvVarsInObject(systemResult.settings);
   systemDefaultSettings = resolveEnvVarsInObject(systemDefaultsResult.settings);
   userSettings = resolveEnvVarsInObject(userResult.settings);
   workspaceSettings = resolveEnvVarsInObject(workspaceResult.settings);
 
-  // Support legacy theme names
   if (userSettings.ui?.theme === 'VS') {
     userSettings.ui.theme = DefaultLight.name;
   } else if (userSettings.ui?.theme === 'VS2015') {
@@ -632,7 +410,6 @@ export function loadSettings(
     workspaceSettings.ui.theme = DefaultDark.name;
   }
 
-  // For the initial trust check, we can only use user and system settings.
   const initialTrustCheckSettings = customDeepMerge(
     getMergeStrategyForPath,
     {},
@@ -642,7 +419,6 @@ export function loadSettings(
   const isTrusted =
     isWorkspaceTrusted(initialTrustCheckSettings as Settings).isTrusted ?? true;
 
-  // Create a temporary merged settings object to pass to loadEnvironment.
   const tempMergedSettings = mergeSettings(
     systemSettings,
     systemDefaultSettings,
@@ -651,11 +427,7 @@ export function loadSettings(
     isTrusted,
   );
 
-  // loadEnviroment depends on settings so we have to create a temp version of
-  // the settings to avoid a cycle
   loadEnvironment(tempMergedSettings);
-
-  // Create LoadedSettings first
 
   if (settingsErrors.length > 0) {
     const errorMessages = settingsErrors.map(
@@ -694,6 +466,31 @@ export function loadSettings(
     isTrusted,
     migratedInMemorScopes,
   );
+}
+
+function setNestedProperty(
+  obj: Record<string, unknown>,
+  path: string,
+  value: unknown,
+) {
+  const keys = path.split('.');
+  const lastKey = keys.pop();
+  if (!lastKey) return;
+
+  let current: Record<string, unknown> = obj;
+  for (const key of keys) {
+    if (current[key] === undefined) {
+      current[key] = {};
+    }
+    const next = current[key];
+    if (typeof next === 'object' && next !== null) {
+      current = next as Record<string, unknown>;
+    } else {
+      // This path is invalid, so we stop.
+      return;
+    }
+  }
+  current[lastKey] = value;
 }
 
 function mergeSettings(
@@ -736,6 +533,198 @@ function getMergeStrategyForPath(path: string[]): MergeStrategy | undefined {
   return current?.mergeStrategy;
 }
 
+export function saveSettings(settingsFile: SettingsFile): void {
+  try {
+    const dirPath = path.dirname(settingsFile.path);
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath, { recursive: true });
+    }
+
+    let settingsToSave = settingsFile.originalSettings;
+    if (!MIGRATE_V2_OVERWRITE) {
+      settingsToSave = migrateSettingsToV1(
+        settingsToSave as Record<string, unknown>,
+      ) as Settings;
+    }
+
+    updateSettingsFilePreservingFormat(
+      settingsFile.path,
+      settingsToSave as Record<string, unknown>,
+    );
+  } catch (error) {
+    console.error('Error saving user settings file:', error);
+  }
+}
+
+export function getSystemSettingsPath(): string {
+  if (process.env['QWEN_CODE_SYSTEM_SETTINGS_PATH']) {
+    return process.env['QWEN_CODE_SYSTEM_SETTINGS_PATH'];
+  }
+  if (platform() === 'darwin') {
+    return '/Library/Application Support/QwenCode/settings.json';
+  } else if (platform() === 'win32') {
+    return 'C:\\ProgramData\\qwen-code\\settings.json';
+  } else {
+    return '/etc/qwen-code/settings.json';
+  }
+}
+
+export function getSystemDefaultsPath(): string {
+  if (process.env['QWEN_CODE_SYSTEM_DEFAULTS_PATH']) {
+    return process.env['QWEN_CODE_SYSTEM_DEFAULTS_PATH'];
+  }
+  return path.join(
+    path.dirname(getSystemSettingsPath()),
+    'system-defaults.json',
+  );
+}
+
+export function needsMigration(settings: Record<string, unknown>): boolean {
+  const hasV1Keys = Object.entries(MIGRATION_MAP).some(([v1Key, v2Path]) => {
+    if (v1Key === v2Path || !(v1Key in settings)) {
+      return false;
+    }
+    if (
+      KNOWN_V2_CONTAINERS.has(v1Key) &&
+      typeof settings[v1Key] === 'object' &&
+      settings[v1Key] !== null
+    ) {
+      return false;
+    }
+    return true;
+  });
+
+  return hasV1Keys;
+}
+
+function migrateSettingsToV2(
+  flatSettings: Record<string, unknown>,
+): Record<string, unknown> | null {
+  if (!needsMigration(flatSettings)) {
+    return null;
+  }
+
+  const v2Settings: Record<string, unknown> = {};
+  const flatKeys = new Set(Object.keys(flatSettings));
+
+  for (const [oldKey, newPath] of Object.entries(MIGRATION_MAP)) {
+    if (flatKeys.has(oldKey)) {
+      setNestedProperty(v2Settings, newPath, flatSettings[oldKey]);
+      flatKeys.delete(oldKey);
+    }
+  }
+
+  if (flatSettings['mcpServers']) {
+    v2Settings['mcpServers'] = flatSettings['mcpServers'];
+    flatKeys.delete('mcpServers');
+  }
+
+  for (const remainingKey of flatKeys) {
+    const existingValue = v2Settings[remainingKey];
+    const newValue = flatSettings[remainingKey];
+
+    if (
+      typeof existingValue === 'object' &&
+      existingValue !== null &&
+      !Array.isArray(existingValue) &&
+      typeof newValue === 'object' &&
+      newValue !== null &&
+      !Array.isArray(newValue)
+    ) {
+      const pathAwareGetStrategy = (path: string[]) =>
+        getMergeStrategyForPath([remainingKey, ...path]);
+      v2Settings[remainingKey] = customDeepMerge(
+        pathAwareGetStrategy,
+        {},
+        newValue as MergeableObject,
+        existingValue as MergeableObject,
+      );
+    } else {
+      v2Settings[remainingKey] = newValue;
+    }
+  }
+
+  return v2Settings;
+}
+
+export function loadEnvironment(settings: Settings): void {
+  const envFilePath = findEnvFile(process.cwd());
+
+  if (!isWorkspaceTrusted(settings).isTrusted) {
+    return;
+  }
+
+  if (process.env['CLOUD_SHELL'] === 'true') {
+    setUpCloudShellEnvironment(envFilePath);
+  }
+
+  if (envFilePath) {
+    try {
+      const envFileContent = fs.readFileSync(envFilePath, 'utf-8');
+      const parsedEnv = dotenv.parse(envFileContent);
+
+      const excludedVars =
+        settings?.advanced?.excludedEnvVars || DEFAULT_EXCLUDED_ENV_VARS;
+      const isProjectEnvFile = !envFilePath.includes(QWEN_DIR);
+
+      for (const key in parsedEnv) {
+        if (Object.hasOwn(parsedEnv, key)) {
+          if (isProjectEnvFile && excludedVars.includes(key)) {
+            continue;
+          }
+
+          if (!Object.hasOwn(process.env, key)) {
+            process.env[key] = parsedEnv[key];
+          }
+        }
+      }
+    } catch (_e) {
+      // Errors are ignored to match the behavior of `dotenv.config({ quiet: true })`.
+    }
+  }
+}
+
+function findEnvFile(startDir: string): string | null {
+  let currentDir = path.resolve(startDir);
+  while (true) {
+    const geminiEnvPath = path.join(currentDir, QWEN_DIR, '.env');
+    if (fs.existsSync(geminiEnvPath)) {
+      return geminiEnvPath;
+    }
+    const envPath = path.join(currentDir, '.env');
+    if (fs.existsSync(envPath)) {
+      return envPath;
+    }
+    const parentDir = path.dirname(currentDir);
+    if (parentDir === currentDir || !parentDir) {
+      const homeGeminiEnvPath = path.join(homedir(), QWEN_DIR, '.env');
+      if (fs.existsSync(homeGeminiEnvPath)) {
+        return homeGeminiEnvPath;
+      }
+      const homeEnvPath = path.join(homedir(), '.env');
+      if (fs.existsSync(homeEnvPath)) {
+        return homeEnvPath;
+      }
+      return null;
+    }
+    currentDir = parentDir;
+  }
+}
+
+export function setUpCloudShellEnvironment(envFilePath: string | null): void {
+  if (envFilePath && fs.existsSync(envFilePath)) {
+    const envFileContent = fs.readFileSync(envFilePath);
+    const parsedEnv = dotenv.parse(envFileContent);
+    if (parsedEnv['GOOGLE_CLOUD_PROJECT']) {
+      process.env['GOOGLE_CLOUD_PROJECT'] = parsedEnv['GOOGLE_CLOUD_PROJECT'];
+    } else {
+      process.env['GOOGLE_CLOUD_PROJECT'] = 'cloudshell-gca';
+    }
+  } else {
+    process.env['GOOGLE_CLOUD_PROJECT'] = 'cloudshell-gca';
+  }
+}
+
 export function migrateDeprecatedSettings(
   loadedSettings: LoadedSettings,
   workspaceDir: string = process.cwd(),
@@ -759,29 +748,4 @@ export function migrateDeprecatedSettings(
 
   processScope(SettingScope.User);
   processScope(SettingScope.Workspace);
-}
-
-export function saveSettings(settingsFile: SettingsFile): void {
-  try {
-    // Ensure the directory exists
-    const dirPath = path.dirname(settingsFile.path);
-    if (!fs.existsSync(dirPath)) {
-      fs.mkdirSync(dirPath, { recursive: true });
-    }
-
-    let settingsToSave = settingsFile.originalSettings;
-    if (!MIGRATE_V2_OVERWRITE) {
-      settingsToSave = migrateSettingsToV1(
-        settingsToSave as Record<string, unknown>,
-      ) as Settings;
-    }
-
-    // Use the format-preserving update function
-    updateSettingsFilePreservingFormat(
-      settingsFile.path,
-      settingsToSave as Record<string, unknown>,
-    );
-  } catch (error) {
-    console.error('Error saving user settings file:', error);
-  }
 }

@@ -1,15 +1,6 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import * as fs from 'node:fs';
 import { parse, stringify } from 'comment-json';
 
-/**
- * Updates a JSON file while preserving comments and formatting.
- */
 export function updateSettingsFilePreservingFormat(
   filePath: string,
   updates: Record<string, unknown>,
