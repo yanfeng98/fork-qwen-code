@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import type {
   FileFilteringOptions,
   MCPServerConfig,
@@ -271,7 +265,6 @@ export async function parseArguments(settings: Settings): Promise<CliArgs> {
           string: true,
           description: 'Allowed MCP server names',
           coerce: (mcpServerNames: string[]) =>
-            // Handle comma-separated values
             mcpServerNames.flatMap((mcpServerName) =>
               mcpServerName.split(',').map((m) => m.trim()),
             ),
@@ -281,7 +274,6 @@ export async function parseArguments(settings: Settings): Promise<CliArgs> {
           string: true,
           description: 'Tools that are allowed to run without confirmation',
           coerce: (tools: string[]) =>
-            // Handle comma-separated values
             tools.flatMap((tool) => tool.split(',').map((t) => t.trim())),
         })
         .option('extensions', {
@@ -291,7 +283,6 @@ export async function parseArguments(settings: Settings): Promise<CliArgs> {
           description:
             'A list of extensions to use. If not provided, all extensions are used.',
           coerce: (extensions: string[]) =>
-            // Handle comma-separated values
             extensions.flatMap((extension) =>
               extension.split(',').map((e) => e.trim()),
             ),
@@ -307,7 +298,6 @@ export async function parseArguments(settings: Settings): Promise<CliArgs> {
           description:
             'Additional directories to include in the workspace (comma-separated or multiple --include-directories)',
           coerce: (dirs: string[]) =>
-            // Handle comma-separated values
             dirs.flatMap((dir) => dir.split(',').map((d) => d.trim())),
         })
         .option('openai-logging', {
@@ -364,15 +354,12 @@ export async function parseArguments(settings: Settings): Promise<CliArgs> {
           'prompt',
           'Use the positional prompt instead. This flag will be removed in a future version.',
         )
-        // Ensure validation flows through .fail() for clean UX
         .fail((msg: string, err: Error | undefined, yargs: Argv) => {
           console.error(msg || err?.message || 'Unknown error');
           yargs.showHelp();
           process.exit(1);
         })
         .check((argv: { [x: string]: unknown }) => {
-          // The 'query' positional can be a string (for one arg) or string[] (for multiple).
-          // This guard safely checks if any positional argument was provided.
           const query = argv['query'] as string | string[] | undefined;
           const hasPositionalQuery = Array.isArray(query)
             ? query.length > 0
@@ -390,7 +377,6 @@ export async function parseArguments(settings: Settings): Promise<CliArgs> {
           return true;
         }),
     )
-    // Register MCP subcommands
     .command(mcpCommand);
 
   if (settings?.experimental?.extensionManagement ?? true) {
@@ -398,35 +384,28 @@ export async function parseArguments(settings: Settings): Promise<CliArgs> {
   }
 
   yargsInstance
-    .version(await getCliVersion()) // This will enable the --version flag based on package.json
+    .version(await getCliVersion())
     .alias('v', 'version')
     .help()
     .alias('h', 'help')
     .strict()
-    .demandCommand(0, 0); // Allow base command to run with no subcommands
+    .demandCommand(0, 0);
 
   yargsInstance.wrap(yargsInstance.terminalWidth());
   const result = await yargsInstance.parse();
 
-  // If yargs handled --help/--version it will have exited; nothing to do here.
-
-  // Handle case where MCP subcommands are executed - they should exit the process
-  // and not return to main CLI logic
   if (
     result._.length > 0 &&
     (result._[0] === 'mcp' || result._[0] === 'extensions')
   ) {
-    // MCP commands handle their own execution and process exit
     process.exit(0);
   }
 
-  // Normalize query args: handle both quoted "@path file" and unquoted @path file
   const queryArg = (result as { query?: string | string[] | undefined }).query;
   const q: string | undefined = Array.isArray(queryArg)
     ? queryArg.join(' ')
     : queryArg;
 
-  // Route positional args: explicit -i flag -> interactive; else -> one-shot (even for @commands)
   if (q && !result['prompt']) {
     const hasExplicitInteractive =
       result['promptInteractive'] === '' || !!result['promptInteractive'];
@@ -437,12 +416,18 @@ export async function parseArguments(settings: Settings): Promise<CliArgs> {
     }
   }
 
-  // Keep CliArgs.query as a string for downstream typing
   (result as Record<string, unknown>)['query'] = q || undefined;
 
-  // The import format is now only controlled by settings.memoryImportFormat
-  // We no longer accept it as a CLI argument
   return result as unknown as CliArgs;
+}
+
+export function isDebugMode(argv: CliArgs): boolean {
+  return (
+    argv.debug ||
+    [process.env['DEBUG'], process.env['DEBUG_MODE']].some(
+      (v) => v === 'true' || v === '1',
+    )
+  );
 }
 
 // This function is now a thin wrapper around the server's implementation.
@@ -485,15 +470,6 @@ export async function loadHierarchicalGeminiMemory(
     memoryImportFormat,
     fileFilteringOptions,
     settings.context?.discoveryMaxDirs,
-  );
-}
-
-export function isDebugMode(argv: CliArgs): boolean {
-  return (
-    argv.debug ||
-    [process.env['DEBUG'], process.env['DEBUG_MODE']].some(
-      (v) => v === 'true' || v === '1',
-    )
   );
 }
 

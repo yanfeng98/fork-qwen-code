@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 // File for 'gemini mcp list' command
 import type { CommandModule } from 'yargs';
 import { loadSettings } from '../../config/settings.js';
@@ -18,70 +12,13 @@ const COLOR_YELLOW = '\u001b[33m';
 const COLOR_RED = '\u001b[31m';
 const RESET_COLOR = '\u001b[0m';
 
-async function getMcpServersFromConfig(): Promise<
-  Record<string, MCPServerConfig>
-> {
-  const settings = loadSettings();
-  const extensions = loadExtensions(
-    new ExtensionEnablementManager(ExtensionStorage.getUserExtensionsDir()),
-  );
-  const mcpServers = { ...(settings.merged.mcpServers || {}) };
-  for (const extension of extensions) {
-    Object.entries(extension.config.mcpServers || {}).forEach(
-      ([key, server]) => {
-        if (mcpServers[key]) {
-          return;
-        }
-        mcpServers[key] = {
-          ...server,
-          extensionName: extension.config.name,
-        };
-      },
-    );
-  }
-  return mcpServers;
-}
-
-async function testMCPConnection(
-  serverName: string,
-  config: MCPServerConfig,
-): Promise<MCPServerStatus> {
-  const client = new Client({
-    name: 'mcp-test-client',
-    version: '0.0.1',
-  });
-
-  let transport;
-  try {
-    // Use the same transport creation logic as core
-    transport = await createTransport(serverName, config, false);
-  } catch (_error) {
-    await client.close();
-    return MCPServerStatus.DISCONNECTED;
-  }
-
-  try {
-    // Attempt actual MCP connection with short timeout
-    await client.connect(transport, { timeout: 5000 }); // 5s timeout
-
-    // Test basic MCP protocol by pinging the server
-    await client.ping();
-
-    await client.close();
-    return MCPServerStatus.CONNECTED;
-  } catch (_error) {
-    await transport.close();
-    return MCPServerStatus.DISCONNECTED;
-  }
-}
-
-async function getServerStatus(
-  serverName: string,
-  server: MCPServerConfig,
-): Promise<MCPServerStatus> {
-  // Test all server types by attempting actual connection
-  return await testMCPConnection(serverName, server);
-}
+export const listCommand: CommandModule = {
+  command: 'list',
+  describe: 'List all configured MCP servers',
+  handler: async () => {
+    await listMcpServers();
+  },
+};
 
 export async function listMcpServers(): Promise<void> {
   const mcpServers = await getMcpServersFromConfig();
@@ -130,10 +67,61 @@ export async function listMcpServers(): Promise<void> {
   }
 }
 
-export const listCommand: CommandModule = {
-  command: 'list',
-  describe: 'List all configured MCP servers',
-  handler: async () => {
-    await listMcpServers();
-  },
-};
+async function getMcpServersFromConfig(): Promise<
+  Record<string, MCPServerConfig>
+> {
+  const settings = loadSettings();
+  const extensions = loadExtensions(
+    new ExtensionEnablementManager(ExtensionStorage.getUserExtensionsDir()),
+  );
+  const mcpServers = { ...(settings.merged.mcpServers || {}) };
+  for (const extension of extensions) {
+    Object.entries(extension.config.mcpServers || {}).forEach(
+      ([key, server]) => {
+        if (mcpServers[key]) {
+          return;
+        }
+        mcpServers[key] = {
+          ...server,
+          extensionName: extension.config.name,
+        };
+      },
+    );
+  }
+  return mcpServers;
+}
+
+async function getServerStatus(
+  serverName: string,
+  server: MCPServerConfig,
+): Promise<MCPServerStatus> {
+  return await testMCPConnection(serverName, server);
+}
+
+async function testMCPConnection(
+  serverName: string,
+  config: MCPServerConfig,
+): Promise<MCPServerStatus> {
+  const client = new Client({
+    name: 'mcp-test-client',
+    version: '0.0.1',
+  });
+
+  let transport;
+  try {
+    transport = await createTransport(serverName, config, false);
+  } catch (_error) {
+    await client.close();
+    return MCPServerStatus.DISCONNECTED;
+  }
+
+  try {
+    await client.connect(transport, { timeout: 5000 }); // 5s timeout
+    await client.ping();
+    await client.close();
+    return MCPServerStatus.CONNECTED;
+  } catch (_error) {
+    await transport.close();
+    return MCPServerStatus.DISCONNECTED;
+  }
+}

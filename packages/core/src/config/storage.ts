@@ -24,8 +24,8 @@ export class Storage {
     return path.join(this.targetDir, QWEN_DIR);
   }
 
-  getExtensionsDir(): string {
-    return path.join(this.getQwenDir(), 'extensions');
+  static getGlobalSettingsPath(): string {
+    return path.join(Storage.getGlobalQwenDir(), 'settings.json');
   }
 
   static getGlobalQwenDir(): string {
@@ -36,12 +36,30 @@ export class Storage {
     return path.join(homeDir, QWEN_DIR);
   }
 
-  static getMcpOAuthTokensPath(): string {
-    return path.join(Storage.getGlobalQwenDir(), 'mcp-oauth-tokens.json');
+  getExtensionsDir(): string {
+    return path.join(this.getQwenDir(), 'extensions');
   }
 
-  static getGlobalSettingsPath(): string {
-    return path.join(Storage.getGlobalQwenDir(), 'settings.json');
+  getProjectTempDir(): string {
+    const hash = this.getFilePathHash(this.getProjectRoot());
+    const tempDir = Storage.getGlobalTempDir();
+    return path.join(tempDir, hash);
+  }
+
+  getProjectRoot(): string {
+    return this.targetDir;
+  }
+
+  private getFilePathHash(filePath: string): string {
+    return crypto.createHash('sha256').update(filePath).digest('hex');
+  }
+
+  static getGlobalTempDir(): string {
+    return path.join(Storage.getGlobalQwenDir(), TMP_DIR_NAME);
+  }
+
+  static getMcpOAuthTokensPath(): string {
+    return path.join(Storage.getGlobalQwenDir(), 'mcp-oauth-tokens.json');
   }
 
   static getInstallationIdPath(): string {
@@ -60,18 +78,8 @@ export class Storage {
     return path.join(Storage.getGlobalQwenDir(), 'memory.md');
   }
 
-  static getGlobalTempDir(): string {
-    return path.join(Storage.getGlobalQwenDir(), TMP_DIR_NAME);
-  }
-
   static getGlobalBinDir(): string {
     return path.join(Storage.getGlobalQwenDir(), BIN_DIR_NAME);
-  }
-
-  getProjectTempDir(): string {
-    const hash = this.getFilePathHash(this.getProjectRoot());
-    const tempDir = Storage.getGlobalTempDir();
-    return path.join(tempDir, hash);
   }
 
   ensureProjectTempDirExists(): void {
@@ -80,14 +88,6 @@ export class Storage {
 
   static getOAuthCredsPath(): string {
     return path.join(Storage.getGlobalQwenDir(), OAUTH_FILE);
-  }
-
-  getProjectRoot(): string {
-    return this.targetDir;
-  }
-
-  private getFilePathHash(filePath: string): string {
-    return crypto.createHash('sha256').update(filePath).digest('hex');
   }
 
   getHistoryDir(): string {

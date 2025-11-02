@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 // File for 'gemini mcp' command
 import type { CommandModule, Argv } from 'yargs';
 import { addCommand } from './mcp/add.js';

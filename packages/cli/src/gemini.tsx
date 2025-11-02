@@ -191,7 +191,6 @@ export async function main() {
 
   const argv = await parseArguments(settings.merged);
 
-  // Check for invalid input combinations early to prevent crashes
   if (argv.promptInteractive && !process.stdin.isTTY) {
     console.error(
       'Error: The --prompt-interactive flag cannot be used when input is piped from stdin.',

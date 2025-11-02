@@ -1,12 +1,17 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { promises as fs } from 'node:fs';
 import { join } from 'node:path';
 import { Storage } from '@qwen-code/qwen-code-core';
+
+export async function cleanupCheckpoints() {
+  const storage = new Storage(process.cwd());
+  const tempDir = storage.getProjectTempDir();
+  const checkpointsDir = join(tempDir, 'checkpoints');
+  try {
+    await fs.rm(checkpointsDir, { recursive: true, force: true });
+  } catch {
+    // Ignore errors if the directory doesn't exist or fails to delete.
+  }
+}
 
 const cleanupFunctions: Array<(() => void) | (() => Promise<void>)> = [];
 
@@ -23,15 +28,4 @@ export async function runExitCleanup() {
     }
   }
   cleanupFunctions.length = 0; // Clear the array
-}
-
-export async function cleanupCheckpoints() {
-  const storage = new Storage(process.cwd());
-  const tempDir = storage.getProjectTempDir();
-  const checkpointsDir = join(tempDir, 'checkpoints');
-  try {
-    await fs.rm(checkpointsDir, { recursive: true, force: true });
-  } catch {
-    // Ignore errors if the directory doesn't exist or fails to delete.
-  }
 }
