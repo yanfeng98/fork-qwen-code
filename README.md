@@ -389,19 +389,3 @@ qwen
 See [CONTRIBUTING.md](./CONTRIBUTING.md) to learn how to contribute to the project.
 
 For detailed authentication setup, see the [authentication guide](./docs/cli/authentication.md).
-
-## Troubleshooting
-
-If you encounter issues, check the [troubleshooting guide](docs/troubleshooting.md).
-
-## Acknowledgments
-
-This project is based on [Google Gemini CLI](https://github.com/google-gemini/gemini-cli). We acknowledge and appreciate the excellent work of the Gemini CLI team. Our main contribution focuses on parser-level adaptations to better support Qwen-Coder models.
-
-## License
-
-[LICENSE](./LICENSE)
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=QwenLM/qwen-code&type=Date)](https://www.star-history.com/#QwenLM/qwen-code&Date)
