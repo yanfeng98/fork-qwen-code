@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import type {
   CompressionStatus,
   MCPServerConfig,
@@ -14,6 +8,12 @@ import type {
 } from '@qwen-code/qwen-code-core';
 import type { PartListUnion } from '@google/genai';
 import { type ReactNode } from 'react';
+
+export interface ConsoleMessageItem {
+  type: 'log' | 'warn' | 'error' | 'debug' | 'info';
+  content: string;
+  count: number;
+}
 
 export type { ThoughtSummary };
 
@@ -340,12 +340,6 @@ export type Message =
       summary: SummaryProps;
       timestamp: Date;
     };
-
-export interface ConsoleMessageItem {
-  type: 'log' | 'warn' | 'error' | 'debug' | 'info';
-  content: string;
-  count: number;
-}
 
 /**
  * Result type for a slash command that should immediately result in a prompt

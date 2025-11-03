@@ -62,23 +62,6 @@ import {
 } from './utils/relaunch.js';
 import { validateNonInteractiveAuth } from './validateNonInterActiveAuth.js';
 
-export function validateDnsResolutionOrder(
-  order: string | undefined,
-): DnsResolutionOrder {
-  const defaultValue: DnsResolutionOrder = 'ipv4first';
-  if (order === undefined) {
-    return defaultValue;
-  }
-  if (order === 'ipv4first' || order === 'verbatim') {
-    return order;
-  }
-  // We don't want to throw here, just warn and use the default.
-  console.warn(
-    `Invalid value for dnsResolutionOrder in settings: "${order}". Using default "${defaultValue}".`,
-  );
-  return defaultValue;
-}
-
 function getNodeMemoryArgs(isDebugMode: boolean): string[] {
   const totalMemoryMB = os.totalmem() / (1024 * 1024);
   const heapStats = v8.getHeapStatistics();
@@ -210,7 +193,6 @@ export async function main() {
     validateDnsResolutionOrder(settings.merged.advanced?.dnsResolutionOrder),
   );
 
-  // Set a default auth type if one isn't set.
   if (!settings.merged.security?.auth?.selectedType) {
     if (process.env['CLOUD_SHELL'] === 'true') {
       settings.setValue(
@@ -461,6 +443,22 @@ ${reason.stack}`
       appEvents.emit(AppEvent.OpenDebugConsole);
     }
   });
+}
+
+export function validateDnsResolutionOrder(
+  order: string | undefined,
+): DnsResolutionOrder {
+  const defaultValue: DnsResolutionOrder = 'ipv4first';
+  if (order === undefined) {
+    return defaultValue;
+  }
+  if (order === 'ipv4first' || order === 'verbatim') {
+    return order;
+  }
+  console.warn(
+    `Invalid value for dnsResolutionOrder in settings: "${order}". Using default "${defaultValue}".`,
+  );
+  return defaultValue;
 }
 
 function setWindowTitle(title: string, settings: LoadedSettings) {

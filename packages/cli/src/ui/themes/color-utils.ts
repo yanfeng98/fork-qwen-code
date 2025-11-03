@@ -1,11 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
-// Mapping from common CSS color names (lowercase) to hex codes (lowercase)
-// Excludes names directly supported by Ink
 export const CSS_NAME_TO_HEX_MAP: Readonly<Record<string, string>> = {
   aliceblue: '#f0f8ff',
   antiquewhite: '#faebd7',
@@ -147,7 +139,6 @@ export const CSS_NAME_TO_HEX_MAP: Readonly<Record<string, string>> = {
   yellowgreen: '#9acd32',
 };
 
-// Define the set of Ink's named colors for quick lookup
 export const INK_SUPPORTED_NAMES = new Set([
   'black',
   'red',
@@ -198,32 +189,21 @@ export function isValidColor(color: string): boolean {
   return false;
 }
 
-/**
- * Resolves a CSS color value (name or hex) into an Ink-compatible color string.
- * @param colorValue The raw color string (e.g., 'blue', '#ff0000', 'darkkhaki').
- * @returns An Ink-compatible color string (hex or name), or undefined if not resolvable.
- */
 export function resolveColor(colorValue: string): string | undefined {
   const lowerColor = colorValue.toLowerCase();
 
-  // 1. Check if it's already a hex code and valid
   if (lowerColor.startsWith('#')) {
     if (/^#[0-9A-Fa-f]{3}([0-9A-Fa-f]{3})?$/.test(colorValue)) {
       return lowerColor;
     } else {
       return undefined;
     }
-  }
-  // 2. Check if it's an Ink supported name (lowercase)
-  else if (INK_SUPPORTED_NAMES.has(lowerColor)) {
-    return lowerColor; // Use Ink name directly
-  }
-  // 3. Check if it's a known CSS name we can map to hex
-  else if (CSS_NAME_TO_HEX_MAP[lowerColor]) {
-    return CSS_NAME_TO_HEX_MAP[lowerColor]; // Use mapped hex
+  } else if (INK_SUPPORTED_NAMES.has(lowerColor)) {
+    return lowerColor;
+  } else if (CSS_NAME_TO_HEX_MAP[lowerColor]) {
+    return CSS_NAME_TO_HEX_MAP[lowerColor];
   }
 
-  // 4. Could not resolve
   console.warn(
     `[ColorUtils] Could not resolve color "${colorValue}" to an Ink-compatible format.`,
   );

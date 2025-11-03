@@ -28,16 +28,6 @@ export class ConsolePatcher {
     console.info = this.patchConsoleMethod('info', this.originalConsoleInfo);
   }
 
-  cleanup = () => {
-    console.log = this.originalConsoleLog;
-    console.warn = this.originalConsoleWarn;
-    console.error = this.originalConsoleError;
-    console.debug = this.originalConsoleDebug;
-    console.info = this.originalConsoleInfo;
-  };
-
-  private formatArgs = (args: unknown[]): string => util.format(...args);
-
   private patchConsoleMethod =
     (
       type: 'log' | 'warn' | 'error' | 'debug' | 'info',
@@ -62,4 +52,14 @@ export class ConsolePatcher {
         }
       }
     };
+
+  private formatArgs = (args: unknown[]): string => util.format(...args);
+
+  cleanup = () => {
+    console.log = this.originalConsoleLog;
+    console.warn = this.originalConsoleWarn;
+    console.error = this.originalConsoleError;
+    console.debug = this.originalConsoleDebug;
+    console.info = this.originalConsoleInfo;
+  };
 }

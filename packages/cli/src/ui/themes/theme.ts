@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import type { CSSProperties } from 'react';
 import type { SemanticColors } from './semantic-tokens.js';
 import { resolveColor } from './color-utils.js';
@@ -143,11 +137,6 @@ export class Theme {
   protected readonly _colorMap: Readonly<Record<string, string>>;
   readonly semanticColors: SemanticColors;
 
-  /**
-   * Creates a new Theme instance.
-   * @param name The name of the theme.
-   * @param rawMappings The raw CSSProperties mappings from a react-syntax-highlighter theme object.
-   */
   constructor(
     readonly name: string,
     readonly type: ThemeType,
@@ -203,15 +192,6 @@ export class Theme {
   }
 
   /**
-   * Resolves a CSS color value (name or hex) into an Ink-compatible color string.
-   * @param colorValue The raw color string (e.g., 'blue', '#ff0000', 'darkkhaki').
-   * @returns An Ink-compatible color string (hex or name), or undefined if not resolvable.
-   */
-  private static _resolveColor(colorValue: string): string | undefined {
-    return resolveColor(colorValue);
-  }
-
-  /**
    * Builds the internal map from highlight.js class names to Ink-compatible color strings.
    * This method is protected and primarily intended for use by the constructor.
    * @param hljsTheme The raw CSSProperties mappings from a react-syntax-highlighter theme object.
@@ -222,9 +202,8 @@ export class Theme {
   ): Record<string, string> {
     const inkTheme: Record<string, string> = {};
     for (const key in hljsTheme) {
-      // Ensure the key starts with 'hljs-' or is 'hljs' for the base style
       if (!key.startsWith('hljs-') && key !== 'hljs') {
-        continue; // Skip keys not related to highlighting classes
+        continue;
       }
 
       const style = hljsTheme[key];
@@ -237,10 +216,12 @@ export class Theme {
         // If color is not resolvable, it's omitted from the map,
         // this enables falling back to the default foreground color.
       }
-      // We currently only care about the 'color' property for Ink rendering.
-      // Other properties like background, fontStyle, etc., are ignored.
     }
     return inkTheme;
+  }
+
+  private static _resolveColor(colorValue: string): string | undefined {
+    return resolveColor(colorValue);
   }
 }
 

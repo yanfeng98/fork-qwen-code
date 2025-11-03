@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import type {
   CountTokensParameters,
   CountTokensResponse,
@@ -20,6 +14,15 @@ import { DEFAULT_QWEN_MODEL } from '../config/models.js';
 import type { UserTierId } from '../code_assist/types.js';
 import { InstallationManager } from '../utils/installationManager.js';
 import { LoggingContentGenerator } from './loggingContentGenerator.js';
+
+export enum AuthType {
+  LOGIN_WITH_GOOGLE = 'oauth-personal',
+  USE_GEMINI = 'gemini-api-key',
+  USE_VERTEX_AI = 'vertex-ai',
+  CLOUD_SHELL = 'cloud-shell',
+  USE_OPENAI = 'openai',
+  QWEN_OAUTH = 'qwen-oauth',
+}
 
 /**
  * Interface abstracting the core functionalities for generating content and counting tokens.
@@ -40,15 +43,6 @@ export interface ContentGenerator {
   embedContent(request: EmbedContentParameters): Promise<EmbedContentResponse>;
 
   userTier?: UserTierId;
-}
-
-export enum AuthType {
-  LOGIN_WITH_GOOGLE = 'oauth-personal',
-  USE_GEMINI = 'gemini-api-key',
-  USE_VERTEX_AI = 'vertex-ai',
-  CLOUD_SHELL = 'cloud-shell',
-  USE_OPENAI = 'openai',
-  QWEN_OAUTH = 'qwen-oauth',
 }
 
 export type ContentGeneratorConfig = {

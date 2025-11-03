@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { type ColorsTheme, Theme } from './theme.js';
 import { darkSemanticColors } from './semantic-tokens.js';
 
