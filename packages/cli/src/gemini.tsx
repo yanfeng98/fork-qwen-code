@@ -62,37 +62,6 @@ import {
 } from './utils/relaunch.js';
 import { validateNonInteractiveAuth } from './validateNonInterActiveAuth.js';
 
-function getNodeMemoryArgs(isDebugMode: boolean): string[] {
-  const totalMemoryMB = os.totalmem() / (1024 * 1024);
-  const heapStats = v8.getHeapStatistics();
-  const currentMaxOldSpaceSizeMb = Math.floor(
-    heapStats.heap_size_limit / 1024 / 1024,
-  );
-
-  // Set target to 50% of total memory
-  const targetMaxOldSpaceSizeInMB = Math.floor(totalMemoryMB * 0.5);
-  if (isDebugMode) {
-    console.debug(
-      `Current heap size ${currentMaxOldSpaceSizeMb.toFixed(2)} MB`,
-    );
-  }
-
-  if (process.env['GEMINI_CLI_NO_RELAUNCH']) {
-    return [];
-  }
-
-  if (targetMaxOldSpaceSizeInMB > currentMaxOldSpaceSizeMb) {
-    if (isDebugMode) {
-      console.debug(
-        `Need to relaunch with more memory: ${targetMaxOldSpaceSizeInMB.toFixed(2)} MB`,
-      );
-    }
-    return [`--max-old-space-size=${targetMaxOldSpaceSizeInMB}`];
-  }
-
-  return [];
-}
-
 import { runZedIntegration } from './zed-integration/zedIntegration.js';
 import { loadSandboxConfig } from './config/sandboxConfig.js';
 import { ExtensionEnablementManager } from './config/extensions/extensionEnablement.js';
@@ -203,28 +172,19 @@ export async function main() {
     }
   }
 
-  // Load custom themes from settings
   themeManager.loadCustomThemes(settings.merged.ui?.customThemes);
 
   if (settings.merged.ui?.theme) {
     if (!themeManager.setActiveTheme(settings.merged.ui?.theme)) {
-      // If the theme is not found during initial load, log a warning and continue.
-      // The useThemeCommand hook in AppContainer.tsx will handle opening the dialog.
       console.warn(`Warning: Theme "${settings.merged.ui?.theme}" not found.`);
     }
   }
 
-  // hop into sandbox if we are outside and sandboxing is enabled
   if (!process.env['SANDBOX']) {
     const memoryArgs = settings.merged.advanced?.autoConfigureMemory
       ? getNodeMemoryArgs(isDebugMode)
       : [];
     const sandboxConfig = await loadSandboxConfig(settings.merged, argv);
-    // We intentially omit the list of extensions here because extensions
-    // should not impact auth or setting up the sandbox.
-    // TODO(jacobr): refactor loadCliConfig so there is a minimal version
-    // that only initializes enough config to enable refreshAuth or find
-    // another way to decouple refreshAuth from requiring a config.
 
     if (sandboxConfig) {
       const partialConfig = await loadCliConfig(
@@ -291,8 +251,6 @@ export async function main() {
       );
       process.exit(0);
     } else {
-      // Relaunch app so we always have a child process that can be internally
-      // restarted if needed.
       await relaunchAppInChildProcess(memoryArgs, []);
     }
   }
@@ -459,6 +417,36 @@ export function validateDnsResolutionOrder(
     `Invalid value for dnsResolutionOrder in settings: "${order}". Using default "${defaultValue}".`,
   );
   return defaultValue;
+}
+
+function getNodeMemoryArgs(isDebugMode: boolean): string[] {
+  const totalMemoryMB = os.totalmem() / (1024 * 1024);
+  const heapStats = v8.getHeapStatistics();
+  const currentMaxOldSpaceSizeMb = Math.floor(
+    heapStats.heap_size_limit / 1024 / 1024,
+  );
+
+  const targetMaxOldSpaceSizeInMB = Math.floor(totalMemoryMB * 0.5);
+  if (isDebugMode) {
+    console.debug(
+      `Current heap size ${currentMaxOldSpaceSizeMb.toFixed(2)} MB`,
+    );
+  }
+
+  if (process.env['GEMINI_CLI_NO_RELAUNCH']) {
+    return [];
+  }
+
+  if (targetMaxOldSpaceSizeInMB > currentMaxOldSpaceSizeMb) {
+    if (isDebugMode) {
+      console.debug(
+        `Need to relaunch with more memory: ${targetMaxOldSpaceSizeInMB.toFixed(2)} MB`,
+      );
+    }
+    return [`--max-old-space-size=${targetMaxOldSpaceSizeInMB}`];
+  }
+
+  return [];
 }
 
 function setWindowTitle(title: string, settings: LoadedSettings) {

@@ -175,28 +175,12 @@ export class Theme {
     };
     this._colorMap = Object.freeze(this._buildColorMap(rawMappings)); // Build and freeze the map
 
-    // Determine the default foreground color
     const rawDefaultColor = rawMappings['hljs']?.color;
     this.defaultColor =
       (rawDefaultColor ? Theme._resolveColor(rawDefaultColor) : undefined) ??
-      ''; // Default to empty string if not found or resolvable
+      '';
   }
 
-  /**
-   * Gets the Ink-compatible color string for a given highlight.js class name.
-   * @param hljsClass The highlight.js class name (e.g., 'hljs-keyword', 'hljs-string').
-   * @returns The corresponding Ink color string (hex or name) if it exists.
-   */
-  getInkColor(hljsClass: string): string | undefined {
-    return this._colorMap[hljsClass];
-  }
-
-  /**
-   * Builds the internal map from highlight.js class names to Ink-compatible color strings.
-   * This method is protected and primarily intended for use by the constructor.
-   * @param hljsTheme The raw CSSProperties mappings from a react-syntax-highlighter theme object.
-   * @returns An Ink-compatible theme map (Record<string, string>).
-   */
   protected _buildColorMap(
     hljsTheme: Record<string, CSSProperties>,
   ): Record<string, string> {
@@ -210,11 +194,8 @@ export class Theme {
       if (style?.color) {
         const resolvedColor = Theme._resolveColor(style.color);
         if (resolvedColor !== undefined) {
-          // Use the original key from the hljsTheme (e.g., 'hljs-keyword')
           inkTheme[key] = resolvedColor;
         }
-        // If color is not resolvable, it's omitted from the map,
-        // this enables falling back to the default foreground color.
       }
     }
     return inkTheme;
@@ -222,6 +203,10 @@ export class Theme {
 
   private static _resolveColor(colorValue: string): string | undefined {
     return resolveColor(colorValue);
+  }
+
+  getInkColor(hljsClass: string): string | undefined {
+    return this._colorMap[hljsClass];
   }
 }
 

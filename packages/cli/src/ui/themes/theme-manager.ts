@@ -56,10 +56,6 @@ class ThemeManager {
     this.activeTheme = DEFAULT_THEME;
   }
 
-  /**
-   * Loads custom themes from settings.
-   * @param customThemesSettings Custom themes from settings.
-   */
   loadCustomThemes(customThemesSettings?: Record<string, CustomTheme>): void {
     this.customThemes.clear();
 
@@ -102,11 +98,6 @@ class ThemeManager {
     }
   }
 
-  /**
-   * Sets the active theme.
-   * @param themeName The name of the theme to set as active.
-   * @returns True if the theme was successfully set, false otherwise.
-   */
   setActiveTheme(themeName: string | undefined): boolean {
     const theme = this.findThemeByName(themeName);
     if (!theme) {
@@ -114,6 +105,33 @@ class ThemeManager {
     }
     this.activeTheme = theme;
     return true;
+  }
+
+  findThemeByName(themeName: string | undefined): Theme | undefined {
+    if (!themeName) {
+      return DEFAULT_THEME;
+    }
+
+    // First check built-in themes
+    const builtInTheme = this.availableThemes.find(
+      (theme) => theme.name === themeName,
+    );
+    if (builtInTheme) {
+      return builtInTheme;
+    }
+
+    // Then check custom themes that have been loaded from settings, or file paths
+    if (this.isPath(themeName)) {
+      return this.loadThemeFromFile(themeName);
+    }
+
+    if (this.customThemes.has(themeName)) {
+      return this.customThemes.get(themeName);
+    }
+
+    // If it's not a built-in, not in cache, and not a valid file path,
+    // it's not a valid theme.
+    return undefined;
   }
 
   /**
@@ -298,33 +316,6 @@ class ThemeManager {
       }
       return undefined;
     }
-  }
-
-  findThemeByName(themeName: string | undefined): Theme | undefined {
-    if (!themeName) {
-      return DEFAULT_THEME;
-    }
-
-    // First check built-in themes
-    const builtInTheme = this.availableThemes.find(
-      (theme) => theme.name === themeName,
-    );
-    if (builtInTheme) {
-      return builtInTheme;
-    }
-
-    // Then check custom themes that have been loaded from settings, or file paths
-    if (this.isPath(themeName)) {
-      return this.loadThemeFromFile(themeName);
-    }
-
-    if (this.customThemes.has(themeName)) {
-      return this.customThemes.get(themeName);
-    }
-
-    // If it's not a built-in, not in cache, and not a valid file path,
-    // it's not a valid theme.
-    return undefined;
   }
 }
 

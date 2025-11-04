@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import type { SandboxConfig } from '@qwen-code/qwen-code-core';
 import { FatalSandboxError } from '@qwen-code/qwen-code-core';
 import commandExists from 'command-exists';
@@ -28,15 +22,29 @@ function isSandboxCommand(value: string): value is SandboxConfig['command'] {
   return (VALID_SANDBOX_COMMANDS as readonly string[]).includes(value);
 }
 
+export async function loadSandboxConfig(
+  settings: Settings,
+  argv: SandboxCliArgs,
+): Promise<SandboxConfig | undefined> {
+  const sandboxOption = argv.sandbox ?? settings.tools?.sandbox;
+  const command = getSandboxCommand(sandboxOption);
+
+  const packageJson = await getPackageJson();
+  const image =
+    argv.sandboxImage ??
+    process.env['GEMINI_SANDBOX_IMAGE'] ??
+    packageJson?.config?.sandboxImageUri;
+
+  return command && image ? { command, image } : undefined;
+}
+
 function getSandboxCommand(
   sandbox?: boolean | string,
 ): SandboxConfig['command'] | '' {
-  // If the SANDBOX env var is set, we're already inside the sandbox.
   if (process.env['SANDBOX']) {
     return '';
   }
 
-  // note environment variable takes precedence over argument (from command line or settings)
   const environmentConfiguredSandbox =
     process.env['GEMINI_SANDBOX']?.toLowerCase().trim() ?? '';
   sandbox =
@@ -86,20 +94,4 @@ function getSandboxCommand(
   }
 
   return '';
-}
-
-export async function loadSandboxConfig(
-  settings: Settings,
-  argv: SandboxCliArgs,
-): Promise<SandboxConfig | undefined> {
-  const sandboxOption = argv.sandbox ?? settings.tools?.sandbox;
-  const command = getSandboxCommand(sandboxOption);
-
-  const packageJson = await getPackageJson();
-  const image =
-    argv.sandboxImage ??
-    process.env['GEMINI_SANDBOX_IMAGE'] ??
-    packageJson?.config?.sandboxImageUri;
-
-  return command && image ? { command, image } : undefined;
 }
