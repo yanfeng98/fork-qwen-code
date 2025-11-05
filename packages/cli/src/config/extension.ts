@@ -190,6 +190,21 @@ export function loadExtensionsFromDir(dir: string): Extension[] {
   return extensions;
 }
 
+export function annotateActiveExtensions(
+  extensions: Extension[],
+  workspaceDir: string,
+  manager: ExtensionEnablementManager,
+): GeminiCLIExtension[] {
+  manager.validateExtensionOverrides(extensions);
+  return extensions.map((extension) => ({
+    name: extension.config.name,
+    version: extension.config.version,
+    isActive: manager.isEnabled(extension.config.name, workspaceDir),
+    path: extension.path,
+    installMetadata: extension.installMetadata,
+  }));
+}
+
 function filterMcpConfig(original: MCPServerConfig): MCPServerConfig {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { trust, ...rest } = original;
@@ -216,28 +231,6 @@ function getContextFileNames(config: ExtensionConfig): string[] {
     return [config.contextFileName];
   }
   return config.contextFileName;
-}
-
-/**
- * Returns an annotated list of extensions. If an extension is listed in enabledExtensionNames, it will be active.
- * If enabledExtensionNames is empty, an extension is active unless it is disabled.
- * @param extensions The base list of extensions.
- * @param enabledExtensionNames The names of explicitly enabled extensions.
- * @param workspaceDir The current workspace directory.
- */
-export function annotateActiveExtensions(
-  extensions: Extension[],
-  workspaceDir: string,
-  manager: ExtensionEnablementManager,
-): GeminiCLIExtension[] {
-  manager.validateExtensionOverrides(extensions);
-  return extensions.map((extension) => ({
-    name: extension.config.name,
-    version: extension.config.version,
-    isActive: manager.isEnabled(extension.config.name, workspaceDir),
-    path: extension.path,
-    installMetadata: extension.installMetadata,
-  }));
 }
 
 /**

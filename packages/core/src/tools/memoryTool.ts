@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import type { ToolEditConfirmationDetails, ToolResult } from './tools.js';
 import {
   BaseDeclarativeTool,
@@ -74,8 +68,6 @@ export const QWEN_CONFIG_DIR = '.qwen';
 export const DEFAULT_CONTEXT_FILENAME = 'QWEN.md';
 export const MEMORY_SECTION_HEADER = '## Qwen Added Memories';
 
-// This variable will hold the currently configured filename for QWEN.md context files.
-// It defaults to DEFAULT_CONTEXT_FILENAME but can be overridden by setGeminiMdFilename.
 let currentGeminiMdFilename: string | string[] = DEFAULT_CONTEXT_FILENAME;
 
 export function setGeminiMdFilename(newFilename: string | string[]): void {
