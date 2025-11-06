@@ -1,17 +1,6 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-/**
- * Checks if a directory is within a git repository
- * @param directory The directory to check
- * @returns true if the directory is in a git repository, false otherwise
- */
 export function isGitRepository(directory: string): boolean {
   try {
     let currentDir = path.resolve(directory);
@@ -19,14 +8,12 @@ export function isGitRepository(directory: string): boolean {
     while (true) {
       const gitDir = path.join(currentDir, '.git');
 
-      // Check if .git exists (either as directory or file for worktrees)
       if (fs.existsSync(gitDir)) {
         return true;
       }
 
       const parentDir = path.dirname(currentDir);
 
-      // If we've reached the root directory, stop searching
       if (parentDir === currentDir) {
         break;
       }
@@ -36,7 +23,6 @@ export function isGitRepository(directory: string): boolean {
 
     return false;
   } catch (_error) {
-    // If any filesystem error occurs, assume not a git repo
     return false;
   }
 }

@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import ignore from 'ignore';
@@ -29,7 +23,6 @@ export class QwenIgnoreParser implements QwenIgnoreFilter {
     try {
       content = fs.readFileSync(patternsFilePath, 'utf-8');
     } catch (_error) {
-      // ignore file not found
       return;
     }
 

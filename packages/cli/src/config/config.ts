@@ -430,49 +430,6 @@ export function isDebugMode(argv: CliArgs): boolean {
   );
 }
 
-// This function is now a thin wrapper around the server's implementation.
-// It's kept in the CLI for now as App.tsx directly calls it for memory refresh.
-// TODO: Consider if App.tsx should get memory via a server call or if Config should refresh itself.
-export async function loadHierarchicalGeminiMemory(
-  currentWorkingDirectory: string,
-  includeDirectoriesToReadGemini: readonly string[] = [],
-  debugMode: boolean,
-  fileService: FileDiscoveryService,
-  settings: Settings,
-  extensionContextFilePaths: string[] = [],
-  folderTrust: boolean,
-  memoryImportFormat: 'flat' | 'tree' = 'tree',
-  fileFilteringOptions?: FileFilteringOptions,
-): Promise<{ memoryContent: string; fileCount: number }> {
-  // FIX: Use real, canonical paths for a reliable comparison to handle symlinks.
-  const realCwd = fs.realpathSync(path.resolve(currentWorkingDirectory));
-  const realHome = fs.realpathSync(path.resolve(homedir()));
-  const isHomeDirectory = realCwd === realHome;
-
-  // If it is the home directory, pass an empty string to the core memory
-  // function to signal that it should skip the workspace search.
-  const effectiveCwd = isHomeDirectory ? '' : currentWorkingDirectory;
-
-  if (debugMode) {
-    logger.debug(
-      `CLI: Delegating hierarchical memory load to server for CWD: ${currentWorkingDirectory} (memoryImportFormat: ${memoryImportFormat})`,
-    );
-  }
-
-  // Directly call the server function with the corrected path.
-  return loadServerHierarchicalMemory(
-    effectiveCwd,
-    includeDirectoriesToReadGemini,
-    debugMode,
-    fileService,
-    extensionContextFilePaths,
-    folderTrust,
-    memoryImportFormat,
-    fileFilteringOptions,
-    settings.context?.discoveryMaxDirs,
-  );
-}
-
 export async function loadCliConfig(
   settings: Settings,
   extensions: Extension[],
@@ -521,7 +478,6 @@ export async function loadCliConfig(
     .map(resolvePath)
     .concat((argv.includeDirectories || []).map(resolvePath));
 
-  // Call the (now wrapper) loadHierarchicalGeminiMemory which calls the server's version
   const { memoryContent, fileCount } = await loadHierarchicalGeminiMemory(
     cwd,
     settings.context?.loadMemoryFromIncludeDirectories
@@ -743,6 +699,45 @@ export async function loadCliConfig(
       format: (argv.outputFormat ?? settings.output?.format) as OutputFormat,
     },
   });
+}
+
+// This function is now a thin wrapper around the server's implementation.
+// It's kept in the CLI for now as App.tsx directly calls it for memory refresh.
+// TODO: Consider if App.tsx should get memory via a server call or if Config should refresh itself.
+export async function loadHierarchicalGeminiMemory(
+  currentWorkingDirectory: string,
+  includeDirectoriesToReadGemini: readonly string[] = [],
+  debugMode: boolean,
+  fileService: FileDiscoveryService,
+  settings: Settings,
+  extensionContextFilePaths: string[] = [],
+  folderTrust: boolean,
+  memoryImportFormat: 'flat' | 'tree' = 'tree',
+  fileFilteringOptions?: FileFilteringOptions,
+): Promise<{ memoryContent: string; fileCount: number }> {
+  const realCwd = fs.realpathSync(path.resolve(currentWorkingDirectory));
+  const realHome = fs.realpathSync(path.resolve(homedir()));
+  const isHomeDirectory = realCwd === realHome;
+
+  const effectiveCwd = isHomeDirectory ? '' : currentWorkingDirectory;
+
+  if (debugMode) {
+    logger.debug(
+      `CLI: Delegating hierarchical memory load to server for CWD: ${currentWorkingDirectory} (memoryImportFormat: ${memoryImportFormat})`,
+    );
+  }
+
+  return loadServerHierarchicalMemory(
+    effectiveCwd,
+    includeDirectoriesToReadGemini,
+    debugMode,
+    fileService,
+    extensionContextFilePaths,
+    folderTrust,
+    memoryImportFormat,
+    fileFilteringOptions,
+    settings.context?.discoveryMaxDirs,
+  );
 }
 
 function allowedMcpServers(
