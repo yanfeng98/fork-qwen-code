@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import * as fs from 'node:fs/promises';
 import * as fsSync from 'node:fs';
 import * as path from 'node:path';
@@ -34,145 +28,11 @@ interface GeminiFileContent {
   content: string | null;
 }
 
-async function findProjectRoot(startDir: string): Promise<string | null> {
-  let currentDir = path.resolve(startDir);
-  while (true) {
-    const gitPath = path.join(currentDir, '.git');
-    try {
-      const stats = await fs.lstat(gitPath);
-      if (stats.isDirectory()) {
-        return currentDir;
-      }
-    } catch (error: unknown) {
-      // Don't log ENOENT errors as they're expected when .git doesn't exist
-      // Also don't log errors in test environments, which often have mocked fs
-      const isENOENT =
-        typeof error === 'object' &&
-        error !== null &&
-        'code' in error &&
-        (error as { code: string }).code === 'ENOENT';
-
-      // Only log unexpected errors in non-test environments
-      // process.env['NODE_ENV'] === 'test' or VITEST are common test indicators
-      const isTestEnv =
-        process.env['NODE_ENV'] === 'test' || process.env['VITEST'];
-
-      if (!isENOENT && !isTestEnv) {
-        if (typeof error === 'object' && error !== null && 'code' in error) {
-          const fsError = error as { code: string; message: string };
-          logger.warn(
-            `Error checking for .git directory at ${gitPath}: ${fsError.message}`,
-          );
-        } else {
-          logger.warn(
-            `Non-standard error checking for .git directory at ${gitPath}: ${String(error)}`,
-          );
-        }
-      }
-    }
-    const parentDir = path.dirname(currentDir);
-    if (parentDir === currentDir) {
-      return null;
-    }
-    currentDir = parentDir;
-  }
-}
-
-async function readGeminiMdFiles(
-  filePaths: string[],
-  debugMode: boolean,
-  importFormat: 'flat' | 'tree' = 'tree',
-): Promise<GeminiFileContent[]> {
-  // Process files in parallel with concurrency limit to prevent EMFILE errors
-  const CONCURRENT_LIMIT = 20; // Higher limit for file reads as they're typically faster
-  const results: GeminiFileContent[] = [];
-
-  for (let i = 0; i < filePaths.length; i += CONCURRENT_LIMIT) {
-    const batch = filePaths.slice(i, i + CONCURRENT_LIMIT);
-    const batchPromises = batch.map(
-      async (filePath): Promise<GeminiFileContent> => {
-        try {
-          const content = await fs.readFile(filePath, 'utf-8');
-
-          // Process imports in the content
-          const processedResult = await processImports(
-            content,
-            path.dirname(filePath),
-            debugMode,
-            undefined,
-            undefined,
-            importFormat,
-          );
-          if (debugMode)
-            logger.debug(
-              `Successfully read and processed imports: ${filePath} (Length: ${processedResult.content.length})`,
-            );
-
-          return { filePath, content: processedResult.content };
-        } catch (error: unknown) {
-          const isTestEnv =
-            process.env['NODE_ENV'] === 'test' || process.env['VITEST'];
-          if (!isTestEnv) {
-            const message =
-              error instanceof Error ? error.message : String(error);
-            logger.warn(
-              `Warning: Could not read ${getAllGeminiMdFilenames()} file at ${filePath}. Error: ${message}`,
-            );
-          }
-          if (debugMode) logger.debug(`Failed to read: ${filePath}`);
-          return { filePath, content: null }; // Still include it with null content
-        }
-      },
-    );
-
-    const batchResults = await Promise.allSettled(batchPromises);
-
-    for (const result of batchResults) {
-      if (result.status === 'fulfilled') {
-        results.push(result.value);
-      } else {
-        // This case shouldn't happen since we catch all errors above,
-        // but handle it for completeness
-        const error = result.reason;
-        const message = error instanceof Error ? error.message : String(error);
-        logger.error(`Unexpected error processing file: ${message}`);
-      }
-    }
-  }
-
-  return results;
-}
-
-function concatenateInstructions(
-  instructionContents: GeminiFileContent[],
-  // CWD is needed to resolve relative paths for display markers
-  currentWorkingDirectoryForDisplay: string,
-): string {
-  return instructionContents
-    .filter((item) => typeof item.content === 'string')
-    .map((item) => {
-      const trimmedContent = (item.content as string).trim();
-      if (trimmedContent.length === 0) {
-        return null;
-      }
-      const displayPath = path.isAbsolute(item.filePath)
-        ? path.relative(currentWorkingDirectoryForDisplay, item.filePath)
-        : item.filePath;
-      return `--- Context from: ${displayPath} ---\n${trimmedContent}\n--- End of Context from: ${displayPath} ---`;
-    })
-    .filter((block): block is string => block !== null)
-    .join('\n\n');
-}
-
 export interface LoadServerHierarchicalMemoryResponse {
   memoryContent: string;
   fileCount: number;
 }
 
-/**
- * Loads hierarchical QWEN.md files and concatenates their content.
- * This function is intended for use by the server.
- */
 export async function loadServerHierarchicalMemory(
   currentWorkingDirectory: string,
   includeDirectoriesToReadGemini: readonly string[],
@@ -210,7 +70,6 @@ export async function loadServerHierarchicalMemory(
     debugMode,
     importFormat,
   );
-  // Pass CWD for relative path display in concatenated content
   const combinedInstructions = concatenateInstructions(
     contentsWithPaths,
     currentWorkingDirectory,
@@ -314,12 +173,10 @@ async function getGeminiMdFilePathsInternalForEachDir(
       // It's okay if it's not found.
     }
 
-    // Handle the case where we're in the home directory (dir is empty string or home path)
     const resolvedDir = dir ? path.resolve(dir) : resolvedHome;
     const isHomeDirectory = resolvedDir === resolvedHome;
 
     if (isHomeDirectory) {
-      // For home directory, only check for QWEN.md directly in the home directory
       const homeContextPath = path.join(resolvedHome, geminiMdFilename);
       try {
         await fs.access(homeContextPath, fsSync.constants.R_OK);
@@ -334,8 +191,6 @@ async function getGeminiMdFilePathsInternalForEachDir(
         // Not found, which is okay
       }
     } else if (dir && folderTrust) {
-      // FIX: Only perform the workspace search (upward and downward scans)
-      // if a valid currentWorkingDirectory is provided and it's not the home directory.
       const resolvedCwd = path.resolve(dir);
       if (debugMode)
         logger.debug(
@@ -394,7 +249,6 @@ async function getGeminiMdFilePathsInternalForEachDir(
     }
   }
 
-  // Add extension context file paths.
   for (const extensionPath of extensionContextFilePaths) {
     allPaths.add(extensionPath);
   }
@@ -408,4 +262,125 @@ async function getGeminiMdFilePathsInternalForEachDir(
       )}`,
     );
   return finalPaths;
+}
+
+async function findProjectRoot(startDir: string): Promise<string | null> {
+  let currentDir = path.resolve(startDir);
+  while (true) {
+    const gitPath = path.join(currentDir, '.git');
+    try {
+      const stats = await fs.lstat(gitPath);
+      if (stats.isDirectory()) {
+        return currentDir;
+      }
+    } catch (error: unknown) {
+      const isENOENT =
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        (error as { code: string }).code === 'ENOENT';
+
+      const isTestEnv =
+        process.env['NODE_ENV'] === 'test' || process.env['VITEST'];
+
+      if (!isENOENT && !isTestEnv) {
+        if (typeof error === 'object' && error !== null && 'code' in error) {
+          const fsError = error as { code: string; message: string };
+          logger.warn(
+            `Error checking for .git directory at ${gitPath}: ${fsError.message}`,
+          );
+        } else {
+          logger.warn(
+            `Non-standard error checking for .git directory at ${gitPath}: ${String(error)}`,
+          );
+        }
+      }
+    }
+    const parentDir = path.dirname(currentDir);
+    if (parentDir === currentDir) {
+      return null;
+    }
+    currentDir = parentDir;
+  }
+}
+
+async function readGeminiMdFiles(
+  filePaths: string[],
+  debugMode: boolean,
+  importFormat: 'flat' | 'tree' = 'tree',
+): Promise<GeminiFileContent[]> {
+  const CONCURRENT_LIMIT = 20;
+  const results: GeminiFileContent[] = [];
+
+  for (let i = 0; i < filePaths.length; i += CONCURRENT_LIMIT) {
+    const batch = filePaths.slice(i, i + CONCURRENT_LIMIT);
+    const batchPromises = batch.map(
+      async (filePath): Promise<GeminiFileContent> => {
+        try {
+          const content = await fs.readFile(filePath, 'utf-8');
+
+          const processedResult = await processImports(
+            content,
+            path.dirname(filePath),
+            debugMode,
+            undefined,
+            undefined,
+            importFormat,
+          );
+          if (debugMode)
+            logger.debug(
+              `Successfully read and processed imports: ${filePath} (Length: ${processedResult.content.length})`,
+            );
+
+          return { filePath, content: processedResult.content };
+        } catch (error: unknown) {
+          const isTestEnv =
+            process.env['NODE_ENV'] === 'test' || process.env['VITEST'];
+          if (!isTestEnv) {
+            const message =
+              error instanceof Error ? error.message : String(error);
+            logger.warn(
+              `Warning: Could not read ${getAllGeminiMdFilenames()} file at ${filePath}. Error: ${message}`,
+            );
+          }
+          if (debugMode) logger.debug(`Failed to read: ${filePath}`);
+          return { filePath, content: null }; // Still include it with null content
+        }
+      },
+    );
+
+    const batchResults = await Promise.allSettled(batchPromises);
+
+    for (const result of batchResults) {
+      if (result.status === 'fulfilled') {
+        results.push(result.value);
+      } else {
+        const error = result.reason;
+        const message = error instanceof Error ? error.message : String(error);
+        logger.error(`Unexpected error processing file: ${message}`);
+      }
+    }
+  }
+
+  return results;
+}
+
+function concatenateInstructions(
+  instructionContents: GeminiFileContent[],
+  currentWorkingDirectoryForDisplay: string,
+): string {
+  return instructionContents
+    .filter((item) => typeof item.content === 'string')
+    .map((item) => {
+      const trimmedContent = (item.content as string).trim();
+      if (trimmedContent.length === 0) {
+        return null;
+      }
+      const displayPath = path.isAbsolute(item.filePath)
+        ? path.relative(currentWorkingDirectoryForDisplay, item.filePath)
+        : item.filePath;
+      return `--- Context from: ${displayPath} ---\n${trimmedContent}\n--- End of Context from: ${displayPath} ---`;
+    })
+    .filter((block): block is string => block !== null)
+    .join('\n\n');
 }

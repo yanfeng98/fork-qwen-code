@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import type { GitIgnoreFilter } from '../utils/gitIgnoreParser.js';
 import type { QwenIgnoreFilter } from '../utils/qwenIgnoreParser.js';
 import { GitIgnoreParser } from '../utils/gitIgnoreParser.js';
@@ -33,6 +27,38 @@ export class FileDiscoveryService {
       this.gitIgnoreFilter = new GitIgnoreParser(this.projectRoot);
     }
     this.qwenIgnoreFilter = new QwenIgnoreParser(this.projectRoot);
+  }
+
+  shouldIgnoreFile(
+    filePath: string,
+    options: FilterFilesOptions = {},
+  ): boolean {
+    const {
+      respectGitIgnore = true,
+      respectQwenIgnore: respectQwenIgnore = true,
+    } = options;
+
+    if (respectGitIgnore && this.shouldGitIgnoreFile(filePath)) {
+      return true;
+    }
+    if (respectQwenIgnore && this.shouldQwenIgnoreFile(filePath)) {
+      return true;
+    }
+    return false;
+  }
+
+  shouldGitIgnoreFile(filePath: string): boolean {
+    if (this.gitIgnoreFilter) {
+      return this.gitIgnoreFilter.isIgnored(filePath);
+    }
+    return false;
+  }
+
+  shouldQwenIgnoreFile(filePath: string): boolean {
+    if (this.qwenIgnoreFilter) {
+      return this.qwenIgnoreFilter.isIgnored(filePath);
+    }
+    return false;
   }
 
   /**
@@ -90,47 +116,6 @@ export class FileDiscoveryService {
       gitIgnoredCount,
       qwenIgnoredCount,
     };
-  }
-
-  /**
-   * Checks if a single file should be git-ignored
-   */
-  shouldGitIgnoreFile(filePath: string): boolean {
-    if (this.gitIgnoreFilter) {
-      return this.gitIgnoreFilter.isIgnored(filePath);
-    }
-    return false;
-  }
-
-  /**
-   * Checks if a single file should be qwen-ignored
-   */
-  shouldQwenIgnoreFile(filePath: string): boolean {
-    if (this.qwenIgnoreFilter) {
-      return this.qwenIgnoreFilter.isIgnored(filePath);
-    }
-    return false;
-  }
-
-  /**
-   * Unified method to check if a file should be ignored based on filtering options
-   */
-  shouldIgnoreFile(
-    filePath: string,
-    options: FilterFilesOptions = {},
-  ): boolean {
-    const {
-      respectGitIgnore = true,
-      respectQwenIgnore: respectQwenIgnore = true,
-    } = options;
-
-    if (respectGitIgnore && this.shouldGitIgnoreFile(filePath)) {
-      return true;
-    }
-    if (respectQwenIgnore && this.shouldQwenIgnoreFile(filePath)) {
-      return true;
-    }
-    return false;
   }
 
   /**

@@ -47,30 +47,6 @@ export interface ProcessImportsResult {
   importTree: MemoryFile;
 }
 
-// Helper to find the project root (looks for .git directory)
-async function findProjectRoot(startDir: string): Promise<string> {
-  let currentDir = path.resolve(startDir);
-  while (true) {
-    const gitPath = path.join(currentDir, '.git');
-    try {
-      const stats = await fs.lstat(gitPath);
-      if (stats.isDirectory()) {
-        return currentDir;
-      }
-    } catch {
-      // .git not found, continue to parent
-    }
-    const parentDir = path.dirname(currentDir);
-    if (parentDir === currentDir) {
-      // Reached filesystem root
-      break;
-    }
-    currentDir = parentDir;
-  }
-  // Fallback to startDir if .git not found
-  return path.resolve(startDir);
-}
-
 // Add a type guard for error objects
 function hasMessage(err: unknown): err is { message: string } {
   return (
@@ -81,120 +57,6 @@ function hasMessage(err: unknown): err is { message: string } {
   );
 }
 
-// Helper to find all code block and inline code regions using marked
-/**
- * Finds all import statements in content without using regex
- * @returns Array of {start, _end, path} objects for each import found
- */
-function findImports(
-  content: string,
-): Array<{ start: number; _end: number; path: string }> {
-  const imports: Array<{ start: number; _end: number; path: string }> = [];
-  let i = 0;
-  const len = content.length;
-
-  while (i < len) {
-    // Find next @ symbol
-    i = content.indexOf('@', i);
-    if (i === -1) break;
-
-    // Check if it's a word boundary (not part of another word)
-    if (i > 0 && !isWhitespace(content[i - 1])) {
-      i++;
-      continue;
-    }
-
-    // Find the end of the import path (whitespace or newline)
-    let j = i + 1;
-    while (
-      j < len &&
-      !isWhitespace(content[j]) &&
-      content[j] !== '\n' &&
-      content[j] !== '\r'
-    ) {
-      j++;
-    }
-
-    // Extract the path (everything after @)
-    const importPath = content.slice(i + 1, j);
-
-    // Basic validation (starts with ./ or / or letter)
-    if (
-      importPath.length > 0 &&
-      (importPath[0] === '.' ||
-        importPath[0] === '/' ||
-        isLetter(importPath[0]))
-    ) {
-      imports.push({
-        start: i,
-        _end: j,
-        path: importPath,
-      });
-    }
-
-    i = j + 1;
-  }
-
-  return imports;
-}
-
-function isWhitespace(char: string): boolean {
-  return char === ' ' || char === '\t' || char === '\n' || char === '\r';
-}
-
-function isLetter(char: string): boolean {
-  const code = char.charCodeAt(0);
-  return (
-    (code >= 65 && code <= 90) || // A-Z
-    (code >= 97 && code <= 122)
-  ); // a-z
-}
-
-function findCodeRegions(content: string): Array<[number, number]> {
-  const regions: Array<[number, number]> = [];
-  const tokens = marked.lexer(content);
-  let offset = 0;
-
-  function walk(token: Token, baseOffset: number) {
-    if (token.type === 'code' || token.type === 'codespan') {
-      regions.push([baseOffset, baseOffset + token.raw.length]);
-    }
-
-    if ('tokens' in token && token.tokens) {
-      let childOffset = 0;
-      for (const child of token.tokens) {
-        const childIndexInParent = token.raw.indexOf(child.raw, childOffset);
-        if (childIndexInParent === -1) {
-          logger.error(
-            `Could not find child token in parent raw content. Aborting parsing for this branch. Child raw: "${child.raw}"`,
-          );
-          break;
-        }
-        walk(child, baseOffset + childIndexInParent);
-        childOffset = childIndexInParent + child.raw.length;
-      }
-    }
-  }
-
-  for (const token of tokens) {
-    walk(token, offset);
-    offset += token.raw.length;
-  }
-
-  return regions;
-}
-
-/**
- * Processes import statements in QWEN.md content
- * Supports @path/to/file syntax for importing content from other files
- * @param content - The content to process for imports
- * @param basePath - The directory path where the current file is located
- * @param debugMode - Whether to enable debug logging
- * @param importState - State tracking for circular import prevention
- * @param projectRoot - The project root directory for allowed directories
- * @param importFormat - The format of the import tree
- * @returns Processed content with imports resolved and import tree
- */
 export async function processImports(
   content: string,
   basePath: string,
@@ -322,7 +184,6 @@ export async function processImports(
     };
   }
 
-  // --- TREE FORMAT LOGIC (existing) ---
   const codeRegions = findCodeRegions(content);
   let result = '';
   let lastIndex = 0;
@@ -330,16 +191,13 @@ export async function processImports(
   const importsList = findImports(content);
 
   for (const { start, _end, path: importPath } of importsList) {
-    // Add content before this import
     result += content.substring(lastIndex, start);
     lastIndex = _end;
 
-    // Skip if inside a code region
     if (codeRegions.some(([s, e]) => start >= s && start < e)) {
       result += `@${importPath}`;
       continue;
     }
-    // Validate import path to prevent path traversal attacks
     if (!validateImportPath(importPath, basePath, [projectRoot || ''])) {
       result += `<!-- Import failed: ${importPath} - Path traversal attempt -->`;
       continue;
@@ -352,7 +210,6 @@ export async function processImports(
     try {
       await fs.access(fullPath);
       const fileContent = await fs.readFile(fullPath, 'utf-8');
-      // Mark this file as processed for this import chain
       const newImportState: ImportState = {
         ...importState,
         processedFiles: new Set(importState.processedFiles),
@@ -381,7 +238,6 @@ export async function processImports(
       result += `<!-- Import failed: ${importPath} - ${message} -->`;
     }
   }
-  // Add any remaining content after the last match
   result += content.substring(lastIndex);
 
   return {
@@ -393,12 +249,125 @@ export async function processImports(
   };
 }
 
+async function findProjectRoot(startDir: string): Promise<string> {
+  let currentDir = path.resolve(startDir);
+  while (true) {
+    const gitPath = path.join(currentDir, '.git');
+    try {
+      const stats = await fs.lstat(gitPath);
+      if (stats.isDirectory()) {
+        return currentDir;
+      }
+    } catch {
+      // .git not found, continue to parent
+    }
+    const parentDir = path.dirname(currentDir);
+    if (parentDir === currentDir) {
+      break;
+    }
+    currentDir = parentDir;
+  }
+  return path.resolve(startDir);
+}
+
+function findCodeRegions(content: string): Array<[number, number]> {
+  const regions: Array<[number, number]> = [];
+  const tokens = marked.lexer(content);
+  let offset = 0;
+
+  function walk(token: Token, baseOffset: number) {
+    if (token.type === 'code' || token.type === 'codespan') {
+      regions.push([baseOffset, baseOffset + token.raw.length]);
+    }
+
+    if ('tokens' in token && token.tokens) {
+      let childOffset = 0;
+      for (const child of token.tokens) {
+        const childIndexInParent = token.raw.indexOf(child.raw, childOffset);
+        if (childIndexInParent === -1) {
+          logger.error(
+            `Could not find child token in parent raw content. Aborting parsing for this branch. Child raw: "${child.raw}"`,
+          );
+          break;
+        }
+        walk(child, baseOffset + childIndexInParent);
+        childOffset = childIndexInParent + child.raw.length;
+      }
+    }
+  }
+
+  for (const token of tokens) {
+    walk(token, offset);
+    offset += token.raw.length;
+  }
+
+  return regions;
+}
+
+function findImports(
+  content: string,
+): Array<{ start: number; _end: number; path: string }> {
+  const imports: Array<{ start: number; _end: number; path: string }> = [];
+  let i = 0;
+  const len = content.length;
+
+  while (i < len) {
+    i = content.indexOf('@', i);
+    if (i === -1) break;
+
+    if (i > 0 && !isWhitespace(content[i - 1])) {
+      i++;
+      continue;
+    }
+
+    let j = i + 1;
+    while (
+      j < len &&
+      !isWhitespace(content[j]) &&
+      content[j] !== '\n' &&
+      content[j] !== '\r'
+    ) {
+      j++;
+    }
+
+    const importPath = content.slice(i + 1, j);
+
+    if (
+      importPath.length > 0 &&
+      (importPath[0] === '.' ||
+        importPath[0] === '/' ||
+        isLetter(importPath[0]))
+    ) {
+      imports.push({
+        start: i,
+        _end: j,
+        path: importPath,
+      });
+    }
+
+    i = j + 1;
+  }
+
+  return imports;
+}
+
+function isWhitespace(char: string): boolean {
+  return char === ' ' || char === '\t' || char === '\n' || char === '\r';
+}
+
+function isLetter(char: string): boolean {
+  const code = char.charCodeAt(0);
+  return (
+    (code >= 65 && code <= 90) || // A-Z
+    (code >= 97 && code <= 122)
+  ); // a-z
+}
+
 export function validateImportPath(
   importPath: string,
   basePath: string,
   allowedDirectories: string[],
 ): boolean {
-  // Reject URLs
   if (/^(file|https?):\/\//.test(importPath)) {
     return false;
   }

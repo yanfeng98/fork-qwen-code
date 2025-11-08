@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import type { FileDiscoveryService } from '../services/fileDiscoveryService.js';
@@ -24,13 +18,6 @@ interface BfsFileSearchOptions {
   fileFilteringOptions?: FileFilteringOptions;
 }
 
-/**
- * Performs a breadth-first search for a specific file within a directory structure.
- *
- * @param rootDir The directory to start the search from.
- * @param options Configuration for the search.
- * @returns A promise that resolves to an array of paths where the file was found.
- */
 export async function bfsFileSearch(
   rootDir: string,
   options: BfsFileSearchOptions,
@@ -46,16 +33,12 @@ export async function bfsFileSearch(
   const queue: string[] = [rootDir];
   const visited = new Set<string>();
   let scannedDirCount = 0;
-  let queueHead = 0; // Pointer-based queue head to avoid expensive splice operations
+  let queueHead = 0;
 
-  // Convert ignoreDirs array to Set for O(1) lookup performance
   const ignoreDirsSet = new Set(ignoreDirs);
-
-  // Process directories in parallel batches for maximum performance
-  const PARALLEL_BATCH_SIZE = 15; // Parallel processing batch size for optimal performance
+  const PARALLEL_BATCH_SIZE = 15;
 
   while (queueHead < queue.length && scannedDirCount < maxDirs) {
-    // Fill batch with unvisited directories up to the desired size
     const batchSize = Math.min(PARALLEL_BATCH_SIZE, maxDirs - scannedDirCount);
     const currentBatch = [];
     while (currentBatch.length < batchSize && queueHead < queue.length) {
@@ -76,13 +59,11 @@ export async function bfsFileSearch(
       );
     }
 
-    // Read directories in parallel instead of one by one
     const readPromises = currentBatch.map(async (currentDir) => {
       try {
         const entries = await fs.readdir(currentDir, { withFileTypes: true });
         return { currentDir, entries };
       } catch (error) {
-        // Warn user that a directory could not be read, as this affects search results.
         const message = (error as Error)?.message ?? 'Unknown error';
         console.warn(
           `[WARN] Skipping unreadable directory: ${currentDir} (${message})`,

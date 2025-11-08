@@ -58,7 +58,6 @@ export class QwenIgnoreParser implements QwenIgnoreFilter {
       return false;
     }
 
-    // Even in windows, Ignore expects forward slashes.
     const normalizedPath = relativePath.replace(/\\/g, '/');
 
     if (normalizedPath.startsWith('/') || normalizedPath === '') {
