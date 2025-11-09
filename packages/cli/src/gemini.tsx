@@ -280,11 +280,8 @@ export async function main() {
     const wasRaw = process.stdin.isRaw;
     let kittyProtocolDetectionComplete: Promise<boolean> | undefined;
     if (config.isInteractive() && !wasRaw && process.stdin.isTTY) {
-      // Set this as early as possible to avoid spurious characters from
-      // input showing up in the output.
       process.stdin.setRawMode(true);
 
-      // This cleanup isn't strictly needed but may help in certain situations.
       process.on('SIGTERM', () => {
         process.stdin.setRawMode(wasRaw);
       });
@@ -292,7 +289,6 @@ export async function main() {
         process.stdin.setRawMode(wasRaw);
       });
 
-      // Detect and enable Kitty keyboard protocol once at startup.
       kittyProtocolDetectionComplete = detectAndEnableKittyProtocol();
     }
 

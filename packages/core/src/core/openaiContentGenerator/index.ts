@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Qwen
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import type {
   ContentGenerator,
   ContentGeneratorConfig,
@@ -30,9 +24,6 @@ export {
 
 export { OpenAIContentConverter } from './converter.js';
 
-/**
- * Create an OpenAI-compatible content generator with the appropriate provider
- */
 export function createOpenAIContentGenerator(
   contentGeneratorConfig: ContentGeneratorConfig,
   cliConfig: Config,
@@ -45,9 +36,6 @@ export function createOpenAIContentGenerator(
   );
 }
 
-/**
- * Determine the appropriate provider based on configuration
- */
 export function determineProvider(
   contentGeneratorConfig: ContentGeneratorConfig,
   cliConfig: Config,
@@ -55,7 +43,6 @@ export function determineProvider(
   const config =
     contentGeneratorConfig || cliConfig.getContentGeneratorConfig();
 
-  // Check for DashScope provider
   if (DashScopeOpenAICompatibleProvider.isDashScopeProvider(config)) {
     return new DashScopeOpenAICompatibleProvider(
       contentGeneratorConfig,
@@ -70,7 +57,6 @@ export function determineProvider(
     );
   }
 
-  // Check for OpenRouter provider
   if (OpenRouterOpenAICompatibleProvider.isOpenRouterProvider(config)) {
     return new OpenRouterOpenAICompatibleProvider(
       contentGeneratorConfig,
@@ -78,7 +64,6 @@ export function determineProvider(
     );
   }
 
-  // Default provider for standard OpenAI-compatible APIs
   return new DefaultOpenAICompatibleProvider(contentGeneratorConfig, cliConfig);
 }
 

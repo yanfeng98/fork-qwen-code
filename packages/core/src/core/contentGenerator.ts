@@ -52,11 +52,8 @@ export type ContentGeneratorConfig = {
   vertexai?: boolean;
   authType?: AuthType | undefined;
   enableOpenAILogging?: boolean;
-  // Timeout configuration in milliseconds
   timeout?: number;
-  // Maximum retries for failed requests
   maxRetries?: number;
-  // Disable cache control for DashScope providers
   disableCacheControl?: boolean;
   samplingParams?: {
     top_p?: number;
@@ -88,7 +85,6 @@ export function createContentGeneratorConfig(
     proxy: config?.getProxy(),
   };
 
-  // If we are using Google auth or we are in Cloud Shell, there is nothing else to validate for now
   if (
     authType === AuthType.LOGIN_WITH_GOOGLE ||
     authType === AuthType.CLOUD_SHELL
@@ -114,8 +110,6 @@ export function createContentGeneratorConfig(
   }
 
   if (authType === AuthType.QWEN_OAUTH) {
-    // For Qwen OAuth, we'll handle the API key dynamically in createContentGenerator
-    // Set a special marker to indicate this is Qwen OAuth
     newContentGeneratorConfig.apiKey = 'QWEN_OAUTH_DYNAMIC_TOKEN';
     newContentGeneratorConfig.model = DEFAULT_QWEN_MODEL;
 
@@ -180,12 +174,10 @@ export async function createContentGenerator(
       throw new Error('OpenAI API key is required');
     }
 
-    // Import OpenAIContentGenerator dynamically to avoid circular dependencies
     const { createOpenAIContentGenerator } = await import(
       './openaiContentGenerator/index.js'
     );
 
-    // Always use OpenAIContentGenerator, logging is controlled by enableOpenAILogging flag
     return createOpenAIContentGenerator(config, gcConfig);
   }
 

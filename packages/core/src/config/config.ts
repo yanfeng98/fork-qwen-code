@@ -489,6 +489,97 @@ export class Config {
     this.geminiClient = new GeminiClient(this);
   }
 
+  getListExtensions(): boolean {
+    return this.listExtensions;
+  }
+
+  isInteractive(): boolean {
+    return this.interactive;
+  }
+
+  async refreshAuth(authMethod: AuthType) {
+    if (
+      this.contentGeneratorConfig?.authType === AuthType.USE_GEMINI &&
+      authMethod === AuthType.LOGIN_WITH_GOOGLE
+    ) {
+      this.geminiClient.stripThoughtsFromHistory();
+    }
+
+    const newContentGeneratorConfig = createContentGeneratorConfig(
+      this,
+      authMethod,
+      this._generationConfig,
+    );
+    this.contentGenerator = await createContentGenerator(
+      newContentGeneratorConfig,
+      this,
+      this.getSessionId(),
+    );
+    this.contentGeneratorConfig = newContentGeneratorConfig;
+    this.baseLlmClient = new BaseLlmClient(this.contentGenerator, this);
+    this.inFallbackMode = false;
+
+    logCliConfiguration(this, new StartSessionEvent(this, this.toolRegistry));
+  }
+
+  getProxy(): string | undefined {
+    return this.proxy;
+  }
+
+  getSessionId(): string {
+    return this.sessionId;
+  }
+
+  getMcpServers(): Record<string, MCPServerConfig> | undefined {
+    return this.mcpServers;
+  }
+
+  getModel(): string {
+    return this.contentGeneratorConfig.model;
+  }
+
+  getEmbeddingModel(): string {
+    return this.embeddingModel;
+  }
+
+  getSandbox(): SandboxConfig | undefined {
+    return this.sandbox;
+  }
+
+  getCoreTools(): string[] | undefined {
+    return this.coreTools;
+  }
+
+  getApprovalMode(): ApprovalMode {
+    return this.approvalMode;
+  }
+
+  getDebugMode(): boolean {
+    return this.debugMode;
+  }
+
+  getTelemetryEnabled(): boolean {
+    return this.telemetrySettings.enabled ?? false;
+  }
+
+  getTelemetryLogPromptsEnabled(): boolean {
+    return this.telemetrySettings.logPrompts ?? true;
+  }
+
+  getFileFilteringRespectGitIgnore(): boolean {
+    return this.fileFiltering.respectGitIgnore;
+  }
+
+  getOutputFormat(): OutputFormat {
+    return this.outputSettings?.format
+      ? this.outputSettings.format
+      : OutputFormat.TEXT;
+  }
+
+  getUsageStatisticsEnabled(): boolean {
+    return this.usageStatisticsEnabled;
+  }
+
   /**
    * Must only be called once, throws if called again.
    */
@@ -514,38 +605,8 @@ export class Config {
     return this.contentGenerator;
   }
 
-  async refreshAuth(authMethod: AuthType) {
-    // Vertex and Genai have incompatible encryption and sending history with
-    // throughtSignature from Genai to Vertex will fail, we need to strip them
-    if (
-      this.contentGeneratorConfig?.authType === AuthType.USE_GEMINI &&
-      authMethod === AuthType.LOGIN_WITH_GOOGLE
-    ) {
-      // Restore the conversation history to the new client
-      this.geminiClient.stripThoughtsFromHistory();
-    }
-
-    const newContentGeneratorConfig = createContentGeneratorConfig(
-      this,
-      authMethod,
-      this._generationConfig,
-    );
-    this.contentGenerator = await createContentGenerator(
-      newContentGeneratorConfig,
-      this,
-      this.getSessionId(),
-    );
-    // Only assign to instance properties after successful initialization
-    this.contentGeneratorConfig = newContentGeneratorConfig;
-
-    // Initialize BaseLlmClient now that the ContentGenerator is available
-    this.baseLlmClient = new BaseLlmClient(this.contentGenerator, this);
-
-    // Reset the session flag since we're explicitly changing auth and using default model
-    this.inFallbackMode = false;
-
-    // Logging the cli configuration here as the auth related configuration params would have been loaded by this point
-    logCliConfiguration(this, new StartSessionEvent(this, this.toolRegistry));
+  getContentGeneratorConfig(): ContentGeneratorConfig {
+    return this.contentGeneratorConfig;
   }
 
   /**
@@ -568,20 +629,8 @@ export class Config {
     return this.baseLlmClient;
   }
 
-  getSessionId(): string {
-    return this.sessionId;
-  }
-
   shouldLoadMemoryFromIncludeDirectories(): boolean {
     return this.loadMemoryFromIncludeDirectories;
-  }
-
-  getContentGeneratorConfig(): ContentGeneratorConfig {
-    return this.contentGeneratorConfig;
-  }
-
-  getModel(): string {
-    return this.contentGeneratorConfig.model;
   }
 
   async setModel(
@@ -623,14 +672,6 @@ export class Config {
     return this.quotaErrorOccurred;
   }
 
-  getEmbeddingModel(): string {
-    return this.embeddingModel;
-  }
-
-  getSandbox(): SandboxConfig | undefined {
-    return this.sandbox;
-  }
-
   isRestrictiveSandbox(): boolean {
     const sandboxConfig = this.getSandbox();
     const seatbeltProfile = process.env['SEATBELT_PROFILE'];
@@ -662,20 +703,12 @@ export class Config {
     return this.promptRegistry;
   }
 
-  getDebugMode(): boolean {
-    return this.debugMode;
-  }
-
   getQuestion(): string | undefined {
     return this.question;
   }
 
   getFullContext(): boolean {
     return this.fullContext;
-  }
-
-  getCoreTools(): string[] | undefined {
-    return this.coreTools;
   }
 
   getAllowedTools(): string[] | undefined {
@@ -698,10 +731,6 @@ export class Config {
     return this.mcpServerCommand;
   }
 
-  getMcpServers(): Record<string, MCPServerConfig> | undefined {
-    return this.mcpServers;
-  }
-
   getUserMemory(): string {
     return this.userMemory;
   }
@@ -716,10 +745,6 @@ export class Config {
 
   setGeminiMdFileCount(count: number): void {
     this.geminiMdFileCount = count;
-  }
-
-  getApprovalMode(): ApprovalMode {
-    return this.approvalMode;
   }
 
   setApprovalMode(mode: ApprovalMode): void {
@@ -741,14 +766,6 @@ export class Config {
 
   getAccessibility(): AccessibilitySettings {
     return this.accessibility;
-  }
-
-  getTelemetryEnabled(): boolean {
-    return this.telemetrySettings.enabled ?? false;
-  }
-
-  getTelemetryLogPromptsEnabled(): boolean {
-    return this.telemetrySettings.logPrompts ?? true;
   }
 
   getTelemetryOtlpEndpoint(): string {
@@ -787,9 +804,6 @@ export class Config {
     return this.fileFiltering.disableFuzzySearch;
   }
 
-  getFileFilteringRespectGitIgnore(): boolean {
-    return this.fileFiltering.respectGitIgnore;
-  }
   getFileFilteringRespectQwenIgnore(): boolean {
     return this.fileFiltering.respectQwenIgnore;
   }
@@ -820,10 +834,6 @@ export class Config {
     return this.checkpointing;
   }
 
-  getProxy(): string | undefined {
-    return this.proxy;
-  }
-
   getWorkingDir(): string {
     return this.cwd;
   }
@@ -839,20 +849,12 @@ export class Config {
     return this.fileDiscoveryService;
   }
 
-  getUsageStatisticsEnabled(): boolean {
-    return this.usageStatisticsEnabled;
-  }
-
   getExtensionContextFilePaths(): string[] {
     return this.extensionContextFilePaths;
   }
 
   getExperimentalZedIntegration(): boolean {
     return this.experimentalZedIntegration;
-  }
-
-  getListExtensions(): boolean {
-    return this.listExtensions;
   }
 
   getExtensionManagement(): boolean {
@@ -951,10 +953,6 @@ export class Config {
     return this.chatCompression;
   }
 
-  isInteractive(): boolean {
-    return this.interactive;
-  }
-
   getUseRipgrep(): boolean {
     return this.useRipgrep;
   }
@@ -1017,12 +1015,6 @@ export class Config {
 
   getUseSmartEdit(): boolean {
     return this.useSmartEdit;
-  }
-
-  getOutputFormat(): OutputFormat {
-    return this.outputSettings?.format
-      ? this.outputSettings.format
-      : OutputFormat.TEXT;
   }
 
   async getGitService(): Promise<GitService> {

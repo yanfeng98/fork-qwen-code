@@ -22,11 +22,10 @@ export interface RumView {
 export interface RumEvent {
   timestamp?: number;
   event_type?: 'view' | 'action' | 'exception' | 'resource';
-  type: string; // Event type
-  name: string; // Event name
-  snapshots?: string; // JSON string of event snapshots
+  type: string;
+  name: string;
+  snapshots?: string;
   properties?: Record<string, unknown>;
-  // [key: string]: unknown;
 }
 
 export interface RumViewEvent extends RumEvent {

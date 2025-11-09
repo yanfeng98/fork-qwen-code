@@ -24,7 +24,6 @@ export class OpenAIContentGenerator implements ContentGenerator {
     cliConfig: Config,
     provider: OpenAICompatibleProvider,
   ) {
-    // Create pipeline configuration
     const pipelineConfig: PipelineConfig = {
       cliConfig,
       provider,

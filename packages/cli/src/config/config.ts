@@ -495,7 +495,6 @@ export async function loadCliConfig(
   let mcpServers = mergeMcpServers(settings, activeExtensions);
   const question = argv.promptInteractive || argv.prompt || '';
 
-  // Determine approval mode with backward compatibility
   let approvalMode: ApprovalMode;
   if (argv.approvalMode) {
     approvalMode = parseApprovalModeValue(argv.approvalMode);
@@ -507,7 +506,6 @@ export async function loadCliConfig(
     approvalMode = ApprovalMode.DEFAULT;
   }
 
-  // Force approval mode to default if the folder is not trusted.
   if (
     !trustedFolder &&
     approvalMode !== ApprovalMode.DEFAULT &&
@@ -535,29 +533,24 @@ export async function loadCliConfig(
     throw err;
   }
 
-  // Interactive mode: explicit -i flag or (TTY + no args + no -p flag)
   const hasQuery = !!argv.query;
   const interactive =
     !!argv.promptInteractive ||
     (process.stdin.isTTY && !hasQuery && !argv.prompt);
-  // In non-interactive mode, exclude tools that require a prompt.
+
   const extraExcludes: string[] = [];
   if (!interactive && !argv.experimentalAcp) {
     switch (approvalMode) {
       case ApprovalMode.PLAN:
       case ApprovalMode.DEFAULT:
-        // In default non-interactive mode, all tools that require approval are excluded.
         extraExcludes.push(ShellTool.Name, EditTool.Name, WriteFileTool.Name);
         break;
       case ApprovalMode.AUTO_EDIT:
-        // In auto-edit non-interactive mode, only tools that still require a prompt are excluded.
         extraExcludes.push(ShellTool.Name);
         break;
       case ApprovalMode.YOLO:
-        // No extra excludes for YOLO mode.
         break;
       default:
-        // This should never happen due to validation earlier, but satisfies the linter
         break;
     }
   }
@@ -737,37 +730,6 @@ export async function loadHierarchicalGeminiMemory(
   );
 }
 
-function allowedMcpServers(
-  mcpServers: { [x: string]: MCPServerConfig },
-  allowMCPServers: string[],
-  blockedMcpServers: Array<{ name: string; extensionName: string }>,
-) {
-  const allowedNames = new Set(allowMCPServers.filter(Boolean));
-  if (allowedNames.size > 0) {
-    mcpServers = Object.fromEntries(
-      Object.entries(mcpServers).filter(([key, server]) => {
-        const isAllowed = allowedNames.has(key);
-        if (!isAllowed) {
-          blockedMcpServers.push({
-            name: key,
-            extensionName: server.extensionName || '',
-          });
-        }
-        return isAllowed;
-      }),
-    );
-  } else {
-    blockedMcpServers.push(
-      ...Object.entries(mcpServers).map(([key, server]) => ({
-        name: key,
-        extensionName: server.extensionName || '',
-      })),
-    );
-    mcpServers = {};
-  }
-  return mcpServers;
-}
-
 function mergeMcpServers(settings: Settings, extensions: Extension[]) {
   const mcpServers = { ...(settings.mcpServers || {}) };
   for (const extension of extensions) {
@@ -804,4 +766,35 @@ function mergeExcludeTools(
     }
   }
   return [...allExcludeTools];
+}
+
+function allowedMcpServers(
+  mcpServers: { [x: string]: MCPServerConfig },
+  allowMCPServers: string[],
+  blockedMcpServers: Array<{ name: string; extensionName: string }>,
+) {
+  const allowedNames = new Set(allowMCPServers.filter(Boolean));
+  if (allowedNames.size > 0) {
+    mcpServers = Object.fromEntries(
+      Object.entries(mcpServers).filter(([key, server]) => {
+        const isAllowed = allowedNames.has(key);
+        if (!isAllowed) {
+          blockedMcpServers.push({
+            name: key,
+            extensionName: server.extensionName || '',
+          });
+        }
+        return isAllowed;
+      }),
+    );
+  } else {
+    blockedMcpServers.push(
+      ...Object.entries(mcpServers).map(([key, server]) => ({
+        name: key,
+        extensionName: server.extensionName || '',
+      })),
+    );
+    mcpServers = {};
+  }
+  return mcpServers;
 }

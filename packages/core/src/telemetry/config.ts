@@ -1,38 +1,6 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import type { TelemetrySettings } from '../config/config.js';
 import { FatalConfigError } from '../utils/errors.js';
 import { TelemetryTarget } from './index.js';
-
-/**
- * Parse a boolean environment flag. Accepts 'true'/'1' as true.
- */
-export function parseBooleanEnvFlag(
-  value: string | undefined,
-): boolean | undefined {
-  if (value === undefined) return undefined;
-  return value === 'true' || value === '1';
-}
-
-/**
- * Normalize a telemetry target value into TelemetryTarget or undefined.
- */
-export function parseTelemetryTargetValue(
-  value: string | TelemetryTarget | undefined,
-): TelemetryTarget | undefined {
-  if (value === undefined) return undefined;
-  if (value === TelemetryTarget.LOCAL || value === 'local') {
-    return TelemetryTarget.LOCAL;
-  }
-  if (value === TelemetryTarget.GCP || value === 'gcp') {
-    return TelemetryTarget.GCP;
-  }
-  return undefined;
-}
 
 export interface TelemetryArgOverrides {
   telemetry?: boolean;
@@ -43,9 +11,6 @@ export interface TelemetryArgOverrides {
   telemetryOutfile?: string;
 }
 
-/**
- * Build TelemetrySettings by resolving from argv (highest), env, then settings.
- */
 export async function resolveTelemetrySettings(options: {
   argv?: TelemetryArgOverrides;
   env?: Record<string, string | undefined>;
@@ -117,4 +82,24 @@ export async function resolveTelemetrySettings(options: {
     outfile,
     useCollector,
   };
+}
+
+export function parseBooleanEnvFlag(
+  value: string | undefined,
+): boolean | undefined {
+  if (value === undefined) return undefined;
+  return value === 'true' || value === '1';
+}
+
+export function parseTelemetryTargetValue(
+  value: string | TelemetryTarget | undefined,
+): TelemetryTarget | undefined {
+  if (value === undefined) return undefined;
+  if (value === TelemetryTarget.LOCAL || value === 'local') {
+    return TelemetryTarget.LOCAL;
+  }
+  if (value === TelemetryTarget.GCP || value === 'gcp') {
+    return TelemetryTarget.GCP;
+  }
+  return undefined;
 }

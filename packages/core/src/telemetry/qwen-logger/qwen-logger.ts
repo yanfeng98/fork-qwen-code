@@ -63,12 +63,6 @@ const RUN_APP_ID = 'gb4w8c3ygj@851d5d500f08f92';
  * Interval in which buffered events are sent to RUM.
  */
 const FLUSH_INTERVAL_MS = 1000 * 60;
-
-/**
- * Maximum amount of events to keep in memory. Events added after this amount
- * are dropped until the next flush to RUM, which happens periodically as
- * defined by {@link FLUSH_INTERVAL_MS}.
- */
 const MAX_EVENTS = 1000;
 
 /**
@@ -100,11 +94,6 @@ export class QwenLogger {
 
   private userId: string;
   private sessionId: string;
-
-  /**
-   * The value is true when there is a pending flush happening. This prevents
-   * concurrent flush operations.
-   */
   private isFlushInProgress: boolean = false;
 
   /**
@@ -125,12 +114,6 @@ export class QwenLogger {
         : '';
   }
 
-  private generateUserId(): string {
-    // Use InstallationManager to get installationId for userId
-    const installationId = this.installationManager.getInstallationId();
-    return `user-${installationId ?? 'unknown'}`;
-  }
-
   static getInstance(config?: Config): QwenLogger | undefined {
     if (config === undefined || !config?.getUsageStatisticsEnabled())
       return undefined;
@@ -145,27 +128,36 @@ export class QwenLogger {
     return QwenLogger.instance;
   }
 
-  enqueueLogEvent(event: RumEvent): void {
-    try {
-      // Manually handle overflow for FixedDeque, which throws when full.
-      const wasAtCapacity = this.events.size >= MAX_EVENTS;
+  private generateUserId(): string {
+    const installationId = this.installationManager.getInstallationId();
+    return `user-${installationId ?? 'unknown'}`;
+  }
 
-      if (wasAtCapacity) {
-        this.events.shift(); // Evict oldest element to make space.
-      }
+  shutdown() {
+    if (this.isShutdown) return;
 
-      this.events.push(event);
+    this.isShutdown = true;
+    const event = new EndSessionEvent(this.config);
+    this.logEndSessionEvent(event);
+  }
 
-      if (wasAtCapacity && this.config?.getDebugMode()) {
-        console.debug(
-          `QwenLogger: Dropped old event to prevent memory leak (queue size: ${this.events.size})`,
-        );
-      }
-    } catch (error) {
+  logEndSessionEvent(_event: EndSessionEvent): void {
+    const applicationEvent = this.createViewEvent('session', 'session_end', {});
+
+    this.enqueueLogEvent(applicationEvent);
+    this.flushToRum().catch((error: unknown) => {
       if (this.config?.getDebugMode()) {
-        console.error('QwenLogger: Failed to enqueue log event.', error);
+        console.debug('Error flushing to RUM:', error);
       }
-    }
+    });
+  }
+
+  createViewEvent(
+    type: string,
+    name: string,
+    properties: Partial<RumViewEvent>,
+  ): RumEvent {
+    return this.createRumEvent('view', type, name, properties);
   }
 
   createRumEvent(
@@ -183,79 +175,50 @@ export class QwenLogger {
     };
   }
 
-  createViewEvent(
-    type: string,
-    name: string,
-    properties: Partial<RumViewEvent>,
-  ): RumEvent {
-    return this.createRumEvent('view', type, name, properties);
-  }
+  enqueueLogEvent(event: RumEvent): void {
+    try {
+      const wasAtCapacity = this.events.size >= MAX_EVENTS;
 
-  createActionEvent(
-    type: string,
-    name: string,
-    properties: Partial<RumActionEvent>,
-  ): RumEvent {
-    return this.createRumEvent('action', type, name, properties);
-  }
+      if (wasAtCapacity) {
+        this.events.shift();
+      }
 
-  createResourceEvent(
-    type: string,
-    name: string,
-    properties: Partial<RumResourceEvent>,
-  ): RumEvent {
-    return this.createRumEvent('resource', type, name, properties);
-  }
+      this.events.push(event);
 
-  createExceptionEvent(
-    type: string,
-    name: string,
-    properties: Partial<RumExceptionEvent>,
-  ): RumEvent {
-    return this.createRumEvent('exception', type, name, properties);
-  }
-
-  async createRumPayload(): Promise<RumPayload> {
-    const authType = this.config?.getAuthType();
-    const version = this.config?.getCliVersion() || 'unknown';
-
-    return {
-      app: {
-        id: RUN_APP_ID,
-        env: process.env['DEBUG'] ? 'dev' : 'prod',
-        version: version || 'unknown',
-        type: 'cli',
-      },
-      user: {
-        id: this.userId,
-      },
-      session: {
-        id: this.sessionId,
-      },
-      view: {
-        id: this.sessionId,
-        name: 'qwen-code-cli',
-      },
-
-      events: this.events.toArray() as RumEvent[],
-      properties: {
-        auth_type: authType,
-        model: this.config?.getModel(),
-        base_url:
-          authType === AuthType.USE_OPENAI
-            ? this.config?.getContentGeneratorConfig().baseUrl || ''
-            : '',
-      },
-      _v: `qwen-code@${version}`,
-    };
-  }
-
-  flushIfNeeded(): void {
-    if (Date.now() - this.lastFlushTime < FLUSH_INTERVAL_MS) {
-      return;
+      if (wasAtCapacity && this.config?.getDebugMode()) {
+        console.debug(
+          `QwenLogger: Dropped old event to prevent memory leak (queue size: ${this.events.size})`,
+        );
+      }
+    } catch (error) {
+      if (this.config?.getDebugMode()) {
+        console.error('QwenLogger: Failed to enqueue log event.', error);
+      }
     }
+  }
 
-    this.flushToRum().catch((error) => {
+  logStartSessionEvent(event: StartSessionEvent): void {
+    const applicationEvent = this.createViewEvent('session', 'session_start', {
+      properties: {
+        model: event.model,
+      },
+      snapshots: JSON.stringify({
+        embedding_model: event.embedding_model,
+        sandbox_enabled: event.sandbox_enabled,
+        core_tools_enabled: event.core_tools_enabled,
+        approval_mode: event.approval_mode,
+        api_key_enabled: event.api_key_enabled,
+        vertex_ai_enabled: event.vertex_ai_enabled,
+        debug_enabled: event.debug_enabled,
+        mcp_servers: event.mcp_servers,
+        telemetry_enabled: event.telemetry_enabled,
+        telemetry_log_user_prompts_enabled:
+          event.telemetry_log_user_prompts_enabled,
+      }),
+    });
+
+    this.enqueueLogEvent(applicationEvent);
+    this.flushToRum().catch((error: unknown) => {
       if (this.config?.getDebugMode()) {
         console.debug('Error flushing to RUM:', error);
       }
@@ -286,7 +249,6 @@ export class QwenLogger {
     this.events.clear();
 
     const rumPayload = await this.createRumPayload();
-    // Override events with the ones we're sending
     rumPayload.events = eventsToSend;
     const flushFn = () =>
       new Promise<Buffer>((resolve, reject) => {
@@ -367,42 +329,71 @@ export class QwenLogger {
     }
   }
 
-  // session events
-  logStartSessionEvent(event: StartSessionEvent): void {
-    const applicationEvent = this.createViewEvent('session', 'session_start', {
-      properties: {
-        model: event.model,
-      },
-      snapshots: JSON.stringify({
-        embedding_model: event.embedding_model,
-        sandbox_enabled: event.sandbox_enabled,
-        core_tools_enabled: event.core_tools_enabled,
-        approval_mode: event.approval_mode,
-        api_key_enabled: event.api_key_enabled,
-        vertex_ai_enabled: event.vertex_ai_enabled,
-        debug_enabled: event.debug_enabled,
-        mcp_servers: event.mcp_servers,
-        telemetry_enabled: event.telemetry_enabled,
-        telemetry_log_user_prompts_enabled:
-          event.telemetry_log_user_prompts_enabled,
-      }),
-    });
+  async createRumPayload(): Promise<RumPayload> {
+    const authType = this.config?.getAuthType();
+    const version = this.config?.getCliVersion() || 'unknown';
 
-    // Flush start event immediately
-    this.enqueueLogEvent(applicationEvent);
-    this.flushToRum().catch((error: unknown) => {
-      if (this.config?.getDebugMode()) {
-        console.debug('Error flushing to RUM:', error);
-      }
-    });
+    return {
+      app: {
+        id: RUN_APP_ID,
+        env: process.env['DEBUG'] ? 'dev' : 'prod',
+        version: version || 'unknown',
+        type: 'cli',
+      },
+      user: {
+        id: this.userId,
+      },
+      session: {
+        id: this.sessionId,
+      },
+      view: {
+        id: this.sessionId,
+        name: 'qwen-code-cli',
+      },
+
+      events: this.events.toArray() as RumEvent[],
+      properties: {
+        auth_type: authType,
+        model: this.config?.getModel(),
+        base_url:
+          authType === AuthType.USE_OPENAI
+            ? this.config?.getContentGeneratorConfig().baseUrl || ''
+            : '',
+      },
+      _v: `qwen-code@${version}`,
+    };
   }
 
-  logEndSessionEvent(_event: EndSessionEvent): void {
-    const applicationEvent = this.createViewEvent('session', 'session_end', {});
+  createActionEvent(
+    type: string,
+    name: string,
+    properties: Partial<RumActionEvent>,
+  ): RumEvent {
+    return this.createRumEvent('action', type, name, properties);
+  }
 
-    // Flush immediately on session end.
-    this.enqueueLogEvent(applicationEvent);
-    this.flushToRum().catch((error: unknown) => {
+  createResourceEvent(
+    type: string,
+    name: string,
+    properties: Partial<RumResourceEvent>,
+  ): RumEvent {
+    return this.createRumEvent('resource', type, name, properties);
+  }
+
+  createExceptionEvent(
+    type: string,
+    name: string,
+    properties: Partial<RumExceptionEvent>,
+  ): RumEvent {
+    return this.createRumEvent('exception', type, name, properties);
+  }
+
+  flushIfNeeded(): void {
+    if (Date.now() - this.lastFlushTime < FLUSH_INTERVAL_MS) {
+      return;
+    }
+
+    this.flushToRum().catch((error) => {
       if (this.config?.getDebugMode()) {
         console.debug('Error flushing to RUM:', error);
       }
@@ -832,14 +823,6 @@ export class QwenLogger {
     } else {
       throw new Error('Unsupported proxy type');
     }
-  }
-
-  shutdown() {
-    if (this.isShutdown) return;
-
-    this.isShutdown = true;
-    const event = new EndSessionEvent(this.config);
-    this.logEndSessionEvent(event);
   }
 
   private requeueFailedEvents(eventsToSend: RumEvent[]): void {

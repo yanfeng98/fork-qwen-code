@@ -60,9 +60,6 @@ export interface GenerateJsonOptions {
   maxAttempts?: number;
 }
 
-/**
- * A client dedicated to stateless, utility-focused LLM calls.
- */
 export class BaseLlmClient {
   // Default configuration for utility tasks
   private readonly defaultUtilityConfig: GenerateContentConfig = {

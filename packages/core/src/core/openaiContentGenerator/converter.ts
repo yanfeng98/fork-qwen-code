@@ -47,9 +47,6 @@ interface ParsedParts {
   }>;
 }
 
-/**
- * Converter class for transforming data between Gemini and OpenAI formats
- */
 export class OpenAIContentConverter {
   private model: string;
   private streamingToolCallParser: StreamingToolCallParser =

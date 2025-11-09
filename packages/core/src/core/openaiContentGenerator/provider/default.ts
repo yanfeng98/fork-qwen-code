@@ -4,9 +4,6 @@ import type { ContentGeneratorConfig } from '../../contentGenerator.js';
 import { DEFAULT_TIMEOUT, DEFAULT_MAX_RETRIES } from '../constants.js';
 import type { OpenAICompatibleProvider } from './types.js';
 
-/**
- * Default provider for standard OpenAI-compatible APIs
- */
 export class DefaultOpenAICompatibleProvider
   implements OpenAICompatibleProvider
 {
@@ -19,14 +16,6 @@ export class DefaultOpenAICompatibleProvider
   ) {
     this.cliConfig = cliConfig;
     this.contentGeneratorConfig = contentGeneratorConfig;
-  }
-
-  buildHeaders(): Record<string, string | undefined> {
-    const version = this.cliConfig.getCliVersion() || 'unknown';
-    const userAgent = `QwenCode/${version} (${process.platform}; ${process.arch})`;
-    return {
-      'User-Agent': userAgent,
-    };
   }
 
   buildClient(): OpenAI {
@@ -44,6 +33,14 @@ export class DefaultOpenAICompatibleProvider
       maxRetries,
       defaultHeaders,
     });
+  }
+
+  buildHeaders(): Record<string, string | undefined> {
+    const version = this.cliConfig.getCliVersion() || 'unknown';
+    const userAgent = `QwenCode/${version} (${process.platform}; ${process.arch})`;
+    return {
+      'User-Agent': userAgent,
+    };
   }
 
   buildRequest(

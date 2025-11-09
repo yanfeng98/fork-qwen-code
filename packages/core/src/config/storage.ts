@@ -58,12 +58,12 @@ export class Storage {
     return path.join(Storage.getGlobalQwenDir(), TMP_DIR_NAME);
   }
 
-  static getMcpOAuthTokensPath(): string {
-    return path.join(Storage.getGlobalQwenDir(), 'mcp-oauth-tokens.json');
-  }
-
   static getInstallationIdPath(): string {
     return path.join(Storage.getGlobalQwenDir(), 'installation_id');
+  }
+
+  static getMcpOAuthTokensPath(): string {
+    return path.join(Storage.getGlobalQwenDir(), 'mcp-oauth-tokens.json');
   }
 
   static getGoogleAccountsPath(): string {
