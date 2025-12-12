@@ -825,10 +825,9 @@ describe('ShellExecutionService child_process fallback', () => {
       );
 
       expect(mockCpSpawn).toHaveBeenCalledWith(
-        'dir "foo bar"',
-        [],
+        'cmd.exe',
+        ['/c', 'dir "foo bar"'],
         expect.objectContaining({
-          shell: true,
           detached: false,
           windowsHide: true,
         }),
@@ -840,10 +839,9 @@ describe('ShellExecutionService child_process fallback', () => {
       await simulateExecution('ls "foo bar"', (cp) => cp.emit('exit', 0, null));
 
       expect(mockCpSpawn).toHaveBeenCalledWith(
-        'ls "foo bar"',
-        [],
+        'bash',
+        ['-c', 'ls "foo bar"'],
         expect.objectContaining({
-          shell: 'bash',
           detached: true,
         }),
       );
