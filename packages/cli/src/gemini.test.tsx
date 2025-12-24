@@ -643,7 +643,7 @@ describe('startInteractiveUI', () => {
     expect(checkForUpdates).toHaveBeenCalledTimes(1);
   });
 
-  it('should not check for updates when update nag is disabled', async () => {
+  it('should not check for updates when enableAutoUpdate is false', async () => {
     const { checkForUpdates } = await import('./ui/utils/updateCheck.js');
 
     const mockInitializationResult = {
@@ -653,10 +653,10 @@ describe('startInteractiveUI', () => {
       geminiMdFileCount: 0,
     };
 
-    const settingsWithUpdateNagDisabled = {
+    const settingsWithAutoUpdateDisabled = {
       merged: {
         general: {
-          disableUpdateNag: true,
+          enableAutoUpdate: false,
         },
         ui: {
           hideWindowTitle: false,
@@ -666,7 +666,7 @@ describe('startInteractiveUI', () => {
 
     await startInteractiveUI(
       mockConfig,
-      settingsWithUpdateNagDisabled,
+      settingsWithAutoUpdateDisabled,
       mockStartupWarnings,
       mockWorkspaceRoot,
       mockInitializationResult,
