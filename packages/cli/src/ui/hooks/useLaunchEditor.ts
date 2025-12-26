@@ -112,8 +112,14 @@ export function useLaunchEditor() {
       try {
         setRawMode?.(false);
 
+        // On Windows, .cmd and .bat files need shell: true
+        const needsShell =
+          process.platform === 'win32' &&
+          (editorCommand.endsWith('.cmd') || editorCommand.endsWith('.bat'));
+
         const { status, error } = spawnSync(editorCommand, editorArgs, {
           stdio: 'inherit',
+          shell: needsShell,
         });
 
         if (error) throw error;
