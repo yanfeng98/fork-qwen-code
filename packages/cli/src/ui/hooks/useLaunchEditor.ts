@@ -7,27 +7,9 @@
 import { useCallback } from 'react';
 import { useStdin } from 'ink';
 import type { EditorType } from '@qwen-code/qwen-code-core';
+import { editorCommands } from '@qwen-code/qwen-code-core';
 import { spawnSync, execSync } from 'child_process';
 import { useSettings } from '../contexts/SettingsContext.js';
-
-/**
- * Editor command configurations for different platforms.
- * Each editor can have multiple possible command names, listed in order of preference.
- */
-const editorCommands: Record<
-  EditorType,
-  { win32: string[]; default: string[] }
-> = {
-  vscode: { win32: ['code.cmd'], default: ['code'] },
-  vscodium: { win32: ['codium.cmd'], default: ['codium'] },
-  windsurf: { win32: ['windsurf'], default: ['windsurf'] },
-  cursor: { win32: ['cursor'], default: ['cursor'] },
-  vim: { win32: ['vim'], default: ['vim'] },
-  neovim: { win32: ['nvim'], default: ['nvim'] },
-  zed: { win32: ['zed'], default: ['zed', 'zeditor'] },
-  emacs: { win32: ['emacs.exe'], default: ['emacs'] },
-  trae: { win32: ['trae'], default: ['trae'] },
-};
 
 /**
  * Cache for command existence checks to avoid repeated execSync calls.
