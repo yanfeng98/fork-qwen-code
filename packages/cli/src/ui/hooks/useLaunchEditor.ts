@@ -30,16 +30,28 @@ const editorCommands: Record<
 };
 
 /**
+ * Cache for command existence checks to avoid repeated execSync calls.
+ */
+const commandExistsCache = new Map<string, boolean>();
+
+/**
  * Check if a command exists in the system.
+ * Results are cached to improve performance in test environments.
  */
 function commandExists(cmd: string): boolean {
+  if (commandExistsCache.has(cmd)) {
+    return commandExistsCache.get(cmd)!;
+  }
+
   try {
     execSync(
       process.platform === 'win32' ? `where.exe ${cmd}` : `command -v ${cmd}`,
       { stdio: 'ignore' },
     );
+    commandExistsCache.set(cmd, true);
     return true;
   } catch {
+    commandExistsCache.set(cmd, false);
     return false;
   }
 }
