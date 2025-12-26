@@ -7,15 +7,64 @@
 import { useCallback } from 'react';
 import { useStdin } from 'ink';
 import type { EditorType } from '@qwen-code/qwen-code-core';
-import { spawnSync } from 'child_process';
+import { spawnSync, execSync } from 'child_process';
 import { useSettings } from '../contexts/SettingsContext.js';
+
+/**
+ * Editor command configurations for different platforms.
+ * Each editor can have multiple possible command names, listed in order of preference.
+ */
+const editorCommands: Record<
+  EditorType,
+  { win32: string[]; default: string[] }
+> = {
+  vscode: { win32: ['code.cmd'], default: ['code'] },
+  vscodium: { win32: ['codium.cmd'], default: ['codium'] },
+  windsurf: { win32: ['windsurf'], default: ['windsurf'] },
+  cursor: { win32: ['cursor'], default: ['cursor'] },
+  vim: { win32: ['vim'], default: ['vim'] },
+  neovim: { win32: ['nvim'], default: ['nvim'] },
+  zed: { win32: ['zed'], default: ['zed', 'zeditor'] },
+  emacs: { win32: ['emacs.exe'], default: ['emacs'] },
+  trae: { win32: ['trae'], default: ['trae'] },
+};
+
+/**
+ * Check if a command exists in the system.
+ */
+function commandExists(cmd: string): boolean {
+  try {
+    execSync(
+      process.platform === 'win32' ? `where.exe ${cmd}` : `command -v ${cmd}`,
+      { stdio: 'ignore' },
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Get the actual executable command for an editor type.
+ */
+function getExecutableCommand(editorType: EditorType): string {
+  const commandConfig = editorCommands[editorType];
+  const commands =
+    process.platform === 'win32' ? commandConfig.win32 : commandConfig.default;
+
+  // Try to find the first available command
+  const availableCommand = commands.find((cmd) => commandExists(cmd));
+
+  // Return the first available command, or fall back to the last one in the list
+  return availableCommand || commands[commands.length - 1];
+}
 
 /**
  * Determines the editor command to use based on user preferences and platform.
  */
 function getEditorCommand(preferredEditor?: EditorType): string {
   if (preferredEditor) {
-    return preferredEditor;
+    return getExecutableCommand(preferredEditor);
   }
 
   // Platform-specific defaults with UI preference for macOS
