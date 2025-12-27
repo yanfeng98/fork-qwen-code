@@ -1,16 +1,8 @@
 #!/usr/bin/env node
-
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import './src/gemini.js';
 import { main } from './src/gemini.js';
 import { FatalError } from '@qwen-code/qwen-code-core';
 
-// --- Global Entry Point ---
 main().catch((error) => {
   if (error instanceof FatalError) {
     let errorMessage = error.message;

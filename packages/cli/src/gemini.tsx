@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import type { Config, AuthType } from '@qwen-code/qwen-code-core';
 import { InputFormat, logUserPrompt } from '@qwen-code/qwen-code-core';
 import { render } from 'ink';
@@ -107,28 +101,6 @@ import { ExtensionEnablementManager } from './config/extensions/extensionEnablem
 import { loadSandboxConfig } from './config/sandboxConfig.js';
 import { runAcpAgent } from './acp-integration/acpAgent.js';
 
-export function setupUnhandledRejectionHandler() {
-  let unhandledRejectionOccurred = false;
-  process.on('unhandledRejection', (reason, _promise) => {
-    const errorMessage = `=========================================
-This is an unexpected error. Please file a bug report using the /bug tool.
-CRITICAL: Unhandled Promise Rejection!
-=========================================
-Reason: ${reason}${
-      reason instanceof Error && reason.stack
-        ? `
-Stack trace:
-${reason.stack}`
-        : ''
-    }`;
-    appEvents.emit(AppEvent.LogError, errorMessage);
-    if (!unhandledRejectionOccurred) {
-      unhandledRejectionOccurred = true;
-      appEvents.emit(AppEvent.OpenDebugConsole);
-    }
-  });
-}
-
 export async function startInteractiveUI(
   config: Config,
   settings: LoadedSettings,
@@ -204,8 +176,6 @@ export async function main() {
   await cleanupCheckpoints();
 
   let argv = await parseArguments(settings.merged);
-
-  // Check for invalid input combinations early to prevent crashes
   if (argv.promptInteractive && !process.stdin.isTTY) {
     console.error(
       'Error: The --prompt-interactive flag cannot be used when input is piped from stdin.',
@@ -483,6 +453,28 @@ export async function main() {
     await runExitCleanup();
     process.exit(0);
   }
+}
+
+export function setupUnhandledRejectionHandler() {
+  let unhandledRejectionOccurred = false;
+  process.on('unhandledRejection', (reason, _promise) => {
+    const errorMessage = `=========================================
+This is an unexpected error. Please file a bug report using the /bug tool.
+CRITICAL: Unhandled Promise Rejection!
+=========================================
+Reason: ${reason}${
+      reason instanceof Error && reason.stack
+        ? `
+Stack trace:
+${reason.stack}`
+        : ''
+    }`;
+    appEvents.emit(AppEvent.LogError, errorMessage);
+    if (!unhandledRejectionOccurred) {
+      unhandledRejectionOccurred = true;
+      appEvents.emit(AppEvent.OpenDebugConsole);
+    }
+  });
 }
 
 function setWindowTitle(title: string, settings: LoadedSettings) {

@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import * as path from 'node:path';
 import * as os from 'node:os';
 import * as crypto from 'node:crypto';
@@ -84,26 +78,30 @@ export class Storage {
     return path.join(tempDir, hash);
   }
 
-  ensureProjectTempDirExists(): void {
-    fs.mkdirSync(this.getProjectTempDir(), { recursive: true });
+  getHistoryDir(): string {
+    const hash = this.getFilePathHash(this.getProjectRoot());
+    const historyDir = path.join(Storage.getGlobalQwenDir(), 'history');
+    return path.join(historyDir, hash);
   }
 
-  static getOAuthCredsPath(): string {
-    return path.join(Storage.getGlobalQwenDir(), OAUTH_FILE);
+  ensureProjectTempDirExists(): void {
+    fs.mkdirSync(this.getProjectTempDir(), { recursive: true });
   }
 
   getProjectRoot(): string {
     return this.targetDir;
   }
 
+  private sanitizeCwd(cwd: string): string {
+    return cwd.replace(/[^a-zA-Z0-9]/g, '-');
+  }
+
   private getFilePathHash(filePath: string): string {
     return crypto.createHash('sha256').update(filePath).digest('hex');
   }
 
-  getHistoryDir(): string {
-    const hash = this.getFilePathHash(this.getProjectRoot());
-    const historyDir = path.join(Storage.getGlobalQwenDir(), 'history');
-    return path.join(historyDir, hash);
+  static getOAuthCredsPath(): string {
+    return path.join(Storage.getGlobalQwenDir(), OAUTH_FILE);
   }
 
   getWorkspaceSettingsPath(): string {
@@ -112,10 +110,6 @@ export class Storage {
 
   getProjectCommandsDir(): string {
     return path.join(this.getQwenDir(), 'commands');
-  }
-
-  getProjectTempCheckpointsDir(): string {
-    return path.join(this.getProjectTempDir(), 'checkpoints');
   }
 
   getExtensionsDir(): string {
@@ -130,11 +124,11 @@ export class Storage {
     return path.join(Storage.getGlobalQwenDir(), 'skills');
   }
 
-  getHistoryFilePath(): string {
-    return path.join(this.getProjectTempDir(), 'shell_history');
+  getProjectTempCheckpointsDir(): string {
+    return path.join(this.getProjectTempDir(), 'checkpoints');
   }
 
-  private sanitizeCwd(cwd: string): string {
-    return cwd.replace(/[^a-zA-Z0-9]/g, '-');
+  getHistoryFilePath(): string {
+    return path.join(this.getProjectTempDir(), 'shell_history');
   }
 }
