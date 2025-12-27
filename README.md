@@ -1,24 +1,16 @@
 <div align="center">
 
 [![npm version](https://img.shields.io/npm/v/@qwen-code/qwen-code.svg)](https://www.npmjs.com/package/@qwen-code/qwen-code)
-[![License](https://img.shields.io/github/license/QwenLM/qwen-code.svg)](./LICENSE)
-[![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen.svg)](https://nodejs.org/)
-[![Downloads](https://img.shields.io/npm/dm/@qwen-code/qwen-code.svg)](https://www.npmjs.com/package/@qwen-code/qwen-code)
 
 **An open-source AI agent that lives in your terminal.**
 
-<a href="https://qwenlm.github.io/qwen-code-docs/zh/users/overview">中文</a> |
-<a href="https://qwenlm.github.io/qwen-code-docs/de/users/overview">Deutsch</a> |
-<a href="https://qwenlm.github.io/qwen-code-docs/fr/users/overview">français</a> |
-<a href="https://qwenlm.github.io/qwen-code-docs/ja/users/overview">日本語</a> |
-<a href="https://qwenlm.github.io/qwen-code-docs/ru/users/overview">Русский</a> |
-<a href="https://qwenlm.github.io/qwen-code-docs/pt-BR/users/overview">Português (Brasil)</a>
+<a href="https://qwenlm.github.io/qwen-code-docs/zh/users/overview">中文</a>
 
 </div>
 
-Qwen Code is an open-source AI agent for the terminal, optimized for [Qwen3-Coder](https://github.com/QwenLM/Qwen3-Coder). It helps you understand large codebases, automate tedious work, and ship faster.
+Qwen Code is an open-source AI agent for the terminal. It helps you understand large codebases, automate tedious work, and ship faster.
 
-![](https://gw.alicdn.com/imgextra/i1/O1CN01D2DviS1wwtEtMwIzJ_!!6000000006373-2-tps-1600-900.png)
+![](./assets/qwen_code.png)
 
 ## Why Qwen Code?
 
@@ -40,12 +32,20 @@ curl -qL https://www.npmjs.com/install.sh | sh
 
 ```bash
 npm install -g @qwen-code/qwen-code@latest
+qwen --version
 ```
 
-#### Homebrew (macOS, Linux)
+#### Install from source
 
 ```bash
-brew install qwen-code
+git clone git@github.com:yanfeng98/fork-qwen-code.git
+cd fork-qwen-code
+npm install
+npm install -g .
+
+# install in development mode
+npm run build
+npm run start
 ```
 
 ## Quick Start
@@ -70,15 +70,6 @@ Help me refactor this function.
 Generate unit tests for this module.
 ```
 
-<details>
-<summary>Click to watch a demo video</summary>
-
-<video src="https://cloud.video.taobao.com/vod/HLfyppnCHplRV9Qhz2xSqeazHeRzYtG-EYJnHAqtzkQ.mp4" controls>
-Your browser does not support the video tag.
-</video>
-
-</details>
-
 ## Authentication
 
 Qwen Code supports two authentication methods:
@@ -94,7 +85,7 @@ Start `qwen`, then run:
 /auth
 ```
 
-Choose **Qwen OAuth** and complete the browser flow. Your credentials are cached locally so you usually won't need to log in again.
+Choose **Qwen OAuth** and complete the browser flow.
 
 #### OpenAI-compatible API (API key)
 
@@ -178,27 +169,8 @@ Qwen Code can be configured via `settings.json`, environment variables, and CLI 
 
 See [settings](https://qwenlm.github.io/qwen-code-docs/en/users/configuration/settings/) for available options and precedence.
 
-## Benchmark Results
-
-### Terminal-Bench Performance
-
-| Agent     | Model              | Accuracy |
-| --------- | ------------------ | -------- |
-| Qwen Code | Qwen3-Coder-480A35 | 37.5%    |
-| Qwen Code | Qwen3-Coder-30BA3B | 31.3%    |
-
 ## Ecosystem
 
 Looking for a graphical interface?
 
 - [**Gemini CLI Desktop**](https://github.com/Piebald-AI/gemini-cli-desktop) A cross-platform desktop/web/mobile UI for Qwen Code
-
-## Troubleshooting
-
-If you encounter issues, check the [troubleshooting guide](https://qwenlm.github.io/qwen-code-docs/en/users/support/troubleshooting/).
-
-To report a bug from within the CLI, run `/bug` and include a short title and repro steps.
-
-## Acknowledgments
-
-This project is based on [Google Gemini CLI](https://github.com/google-gemini/gemini-cli). We acknowledge and appreciate the excellent work of the Gemini CLI team. Our main contribution focuses on parser-level adaptations to better support Qwen-Coder models.
