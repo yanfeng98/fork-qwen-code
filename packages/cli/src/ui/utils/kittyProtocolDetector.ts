@@ -1,18 +1,7 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 let detectionComplete = false;
 let protocolSupported = false;
 let protocolEnabled = false;
 
-/**
- * Detects Kitty keyboard protocol support.
- * Definitive document about this protocol lives at https://sw.kovidgoyal.net/kitty/keyboard-protocol/
- * This function should be called once at app startup.
- */
 export async function detectAndEnableKittyProtocol(): Promise<boolean> {
   if (detectionComplete) {
     return protocolSupported;
@@ -46,22 +35,16 @@ export async function detectAndEnableKittyProtocol(): Promise<boolean> {
 
     const handleData = (data: Buffer) => {
       if (timeoutId === undefined) {
-        // Race condition. We have already timed out.
         return;
       }
       responseBuffer += data.toString();
 
-      // Check for progressive enhancement response (CSI ? <flags> u)
       if (responseBuffer.includes('\x1b[?') && responseBuffer.includes('u')) {
         progressiveEnhancementReceived = true;
-        // Give more time to get the full set of kitty responses if we have an
-        // indication the terminal probably supports kitty and we just need to
-        // wait a bit longer for a response.
         clearTimeout(timeoutId);
         timeoutId = setTimeout(onTimeout, 1000);
       }
 
-      // Check for device attributes response (CSI ? <attrs> c)
       if (responseBuffer.includes('\x1b[?') && responseBuffer.includes('c')) {
         clearTimeout(timeoutId);
         timeoutId = undefined;
@@ -72,12 +55,10 @@ export async function detectAndEnableKittyProtocol(): Promise<boolean> {
         }
 
         if (progressiveEnhancementReceived) {
-          // Enable the protocol
           process.stdout.write('\x1b[>1u');
           protocolSupported = true;
           protocolEnabled = true;
 
-          // Set up cleanup on exit
           process.on('exit', disableProtocol);
           process.on('SIGTERM', disableProtocol);
         }
@@ -89,13 +70,9 @@ export async function detectAndEnableKittyProtocol(): Promise<boolean> {
 
     process.stdin.on('data', handleData);
 
-    // Send queries
-    process.stdout.write('\x1b[?u'); // Query progressive enhancement
-    process.stdout.write('\x1b[c'); // Query device attributes
+    process.stdout.write('\x1b[?u');
+    process.stdout.write('\x1b[c');
 
-    // Timeout after 200ms
-    // When a iterm2 terminal does not have focus this can take over 90s on a
-    // fast macbook so we need a somewhat longer threshold than would be ideal.
     timeoutId = setTimeout(onTimeout, 200);
   });
 }

@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import {
   readPackageUp,
   type PackageJson as BasePackageJson,
@@ -29,7 +23,6 @@ export async function getPackageJson(): Promise<PackageJson | undefined> {
 
   const result = await readPackageUp({ cwd: __dirname });
   if (!result) {
-    // TODO: Maybe bubble this up as an error.
     return;
   }
 

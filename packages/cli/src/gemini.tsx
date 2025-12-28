@@ -101,74 +101,6 @@ import { ExtensionEnablementManager } from './config/extensions/extensionEnablem
 import { loadSandboxConfig } from './config/sandboxConfig.js';
 import { runAcpAgent } from './acp-integration/acpAgent.js';
 
-export async function startInteractiveUI(
-  config: Config,
-  settings: LoadedSettings,
-  startupWarnings: string[],
-  workspaceRoot: string = process.cwd(),
-  initializationResult: InitializationResult,
-) {
-  const version = await getCliVersion();
-  setWindowTitle(basename(workspaceRoot), settings);
-
-  // Create wrapper component to use hooks inside render
-  const AppWrapper = () => {
-    const kittyProtocolStatus = useKittyKeyboardProtocol();
-    const nodeMajorVersion = parseInt(process.versions.node.split('.')[0], 10);
-    return (
-      <SettingsContext.Provider value={settings}>
-        <KeypressProvider
-          kittyProtocolEnabled={kittyProtocolStatus.enabled}
-          config={config}
-          debugKeystrokeLogging={settings.merged.general?.debugKeystrokeLogging}
-          pasteWorkaround={
-            process.platform === 'win32' || nodeMajorVersion < 20
-          }
-        >
-          <SessionStatsProvider sessionId={config.getSessionId()}>
-            <VimModeProvider settings={settings}>
-              <AppContainer
-                config={config}
-                settings={settings}
-                startupWarnings={startupWarnings}
-                version={version}
-                initializationResult={initializationResult}
-              />
-            </VimModeProvider>
-          </SessionStatsProvider>
-        </KeypressProvider>
-      </SettingsContext.Provider>
-    );
-  };
-
-  const instance = render(
-    process.env['DEBUG'] ? (
-      <React.StrictMode>
-        <AppWrapper />
-      </React.StrictMode>
-    ) : (
-      <AppWrapper />
-    ),
-    {
-      exitOnCtrlC: false,
-      isScreenReaderEnabled: config.getScreenReader(),
-    },
-  );
-
-  checkForUpdates()
-    .then((info) => {
-      handleAutoUpdate(info, settings, config.getProjectRoot());
-    })
-    .catch((err) => {
-      // Silently ignore update check errors.
-      if (config.getDebugMode()) {
-        console.error('Update check failed:', err);
-      }
-    });
-
-  registerCleanup(() => instance.unmount());
-}
-
 export async function main() {
   setupUnhandledRejectionHandler();
   const settings = loadSettings();
@@ -297,9 +229,6 @@ export async function main() {
     argv = { ...argv, resume: selectedSessionId };
   }
 
-  // We are now past the logic handling potentially launching a child process
-  // to run Gemini CLI. It is now safe to perform expensive initialization that
-  // may have side effects.
   {
     const extensionEnablementManager = new ExtensionEnablementManager(
       ExtensionStorage.getUserExtensionsDir(),
@@ -321,7 +250,6 @@ export async function main() {
       process.exit(0);
     }
 
-    // Setup unified ConsolePatcher based on interactive mode
     const isInteractive = config.isInteractive();
     const consolePatcher = new ConsolePatcher({
       stderr: isInteractive,
@@ -333,11 +261,8 @@ export async function main() {
     const wasRaw = process.stdin.isRaw;
     let kittyProtocolDetectionComplete: Promise<boolean> | undefined;
     if (config.isInteractive() && !wasRaw && process.stdin.isTTY) {
-      // Set this as early as possible to avoid spurious characters from
-      // input showing up in the output.
       process.stdin.setRawMode(true);
 
-      // This cleanup isn't strictly needed but may help in certain situations.
       process.on('SIGTERM', () => {
         process.stdin.setRawMode(wasRaw);
       });
@@ -345,20 +270,16 @@ export async function main() {
         process.stdin.setRawMode(wasRaw);
       });
 
-      // Detect and enable Kitty keyboard protocol once at startup.
       kittyProtocolDetectionComplete = detectAndEnableKittyProtocol();
     }
 
     setMaxSizedBoxDebugging(isDebugMode);
 
-    // Check input format early to determine initialization flow
     const inputFormat =
       typeof config.getInputFormat === 'function'
         ? config.getInputFormat()
         : InputFormat.TEXT;
 
-    // For stream-json mode, defer config.initialize() until after the initialize control request
-    // For other modes, initialize normally
     let initializationResult: InitializationResult | undefined;
     if (inputFormat !== InputFormat.STREAM_JSON) {
       initializationResult = await initializeApp(config, settings);
@@ -378,9 +299,7 @@ export async function main() {
       })),
     ];
 
-    // Render UI, passing necessary config values. Check that there is no command line question.
     if (config.isInteractive()) {
-      // Need kitty detection to be complete before we can start the interactive UI.
       await kittyProtocolDetectionComplete;
       await startInteractiveUI(
         config,
@@ -475,6 +394,73 @@ ${reason.stack}`
       appEvents.emit(AppEvent.OpenDebugConsole);
     }
   });
+}
+
+export async function startInteractiveUI(
+  config: Config,
+  settings: LoadedSettings,
+  startupWarnings: string[],
+  workspaceRoot: string = process.cwd(),
+  initializationResult: InitializationResult,
+) {
+  const version = await getCliVersion();
+  setWindowTitle(basename(workspaceRoot), settings);
+
+  const AppWrapper = () => {
+    const kittyProtocolStatus = useKittyKeyboardProtocol();
+    const nodeMajorVersion = parseInt(process.versions.node.split('.')[0], 10);
+    return (
+      <SettingsContext.Provider value={settings}>
+        <KeypressProvider
+          kittyProtocolEnabled={kittyProtocolStatus.enabled}
+          config={config}
+          debugKeystrokeLogging={settings.merged.general?.debugKeystrokeLogging}
+          pasteWorkaround={
+            process.platform === 'win32' || nodeMajorVersion < 20
+          }
+        >
+          <SessionStatsProvider sessionId={config.getSessionId()}>
+            <VimModeProvider settings={settings}>
+              <AppContainer
+                config={config}
+                settings={settings}
+                startupWarnings={startupWarnings}
+                version={version}
+                initializationResult={initializationResult}
+              />
+            </VimModeProvider>
+          </SessionStatsProvider>
+        </KeypressProvider>
+      </SettingsContext.Provider>
+    );
+  };
+
+  const instance = render(
+    process.env['DEBUG'] ? (
+      <React.StrictMode>
+        <AppWrapper />
+      </React.StrictMode>
+    ) : (
+      <AppWrapper />
+    ),
+    {
+      exitOnCtrlC: false,
+      isScreenReaderEnabled: config.getScreenReader(),
+    },
+  );
+
+  checkForUpdates()
+    .then((info) => {
+      handleAutoUpdate(info, settings, config.getProjectRoot());
+    })
+    .catch((err) => {
+      // Silently ignore update check errors.
+      if (config.getDebugMode()) {
+        console.error('Update check failed:', err);
+      }
+    });
+
+  registerCleanup(() => instance.unmount());
 }
 
 function setWindowTitle(title: string, settings: LoadedSettings) {

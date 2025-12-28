@@ -1,14 +1,8 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import util from 'node:util';
 import type { ConsoleMessageItem } from '../types.js';
 
 interface ConsolePatcherParams {
-  onNewMessage?: (message: Omit<ConsoleMessageItem, 'id'>) => void;
+  onNewMessage?: (message: ConsoleMessageItem) => void;
   debugMode: boolean;
   stderr?: boolean;
 }

@@ -1,6 +1,7 @@
 <div align="center">
 
 [![npm version](https://img.shields.io/npm/v/@qwen-code/qwen-code.svg)](https://www.npmjs.com/package/@qwen-code/qwen-code)
+<a href="https://deepwiki.com/QwenLM/qwen-code"><img src="https://devin.ai/assets/deepwiki-badge.png" alt="Ask DeepWiki.com" style="height:20px;"></a>
 
 **An open-source AI agent that lives in your terminal.**
 
