@@ -73,26 +73,17 @@ export interface ListSessionsResult {
   hasMore: boolean;
 }
 
-/**
- * Complete conversation reconstructed from ChatRecords.
- * Used for resuming sessions and API compatibility.
- */
 export interface ConversationRecord {
   sessionId: string;
   projectHash: string;
   startTime: string;
   lastUpdated: string;
-  /** Messages in chronological order (reconstructed from tree) */
   messages: ChatRecord[];
 }
 
-/**
- * Data structure for resuming an existing session.
- */
 export interface ResumedSessionData {
   conversation: ConversationRecord;
   filePath: string;
-  /** UUID of the last completed message - new messages should use this as parentUuid */
   lastCompletedUuid: string | null;
 }
 
@@ -554,17 +545,10 @@ export interface BuildApiHistoryOptions {
   stripThoughtsFromHistory?: boolean;
 }
 
-/**
- * Strips thought parts from a Content object.
- * Thought parts are identified by having `thought: true`.
- * Returns null if the content only contained thought parts.
- */
 function stripThoughtsFromContent(content: Content): Content | null {
   if (!content.parts) return content;
 
   const filteredParts = content.parts.filter((part) => !(part as Part).thought);
-
-  // If all parts were thoughts, remove the entire content
   if (filteredParts.length === 0) {
     return null;
   }
@@ -575,17 +559,6 @@ function stripThoughtsFromContent(content: Content): Content | null {
   };
 }
 
-/**
- * Builds the model-facing chat history (Content[]) from a reconstructed
- * conversation. This keeps UI history intact while applying chat compression
- * checkpoints for the API history used on resume.
- *
- * Strategy:
- * - Find the latest system/chat_compression record (if any).
- * - Use its compressedHistory snapshot as the base history.
- * - Append all messages after that checkpoint (skipping system records).
- * - If no checkpoint exists, return the linear message list (message field only).
- */
 export function buildApiHistoryFromConversation(
   conversation: ConversationRecord,
   options: BuildApiHistoryOptions = {},
@@ -611,7 +584,6 @@ export function buildApiHistoryFromConversation(
   if (compressedHistory && lastCompressionIndex >= 0) {
     const baseHistory: Content[] = structuredClone(compressedHistory);
 
-    // Append everything after the compression record (newer turns)
     for (let i = lastCompressionIndex + 1; i < messages.length; i++) {
       const record = messages[i];
       if (record.type === 'system') continue;
@@ -628,7 +600,6 @@ export function buildApiHistoryFromConversation(
     return baseHistory;
   }
 
-  // Fallback: return linear messages as Content[]
   const result = messages
     .map((record) => record.message)
     .filter((message): message is Content => message !== undefined)
@@ -642,10 +613,6 @@ export function buildApiHistoryFromConversation(
   return result;
 }
 
-/**
- * Replays stored UI telemetry events to rebuild metrics when resuming a session.
- * Also restores the last prompt token count from the best available source.
- */
 export function replayUiTelemetryFromConversation(
   conversation: ConversationRecord,
 ): void {
@@ -670,11 +637,6 @@ export function replayUiTelemetryFromConversation(
   }
 }
 
-/**
- * Returns the best available prompt token count for resuming telemetry:
- * - If a chat compression checkpoint exists, use its new token count.
- * - Otherwise, use the last assistant usageMetadata input (fallback to total).
- */
 export function getResumePromptTokenCount(
   conversation: ConversationRecord,
 ): number | undefined {

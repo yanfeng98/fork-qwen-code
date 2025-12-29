@@ -752,9 +752,6 @@ export class Config {
     return this.sessionId;
   }
 
-  /**
-   * Returns the resumed session data if this session was resumed from a previous one.
-   */
   getResumedSessionData(): ResumedSessionData | undefined {
     return this.sessionData;
   }

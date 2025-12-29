@@ -39,10 +39,6 @@ const LLM_LOOP_CHECK_HISTORY_COUNT = 20;
  */
 const LLM_CHECK_AFTER_TURNS = 30;
 
-/**
- * The default interval, in number of turns, at which the LLM-based loop check is performed.
- * This value is adjusted dynamically based on the LLM's confidence.
- */
 const DEFAULT_LLM_CHECK_INTERVAL = 3;
 
 /**
@@ -68,31 +64,23 @@ Cognitive Loop: The assistant seems unable to determine the next logical step. I
 Crucially, differentiate between a true unproductive state and legitimate, incremental progress.
 For example, a series of 'tool_A' or 'tool_B' tool calls that make small, distinct changes to the same file (like adding docstrings to functions one by one) is considered forward progress and is NOT a loop. A loop would be repeatedly replacing the same text with the same content, or cycling between a small set of files with no net change.`;
 
-/**
- * Service for detecting and preventing infinite loops in AI responses.
- * Monitors tool call repetitions and content sentence repetitions.
- */
 export class LoopDetectionService {
   private readonly config: Config;
   private promptId = '';
 
-  // Tool call tracking
   private lastToolCallKey: string | null = null;
   private toolCallRepetitionCount: number = 0;
 
-  // Content streaming tracking
   private streamContentHistory = '';
   private contentStats = new Map<string, number[]>();
   private lastContentIndex = 0;
   private loopDetected = false;
   private inCodeBlock = false;
 
-  // LLM loop track tracking
   private turnsInCurrentPrompt = 0;
   private llmCheckInterval = DEFAULT_LLM_CHECK_INTERVAL;
   private lastCheckTurn = 0;
 
-  // Session-level disable flag
   private disabledForSession = false;
 
   constructor(config: Config) {

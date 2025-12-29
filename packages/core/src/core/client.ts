@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 // External dependencies
 import type {
   Content,
@@ -85,10 +79,6 @@ export class GeminiClient {
   private lastSentIdeContext: IdeContext | undefined;
   private forceFullIdeContext = true;
 
-  /**
-   * At any point in this conversation, was compression triggered without
-   * being forced and did it fail?
-   */
   private hasFailedCompressionAttempt = false;
 
   constructor(private readonly config: Config) {
@@ -98,12 +88,9 @@ export class GeminiClient {
   async initialize() {
     this.lastPromptId = this.config.getSessionId();
 
-    // Check if we're resuming from a previous session
     const resumedSessionData = this.config.getResumedSessionData();
     if (resumedSessionData) {
       replayUiTelemetryFromConversation(resumedSessionData.conversation);
-      // Convert resumed session to API history format
-      // Each ChatRecord's message field is already a Content object
       const resumedHistory = buildApiHistoryFromConversation(
         resumedSessionData.conversation,
       );

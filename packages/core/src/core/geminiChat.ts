@@ -129,20 +129,6 @@ function isValidContentPart(part: Part): boolean {
 }
 
 /**
- * Validates the history contains the correct roles.
- *
- * @throws Error if the history does not start with a user turn.
- * @throws Error if the history contains an invalid role.
- */
-function validateHistory(history: Content[]) {
-  for (const content of history) {
-    if (content.role !== 'user' && content.role !== 'model') {
-      throw new Error(`Role must be user or model, but got ${content.role}.`);
-    }
-  }
-}
-
-/**
  * Extracts the curated (valid) history from a comprehensive history.
  *
  * @remarks
@@ -193,27 +179,9 @@ export class InvalidStreamError extends Error {
   }
 }
 
-/**
- * Chat session that enables sending messages to the model with previous
- * conversation context.
- *
- * @remarks
- * The session maintains all the turns between user and model.
- */
 export class GeminiChat {
-  // A promise to represent the current state of the message being sent to the
-  // model.
   private sendPromise: Promise<void> = Promise.resolve();
 
-  /**
-   * Creates a new GeminiChat instance.
-   *
-   * @param config - The configuration object.
-   * @param generationConfig - Optional generation configuration.
-   * @param history - Optional initial conversation history.
-   * @param chatRecordingService - Optional recording service. If provided, chat
-   *   messages will be recorded.
-   */
   constructor(
     private readonly config: Config,
     private readonly generationConfig: GenerateContentConfig = {},
@@ -647,6 +615,14 @@ export class GeminiChat {
         ...consolidatedHistoryParts,
       ],
     });
+  }
+}
+
+function validateHistory(history: Content[]) {
+  for (const content of history) {
+    if (content.role !== 'user' && content.role !== 'model') {
+      throw new Error(`Role must be user or model, but got ${content.role}.`);
+    }
   }
 }
 

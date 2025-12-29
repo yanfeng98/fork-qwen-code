@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { type Config } from '../config/config.js';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -25,83 +19,30 @@ import type { Status } from '../core/coreToolScheduler.js';
 import type { TaskResultDisplay } from '../tools/tools.js';
 import type { UiEvent } from '../telemetry/uiTelemetry.js';
 
-/**
- * A single record stored in the JSONL file.
- * Forms a tree structure via uuid/parentUuid for future checkpointing support.
- *
- * Each record is self-contained with full metadata, enabling:
- * - Append-only writes (crash-safe)
- * - Tree reconstruction by following parentUuid chain
- * - Future checkpointing by branching from any historical record
- */
 export interface ChatRecord {
-  /** Unique identifier for this logical message */
   uuid: string;
-  /** UUID of the parent message; null for root (first message in session) */
   parentUuid: string | null;
-  /** Session identifier - groups records into a logical conversation */
   sessionId: string;
-  /** ISO 8601 timestamp of when the record was created */
   timestamp: string;
-  /**
-   * Message type: user input, assistant response, tool result, or system event.
-   * System records are append-only events that can alter how history is reconstructed
-   * (e.g., chat compression checkpoints) while keeping the original UI history intact.
-   */
   type: 'user' | 'assistant' | 'tool_result' | 'system';
-  /** Optional system subtype for distinguishing system behaviors */
   subtype?: 'chat_compression' | 'slash_command' | 'ui_telemetry';
-  /** Working directory at time of message */
   cwd: string;
-  /** CLI version for compatibility tracking */
   version: string;
-  /** Current git branch, if available */
   gitBranch?: string;
 
-  // Content field - raw API format for history reconstruction
-
-  /**
-   * The actual Content object (role + parts) sent to/from LLM.
-   * This is stored in the exact format needed for API calls, enabling
-   * direct aggregation into Content[] for session resumption.
-   * Contains: text, functionCall, functionResponse, thought parts, etc.
-   */
   message?: Content;
 
-  // Metadata fields (not part of API Content)
-
-  /** Token usage statistics */
   usageMetadata?: GenerateContentResponseUsageMetadata;
-  /** Model used for this response */
   model?: string;
-  /**
-   * Tool call metadata for UI recovery.
-   * Contains enriched info (displayName, status, result, etc.) not in API format.
-   */
   toolCallResult?: Partial<ToolCallResponseInfo>;
-
-  /**
-   * Payload for system records. For chat compression, this stores all data needed
-   * to reconstruct the compressed history without mutating the original UI list.
-   */
   systemPayload?:
     | ChatCompressionRecordPayload
     | SlashCommandRecordPayload
     | UiTelemetryRecordPayload;
 }
 
-/**
- * Stored payload for chat compression checkpoints. This allows us to rebuild the
- * effective chat history on resume while keeping the original UI-visible history.
- */
 export interface ChatCompressionRecordPayload {
-  /** Compression metrics/status returned by the compression service */
   info: ChatCompressionInfo;
-  /**
-   * Snapshot of the new history contents that the model should see after
-   * compression (summary turns + retained tail). Stored as Content[] for
-   * resume reconstruction.
-   */
   compressedHistory: Content[];
 }
 
@@ -117,9 +58,6 @@ export interface SlashCommandRecordPayload {
   outputHistoryItems?: Array<Record<string, unknown>>;
 }
 
-/**
- * Stored payload for UI telemetry replay.
- */
 export interface UiTelemetryRecordPayload {
   uiEvent: UiEvent;
 }
