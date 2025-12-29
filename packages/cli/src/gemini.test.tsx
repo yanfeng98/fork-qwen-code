@@ -643,15 +643,8 @@ describe('startInteractiveUI', () => {
     expect(checkForUpdates).toHaveBeenCalledTimes(1);
   });
 
-  it('should not check for updates when enableAutoUpdate is false', async () => {
+  it('should not call checkForUpdates when enableAutoUpdate is false', async () => {
     const { checkForUpdates } = await import('./ui/utils/updateCheck.js');
-
-    const mockInitializationResult = {
-      authError: null,
-      themeError: null,
-      shouldOpenAuthDialog: false,
-      geminiMdFileCount: 0,
-    };
 
     const settingsWithAutoUpdateDisabled = {
       merged: {
@@ -664,6 +657,13 @@ describe('startInteractiveUI', () => {
       },
     } as LoadedSettings;
 
+    const mockInitializationResult = {
+      authError: null,
+      themeError: null,
+      shouldOpenAuthDialog: false,
+      geminiMdFileCount: 0,
+    };
+
     await startInteractiveUI(
       mockConfig,
       settingsWithAutoUpdateDisabled,
@@ -673,6 +673,8 @@ describe('startInteractiveUI', () => {
     );
 
     await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // checkForUpdates should NOT be called when enableAutoUpdate is false
     expect(checkForUpdates).not.toHaveBeenCalled();
   });
 });
