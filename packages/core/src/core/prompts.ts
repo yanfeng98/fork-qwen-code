@@ -109,24 +109,17 @@ export function getCoreSystemPrompt(
   userMemory?: string,
   model?: string,
 ): string {
-  // if QWEN_SYSTEM_MD is set (and not 0|false), override system prompt from file
-  // default path is .qwen/system.md but can be modified via custom path in QWEN_SYSTEM_MD
   let systemMdEnabled = false;
-  // The default path for the system prompt file. This can be overridden.
   let systemMdPath = path.resolve(path.join(QWEN_CONFIG_DIR, 'system.md'));
-  // Resolve the environment variable to get either a path or a switch value.
   const systemMdResolution = resolvePathFromEnv(process.env['QWEN_SYSTEM_MD']);
 
-  // Proceed only if the environment variable is set and is not disabled.
   if (systemMdResolution.value && !systemMdResolution.isDisabled) {
     systemMdEnabled = true;
 
-    // We update systemMdPath to this new custom path.
     if (!systemMdResolution.isSwitch) {
       systemMdPath = systemMdResolution.value;
     }
 
-    // require file to exist when override is enabled
     if (!fs.existsSync(systemMdPath)) {
       throw new Error(`missing system prompt file '${systemMdPath}'`);
     }

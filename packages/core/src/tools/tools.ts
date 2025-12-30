@@ -46,12 +46,6 @@ export interface ToolInvocation<
     abortSignal: AbortSignal,
   ): Promise<ToolCallConfirmationDetails | false>;
 
-  /**
-   * Executes the tool with the validated parameters.
-   * @param signal AbortSignal for tool cancellation.
-   * @param updateOutput Optional callback to stream output.
-   * @returns Result of the tool execution.
-   */
   execute(
     signal: AbortSignal,
     updateOutput?: (output: ToolResultDisplay) => void,
@@ -182,13 +176,6 @@ export abstract class DeclarativeTool<
     return null;
   }
 
-  /**
-   * The core of the new pattern. It validates parameters and, if successful,
-   * returns a `ToolInvocation` object that encapsulates the logic for the
-   * specific, validated call.
-   * @param params The raw, untrusted parameters from the model.
-   * @returns A `ToolInvocation` instance.
-   */
   abstract build(params: TParams): ToolInvocation<TParams, TResult>;
 
   /**
@@ -308,9 +295,6 @@ export abstract class BaseDeclarativeTool<
   ): ToolInvocation<TParams, TResult>;
 }
 
-/**
- * A type alias for a declarative tool where the specific parameter and result types are not known.
- */
 export type AnyDeclarativeTool = DeclarativeTool<object, ToolResult>;
 
 /**
@@ -329,27 +313,11 @@ export function isTool(obj: unknown): obj is AnyDeclarativeTool {
 }
 
 export interface ToolResult {
-  /**
-   * Content meant to be included in LLM history.
-   * This should represent the factual outcome of the tool execution.
-   */
   llmContent: PartListUnion;
-
-  /**
-   * Markdown string for user display.
-   * This provides a user-friendly summary or visualization of the result.
-   * NOTE: This might also be considered UI-specific and could potentially be
-   * removed or modified in a further refactor if the server becomes purely API-driven.
-   * For now, we keep it as the core logic in ReadFileTool currently produces it.
-   */
   returnDisplay: ToolResultDisplay;
-
-  /**
-   * If this property is present, the tool call is considered a failure.
-   */
   error?: {
-    message: string; // raw error message
-    type?: ToolErrorType; // An optional machine-readable error type (e.g., 'FILE_NOT_FOUND').
+    message: string;
+    type?: ToolErrorType;
   };
 }
 

@@ -169,7 +169,6 @@ Signal: Signal number or \`(none)\` if no signal was received.
 }
 
 export class ToolRegistry {
-  // The tools keyed by tool name as seen by the LLM.
   private tools: Map<string, AnyDeclarativeTool> = new Map();
   private config: Config;
   private mcpClientManager: McpClientManager;
@@ -418,12 +417,6 @@ export class ToolRegistry {
     }
   }
 
-  /**
-   * Retrieves the list of tool schemas (FunctionDeclaration array).
-   * Extracts the declarations from the ToolListUnion structure.
-   * Includes discovered (vs registered) tools if configured.
-   * @returns An array of FunctionDeclarations.
-   */
   getFunctionDeclarations(): FunctionDeclaration[] {
     const declarations: FunctionDeclaration[] = [];
     this.tools.forEach((tool) => {
@@ -477,9 +470,6 @@ export class ToolRegistry {
     return serverTools.sort((a, b) => a.name.localeCompare(b.name));
   }
 
-  /**
-   * Get the definition of a specific tool.
-   */
   getTool(name: string): AnyDeclarativeTool | undefined {
     return this.tools.get(name);
   }

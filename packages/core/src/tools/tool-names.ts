@@ -1,14 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
-/**
- * Tool name constants to avoid circular dependencies.
- * These constants are used across multiple files and should be kept in sync
- * with the actual tool class names.
- */
 export const ToolNames = {
   EDIT: 'edit',
   WRITE_FILE: 'write_file',
