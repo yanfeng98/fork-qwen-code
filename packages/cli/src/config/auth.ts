@@ -15,7 +15,11 @@ export function validateAuthMethod(authMethod: string): string | null {
     const hasApiKey =
       process.env['OPENAI_API_KEY'] || settings.merged.security?.auth?.apiKey;
     if (!hasApiKey) {
-      return 'OPENAI_API_KEY environment variable not found. You can enter it interactively or add it to your .env file.';
+      return (
+        'Missing API key for OpenAI-compatible auth. ' +
+        "Set settings.security.auth.apiKey, or set the 'OPENAI_API_KEY' environment variable. " +
+        'If you configured a model in settings.modelProviders with an envKey, set that env var as well.'
+      );
     }
     return null;
   }

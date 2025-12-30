@@ -32,7 +32,7 @@ describe('validateAuthMethod', () => {
   it('should return an error message for USE_OPENAI if OPENAI_API_KEY is not set', () => {
     delete process.env['OPENAI_API_KEY'];
     expect(validateAuthMethod(AuthType.USE_OPENAI)).toBe(
-      'OPENAI_API_KEY environment variable not found. You can enter it interactively or add it to your .env file.',
+      "Missing API key for OpenAI-compatible auth. Set settings.security.auth.apiKey, or set the 'OPENAI_API_KEY' environment variable. If you configured a model in settings.modelProviders with an envKey, set that env var as well.",
     );
   });
 
