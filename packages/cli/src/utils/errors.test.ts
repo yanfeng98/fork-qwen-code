@@ -125,6 +125,15 @@ describe('errors', () => {
       const obj = { message: 123 };
       expect(getErrorMessage(obj)).toBe('{"message":123}');
     });
+
+    it('should fallback to String() when toJSON returns undefined', () => {
+      const obj = {
+        toJSON() {
+          return undefined;
+        },
+      };
+      expect(getErrorMessage(obj)).toBe('[object Object]');
+    });
   });
 
   describe('handleError', () => {

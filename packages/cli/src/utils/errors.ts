@@ -31,7 +31,9 @@ export function getErrorMessage(error: unknown): string {
   // Handle plain objects by stringifying them
   if (error !== null && typeof error === 'object') {
     try {
-      return JSON.stringify(error);
+      const stringified = JSON.stringify(error);
+      // JSON.stringify can return undefined for objects with toJSON() returning undefined
+      return stringified ?? String(error);
     } catch {
       // If JSON.stringify fails (circular reference, etc.), fall back to String
       return String(error);
