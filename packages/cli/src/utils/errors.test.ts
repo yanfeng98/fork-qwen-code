@@ -105,9 +105,25 @@ describe('errors', () => {
       expect(getErrorMessage(undefined)).toBe('undefined');
     });
 
-    it('should handle objects', () => {
-      const obj = { message: 'test' };
-      expect(getErrorMessage(obj)).toBe('[object Object]');
+    it('should extract message from error-like objects', () => {
+      const obj = { message: 'test error message' };
+      expect(getErrorMessage(obj)).toBe('test error message');
+    });
+
+    it('should stringify plain objects without message property', () => {
+      const obj = { code: 500, details: 'internal error' };
+      expect(getErrorMessage(obj)).toBe(
+        '{"code":500,"details":"internal error"}',
+      );
+    });
+
+    it('should handle empty objects', () => {
+      expect(getErrorMessage({})).toBe('{}');
+    });
+
+    it('should handle objects with non-string message property', () => {
+      const obj = { message: 123 };
+      expect(getErrorMessage(obj)).toBe('{"message":123}');
     });
   });
 
