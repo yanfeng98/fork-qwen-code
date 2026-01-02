@@ -62,32 +62,7 @@ export interface UiTelemetryRecordPayload {
   uiEvent: UiEvent;
 }
 
-/**
- * Service for recording the current chat session to disk.
- *
- * This service provides comprehensive conversation recording that captures:
- * - All user and assistant messages
- * - Tool calls and their execution results
- * - Token usage statistics
- * - Assistant thoughts and reasoning
- *
- * **API Design:**
- * - `recordUserMessage()` - Records a user message (immediate write)
- * - `recordAssistantTurn()` - Records an assistant turn with all data (immediate write)
- * - `recordToolResult()` - Records tool results (immediate write)
- *
- * **Storage Format:** JSONL files with tree-structured records.
- * Each record has uuid/parentUuid fields enabling:
- * - Append-only writes (never rewrite the file)
- * - Linear history reconstruction
- * - Future checkpointing (branch from any historical point)
- *
- * File location: ~/.qwen/tmp/<project_id>/chats/
- *
- * For session management (list, load, remove), use SessionService.
- */
 export class ChatRecordingService {
-  /** UUID of the last written record in the chain */
   private lastRecordUuid: string | null = null;
   private readonly config: Config;
 
@@ -97,19 +72,10 @@ export class ChatRecordingService {
       config.getResumedSessionData()?.lastCompletedUuid ?? null;
   }
 
-  /**
-   * Returns the session ID.
-   * @returns The session ID.
-   */
   private getSessionId(): string {
     return this.config.getSessionId();
   }
 
-  /**
-   * Ensures the chats directory exists, creating it if it doesn't exist.
-   * @returns The path to the chats directory.
-   * @throws Error if the directory cannot be created.
-   */
   private ensureChatsDir(): string {
     const projectDir = this.config.storage.getProjectDir();
     const chatsDir = path.join(projectDir, 'chats');
@@ -123,12 +89,6 @@ export class ChatRecordingService {
     return chatsDir;
   }
 
-  /**
-   * Ensures the conversation file exists, creating it if it doesn't exist.
-   * Uses atomic file creation to avoid race conditions.
-   * @returns The path to the conversation file.
-   * @throws Error if the file cannot be created or accessed.
-   */
   private ensureConversationFile(): string {
     const chatsDir = this.ensureChatsDir();
     const sessionId = this.getSessionId();
@@ -140,12 +100,9 @@ export class ChatRecordingService {
     }
 
     try {
-      // Use 'wx' flag for exclusive creation - atomic operation that fails if file exists
-      // This avoids the TOCTOU race condition of existsSync + writeFileSync
       fs.writeFileSync(conversationFile, '', { flag: 'wx', encoding: 'utf8' });
     } catch (error) {
       const nodeError = error as NodeJS.ErrnoException;
-      // EEXIST means file already exists, which is expected and fine
       if (nodeError.code !== 'EEXIST') {
         const message = error instanceof Error ? error.message : String(error);
         throw new Error(
@@ -157,9 +114,6 @@ export class ChatRecordingService {
     return conversationFile;
   }
 
-  /**
-   * Creates base fields for a ChatRecord.
-   */
   private createBaseRecord(
     type: ChatRecord['type'],
   ): Omit<ChatRecord, 'message' | 'tokens' | 'model' | 'toolCallsMetadata'> {
@@ -175,9 +129,6 @@ export class ChatRecordingService {
     };
   }
 
-  /**
-   * Appends a record to the session file and updates lastRecordUuid.
-   */
   private appendRecord(record: ChatRecord): void {
     try {
       const conversationFile = this.ensureConversationFile();
@@ -190,12 +141,6 @@ export class ChatRecordingService {
     }
   }
 
-  /**
-   * Records a user message.
-   * Writes immediately to disk.
-   *
-   * @param message The raw PartListUnion object as used with the API
-   */
   recordUserMessage(message: PartListUnion): void {
     try {
       const record: ChatRecord = {

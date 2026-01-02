@@ -1272,9 +1272,6 @@ export class Config {
     return this.gitService;
   }
 
-  /**
-   * Returns the chat recording service.
-   */
   getChatRecordingService(): ChatRecordingService | undefined {
     if (!this.chatRecordingEnabled) {
       return undefined;

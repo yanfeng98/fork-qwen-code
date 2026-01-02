@@ -374,11 +374,7 @@ export class GeminiClient {
     if (!options?.isContinuation) {
       this.loopDetector.reset(prompt_id);
       this.lastPromptId = prompt_id;
-
-      // record user message for session management
       this.config.getChatRecordingService()?.recordUserMessage(request);
-
-      // strip thoughts from history before sending the message
       this.stripThoughtsFromHistory();
     }
     this.sessionTurnCount++;
@@ -389,7 +385,6 @@ export class GeminiClient {
       yield { type: GeminiEventType.MaxSessionTurns };
       return new Turn(this.getChat(), prompt_id);
     }
-    // Ensure turns never exceeds MAX_TURNS to prevent infinite loops
     const boundedTurns = Math.min(turns, MAX_TURNS);
     if (!boundedTurns) {
       return new Turn(this.getChat(), prompt_id);

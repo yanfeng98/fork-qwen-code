@@ -128,14 +128,6 @@ function isValidContentPart(part: Part): boolean {
   return !isInvalid;
 }
 
-/**
- * Extracts the curated (valid) history from a comprehensive history.
- *
- * @remarks
- * The model may sometimes generate invalid or empty contents(e.g., due to safety
- * filters or recitation). Extracting valid turns from the history
- * ensures that subsequent requests could be accepted by the model.
- */
 function extractCuratedHistory(comprehensiveHistory: Content[]): Content[] {
   if (comprehensiveHistory === undefined || comprehensiveHistory.length === 0) {
     return [];
@@ -367,35 +359,10 @@ export class GeminiChat {
     return this.processStreamResponse(model, streamResponse);
   }
 
-  /**
-   * Returns the chat history.
-   *
-   * @remarks
-   * The history is a list of contents alternating between user and model.
-   *
-   * There are two types of history:
-   * - The `curated history` contains only the valid turns between user and
-   * model, which will be included in the subsequent requests sent to the model.
-   * - The `comprehensive history` contains all turns, including invalid or
-   * empty model outputs, providing a complete record of the history.
-   *
-   * The history is updated after receiving the response from the model,
-   * for streaming response, it means receiving the last chunk of the response.
-   *
-   * The `comprehensive history` is returned by default. To get the `curated
-   * history`, set the `curated` parameter to `true`.
-   *
-   * @param curated - whether to return the curated history or the comprehensive
-   * history.
-   * @return History contents alternating between user and model for the entire
-   * chat session.
-   */
   getHistory(curated: boolean = false): Content[] {
     const history = curated
       ? extractCuratedHistory(this.history)
       : this.history;
-    // Deep copy the history to avoid mutating the history outside of the
-    // chat session.
     return structuredClone(history);
   }
 
@@ -422,7 +389,6 @@ export class GeminiChat {
       .map((content) => {
         if (!content.parts) return content;
 
-        // Filter out thought parts entirely
         const filteredParts = content.parts
           .filter(
             (part) =>
@@ -452,7 +418,6 @@ export class GeminiChat {
           parts: filteredParts,
         };
       })
-      // Remove Content objects that have no parts left after filtering
       .filter((content) => content.parts && content.parts.length > 0);
   }
 

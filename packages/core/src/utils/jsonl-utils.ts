@@ -126,13 +126,8 @@ export async function writeLine(
   });
 }
 
-/**
- * Synchronous version of writeLine for use in non-async contexts.
- * Uses a simple flag-based locking mechanism (less robust than async version).
- */
 export function writeLineSync(filePath: string, data: unknown): void {
   const line = `${JSON.stringify(data)}\n`;
-  // Ensure directory exists before writing
   const dir = path.dirname(filePath);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });

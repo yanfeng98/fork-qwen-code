@@ -444,9 +444,6 @@ export class LoopDetectionService {
     return false;
   }
 
-  /**
-   * Resets all loop detection state.
-   */
   reset(promptId: string): void {
     this.promptId = promptId;
     this.resetToolCallCount();

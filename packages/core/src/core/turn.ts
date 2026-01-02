@@ -160,7 +160,6 @@ export enum CompressionStatus {
   /** The compression failed due to receiving an empty or null summary */
   COMPRESSION_FAILED_EMPTY_SUMMARY,
 
-  /** The compression was not necessary and no action was taken */
   NOOP,
 }
 
@@ -215,7 +214,6 @@ export type ServerGeminiStreamEvent =
   | ServerGeminiSessionTokenLimitExceededEvent
   | ServerGeminiRetryEvent;
 
-// A turn manages the agentic loop turn within the server context.
 export class Turn {
   readonly pendingToolCalls: ToolCallRequestInfo[] = [];
   private debugResponses: GenerateContentResponse[] = [];

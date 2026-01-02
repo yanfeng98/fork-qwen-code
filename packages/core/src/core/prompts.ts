@@ -18,44 +18,35 @@ export function resolvePathFromEnv(envVar?: string): {
   value: string | null;
   isDisabled: boolean;
 } {
-  // Handle the case where the environment variable is not set, empty, or just whitespace.
   const trimmedEnvVar = envVar?.trim();
   if (!trimmedEnvVar) {
     return { isSwitch: false, value: null, isDisabled: false };
   }
 
   const lowerEnvVar = trimmedEnvVar.toLowerCase();
-  // Check if the input is a common boolean-like string.
   if (['0', 'false', '1', 'true'].includes(lowerEnvVar)) {
-    // If so, identify it as a "switch" and return its value.
     const isDisabled = ['0', 'false'].includes(lowerEnvVar);
     return { isSwitch: true, value: lowerEnvVar, isDisabled };
   }
 
-  // If it's not a switch, treat it as a potential file path.
   let customPath = trimmedEnvVar;
-
-  // Safely expand the tilde (~) character to the user's home directory.
   if (customPath.startsWith('~/') || customPath === '~') {
     try {
-      const home = os.homedir(); // This is the call that can throw an error.
+      const home = os.homedir();
       if (customPath === '~') {
         customPath = home;
       } else {
         customPath = path.join(home, customPath.slice(2));
       }
     } catch (error) {
-      // If os.homedir() fails, we catch the error instead of crashing.
       console.warn(
         `Could not resolve home directory for path: ${trimmedEnvVar}`,
         error,
       );
-      // Return null to indicate the path resolution failed.
       return { isSwitch: false, value: null, isDisabled: false };
     }
   }
 
-  // Return it as a non-switch with the fully resolved absolute path.
   return {
     isSwitch: false,
     value: path.resolve(customPath),
@@ -307,13 +298,10 @@ ${getToolCallExamples(model || '')}
 Your core function is efficient and safe assistance. Balance extreme conciseness with the crucial need for clarity, especially regarding safety and potential system modifications. Always prioritize user control and project conventions. Never make assumptions about the contents of files; instead use '${ToolNames.READ_FILE}' or '${ToolNames.READ_MANY_FILES}' to ensure you aren't making broad assumptions. Finally, you are an agent - please keep going until the user's query is completely resolved.
 `.trim();
 
-  // if QWEN_WRITE_SYSTEM_MD is set (and not 0|false), write base system prompt to file
   const writeSystemMdResolution = resolvePathFromEnv(
     process.env['QWEN_WRITE_SYSTEM_MD'],
   );
 
-  // Check if the feature is enabled. This proceeds only if the environment
-  // variable is set and is not explicitly '0' or 'false'.
   if (writeSystemMdResolution.value && !writeSystemMdResolution.isDisabled) {
     const writePath = writeSystemMdResolution.isSwitch
       ? systemMdPath
@@ -756,7 +744,6 @@ To help you check their settings, I can read their contents. Which one would you
 `.trim();
 
 function getToolCallExamples(model?: string): string {
-  // Check for environment variable override first
   const toolCallStyle = process.env['QWEN_CODE_TOOL_CALL_STYLE'];
   if (toolCallStyle) {
     switch (toolCallStyle.toLowerCase()) {
@@ -774,21 +761,16 @@ function getToolCallExamples(model?: string): string {
     }
   }
 
-  // Enhanced regex-based model detection
   if (model && model.length < 100) {
-    // Match qwen*-coder patterns (e.g., qwen3-coder, qwen2.5-coder, qwen-coder)
     if (/qwen[^-]*-coder/i.test(model)) {
       return qwenCoderToolCallExamples;
     }
-    // Match qwen*-vl patterns (e.g., qwen-vl, qwen2-vl, qwen3-vl)
     if (/qwen[^-]*-vl/i.test(model)) {
       return qwenVlToolCallExamples;
     }
-    // Match coder-model pattern (same as qwen3-coder)
     if (/coder-model/i.test(model)) {
       return qwenCoderToolCallExamples;
     }
-    // Match vision-model pattern (same as qwen3-vl)
     if (/vision-model/i.test(model)) {
       return qwenVlToolCallExamples;
     }

@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import type { Content } from '@google/genai';
 import type { Config } from '../config/config.js';
 import type { GeminiChat } from '../core/geminiChat.js';
@@ -16,24 +10,9 @@ import { logChatCompression } from '../telemetry/loggers.js';
 import { makeChatCompressionEvent } from '../telemetry/types.js';
 import { getInitialChatHistory } from '../utils/environmentContext.js';
 
-/**
- * Threshold for compression token count as a fraction of the model's token limit.
- * If the chat history exceeds this threshold, it will be compressed.
- */
 export const COMPRESSION_TOKEN_THRESHOLD = 0.7;
-
-/**
- * The fraction of the latest chat history to keep. A value of 0.3
- * means that only the last 30% of the chat history will be kept after compression.
- */
 export const COMPRESSION_PRESERVE_THRESHOLD = 0.3;
 
-/**
- * Returns the index of the oldest item to keep when compressing. May return
- * contents.length which indicates that everything should be compressed.
- *
- * Exported for testing purposes.
- */
 export function findCompressSplitPoint(
   contents: Content[],
   fraction: number,
@@ -90,7 +69,6 @@ export class ChatCompressionService {
       config.getChatCompression()?.contextPercentageThreshold ??
       COMPRESSION_TOKEN_THRESHOLD;
 
-    // Regardless of `force`, don't do anything if the history is empty.
     if (
       curatedHistory.length === 0 ||
       threshold <= 0 ||
@@ -107,8 +85,6 @@ export class ChatCompressionService {
     }
 
     const originalTokenCount = uiTelemetryService.getLastPromptTokenCount();
-
-    // Don't compress if not forced and we are under the limit.
     if (!force) {
       if (originalTokenCount < threshold * tokenLimit(model)) {
         return {

@@ -11,72 +11,47 @@ export type TokenLimitType = 'input' | 'output';
 export const DEFAULT_TOKEN_LIMIT: TokenCount = 131_072; // 128K (power-of-two)
 export const DEFAULT_OUTPUT_TOKEN_LIMIT: TokenCount = 4_096; // 4K tokens
 
-/**
- * Accurate numeric limits:
- * - power-of-two approximations (128K -> 131072, 256K -> 262144, etc.)
- * - vendor-declared exact values (e.g., 200k -> 200000) are used as stated in docs.
- */
 const LIMITS = {
   '32k': 32_768,
   '64k': 65_536,
   '128k': 131_072,
-  '200k': 200_000, // vendor-declared decimal, used by OpenAI, Anthropic, GLM etc.
+  '200k': 200_000,
   '256k': 262_144,
   '512k': 524_288,
   '1m': 1_048_576,
   '2m': 2_097_152,
-  '10m': 10_485_760, // 10 million tokens
+  '10m': 10_485_760,
   // Output token limits (typically much smaller than input limits)
   '4k': 4_096,
   '8k': 8_192,
   '16k': 16_384,
 } as const;
 
-/** Robust normalizer: strips provider prefixes, pipes/colons, date/version suffixes, etc. */
 export function normalize(model: string): string {
   let s = (model ?? '').toLowerCase().trim();
 
-  // keep final path segment (strip provider prefixes), handle pipe/colon
   s = s.replace(/^.*\//, '');
   s = s.split('|').pop() ?? s;
   s = s.split(':').pop() ?? s;
 
-  // collapse whitespace to single hyphen
   s = s.replace(/\s+/g, '-');
 
-  // remove trailing build / date / revision suffixes:
-  // - dates (e.g., -20250219), -v1, version numbers, 'latest', 'preview' etc.
   s = s.replace(/-preview/g, '');
-  // Special handling for model names that include date/version as part of the model identifier
-  // - Qwen models: qwen-plus-latest, qwen-flash-latest, qwen-vl-max-latest
-  // - Kimi models: kimi-k2-0905, kimi-k2-0711, etc. (keep date for version distinction)
   if (
     !s.match(/^qwen-(?:plus|flash|vl-max)-latest$/) &&
     !s.match(/^kimi-k2-\d{4}$/)
   ) {
-    // Regex breakdown:
-    // -(?:...)$ - Non-capturing group for suffixes at the end of the string
-    // The following patterns are matched within the group:
-    //   \d{4,} - Match 4 or more digits (dates) like -20250219 -0528 (4+ digit dates)
-    //   \d+x\d+b - Match patterns like 4x8b, -7b, -70b
-    //   v\d+(?:\.\d+)* - Match version patterns starting with 'v' like -v1, -v1.2, -v2.1.3
-    //   (?<=-[^-]+-)\d+(?:\.\d+)+ - Match version numbers with dots that are preceded by another dash,
-    //     like -1.1, -2.0.1 but only when they are preceded by another dash, Example: model-test-1.1 → model-test;
-    //     Note: this does NOT match 4.1 in gpt-4.1 because there's no dash before -4.1 in that context.
-    //   latest|exp - Match the literal string "latest" or "exp"
     s = s.replace(
       /-(?:\d{4,}|\d+x\d+b|v\d+(?:\.\d+)*|(?<=-[^-]+-)\d+(?:\.\d+)+|latest|exp)$/g,
       '',
     );
   }
 
-  // remove quantization / numeric / precision suffixes common in local/community models
   s = s.replace(/-(?:\d?bit|int[48]|bf16|fp16|q[45]|quantized)$/g, '');
 
   return s;
 }
 
-/** Ordered regex patterns: most specific -> most general (first match wins). */
 const PATTERNS: Array<[RegExp, TokenCount]> = [
   // -------------------
   // Google Gemini
@@ -183,11 +158,6 @@ const PATTERNS: Array<[RegExp, TokenCount]> = [
   [/^mistral-large-2.*$/, LIMITS['128k']],
 ];
 
-/**
- * Output token limit patterns for specific model families.
- * These patterns define the maximum number of tokens that can be generated
- * in a single response for specific models.
- */
 const OUTPUT_PATTERNS: Array<[RegExp, TokenCount]> = [
   // -------------------
   // Alibaba / Qwen - DashScope Models
@@ -217,24 +187,11 @@ const OUTPUT_PATTERNS: Array<[RegExp, TokenCount]> = [
   [/^deepseek-reasoner$/, LIMITS['64k']],
 ];
 
-/**
- * Return the token limit for a model string based on the specified type.
- *
- * This function determines the maximum number of tokens for either input context
- * or output generation based on the model and token type. It uses the same
- * normalization logic for consistency across both input and output limits.
- *
- * @param model - The model name to get the token limit for
- * @param type - The type of token limit ('input' for context window, 'output' for generation)
- * @returns The maximum number of tokens allowed for this model and type
- */
 export function tokenLimit(
   model: Model,
   type: TokenLimitType = 'input',
 ): TokenCount {
   const norm = normalize(model);
-
-  // Choose the appropriate patterns based on token type
   const patterns = type === 'output' ? OUTPUT_PATTERNS : PATTERNS;
 
   for (const [regex, limit] of patterns) {
@@ -243,6 +200,5 @@ export function tokenLimit(
     }
   }
 
-  // Return appropriate default based on token type
   return type === 'output' ? DEFAULT_OUTPUT_TOKEN_LIMIT : DEFAULT_TOKEN_LIMIT;
 }
