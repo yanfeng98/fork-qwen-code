@@ -40,9 +40,6 @@ interface StructuredError {
   status: number;
 }
 
-/**
- * A decorator that wraps a ContentGenerator to add logging to API calls.
- */
 export class LoggingContentGenerator implements ContentGenerator {
   private openaiLogger?: OpenAILogger;
   private schemaCompliance?: 'auto' | 'openapi_30';

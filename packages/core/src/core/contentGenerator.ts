@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import type {
   CountTokensParameters,
   CountTokensResponse,
@@ -16,9 +10,6 @@ import { DEFAULT_QWEN_MODEL } from '../config/models.js';
 import type { Config } from '../config/config.js';
 import { LoggingContentGenerator } from './loggingContentGenerator/index.js';
 
-/**
- * Interface abstracting the core functionalities for generating content and counting tokens.
- */
 export interface ContentGenerator {
   generateContent(
     request: GenerateContentParameters,
@@ -53,9 +44,9 @@ export type ContentGeneratorConfig = {
   authType?: AuthType | undefined;
   enableOpenAILogging?: boolean;
   openAILoggingDir?: string;
-  timeout?: number; // Timeout configuration in milliseconds
-  maxRetries?: number; // Maximum retries for failed requests
-  disableCacheControl?: boolean; // Disable cache control for DashScope providers
+  timeout?: number;
+  maxRetries?: number;
+  disableCacheControl?: boolean;
   samplingParams?: {
     top_p?: number;
     top_k?: number;
@@ -73,7 +64,6 @@ export type ContentGeneratorConfig = {
       };
   proxy?: string | undefined;
   userAgent?: string;
-  // Schema compliance mode for tool definitions
   schemaCompliance?: 'auto' | 'openapi_30';
 };
 
@@ -185,12 +175,10 @@ export async function createContentGenerator(
       throw new Error('OPENAI_API_KEY environment variable not found.');
     }
 
-    // Import OpenAIContentGenerator dynamically to avoid circular dependencies
     const { createOpenAIContentGenerator } = await import(
       './openaiContentGenerator/index.js'
     );
 
-    // Always use OpenAIContentGenerator, logging is controlled by enableOpenAILogging flag
     const generator = createOpenAIContentGenerator(config, gcConfig);
     return new LoggingContentGenerator(generator, gcConfig);
   }

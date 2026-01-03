@@ -227,14 +227,12 @@ export class ContentGenerationPipeline {
   ): Promise<OpenAI.Chat.ChatCompletionCreateParams> {
     const messages = this.converter.convertGeminiRequestToOpenAI(request);
 
-    // Apply provider-specific enhancements
     const baseRequest: OpenAI.Chat.ChatCompletionCreateParams = {
       model: this.contentGeneratorConfig.model,
       messages,
       ...this.buildGenerateContentConfig(request),
     };
 
-    // Add streaming options if present
     if (streaming) {
       (
         baseRequest as unknown as OpenAI.Chat.ChatCompletionCreateParamsStreaming
@@ -242,14 +240,12 @@ export class ContentGenerationPipeline {
       baseRequest.stream_options = { include_usage: true };
     }
 
-    // Add tools if present
     if (request.config?.tools) {
       baseRequest.tools = await this.converter.convertGeminiToolsToOpenAI(
         request.config.tools,
       );
     }
 
-    // Let provider enhance the request (e.g., add metadata, cache control)
     return this.config.provider.buildRequest(baseRequest, userPromptId);
   }
 
@@ -328,9 +324,6 @@ export class ContentGenerationPipeline {
     };
   }
 
-  /**
-   * Common error handling wrapper for execute methods
-   */
   private async executeWithErrorHandling<T>(
     request: GenerateContentParameters,
     userPromptId: string,
@@ -354,7 +347,6 @@ export class ContentGenerationPipeline {
       context.duration = Date.now() - context.startTime;
       return result;
     } catch (error) {
-      // Use shared error handling logic
       return await this.handleError(error, context, request);
     }
   }
@@ -372,9 +364,6 @@ export class ContentGenerationPipeline {
     this.config.errorHandler.handle(error, context, request);
   }
 
-  /**
-   * Create request context with common properties
-   */
   private createRequestContext(
     userPromptId: string,
     isStreaming: boolean,

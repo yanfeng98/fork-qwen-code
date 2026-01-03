@@ -5,9 +5,6 @@ import type { ContentGeneratorConfig } from '../../contentGenerator.js';
 import { DEFAULT_TIMEOUT, DEFAULT_MAX_RETRIES } from '../constants.js';
 import type { OpenAICompatibleProvider } from './types.js';
 
-/**
- * Default provider for standard OpenAI-compatible APIs
- */
 export class DefaultOpenAICompatibleProvider
   implements OpenAICompatibleProvider
 {

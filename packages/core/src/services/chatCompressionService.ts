@@ -25,7 +25,7 @@ export function findCompressSplitPoint(
   const totalCharCount = charCounts.reduce((a, b) => a + b, 0);
   const targetCharCount = totalCharCount * fraction;
 
-  let lastSplitPoint = 0; // 0 is always valid (compress nothing)
+  let lastSplitPoint = 0;
   let cumulativeCharCount = 0;
   for (let i = 0; i < contents.length; i++) {
     const content = contents[i];
@@ -41,8 +41,6 @@ export function findCompressSplitPoint(
     cumulativeCharCount += charCounts[i];
   }
 
-  // We found no split points after targetCharCount.
-  // Check if it's safe to compress everything.
   const lastContent = contents[contents.length - 1];
   if (
     lastContent?.role === 'model' &&
@@ -51,7 +49,6 @@ export function findCompressSplitPoint(
     return contents.length;
   }
 
-  // Can't compress everything so just compress at last splitpoint.
   return lastSplitPoint;
 }
 
