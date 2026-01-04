@@ -50,7 +50,7 @@ export const WriteToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
 
     return (
       <ToolCallContainer
-        label={'Write'}
+        label={'WriteFile'}
         status="error"
         toolCallId={toolCallId}
         labelSuffix={
@@ -85,7 +85,7 @@ export const WriteToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
     const containerStatus = mapToolStatusToContainerStatus(toolCall.status);
     return (
       <ToolCallContainer
-        label={'Created'}
+        label={'WriteFile'}
         status={containerStatus}
         toolCallId={toolCallId}
         labelSuffix={
@@ -111,7 +111,7 @@ export const WriteToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
     const containerStatus = mapToolStatusToContainerStatus(toolCall.status);
     return (
       <ToolCallContainer
-        label="Write"
+        label="WriteFile"
         status={containerStatus}
         toolCallId={toolCallId}
       >

@@ -53,8 +53,22 @@ export const ToolCallContainer: React.FC<ToolCallContainerProps> = ({
  * Shows: Read filename (no content preview)
  */
 export const ReadToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
-  const { content, locations, toolCallId } = toolCall;
+  const { kind, content, locations, toolCallId } = toolCall;
   const vscode = useVSCode();
+
+  // Map tool call kind to appropriate display name
+  const getDisplayLabel = (): string => {
+    const normalizedKind = kind.toLowerCase();
+    if (normalizedKind === 'read_many_files') {
+      return 'ReadManyFiles';
+    } else if (normalizedKind === 'list_directory' || normalizedKind === 'ls') {
+      return 'ListFiles';
+    } else if (normalizedKind === 'skill') {
+      return 'Skill';
+    } else {
+      return 'ReadFile'; // default for read_file tools
+    }
+  };
 
   // Group content by type; memoize to avoid new array identities on every render
   const { errors, diffs } = useMemo(() => groupContent(content), [content]);
@@ -105,7 +119,7 @@ export const ReadToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
     const path = locations?.[0]?.path || '';
     return (
       <ToolCallContainer
-        label={'Read'}
+        label={getDisplayLabel()}
         className="read-tool-call-error"
         status="error"
         toolCallId={toolCallId}
@@ -129,7 +143,7 @@ export const ReadToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
     const path = diffs[0]?.path || locations?.[0]?.path || '';
     return (
       <ToolCallContainer
-        label={'Read'}
+        label={getDisplayLabel()}
         className="read-tool-call-success"
         status={containerStatus}
         toolCallId={toolCallId}
@@ -153,7 +167,7 @@ export const ReadToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
     const path = locations[0].path;
     return (
       <ToolCallContainer
-        label={'Read'}
+        label={getDisplayLabel()}
         className="read-tool-call-success"
         status={containerStatus}
         toolCallId={toolCallId}

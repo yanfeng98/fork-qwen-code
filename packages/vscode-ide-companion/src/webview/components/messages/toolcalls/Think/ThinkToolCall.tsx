@@ -29,7 +29,7 @@ export const ThinkToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
   // Error case (rare for thinking)
   if (errors.length > 0) {
     return (
-      <ToolCallContainer label="Thinking" status="error">
+      <ToolCallContainer label="SaveMemory" status="error">
         {errors.join('\n')}
       </ToolCallContainer>
     );
@@ -46,7 +46,7 @@ export const ThinkToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
 
       return (
         <ToolCallCard icon="💭">
-          <ToolCallRow label="Thinking">
+          <ToolCallRow label="SaveMemory">
             <div className="italic opacity-90 leading-relaxed">
               {truncatedThoughts}
             </div>
@@ -61,7 +61,7 @@ export const ThinkToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
         ? 'loading'
         : 'default';
     return (
-      <ToolCallContainer label="Thinking" status={status}>
+      <ToolCallContainer label="SaveMemory" status={status}>
         <span className="italic opacity-90">{thoughts}</span>
       </ToolCallContainer>
     );

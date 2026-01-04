@@ -112,7 +112,7 @@ export const UpdatedPlanToolCall: React.FC<BaseToolCallProps> = ({
   // Error-first display
   if (errors.length > 0) {
     return (
-      <ToolCallContainer label="Updated Plan" status="error">
+      <ToolCallContainer label="TodoWrite" status="error">
         {errors.join('\n')}
       </ToolCallContainer>
     );
@@ -120,7 +120,7 @@ export const UpdatedPlanToolCall: React.FC<BaseToolCallProps> = ({
 
   const entries = parsePlanEntries(textOutputs);
 
-  const label = safeTitle(toolCall.title) || 'Updated Plan';
+  const label = safeTitle(toolCall.title) || 'TodoWrite';
 
   return (
     <ToolCallContainer

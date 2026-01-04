@@ -26,7 +26,8 @@ const InlineContainer: React.FC<{
   children?: React.ReactNode;
   isFirst?: boolean;
   isLast?: boolean;
-}> = ({ status, labelSuffix, children, isFirst, isLast }) => {
+  displayLabel: string;
+}> = ({ status, labelSuffix, children, isFirst, isLast, displayLabel }) => {
   const beforeStatusClass = `toolcall-container toolcall-status-${status}`;
   const lineCropTop = isFirst ? 'top-[24px]' : 'top-0';
   const lineCropBottom = isLast
@@ -48,7 +49,7 @@ const InlineContainer: React.FC<{
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-2 min-w-0">
           <span className="text-[14px] leading-none font-bold text-[var(--app-primary-foreground)]">
-            Search
+            {displayLabel}
           </span>
           {labelSuffix ? (
             <span className="text-[11px] text-[var(--app-secondary-foreground)]">
@@ -134,8 +135,22 @@ export const SearchToolCall: React.FC<BaseToolCallProps> = ({
   isFirst,
   isLast,
 }) => {
-  const { title, content, locations } = toolCall;
+  const { kind, title, content, locations } = toolCall;
   const queryText = safeTitle(title);
+
+  // Map tool call kind to appropriate display name
+  const getDisplayLabel = (): string => {
+    const normalizedKind = kind.toLowerCase();
+    if (normalizedKind === 'grep' || normalizedKind === 'grep_search') {
+      return 'Grep';
+    } else if (normalizedKind === 'glob') {
+      return 'Glob';
+    } else if (normalizedKind === 'web_search') {
+      return 'WebSearch';
+    } else {
+      return 'Search'; // fallback for other search-like tools
+    }
+  };
 
   // Group content by type
   const { errors, textOutputs } = groupContent(content);
@@ -144,7 +159,7 @@ export const SearchToolCall: React.FC<BaseToolCallProps> = ({
   if (errors.length > 0) {
     return (
       <SearchCard status="error" isFirst={isFirst} isLast={isLast}>
-        <SearchRow label="Search">
+        <SearchRow label={getDisplayLabel()}>
           <div className="font-mono">{queryText}</div>
         </SearchRow>
         <SearchRow label="Error">
@@ -161,7 +176,7 @@ export const SearchToolCall: React.FC<BaseToolCallProps> = ({
     if (locations.length > 1) {
       return (
         <SearchCard status={containerStatus} isFirst={isFirst} isLast={isLast}>
-          <SearchRow label="Search">
+          <SearchRow label={getDisplayLabel()}>
             <div className="font-mono">{queryText}</div>
           </SearchRow>
           <SearchRow label={`Found (${locations.length})`}>
@@ -177,6 +192,7 @@ export const SearchToolCall: React.FC<BaseToolCallProps> = ({
         labelSuffix={`(${queryText})`}
         isFirst={isFirst}
         isLast={isLast}
+        displayLabel={getDisplayLabel()}
       >
         <span className="mx-2 opacity-50">→</span>
         <LocationsListLocal locations={locations} />
@@ -193,6 +209,7 @@ export const SearchToolCall: React.FC<BaseToolCallProps> = ({
         labelSuffix={queryText ? `(${queryText})` : undefined}
         isFirst={isFirst}
         isLast={isLast}
+        displayLabel={getDisplayLabel()}
       >
         <div className="flex flex-col">
           {textOutputs.map((text: string, index: number) => (
@@ -217,6 +234,7 @@ export const SearchToolCall: React.FC<BaseToolCallProps> = ({
         status={containerStatus}
         isFirst={isFirst}
         isLast={isLast}
+        displayLabel={getDisplayLabel()}
       >
         <span className="font-mono">{queryText}</span>
       </InlineContainer>
