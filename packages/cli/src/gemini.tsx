@@ -248,6 +248,8 @@ export async function main() {
         [],
         new ExtensionEnablementManager(ExtensionStorage.getUserExtensionsDir()),
         argv,
+        undefined,
+        { startLsp: false },
       );
 
       if (
