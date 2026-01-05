@@ -1,10 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { NativeLspService } from './NativeLspService.js';
-import type { Config as CoreConfig } from '@qwen-code/qwen-code-core';
-import { WorkspaceContext } from '@qwen-code/qwen-code-core';
+import type {
+  Config as CoreConfig,
+  WorkspaceContext,
+  FileDiscoveryService,
+  IdeContextStore,
+} from '@qwen-code/qwen-code-core';
 import { EventEmitter } from 'events';
-import { FileDiscoveryService } from '@qwen-code/qwen-code-core';
-import { IdeContextStore } from '@qwen-code/qwen-code-core';
 
 // 模拟依赖项
 class MockConfig {
@@ -33,11 +35,11 @@ class MockWorkspaceContext {
   async readFile(path: string): Promise<string> {
     if (path.includes('.lsp.json')) {
       return JSON.stringify({
-        'typescript': {
-          'command': 'typescript-language-server',
-          'args': ['--stdio'],
-          'transport': 'stdio'
-        }
+        typescript: {
+          command: 'typescript-language-server',
+          args: ['--stdio'],
+          transport: 'stdio',
+        },
       });
     }
     return '{}';
@@ -57,13 +59,16 @@ class MockWorkspaceContext {
 }
 
 class MockFileDiscoveryService {
-  async discoverFiles(root: string, options: any): Promise<string[]> {
+  async discoverFiles(
+    root: string,
+    options: Record<string, unknown>,
+  ): Promise<string[]> {
     // 模拟发现一些文件
     return [
       '/test/workspace/src/index.ts',
       '/test/workspace/src/utils.ts',
       '/test/workspace/server.py',
-      '/test/workspace/main.go'
+      '/test/workspace/main.go',
     ];
   }
 
@@ -92,11 +97,11 @@ describe('NativeLspService', () => {
     eventEmitter = new EventEmitter();
 
     lspService = new NativeLspService(
-      mockConfig as any,
-      mockWorkspace as any,
+      mockConfig as CoreConfig,
+      mockWorkspace as WorkspaceContext,
       eventEmitter,
-      mockFileDiscovery as any,
-      mockIdeStore as any
+      mockFileDiscovery as FileDiscoveryService,
+      mockIdeStore as IdeContextStore,
     );
   });
 

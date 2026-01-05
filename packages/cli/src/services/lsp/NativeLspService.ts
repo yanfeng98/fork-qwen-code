@@ -1,15 +1,18 @@
-import type { Config as CoreConfig } from '@qwen-code/qwen-code-core';
-import type { WorkspaceContext } from '@qwen-code/qwen-code-core';
-import type { EventEmitter } from 'events';
-import type { FileDiscoveryService } from '@qwen-code/qwen-code-core';
-import type { IdeContextStore } from '@qwen-code/qwen-code-core';
-import { LspConnectionFactory } from './LspConnectionFactory.js';
 import type {
+  Config as CoreConfig,
+  WorkspaceContext,
+  FileDiscoveryService,
+  IdeContextStore,
   LspLocation,
   LspDefinition,
   LspReference,
   LspSymbolInformation,
 } from '@qwen-code/qwen-code-core';
+import type { EventEmitter } from 'events';
+import {
+  LspConnectionFactory,
+  type JsonRpcMessage,
+} from './LspConnectionFactory.js';
 import * as path from 'path';
 import { pathToFileURL } from 'url';
 import { spawn, type ChildProcess } from 'node:child_process';
@@ -18,7 +21,7 @@ import { globSync } from 'glob';
 
 // 定义 LSP 初始化选项的类型
 interface LspInitializationOptions {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 // 定义 LSP 服务器配置类型
@@ -36,11 +39,11 @@ interface LspServerConfig {
 // 定义 LSP 连接接口
 interface LspConnectionInterface {
   listen: (readable: NodeJS.ReadableStream) => void;
-  send: (message: any) => void;
-  onNotification: (handler: (notification: any) => void) => void;
-  onRequest: (handler: (request: any) => Promise<any>) => void;
-  request: (method: string, params: any) => Promise<any>;
-  initialize: (params: any) => Promise<any>;
+  send: (message: JsonRpcMessage) => void;
+  onNotification: (handler: (notification: JsonRpcMessage) => void) => void;
+  onRequest: (handler: (request: JsonRpcMessage) => Promise<unknown>) => void;
+  request: (method: string, params: unknown) => Promise<unknown>;
+  initialize: (params: unknown) => Promise<unknown>;
   shutdown: () => Promise<void>;
   end: () => void;
 }
@@ -90,7 +93,7 @@ export class NativeLspService {
     this.excludedServers = options.excludedServers?.filter(Boolean);
     this.requireTrustedWorkspace = options.requireTrustedWorkspace ?? true;
     this.workspaceRoot =
-      options.workspaceRoot ?? (config as any).getProjectRoot();
+      options.workspaceRoot ?? (config as CoreConfig).getProjectRoot();
   }
 
   /**
@@ -462,15 +465,19 @@ export class NativeLspService {
   }
 
   private normalizeLocationResult(
-    item: any,
+    item: unknown,
     serverName: string,
   ): LspReference | null {
-    const uri = item?.uri ?? item?.targetUri ?? item?.target?.uri;
+    const itemObj = item as Record<string, unknown>;
+    const uri =
+      itemObj?.uri ??
+      itemObj?.targetUri ??
+      (itemObj?.target as Record<string, unknown>)?.uri;
     const range =
-      item?.range ??
-      item?.targetSelectionRange ??
-      item?.targetRange ??
-      item?.target?.range;
+      itemObj?.range ??
+      itemObj?.targetSelectionRange ??
+      itemObj?.targetRange ??
+      (itemObj?.target as Record<string, unknown>)?.range;
 
     if (!uri || !range?.start || !range?.end) {
       return null;
@@ -493,12 +500,17 @@ export class NativeLspService {
   }
 
   private normalizeSymbolResult(
-    item: any,
+    item: unknown,
     serverName: string,
   ): LspSymbolInformation | null {
-    const location = item?.location ?? item?.target ?? item;
+    const itemObj = item as Record<string, unknown>;
+    const location = itemObj?.location ?? itemObj?.target ?? itemObj;
+    const locationObj = location as Record<string, unknown>;
     const range =
-      location?.range ?? location?.targetRange ?? item?.range ?? undefined;
+      locationObj?.range ??
+      locationObj?.targetRange ??
+      itemObj?.range ??
+      undefined;
 
     if (!location?.uri || !range?.start || !range?.end) {
       return null;
@@ -581,7 +593,7 @@ export class NativeLspService {
         args: ['--stdio'],
         transport: 'stdio',
         initializationOptions: {},
-        rootUri: rootUri,
+        rootUri,
         trustRequired: true,
       });
     }
@@ -594,7 +606,7 @@ export class NativeLspService {
         args: [],
         transport: 'stdio',
         initializationOptions: {},
-        rootUri: rootUri,
+        rootUri,
         trustRequired: true,
       });
     }
@@ -607,7 +619,7 @@ export class NativeLspService {
         args: [],
         transport: 'stdio',
         initializationOptions: {},
-        rootUri: rootUri,
+        rootUri,
         trustRequired: true,
       });
     }
@@ -633,7 +645,7 @@ export class NativeLspService {
         if (userConfig && typeof userConfig === 'object') {
           for (const [langId, serverSpec] of Object.entries(userConfig) as [
             string,
-            any,
+            Record<string, unknown>,
           ]) {
             // 转换为文件 URI 格式
             const rootUri = pathToFileURL(this.workspaceRoot).toString();
@@ -651,7 +663,7 @@ export class NativeLspService {
               args: serverSpec.args || [],
               transport: serverSpec.transport || 'stdio',
               initializationOptions: serverSpec.initializationOptions,
-              rootUri: rootUri,
+              rootUri,
               trustRequired: serverSpec.trustRequired ?? true,
             };
 
@@ -715,7 +727,9 @@ export class NativeLspService {
     }
 
     // 检查路径安全性
-    if (!this.isPathSafe(handle.config.command, (this.config as any).cwd)) {
+    if (
+      !this.isPathSafe(handle.config.command, (this.config as CoreConfig).cwd)
+    ) {
       console.warn(
         `LSP 服务器 ${name} 的命令路径不安全: ${handle.config.command}`,
       );
@@ -773,7 +787,7 @@ export class NativeLspService {
     process: ChildProcess;
     shutdown: () => Promise<void>;
     exit: () => void;
-    initialize: (params: any) => Promise<any>;
+    initialize: (params: unknown) => Promise<unknown>;
   }> {
     if (config.transport === 'stdio') {
       // 修复：使用 cwd 作为 cwd 而不是 rootUri
@@ -795,9 +809,8 @@ export class NativeLspService {
           }
           lspConnection.connection.end();
         },
-        initialize: async (params: any) => {
-          return lspConnection.connection.initialize(params);
-        },
+        initialize: async (params: unknown) =>
+          lspConnection.connection.initialize(params),
       };
     } else if (config.transport === 'tcp') {
       // 如果需要 TCP 支持，可以扩展此部分
@@ -866,7 +879,9 @@ export class NativeLspService {
         const tsFile = this.findFirstTypescriptFile();
         if (tsFile) {
           const uri = pathToFileURL(tsFile).toString();
-          const languageId = tsFile.endsWith('.tsx') ? 'typescriptreact' : 'typescript';
+          const languageId = tsFile.endsWith('.tsx')
+            ? 'typescriptreact'
+            : 'typescript';
           const text = fs.readFileSync(tsFile, 'utf-8');
           connection.connection.send({
             jsonrpc: '2.0',
@@ -1013,15 +1028,15 @@ export class NativeLspService {
     return handle.config.name.includes('typescript');
   }
 
-  private isNoProjectErrorResponse(response: any): boolean {
+  private isNoProjectErrorResponse(response: unknown): boolean {
     if (!response) {
       return false;
     }
     const message =
       typeof response === 'string'
         ? response
-        : typeof response?.message === 'string'
-          ? response.message
+        : typeof (response as Record<string, unknown>)?.message === 'string'
+          ? ((response as Record<string, unknown>).message as string)
           : '';
     return message.includes('No Project');
   }

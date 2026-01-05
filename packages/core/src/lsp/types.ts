@@ -31,9 +31,9 @@ export interface LspSymbolInformation {
   serverName?: string;
 }
 
-export interface LspReference extends LspLocationWithServer {}
+export type LspReference = LspLocationWithServer;
 
-export interface LspDefinition extends LspLocationWithServer {}
+export type LspDefinition = LspLocationWithServer;
 
 export interface LspClient {
   workspaceSymbols(

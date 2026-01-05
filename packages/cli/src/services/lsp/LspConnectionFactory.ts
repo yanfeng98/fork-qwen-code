@@ -12,8 +12,11 @@ class JsonRpcConnection {
   private nextId = 1;
   private disposed = false;
   private pendingRequests = new Map<number, PendingRequest>();
-  private notificationHandlers: Array<(notification: JsonRpcMessage) => void> = [];
-  private requestHandlers: Array<(request: JsonRpcMessage) => Promise<unknown>> = [];
+  private notificationHandlers: Array<(notification: JsonRpcMessage) => void> =
+    [];
+  private requestHandlers: Array<
+    (request: JsonRpcMessage) => Promise<unknown>
+  > = [];
 
   constructor(
     private readonly writer: (data: string) => void,
@@ -229,12 +232,12 @@ interface JsonRpcMessage {
   jsonrpc: string;
   id?: number | string;
   method?: string;
-  params?: any;
-  result?: any;
+  params?: unknown;
+  result?: unknown;
   error?: {
     code: number;
     message: string;
-    data?: any;
+    data?: unknown;
   };
 }
 
