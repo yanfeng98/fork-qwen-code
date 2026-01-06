@@ -1,14 +1,11 @@
-/**
- * @license
- * Copyright 2025 Qwen
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { useCallback } from 'react';
 import { useStdin } from 'ink';
 import type { EditorType } from '@qwen-code/qwen-code-core';
-import { editorCommands } from '@qwen-code/qwen-code-core';
-import { spawnSync, execSync } from 'child_process';
+import {
+  editorCommands,
+  commandExists as coreCommandExists,
+} from '@qwen-code/qwen-code-core';
+import { spawnSync } from 'child_process';
 import { useSettings } from '../contexts/SettingsContext.js';
 
 /**
@@ -17,7 +14,7 @@ import { useSettings } from '../contexts/SettingsContext.js';
 const commandExistsCache = new Map<string, boolean>();
 
 /**
- * Check if a command exists in the system.
+ * Check if a command exists in the system with caching.
  * Results are cached to improve performance in test environments.
  */
 function commandExists(cmd: string): boolean {
@@ -25,19 +22,10 @@ function commandExists(cmd: string): boolean {
     return commandExistsCache.get(cmd)!;
   }
 
-  try {
-    execSync(
-      process.platform === 'win32' ? `where.exe ${cmd}` : `command -v ${cmd}`,
-      { stdio: 'ignore' },
-    );
-    commandExistsCache.set(cmd, true);
-    return true;
-  } catch {
-    commandExistsCache.set(cmd, false);
-    return false;
-  }
+  const exists = coreCommandExists(cmd);
+  commandExistsCache.set(cmd, exists);
+  return exists;
 }
-
 /**
  * Get the actual executable command for an editor type.
  */
@@ -46,11 +34,9 @@ function getExecutableCommand(editorType: EditorType): string {
   const commands =
     process.platform === 'win32' ? commandConfig.win32 : commandConfig.default;
 
-  // Try to find the first available command
-  const availableCommand = commands.find((cmd) => commandExists(cmd));
-
-  // Return the first available command, or fall back to the last one in the list
-  return availableCommand || commands[commands.length - 1];
+  // For editors with multiple commands (like zed), try to find the first available one
+  // Otherwise, just return the first (and only) command
+  return commands.find((cmd) => commandExists(cmd)) || commands[0];
 }
 
 /**
