@@ -34,9 +34,11 @@ function getExecutableCommand(editorType: EditorType): string {
   const commands =
     process.platform === 'win32' ? commandConfig.win32 : commandConfig.default;
 
-  // For editors with multiple commands (like zed), try to find the first available one
-  // Otherwise, just return the first (and only) command
-  return commands.find((cmd) => commandExists(cmd)) || commands[0];
+  // Try to find the first available command
+  const availableCommand = commands.find((cmd) => commandExists(cmd));
+
+  // Return the first available command, or fall back to the last one in the list
+  return availableCommand || commands[commands.length - 1];
 }
 
 /**

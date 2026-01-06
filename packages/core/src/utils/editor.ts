@@ -110,9 +110,9 @@ export function getDiffCommand(
   const commandConfig = editorCommands[editor];
   const commands =
     process.platform === 'win32' ? commandConfig.win32 : commandConfig.default;
-  // For editors with multiple commands (like zed), try to find the first available one
-  // Otherwise, just use the first (and only) command
-  const command = commands.find((cmd) => commandExists(cmd)) || commands[0];
+  const command =
+    commands.slice(0, -1).find((cmd) => commandExists(cmd)) ||
+    commands[commands.length - 1];
 
   switch (editor) {
     case 'vscode':
