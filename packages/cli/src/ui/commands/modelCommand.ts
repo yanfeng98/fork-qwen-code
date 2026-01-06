@@ -29,7 +29,7 @@ export const modelCommand: SlashCommand = {
       return {
         type: 'message',
         messageType: 'error',
-        content: 'Configuration not available.',
+        content: t('Configuration not available.'),
       };
     }
 

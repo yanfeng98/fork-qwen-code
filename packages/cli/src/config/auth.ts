@@ -10,6 +10,7 @@ import type {
   ProviderModelConfig,
 } from '@qwen-code/qwen-code-core';
 import { loadEnvironment, loadSettings, type Settings } from './settings.js';
+import { t } from '../i18n/index.js';
 
 /**
  * Default environment variable names for each auth type
@@ -89,9 +90,9 @@ export function validateAuthMethod(authMethod: string): string | null {
       const envKeyHint = checkedEnvKey
         ? `'${checkedEnvKey}'`
         : "'OPENAI_API_KEY' (or configure modelProviders[].envKey)";
-      return (
-        'Missing API key for OpenAI-compatible auth. ' +
-        `Set settings.security.auth.apiKey, or set the ${envKeyHint} environment variable.`
+      return t(
+        'Missing API key for OpenAI-compatible auth. Set settings.security.auth.apiKey, or set the {{envKeyHint}} environment variable.',
+        { envKeyHint },
       );
     }
     return null;
@@ -110,7 +111,9 @@ export function validateAuthMethod(authMethod: string): string | null {
     );
     if (!hasKey) {
       const envKeyHint = checkedEnvKey || 'ANTHROPIC_API_KEY';
-      return `${envKeyHint} environment variable not found.`;
+      return t('{{envKeyHint}} environment variable not found.', {
+        envKeyHint,
+      });
     }
 
     // Check baseUrl - can come from modelProviders or environment
@@ -122,7 +125,9 @@ export function validateAuthMethod(authMethod: string): string | null {
     const hasBaseUrl =
       modelConfig?.baseUrl || process.env['ANTHROPIC_BASE_URL'];
     if (!hasBaseUrl) {
-      return 'ANTHROPIC_BASE_URL environment variable not found (or configure modelProviders[].baseUrl).';
+      return t(
+        'ANTHROPIC_BASE_URL environment variable not found (or configure modelProviders[].baseUrl).',
+      );
     }
 
     return null;
@@ -135,7 +140,10 @@ export function validateAuthMethod(authMethod: string): string | null {
     );
     if (!hasKey) {
       const envKeyHint = checkedEnvKey || 'GEMINI_API_KEY';
-      return `${envKeyHint} environment variable not found. Please set it in your .env file or environment variables.`;
+      return t(
+        '{{envKeyHint}} environment variable not found. Please set it in your .env file or environment variables.',
+        { envKeyHint },
+      );
     }
     return null;
   }
@@ -147,12 +155,15 @@ export function validateAuthMethod(authMethod: string): string | null {
     );
     if (!hasKey) {
       const envKeyHint = checkedEnvKey || 'GOOGLE_API_KEY';
-      return `${envKeyHint} environment variable not found. Please set it in your .env file or environment variables.`;
+      return t(
+        '{{envKeyHint}} environment variable not found. Please set it in your .env file or environment variables.',
+        { envKeyHint },
+      );
     }
 
     process.env['GOOGLE_GENAI_USE_VERTEXAI'] = 'true';
     return null;
   }
 
-  return 'Invalid auth method selected.';
+  return t('Invalid auth method selected.');
 }

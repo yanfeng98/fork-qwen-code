@@ -770,6 +770,15 @@ export default {
     'Authentication timed out. Please try again.',
   'Waiting for auth... (Press ESC or CTRL+C to cancel)':
     'Waiting for auth... (Press ESC or CTRL+C to cancel)',
+  'Missing API key for OpenAI-compatible auth. Set settings.security.auth.apiKey, or set the {{envKeyHint}} environment variable.':
+    'Missing API key for OpenAI-compatible auth. Set settings.security.auth.apiKey, or set the {{envKeyHint}} environment variable.',
+  '{{envKeyHint}} environment variable not found.':
+    '{{envKeyHint}} environment variable not found.',
+  '{{envKeyHint}} environment variable not found. Please set it in your .env file or environment variables.':
+    '{{envKeyHint}} environment variable not found. Please set it in your .env file or environment variables.',
+  'ANTHROPIC_BASE_URL environment variable not found (or configure modelProviders[].baseUrl).':
+    'ANTHROPIC_BASE_URL environment variable not found (or configure modelProviders[].baseUrl).',
+  'Invalid auth method selected.': 'Invalid auth method selected.',
   'Failed to authenticate. Message: {{message}}':
     'Failed to authenticate. Message: {{message}}',
   'Authenticated successfully with {{authType}} credentials.':
@@ -791,6 +800,15 @@ export default {
   // ============================================================================
   'Select Model': 'Select Model',
   '(Press Esc to close)': '(Press Esc to close)',
+  'Current (effective) configuration': 'Current (effective) configuration',
+  AuthType: 'AuthType',
+  'API Key': 'API Key',
+  unset: 'unset',
+  '(default)': '(default)',
+  '(set)': '(set)',
+  '(not set)': '(not set)',
+  "Failed to switch model to '{{modelId}}'.\n\n{{error}}":
+    "Failed to switch model to '{{modelId}}'.\n\n{{error}}",
   'The latest Qwen Coder model from Alibaba Cloud ModelStudio (version: qwen3-coder-plus-2025-09-23)':
     'The latest Qwen Coder model from Alibaba Cloud ModelStudio (version: qwen3-coder-plus-2025-09-23)',
   'The latest Qwen Vision model from Alibaba Cloud ModelStudio (version: qwen3-vl-plus-2025-09-23)':
