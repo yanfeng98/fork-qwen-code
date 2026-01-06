@@ -15,7 +15,6 @@ import type {
 
 // Config
 import { ApprovalMode, type Config } from '../config/config.js';
-import { DEFAULT_GEMINI_FLASH_MODEL } from '../config/models.js';
 
 // Core modules
 import type { ContentGenerator } from './contentGenerator.js';
@@ -542,11 +541,6 @@ export class GeminiClient {
       }
     }
     if (!turn.pendingToolCalls.length && signal && !signal.aborted) {
-      // Check if next speaker check is needed
-      if (this.config.getQuotaErrorOccurred()) {
-        return turn;
-      }
-
       if (this.config.getSkipNextSpeakerCheck()) {
         return turn;
       }
@@ -602,14 +596,11 @@ export class GeminiClient {
       };
 
       const apiCall = () => {
-        const modelToUse = this.config.isInFallbackMode()
-          ? DEFAULT_GEMINI_FLASH_MODEL
-          : model;
-        currentAttemptModel = modelToUse;
+        currentAttemptModel = model;
 
         return this.getContentGeneratorOrFail().generateContent(
           {
-            model: modelToUse,
+            model,
             config: requestConfig,
             contents,
           },

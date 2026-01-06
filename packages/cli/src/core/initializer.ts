@@ -45,7 +45,9 @@ export async function initializeApp(
   // Auto-detect and set LLM output language on first use
   initializeLlmOutputLanguage();
 
-  const authType = settings.merged.security?.auth?.selectedType;
+  // Use authType from modelsConfig which respects CLI --auth-type argument
+  // over settings.security.auth.selectedType
+  const authType = config.modelsConfig.getCurrentAuthType();
   const authError = await performInitialAuth(config, authType);
 
   // Fallback to user select when initial authentication fails
@@ -58,8 +60,13 @@ export async function initializeApp(
   }
   const themeError = validateTheme(settings);
 
+  // Open auth dialog if:
+  // 1. No authType was explicitly selected (neither from CLI --auth-type nor settings), OR
+  // 2. Authentication failed
+  // wasAuthTypeExplicitlyProvided() returns true if CLI or settings specified authType,
+  // false if using the default QWEN_OAUTH
   const shouldOpenAuthDialog =
-    settings.merged.security?.auth?.selectedType === undefined || !!authError;
+    !config.modelsConfig.wasAuthTypeExplicitlyProvided() || !!authError;
 
   if (config.getIdeMode()) {
     const ideClient = await IdeClient.getInstance();

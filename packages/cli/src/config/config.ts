@@ -31,10 +31,7 @@ import {
 } from '@qwen-code/qwen-code-core';
 import { extensionsCommand } from '../commands/extensions.js';
 import type { Settings } from './settings.js';
-import {
-  buildGenerationConfigSources,
-  getModelProvidersConfigFromSettings,
-} from '../utils/modelProviderUtils.js';
+import { resolveCliGenerationConfig } from '../utils/modelConfigUtils.js';
 import yargs, { type Argv } from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import * as fs from 'node:fs';
@@ -930,26 +927,21 @@ export async function loadCliConfig(
     (argv.authType as AuthType | undefined) ||
     settings.security?.auth?.selectedType;
 
-  const apiKey =
-    (selectedAuthType === AuthType.USE_OPENAI
-      ? argv.openaiApiKey ||
-        process.env['OPENAI_API_KEY'] ||
-        settings.security?.auth?.apiKey
-      : '') || '';
-  const baseUrl =
-    (selectedAuthType === AuthType.USE_OPENAI
-      ? argv.openaiBaseUrl ||
-        process.env['OPENAI_BASE_URL'] ||
-        settings.security?.auth?.baseUrl
-      : '') || '';
-  const resolvedModel =
-    argv.model ||
-    (selectedAuthType === AuthType.USE_OPENAI
-      ? process.env['OPENAI_MODEL'] ||
-        process.env['QWEN_MODEL'] ||
-        settings.model?.name
-      : '') ||
-    '';
+  // Unified resolution of generation config with source attribution
+  const resolvedCliConfig = resolveCliGenerationConfig({
+    argv: {
+      model: argv.model,
+      openaiApiKey: argv.openaiApiKey,
+      openaiBaseUrl: argv.openaiBaseUrl,
+      openaiLogging: argv.openaiLogging,
+      openaiLoggingDir: argv.openaiLoggingDir,
+    },
+    settings,
+    selectedAuthType,
+    env: process.env as Record<string, string | undefined>,
+  });
+
+  const { model: resolvedModel } = resolvedCliConfig;
 
   const sandboxConfig = await loadSandboxConfig(settings, argv);
   const screenReader =
@@ -983,17 +975,7 @@ export async function loadCliConfig(
     }
   }
 
-  const modelProvidersConfig = getModelProvidersConfigFromSettings(settings);
-  const generationConfigSources = buildGenerationConfigSources({
-    argv: {
-      model: argv.model,
-      openaiApiKey: argv.openaiApiKey,
-      openaiBaseUrl: argv.openaiBaseUrl,
-    },
-    settings,
-    selectedAuthType,
-    env: process.env as Record<string, string | undefined>,
-  });
+  const modelProvidersConfig = settings.modelProviders;
 
   return new Config({
     sessionId,
@@ -1053,25 +1035,10 @@ export async function loadCliConfig(
     outputFormat,
     includePartialMessages,
     modelProvidersConfig,
-    generationConfigSources,
-    generationConfig: {
-      ...(settings.model?.generationConfig || {}),
-      model: resolvedModel,
-      apiKey,
-      baseUrl,
-      enableOpenAILogging:
-        (typeof argv.openaiLogging === 'undefined'
-          ? settings.model?.enableOpenAILogging
-          : argv.openaiLogging) ?? false,
-      openAILoggingDir:
-        argv.openaiLoggingDir || settings.model?.openAILoggingDir,
-    },
+    generationConfigSources: resolvedCliConfig.sources,
+    generationConfig: resolvedCliConfig.generationConfig,
     cliVersion: await getCliVersion(),
-    webSearch: buildWebSearchConfig(
-      argv,
-      settings,
-      settings.security?.auth?.selectedType,
-    ),
+    webSearch: buildWebSearchConfig(argv, settings, selectedAuthType),
     summarizeToolOutput: settings.model?.summarizeToolOutput,
     ideMode,
     chatCompression: settings.model?.chatCompression,

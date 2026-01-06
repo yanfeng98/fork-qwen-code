@@ -113,7 +113,7 @@ const SETTINGS_SCHEMA = {
     description:
       'Model providers configuration grouped by authType. Each authType contains an array of model configurations.',
     showInDialog: false,
-    mergeStrategy: MergeStrategy.SHALLOW_MERGE,
+    mergeStrategy: MergeStrategy.REPLACE,
   },
 
   general: {

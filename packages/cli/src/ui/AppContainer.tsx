@@ -32,7 +32,6 @@ import {
   type Config,
   type IdeInfo,
   type IdeContext,
-  DEFAULT_GEMINI_FLASH_MODEL,
   IdeClient,
   ideContextStore,
   getErrorMessage,
@@ -180,15 +179,10 @@ export const AppContainer = (props: AppContainerProps) => {
     [],
   );
 
-  // Helper to determine the effective model, considering the fallback state.
-  const getEffectiveModel = useCallback(() => {
-    if (config.isInFallbackMode()) {
-      return DEFAULT_GEMINI_FLASH_MODEL;
-    }
-    return config.getModel();
-  }, [config]);
+  // Helper to determine the current model (polled, since Config has no model-change event).
+  const getCurrentModel = useCallback(() => config.getModel(), [config]);
 
-  const [currentModel, setCurrentModel] = useState(getEffectiveModel());
+  const [currentModel, setCurrentModel] = useState(getCurrentModel());
 
   const [isConfigInitialized, setConfigInitialized] = useState(false);
 
@@ -241,12 +235,12 @@ export const AppContainer = (props: AppContainerProps) => {
     [historyManager.addItem],
   );
 
-  // Watch for model changes (e.g., from Flash fallback)
+  // Watch for model changes (e.g., user switches model via /model)
   useEffect(() => {
     const checkModelChange = () => {
-      const effectiveModel = getEffectiveModel();
-      if (effectiveModel !== currentModel) {
-        setCurrentModel(effectiveModel);
+      const model = getCurrentModel();
+      if (model !== currentModel) {
+        setCurrentModel(model);
       }
     };
 
@@ -254,7 +248,7 @@ export const AppContainer = (props: AppContainerProps) => {
     const interval = setInterval(checkModelChange, 1000); // Check every second
 
     return () => clearInterval(interval);
-  }, [config, currentModel, getEffectiveModel]);
+  }, [config, currentModel, getCurrentModel]);
 
   const {
     consoleMessages,

@@ -8,7 +8,6 @@ import type { Config } from '@qwen-code/qwen-code-core';
 import {
   AuthEvent,
   AuthType,
-  clearCachedCredentialFile,
   getErrorMessage,
   logAuth,
 } from '@qwen-code/qwen-code-core';
@@ -109,7 +108,6 @@ export const useAuthCommand = (
           if (credentials?.model != null) {
             settings.setValue(scope, 'model.name', credentials.model);
           }
-          await clearCachedCredentialFile();
         }
       } catch (error) {
         handleAuthFailure(error);
