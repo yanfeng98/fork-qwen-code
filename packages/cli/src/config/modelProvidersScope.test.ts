@@ -75,9 +75,7 @@ describe('getPersistScopeForModelSelection', () => {
       userModelProviders: undefined,
       workspaceModelProviders: undefined,
     });
-    expect(getPersistScopeForModelSelection(trusted)).toBe(
-      SettingScope.Workspace,
-    );
+    expect(getPersistScopeForModelSelection(trusted)).toBe(SettingScope.User);
 
     const untrusted = makeSettings({
       isTrusted: false,

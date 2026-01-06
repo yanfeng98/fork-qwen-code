@@ -182,12 +182,12 @@ describe('<ModelDialog />', () => {
       },
     );
     expect(mockSettings.setValue).toHaveBeenCalledWith(
-      SettingScope.Workspace,
+      SettingScope.User,
       'model.name',
       MAINLINE_CODER,
     );
     expect(mockSettings.setValue).toHaveBeenCalledWith(
-      SettingScope.Workspace,
+      SettingScope.User,
       'security.auth.selectedType',
       AuthType.QWEN_OAUTH,
     );
@@ -242,12 +242,12 @@ describe('<ModelDialog />', () => {
       },
     );
     expect(mockSettings.setValue).toHaveBeenCalledWith(
-      SettingScope.Workspace,
+      SettingScope.User,
       'model.name',
       MAINLINE_CODER,
     );
     expect(mockSettings.setValue).toHaveBeenCalledWith(
-      SettingScope.Workspace,
+      SettingScope.User,
       'security.auth.selectedType',
       AuthType.QWEN_OAUTH,
     );

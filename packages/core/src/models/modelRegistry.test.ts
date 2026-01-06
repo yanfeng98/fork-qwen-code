@@ -226,9 +226,7 @@ describe('ModelRegistry', () => {
     it('should apply default dashscope URL for qwen-oauth', () => {
       const registry = new ModelRegistry();
       const model = registry.getModel(AuthType.QWEN_OAUTH, 'coder-model');
-      expect(model?.baseUrl).toBe(
-        'https://dashscope.aliyuncs.com/compatible-mode/v1',
-      );
+      expect(model?.baseUrl).toBe('DYNAMIC_QWEN_OAUTH_BASE_URL');
     });
 
     it('should apply default openai URL when not specified', () => {
