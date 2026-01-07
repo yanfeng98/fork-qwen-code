@@ -12,6 +12,7 @@ import {
 import type { ExtensionInstallMetadata } from '@qwen-code/qwen-code-core';
 import { getErrorMessage } from '../../utils/errors.js';
 import { stat } from 'node:fs/promises';
+import { parseMarketplaceSource } from '../../config/extensions/marketplace.js';
 
 interface InstallArgs {
   source: string;
@@ -23,7 +24,20 @@ export async function handleInstall(args: InstallArgs) {
   try {
     let installMetadata: ExtensionInstallMetadata;
     const { source } = args;
-    if (
+
+    // Check if it's a marketplace source (format: marketplace-url:plugin-name)
+    const marketplaceParsed = parseMarketplaceSource(source);
+    if (marketplaceParsed) {
+      if (args.ref || args.autoUpdate) {
+        throw new Error(
+          '--ref and --auto-update are not applicable for marketplace extensions.',
+        );
+      }
+      installMetadata = {
+        source,
+        type: 'marketplace',
+      };
+    } else if (
       source.startsWith('http://') ||
       source.startsWith('https://') ||
       source.startsWith('git@') ||
@@ -65,11 +79,13 @@ export async function handleInstall(args: InstallArgs) {
 
 export const installCommand: CommandModule = {
   command: 'install <source>',
-  describe: 'Installs an extension from a git repository URL or a local path.',
+  describe:
+    'Installs an extension from a git repository URL, local path, or claude marketplace (marketplace-url:plugin-name).',
   builder: (yargs) =>
     yargs
       .positional('source', {
-        describe: 'The github URL or local path of the extension to install.',
+        describe:
+          'The github URL, local path, or marketplace source (marketplace-url:plugin-name) of the extension to install.',
         type: 'string',
         demandOption: true,
       })

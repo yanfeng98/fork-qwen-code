@@ -992,7 +992,7 @@ export const AppContainer = (props: AppContainerProps) => {
               historyManager.addItem(
                 {
                   type: MessageType.INFO,
-                  text: `✅ [${level}] Successfully migrated ${migrationResult.convertedFiles.length} command file${migrationResult.convertedFiles.length > 1 ? 's' : ''} to Markdown format. Original files backed up as .toml.backup`,
+                  text: `[${level}] Successfully migrated ${migrationResult.convertedFiles.length} command file${migrationResult.convertedFiles.length > 1 ? 's' : ''} to Markdown format. Original files backed up as .toml.backup`,
                 },
                 Date.now(),
               );
@@ -1002,7 +1002,7 @@ export const AppContainer = (props: AppContainerProps) => {
               historyManager.addItem(
                 {
                   type: MessageType.ERROR,
-                  text: `⚠️  [${level}] Failed to migrate ${migrationResult.failedFiles.length} file${migrationResult.failedFiles.length > 1 ? 's' : ''}:\n${migrationResult.failedFiles.map((f) => `  • ${f.file}: ${f.error}`).join('\n')}`,
+                  text: `[${level}] Failed to migrate ${migrationResult.failedFiles.length} file${migrationResult.failedFiles.length > 1 ? 's' : ''}:\n${migrationResult.failedFiles.map((f) => `  • ${f.file}: ${f.error}`).join('\n')}`,
                 },
                 Date.now(),
               );
@@ -1013,7 +1013,7 @@ export const AppContainer = (props: AppContainerProps) => {
             historyManager.addItem(
               {
                 type: MessageType.INFO,
-                text: 'ℹ️  No TOML files found to migrate.',
+                text: 'No TOML files found to migrate.',
               },
               Date.now(),
             );

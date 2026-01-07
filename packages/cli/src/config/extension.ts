@@ -38,6 +38,16 @@ import type { LoadExtensionContext } from './extensions/variableSchema.js';
 import { ExtensionEnablementManager } from './extensions/extensionEnablement.js';
 import chalk from 'chalk';
 import type { ConfirmationRequest } from '../ui/types.js';
+import {
+  installFromMarketplace,
+  parseMarketplaceSource,
+} from './extensions/marketplace.js';
+import { isClaudePluginConfig } from './extensions/claude-converter.js';
+import {
+  isGeminiExtensionConfig,
+  convertGeminiExtensionPackage,
+} from './extensions/gemini-converter.js';
+import { glob } from 'glob';
 
 export const EXTENSIONS_DIRECTORY_NAME = path.join(QWEN_DIR, 'extensions');
 
@@ -493,7 +503,27 @@ export async function installExtension(
 
     let tempDir: string | undefined;
 
-    if (
+    // Handle marketplace installation
+    if (installMetadata.type === 'marketplace') {
+      const marketplaceParsed = parseMarketplaceSource(installMetadata.source);
+      if (!marketplaceParsed) {
+        throw new Error(
+          `Invalid marketplace source format: ${installMetadata.source}. Expected format: marketplace-url:plugin-name`,
+        );
+      }
+
+      tempDir = await ExtensionStorage.createTmpDir();
+      const marketplaceResult = await installFromMarketplace({
+        marketplaceUrl: marketplaceParsed.marketplaceUrl,
+        pluginName: marketplaceParsed.pluginName,
+        tempDir,
+        requestConsent,
+      });
+
+      newExtensionConfig = marketplaceResult.config;
+      localSourcePath = marketplaceResult.sourcePath;
+      installMetadata = marketplaceResult.installMetadata;
+    } else if (
       installMetadata.type === 'git' ||
       installMetadata.type === 'github-release'
     ) {
@@ -520,10 +550,14 @@ export async function installExtension(
     }
 
     try {
-      newExtensionConfig = loadExtensionConfig({
-        extensionDir: localSourcePath,
-        workspaceDir: cwd,
-      });
+      localSourcePath = await convertGeminiOrClaudeExtension(localSourcePath);
+      // Load extension config if not already loaded (from marketplace)
+      if (!newExtensionConfig) {
+        newExtensionConfig = loadExtensionConfig({
+          extensionDir: localSourcePath,
+          workspaceDir: cwd,
+        });
+      }
 
       const newExtensionName = newExtensionConfig.name;
       const extensionStorage = new ExtensionStorage(newExtensionName);
@@ -539,9 +573,16 @@ export async function installExtension(
           `Extension "${newExtensionName}" is already installed. Please uninstall it first.`,
         );
       }
+
+      const commands = await loadCommandsFromDir(
+        `${localSourcePath}/commands`,
+        newExtensionConfig.name,
+      );
+
       await maybeRequestConsentOrFail(
         newExtensionConfig,
         requestConsent,
+        commands,
         previousExtensionConfig,
       );
       await fs.promises.mkdir(destinationPath, { recursive: true });
@@ -563,6 +604,9 @@ export async function installExtension(
     } finally {
       if (tempDir) {
         await fs.promises.rm(tempDir, { recursive: true, force: true });
+      }
+      if (localSourcePath !== tempDir) {
+        await fs.promises.rm(localSourcePath, { recursive: true, force: true });
       }
     }
 
@@ -608,7 +652,10 @@ export async function installExtension(
  * Builds a consent string for installing an extension based on it's
  * extensionConfig.
  */
-function extensionConsentString(extensionConfig: ExtensionConfig): string {
+function extensionConsentString(
+  extensionConfig: ExtensionConfig,
+  commands?: string[],
+): string {
   const output: string[] = [];
   const mcpServerEntries = Object.entries(extensionConfig.mcpServers || {});
   output.push(`Installing extension "${extensionConfig.name}".`);
@@ -625,6 +672,11 @@ function extensionConsentString(extensionConfig: ExtensionConfig): string {
         `${mcpServer.command || ''}${mcpServer.args ? ' ' + mcpServer.args.join(' ') : ''}`;
       output.push(`  * ${key} (${isLocal ? 'local' : 'remote'}): ${source}`);
     }
+  }
+  if (commands && commands.length > 0) {
+    output.push(
+      `This extension will add the following commands: ${commands.join(', ')}.`,
+    );
   }
   if (extensionConfig.contextFileName) {
     output.push(
@@ -651,9 +703,10 @@ function extensionConsentString(extensionConfig: ExtensionConfig): string {
 async function maybeRequestConsentOrFail(
   extensionConfig: ExtensionConfig,
   requestConsent: (consent: string) => Promise<boolean>,
+  commands: string[],
   previousExtensionConfig?: ExtensionConfig,
 ) {
-  const extensionConsent = extensionConsentString(extensionConfig);
+  const extensionConsent = extensionConsentString(extensionConfig, commands);
   if (previousExtensionConfig) {
     const previousExtensionConsent = extensionConsentString(
       previousExtensionConfig,
@@ -667,12 +720,69 @@ async function maybeRequestConsentOrFail(
   }
 }
 
+async function loadCommandsFromDir(
+  dir: string,
+  extensionName: string,
+): Promise<string[]> {
+  const globOptions = {
+    nodir: true,
+    dot: true,
+    follow: true,
+  };
+
+  try {
+    const mdFiles = await glob('**/*.md', {
+      ...globOptions,
+      cwd: dir,
+    });
+
+    const commandNames = mdFiles.map((file) => {
+      const relativePathWithExt = path.relative(dir, path.join(dir, file));
+      const relativePath = relativePathWithExt.substring(
+        0,
+        relativePathWithExt.length - 3,
+      );
+      const baseCommandName = relativePath
+        .split(path.sep)
+        .map((segment) => segment.replaceAll(':', '_'))
+        .join(':');
+
+      const commandName = `${extensionName}:${baseCommandName}`;
+      return commandName;
+    });
+
+    return commandNames;
+  } catch (error) {
+    // Ignore ENOENT (directory doesn't exist) and AbortError (operation was cancelled)
+    const isEnoent = (error as NodeJS.ErrnoException).code === 'ENOENT';
+    const isAbortError = error instanceof Error && error.name === 'AbortError';
+    if (!isEnoent && !isAbortError) {
+      console.error(`Error loading commands from ${dir}:`, error);
+    }
+    return [];
+  }
+}
+
 export function validateName(name: string) {
   if (!/^[a-zA-Z0-9-]+$/.test(name)) {
     throw new Error(
       `Invalid extension name: "${name}". Only letters (a-z, A-Z), numbers (0-9), and dashes (-) are allowed.`,
     );
   }
+}
+
+async function convertGeminiOrClaudeExtension(extensionDir: string) {
+  let newExtensionDir = extensionDir;
+  const configFilePath = path.join(extensionDir, EXTENSIONS_CONFIG_FILENAME);
+  if (fs.existsSync(configFilePath)) {
+    newExtensionDir = extensionDir;
+  } else if (isGeminiExtensionConfig(extensionDir)) {
+    newExtensionDir = (await convertGeminiExtensionPackage(extensionDir))
+      .convertedDir;
+  } else if (isClaudePluginConfig(extensionDir)) {
+    // claude
+  }
+  return newExtensionDir;
 }
 
 export function loadExtensionConfig(
