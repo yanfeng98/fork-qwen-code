@@ -734,8 +734,14 @@ export default {
     '未找到 {{envKeyHint}} 环境变量。',
   '{{envKeyHint}} environment variable not found. Please set it in your .env file or environment variables.':
     '未找到 {{envKeyHint}} 环境变量。请在 .env 文件或系统环境变量中进行设置。',
-  'ANTHROPIC_BASE_URL environment variable not found (or configure modelProviders[].baseUrl).':
-    '未找到 ANTHROPIC_BASE_URL 环境变量（或配置 modelProviders[].baseUrl）。',
+  '{{envKeyHint}} environment variable not found (or set settings.security.auth.apiKey). Please set it in your .env file or environment variables.':
+    '未找到 {{envKeyHint}} 环境变量（或设置 settings.security.auth.apiKey）。请在 .env 文件或系统环境变量中进行设置。',
+  'Missing API key for OpenAI-compatible auth. Set the {{envKeyHint}} environment variable.':
+    '缺少 OpenAI 兼容认证的 API 密钥。请设置 {{envKeyHint}} 环境变量。',
+  'Anthropic provider missing required baseUrl in modelProviders[].baseUrl.':
+    'Anthropic 提供商缺少必需的 baseUrl，请在 modelProviders[].baseUrl 中配置。',
+  'ANTHROPIC_BASE_URL environment variable not found.':
+    '未找到 ANTHROPIC_BASE_URL 环境变量。',
   'Invalid auth method selected.': '选择了无效的认证方式。',
   'Failed to authenticate. Message: {{message}}': '认证失败。消息：{{message}}',
   'Authenticated successfully with {{authType}} credentials.':

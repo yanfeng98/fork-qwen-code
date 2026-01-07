@@ -798,8 +798,14 @@ export default {
     'Umgebungsvariable {{envKeyHint}} wurde nicht gefunden.',
   '{{envKeyHint}} environment variable not found. Please set it in your .env file or environment variables.':
     'Umgebungsvariable {{envKeyHint}} wurde nicht gefunden. Bitte legen Sie sie in Ihrer .env-Datei oder den Systemumgebungsvariablen fest.',
-  'ANTHROPIC_BASE_URL environment variable not found (or configure modelProviders[].baseUrl).':
-    'Umgebungsvariable ANTHROPIC_BASE_URL wurde nicht gefunden (oder konfigurieren Sie modelProviders[].baseUrl).',
+  '{{envKeyHint}} environment variable not found (or set settings.security.auth.apiKey). Please set it in your .env file or environment variables.':
+    'Umgebungsvariable {{envKeyHint}} wurde nicht gefunden (oder setzen Sie settings.security.auth.apiKey). Bitte legen Sie sie in Ihrer .env-Datei oder den Systemumgebungsvariablen fest.',
+  'Missing API key for OpenAI-compatible auth. Set the {{envKeyHint}} environment variable.':
+    'API-Schlüssel für OpenAI-kompatible Authentifizierung fehlt. Setzen Sie die Umgebungsvariable {{envKeyHint}}.',
+  'Anthropic provider missing required baseUrl in modelProviders[].baseUrl.':
+    'Anthropic-Anbieter fehlt erforderliche baseUrl in modelProviders[].baseUrl.',
+  'ANTHROPIC_BASE_URL environment variable not found.':
+    'Umgebungsvariable ANTHROPIC_BASE_URL wurde nicht gefunden.',
   'Invalid auth method selected.':
     'Ungültige Authentifizierungsmethode ausgewählt.',
   'Failed to authenticate. Message: {{message}}':

@@ -776,8 +776,14 @@ export default {
     '{{envKeyHint}} environment variable not found.',
   '{{envKeyHint}} environment variable not found. Please set it in your .env file or environment variables.':
     '{{envKeyHint}} environment variable not found. Please set it in your .env file or environment variables.',
-  'ANTHROPIC_BASE_URL environment variable not found (or configure modelProviders[].baseUrl).':
-    'ANTHROPIC_BASE_URL environment variable not found (or configure modelProviders[].baseUrl).',
+  '{{envKeyHint}} environment variable not found (or set settings.security.auth.apiKey). Please set it in your .env file or environment variables.':
+    '{{envKeyHint}} environment variable not found (or set settings.security.auth.apiKey). Please set it in your .env file or environment variables.',
+  'Missing API key for OpenAI-compatible auth. Set the {{envKeyHint}} environment variable.':
+    'Missing API key for OpenAI-compatible auth. Set the {{envKeyHint}} environment variable.',
+  'Anthropic provider missing required baseUrl in modelProviders[].baseUrl.':
+    'Anthropic provider missing required baseUrl in modelProviders[].baseUrl.',
+  'ANTHROPIC_BASE_URL environment variable not found.':
+    'ANTHROPIC_BASE_URL environment variable not found.',
   'Invalid auth method selected.': 'Invalid auth method selected.',
   'Failed to authenticate. Message: {{message}}':
     'Failed to authenticate. Message: {{message}}',

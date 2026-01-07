@@ -149,7 +149,7 @@ describe('validateAuthMethod', () => {
     process.env['CUSTOM_ANTHROPIC_KEY'] = 'custom-key';
 
     const result = validateAuthMethod(AuthType.USE_ANTHROPIC);
-    expect(result).toContain('ANTHROPIC_BASE_URL');
+    expect(result).toContain('modelProviders[].baseUrl');
   });
 
   it('should return null for USE_VERTEX_AI with custom envKey', () => {

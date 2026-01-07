@@ -110,7 +110,7 @@ export class MissingBaseUrlError extends ModelConfigError {
     model: string | undefined;
   }) {
     super(
-      `Missing baseUrl for modelProviders model '${params.model || '(unknown)'}' (authType: ${params.authType}). ` +
+      `Missing baseUrl for modelProviders model '${params.model || '(unknown)'}'. ` +
         `Configure modelProviders.${params.authType || '(unknown)'}[].baseUrl.`,
     );
   }

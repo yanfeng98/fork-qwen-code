@@ -7,6 +7,7 @@
 import { describe, it, expect } from 'vitest';
 import { ModelsConfig } from './modelsConfig.js';
 import { AuthType } from '../core/contentGenerator.js';
+import type { ContentGeneratorConfig } from '../core/contentGenerator.js';
 import type { ModelProvidersConfig } from './types.js';
 
 describe('ModelsConfig', () => {
@@ -18,6 +19,20 @@ describe('ModelsConfig', () => {
       out[key] = deepClone((value as Record<string, unknown>)[key]);
     }
     return out as T;
+  }
+
+  function snapshotGenerationConfig(
+    modelsConfig: ModelsConfig,
+  ): ContentGeneratorConfig {
+    return deepClone<ContentGeneratorConfig>(
+      modelsConfig.getGenerationConfig() as ContentGeneratorConfig,
+    );
+  }
+
+  function currentGenerationConfig(
+    modelsConfig: ModelsConfig,
+  ): ContentGeneratorConfig {
+    return modelsConfig.getGenerationConfig() as ContentGeneratorConfig;
   }
 
   it('should fully rollback state when switchModel fails after applying defaults (authType change)', async () => {
@@ -60,7 +75,7 @@ describe('ModelsConfig', () => {
     const baselineAuthType = modelsConfig.getCurrentAuthType();
     const baselineModel = modelsConfig.getModel();
     const baselineStrict = modelsConfig.isStrictModelProviderSelection();
-    const baselineGc = deepClone(modelsConfig.getGenerationConfig());
+    const baselineGc = snapshotGenerationConfig(modelsConfig);
     const baselineSources = deepClone(
       modelsConfig.getGenerationConfigSources(),
     );
@@ -78,7 +93,7 @@ describe('ModelsConfig', () => {
     expect(modelsConfig.getModel()).toBe(baselineModel);
     expect(modelsConfig.isStrictModelProviderSelection()).toBe(baselineStrict);
 
-    const gc = modelsConfig.getGenerationConfig();
+    const gc = currentGenerationConfig(modelsConfig);
     expect(gc).toMatchObject({
       model: baselineGc.model,
       baseUrl: baselineGc.baseUrl,
@@ -117,7 +132,7 @@ describe('ModelsConfig', () => {
 
     await modelsConfig.switchModel(AuthType.USE_OPENAI, 'model-a');
     const baselineModel = modelsConfig.getModel();
-    const baselineGc = deepClone(modelsConfig.getGenerationConfig());
+    const baselineGc = snapshotGenerationConfig(modelsConfig);
     const baselineSources = deepClone(
       modelsConfig.getGenerationConfigSources(),
     );
@@ -139,7 +154,7 @@ describe('ModelsConfig', () => {
     expect(modelsConfig.getGenerationConfigSources()).toEqual(baselineSources);
   });
 
-  it('should preserve an explicit apiKey when switching models if envKey is missing in the environment', async () => {
+  it('should require provider-sourced apiKey when switching models even if envKey is missing', async () => {
     const modelProvidersConfig: ModelProvidersConfig = {
       openai: [
         {
@@ -168,9 +183,9 @@ describe('ModelsConfig', () => {
 
     await modelsConfig.switchModel(AuthType.USE_OPENAI, 'model-b');
 
-    const gc = modelsConfig.getGenerationConfig();
+    const gc = currentGenerationConfig(modelsConfig);
     expect(gc.model).toBe('model-b');
-    expect(gc.apiKey).toBe('manual-key');
+    expect(gc.apiKey).toBeUndefined();
     expect(gc.apiKeyEnvKey).toBe('API_KEY_SHARED');
   });
 
@@ -229,7 +244,7 @@ describe('ModelsConfig', () => {
       modelsConfig.getModel(),
     );
 
-    const gc = modelsConfig.getGenerationConfig();
+    const gc = currentGenerationConfig(modelsConfig);
     expect(gc.model).toBe('model-a');
     expect(gc.samplingParams?.temperature).toBe(0.9);
     expect(gc.samplingParams?.max_tokens).toBe(999);
@@ -298,7 +313,7 @@ describe('ModelsConfig', () => {
       modelsConfig.getModel(),
     );
 
-    const gc = modelsConfig.getGenerationConfig();
+    const gc = currentGenerationConfig(modelsConfig);
     expect(gc.model).toBe('model-a');
     expect(gc.samplingParams?.temperature).toBe(0.9);
     expect(gc.samplingParams?.max_tokens).toBe(999);
@@ -332,7 +347,7 @@ describe('ModelsConfig', () => {
     await modelsConfig.switchModel(AuthType.USE_OPENAI, 'provider-model');
 
     // Verify provider config is applied
-    let gc = modelsConfig.getGenerationConfig();
+    let gc = currentGenerationConfig(modelsConfig);
     expect(gc.model).toBe('provider-model');
     expect(gc.baseUrl).toBe('https://provider.example.com/v1');
     expect(gc.samplingParams?.temperature).toBe(0.1);
@@ -356,7 +371,7 @@ describe('ModelsConfig', () => {
     });
 
     // Verify provider-sourced config is cleared
-    gc = modelsConfig.getGenerationConfig();
+    gc = currentGenerationConfig(modelsConfig);
     expect(gc.model).toBe('custom-model'); // Set by updateCredentials
     expect(gc.apiKey).toBe('manual-api-key'); // Set by updateCredentials
     expect(gc.baseUrl).toBeUndefined(); // Cleared (was from provider)
@@ -415,7 +430,7 @@ describe('ModelsConfig', () => {
     await modelsConfig.switchModel(AuthType.USE_OPENAI, 'provider-model');
 
     // Verify provider config is applied (overwriting settings)
-    let gc = modelsConfig.getGenerationConfig();
+    let gc = currentGenerationConfig(modelsConfig);
     expect(gc.samplingParams?.temperature).toBe(0.1);
     expect(gc.timeout).toBe(1000);
 
@@ -425,7 +440,7 @@ describe('ModelsConfig', () => {
     });
 
     // Provider-sourced config should be cleared
-    gc = modelsConfig.getGenerationConfig();
+    gc = currentGenerationConfig(modelsConfig);
     expect(gc.samplingParams).toBeUndefined();
     expect(gc.timeout).toBeUndefined();
     // The original settings-sourced config is NOT restored automatically;
@@ -444,7 +459,7 @@ describe('ModelsConfig', () => {
     // Switching within qwen-oauth triggers applyResolvedModelDefaults().
     await modelsConfig.switchModel(AuthType.QWEN_OAUTH, 'vision-model');
 
-    const gc = modelsConfig.getGenerationConfig();
+    const gc = currentGenerationConfig(modelsConfig);
     expect(gc.apiKey).toBe('QWEN_OAUTH_DYNAMIC_TOKEN');
     expect(gc.apiKeyEnvKey).toBeUndefined();
   });

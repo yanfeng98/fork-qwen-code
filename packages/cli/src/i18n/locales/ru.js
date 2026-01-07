@@ -792,8 +792,14 @@ export default {
     'Переменная окружения {{envKeyHint}} не найдена.',
   '{{envKeyHint}} environment variable not found. Please set it in your .env file or environment variables.':
     'Переменная окружения {{envKeyHint}} не найдена. Укажите её в файле .env или среди системных переменных.',
-  'ANTHROPIC_BASE_URL environment variable not found (or configure modelProviders[].baseUrl).':
-    'Переменная окружения ANTHROPIC_BASE_URL не найдена (или настройте modelProviders[].baseUrl).',
+  '{{envKeyHint}} environment variable not found (or set settings.security.auth.apiKey). Please set it in your .env file or environment variables.':
+    'Переменная окружения {{envKeyHint}} не найдена (или установите settings.security.auth.apiKey). Укажите её в файле .env или среди системных переменных.',
+  'Missing API key for OpenAI-compatible auth. Set the {{envKeyHint}} environment variable.':
+    'Отсутствует API-ключ для аутентификации, совместимой с OpenAI. Установите переменную окружения {{envKeyHint}}.',
+  'Anthropic provider missing required baseUrl in modelProviders[].baseUrl.':
+    'У провайдера Anthropic отсутствует обязательный baseUrl в modelProviders[].baseUrl.',
+  'ANTHROPIC_BASE_URL environment variable not found.':
+    'Переменная окружения ANTHROPIC_BASE_URL не найдена.',
   'Invalid auth method selected.': 'Выбран недопустимый метод авторизации.',
   'Failed to authenticate. Message: {{message}}':
     'Не удалось авторизоваться. Сообщение: {{message}}',
