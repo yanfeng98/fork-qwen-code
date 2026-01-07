@@ -1,11 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NativeLspService } from './NativeLspService.js';
-import type {
-  Config as CoreConfig,
-  WorkspaceContext,
-  FileDiscoveryService,
-  IdeContextStore,
-} from '@qwen-code/qwen-code-core';
 import { EventEmitter } from 'events';
 
 // 模拟依赖项
@@ -16,7 +9,7 @@ class MockConfig {
     return true;
   }
 
-  get(key: string) {
+  get(_key: string) {
     return undefined;
   }
 
@@ -28,12 +21,12 @@ class MockConfig {
 class MockWorkspaceContext {
   rootPath = '/test/workspace';
 
-  async fileExists(path: string): Promise<boolean> {
-    return path.endsWith('.json') || path.includes('package.json');
+  async fileExists(_path: string): Promise<boolean> {
+    return _path.endsWith('.json') || _path.includes('package.json');
   }
 
-  async readFile(path: string): Promise<string> {
-    if (path.includes('.lsp.json')) {
+  async readFile(_path: string): Promise<string> {
+    if (_path.includes('.lsp.json')) {
       return JSON.stringify({
         typescript: {
           command: 'typescript-language-server',
@@ -45,11 +38,11 @@ class MockWorkspaceContext {
     return '{}';
   }
 
-  resolvePath(path: string): string {
-    return this.rootPath + '/' + path;
+  resolvePath(_path: string): string {
+    return this.rootPath + '/' + _path;
   }
 
-  isPathWithinWorkspace(path: string): boolean {
+  isPathWithinWorkspace(_path: string): boolean {
     return true;
   }
 
@@ -59,10 +52,7 @@ class MockWorkspaceContext {
 }
 
 class MockFileDiscoveryService {
-  async discoverFiles(
-    root: string,
-    options: Record<string, unknown>,
-  ): Promise<string[]> {
+  async discoverFiles(_root: string, _options: unknown): Promise<string[]> {
     // 模拟发现一些文件
     return [
       '/test/workspace/src/index.ts',
@@ -97,11 +87,11 @@ describe('NativeLspService', () => {
     eventEmitter = new EventEmitter();
 
     lspService = new NativeLspService(
-      mockConfig as CoreConfig,
-      mockWorkspace as WorkspaceContext,
+      mockConfig as MockConfig,
+      mockWorkspace as MockWorkspaceContext,
       eventEmitter,
-      mockFileDiscovery as FileDiscoveryService,
-      mockIdeStore as IdeContextStore,
+      mockFileDiscovery as MockFileDiscoveryService,
+      mockIdeStore as MockIdeContextStore,
     );
   });
 

@@ -11,7 +11,7 @@ class JsonRpcConnection {
   private buffer = '';
   private nextId = 1;
   private disposed = false;
-  private pendingRequests = new Map<number, PendingRequest>();
+  private pendingRequests = new Map<string | number, PendingRequest>();
   private notificationHandlers: Array<(notification: JsonRpcMessage) => void> =
     [];
   private requestHandlers: Array<

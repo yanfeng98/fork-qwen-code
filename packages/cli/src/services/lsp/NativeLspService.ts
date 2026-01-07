@@ -9,10 +9,7 @@ import type {
   LspSymbolInformation,
 } from '@qwen-code/qwen-code-core';
 import type { EventEmitter } from 'events';
-import {
-  LspConnectionFactory,
-  type JsonRpcMessage,
-} from './LspConnectionFactory.js';
+import { LspConnectionFactory } from './LspConnectionFactory.js';
 import * as path from 'path';
 import { pathToFileURL } from 'url';
 import { spawn, type ChildProcess } from 'node:child_process';
@@ -39,9 +36,9 @@ interface LspServerConfig {
 // 定义 LSP 连接接口
 interface LspConnectionInterface {
   listen: (readable: NodeJS.ReadableStream) => void;
-  send: (message: JsonRpcMessage) => void;
-  onNotification: (handler: (notification: JsonRpcMessage) => void) => void;
-  onRequest: (handler: (request: JsonRpcMessage) => Promise<unknown>) => void;
+  send: (message: unknown) => void;
+  onNotification: (handler: (notification: unknown) => void) => void;
+  onRequest: (handler: (request: unknown) => Promise<unknown>) => void;
   request: (method: string, params: unknown) => Promise<unknown>;
   initialize: (params: unknown) => Promise<unknown>;
   shutdown: () => Promise<void>;
@@ -93,7 +90,8 @@ export class NativeLspService {
     this.excludedServers = options.excludedServers?.filter(Boolean);
     this.requireTrustedWorkspace = options.requireTrustedWorkspace ?? true;
     this.workspaceRoot =
-      options.workspaceRoot ?? (config as CoreConfig).getProjectRoot();
+      options.workspaceRoot ??
+      (config as { getProjectRoot: () => string }).getProjectRoot();
   }
 
   /**
@@ -483,16 +481,20 @@ export class NativeLspService {
       return null;
     }
 
+    const rangeObj = range as Record<string, unknown>;
+    const start = rangeObj.start as { line?: number; character?: number };
+    const end = rangeObj.end as { line?: number; character?: number };
+
     return {
-      uri,
+      uri: uri as string,
       range: {
         start: {
-          line: Number(range.start.line ?? 0),
-          character: Number(range.start.character ?? 0),
+          line: Number(start?.line ?? 0),
+          character: Number(start?.character ?? 0),
         },
         end: {
-          line: Number(range.end.line ?? 0),
-          character: Number(range.end.character ?? 0),
+          line: Number(end?.line ?? 0),
+          character: Number(end?.character ?? 0),
         },
       },
       serverName,
@@ -504,7 +506,7 @@ export class NativeLspService {
     serverName: string,
   ): LspSymbolInformation | null {
     const itemObj = item as Record<string, unknown>;
-    const location = itemObj?.location ?? itemObj?.target ?? itemObj;
+    const location = itemObj?.location ?? itemObj?.target ?? item;
     const locationObj = location as Record<string, unknown>;
     const range =
       locationObj?.range ??
@@ -512,24 +514,28 @@ export class NativeLspService {
       itemObj?.range ??
       undefined;
 
-    if (!location?.uri || !range?.start || !range?.end) {
+    if (!locationObj?.uri || !range?.start || !range?.end) {
       return null;
     }
 
+    const rangeObj = range as Record<string, unknown>;
+    const start = rangeObj.start as { line?: number; character?: number };
+    const end = rangeObj.end as { line?: number; character?: number };
+
     return {
-      name: item?.name ?? item?.label ?? 'symbol',
-      kind: item?.kind ? String(item.kind) : undefined,
-      containerName: item?.containerName ?? item?.container,
+      name: (itemObj?.name ?? itemObj?.label ?? 'symbol') as string,
+      kind: itemObj?.kind ? String(itemObj.kind) : undefined,
+      containerName: itemObj?.containerName ?? itemObj?.container,
       location: {
-        uri: location.uri,
+        uri: locationObj.uri as string,
         range: {
           start: {
-            line: Number(range.start.line ?? 0),
-            character: Number(range.start.character ?? 0),
+            line: Number(start?.line ?? 0),
+            character: Number(start?.character ?? 0),
           },
           end: {
-            line: Number(range.end.line ?? 0),
-            character: Number(range.end.character ?? 0),
+            line: Number(end?.line ?? 0),
+            character: Number(end?.character ?? 0),
           },
         },
       },
@@ -728,7 +734,10 @@ export class NativeLspService {
 
     // 检查路径安全性
     if (
-      !this.isPathSafe(handle.config.command, (this.config as CoreConfig).cwd)
+      !this.isPathSafe(
+        handle.config.command,
+        (this.config as { cwd: string }).cwd,
+      )
     ) {
       console.warn(
         `LSP 服务器 ${name} 的命令路径不安全: ${handle.config.command}`,

@@ -10,11 +10,7 @@ import type { ToolInvocation, ToolResult } from './tools.js';
 import { BaseDeclarativeTool, BaseToolInvocation, Kind } from './tools.js';
 import { ToolDisplayNames, ToolNames } from './tool-names.js';
 import type { Config } from '../config/config.js';
-import type {
-  LspClient,
-  LspDefinition,
-  LspLocation,
-} from '../lsp/types.js';
+import type { LspClient, LspDefinition, LspLocation } from '../lsp/types.js';
 
 export interface LspGoToDefinitionParams {
   /**
@@ -126,9 +122,12 @@ class LspGoToDefinitionInvocation extends BaseToolInvocation<
     }
 
     const workspaceRoot = this.config.getProjectRoot();
-    const lines = definitions.slice(0, limit).map((definition, index) => {
-      return `${index + 1}. ${this.formatLocation(definition, workspaceRoot)}`;
-    });
+    const lines = definitions
+      .slice(0, limit)
+      .map(
+        (definition, index) =>
+          `${index + 1}. ${this.formatLocation(definition, workspaceRoot)}`,
+      );
 
     const heading = `Definitions for ${target.description}:`;
     return {
