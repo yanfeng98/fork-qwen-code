@@ -346,26 +346,6 @@ export function ModelDialog({ onClose }: ModelDialogProps): React.JSX.Element {
               />
             </>
           )}
-
-          {effectiveConfig?.samplingParams ? (
-            <ConfigRow
-              label="Sampling"
-              value={
-                `temperature=${effectiveConfig.samplingParams.temperature ?? t('unset')} ` +
-                `top_p=${effectiveConfig.samplingParams.top_p ?? t('unset')} ` +
-                `max_tokens=${effectiveConfig.samplingParams.max_tokens ?? t('unset')}`
-              }
-              badge={formatSourceBadge(sources['samplingParams'])}
-            />
-          ) : null}
-
-          {effectiveConfig?.timeout !== undefined ? (
-            <ConfigRow
-              label="Timeout"
-              value={String(effectiveConfig.timeout)}
-              badge={formatSourceBadge(sources['timeout'])}
-            />
-          ) : null}
         </Box>
       </Box>
 
