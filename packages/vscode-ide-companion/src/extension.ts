@@ -340,8 +340,8 @@ export async function activate(context: vscode.ExtensionContext) {
               // PowerShell requires & call operator for quoted paths
               qwenCmd = `& ${baseCmd}`;
             } else if (execPath.toLowerCase().includes('code helper')) {
-              // macOS Electron helper needs ELECTRON_RUN_AS_NODE=1
-              qwenCmd = `ELECTRON_RUN_AS_NODE=1 ${baseCmd}`;
+              // macOS Electron helper needs ELECTRON_RUN_AS_NODE=1; add -i to force TUI mode
+              qwenCmd = `ELECTRON_RUN_AS_NODE=1 ${baseCmd} -i`;
             } else {
               qwenCmd = baseCmd;
             }
