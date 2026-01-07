@@ -22,6 +22,21 @@ const SKILLS_CONFIG_DIR = 'skills';
 const SKILL_MANIFEST_FILE = 'SKILL.md';
 
 /**
+ * Simplified Extension interface for SkillManager.
+ * Avoids circular dependency with cli package.
+ */
+export interface Extension {
+  path: string;
+  config: {
+    name: string;
+    version: string;
+  };
+  /** Absolute paths to skills directories from this extension */
+  skillsPaths?: string[];
+  contextFiles?: string[];
+}
+
+/**
  * Manages skill configurations stored as directories containing SKILL.md files.
  * Provides discovery, parsing, validation, and caching for skills.
  */
@@ -29,8 +44,19 @@ export class SkillManager {
   private skillsCache: Map<SkillLevel, SkillConfig[]> | null = null;
   private readonly changeListeners: Set<() => void> = new Set();
   private parseErrors: Map<string, SkillError> = new Map();
+  private extensions: Extension[] = [];
 
   constructor(private readonly config: Config) {}
+
+  /**
+   * Sets the extensions to load skills from.
+   * Should be called before listSkills() to include extension skills.
+   */
+  setExtensions(extensions: Extension[]): void {
+    this.extensions = extensions;
+    // Invalidate cache when extensions change
+    this.skillsCache = null;
+  }
 
   /**
    * Adds a listener that will be called when skills change.
@@ -76,7 +102,7 @@ export class SkillManager {
 
     const levelsToCheck: SkillLevel[] = options.level
       ? [options.level]
-      : ['project', 'user'];
+      : ['project', 'user', 'extension'];
 
     // Check if we should use cache or force refresh
     const shouldUseCache = !options.force && this.skillsCache !== null;
@@ -86,12 +112,12 @@ export class SkillManager {
       await this.refreshCache();
     }
 
-    // Collect skills from each level (project takes precedence over user)
+    // Collect skills from each level (project takes precedence over user over extension)
     for (const level of levelsToCheck) {
       const levelSkills = this.skillsCache?.get(level) || [];
 
       for (const skill of levelSkills) {
-        // Skip if we've already seen this name (precedence: project > user)
+        // Skip if we've already seen this name (precedence: project > user > extension)
         if (seenNames.has(skill.name)) {
           continue;
         }
@@ -217,8 +243,75 @@ export class SkillManager {
       skillsCache.set(level, levelSkills);
     }
 
+    // Load extension skills
+    const extensionSkills = await this.listSkillsFromExtensions(
+      this.extensions,
+    );
+    skillsCache.set('extension', extensionSkills);
+
     this.skillsCache = skillsCache;
     this.notifyChangeListeners();
+  }
+
+  /**
+   * Lists skills from all extensions.
+   *
+   * @param extensions - Array of extensions to load skills from
+   * @returns Array of skill configurations from extensions
+   */
+  async listSkillsFromExtensions(
+    extensions: Extension[],
+  ): Promise<SkillConfig[]> {
+    const skills: SkillConfig[] = [];
+
+    for (const extension of extensions) {
+      if (!extension.skillsPaths || extension.skillsPaths.length === 0) {
+        continue;
+      }
+
+      for (const skillsPath of extension.skillsPaths) {
+        try {
+          const entries = await fs.readdir(skillsPath, { withFileTypes: true });
+
+          for (const entry of entries) {
+            // Only process directories (each skill is a directory)
+            if (!entry.isDirectory()) continue;
+
+            const skillDir = path.join(skillsPath, entry.name);
+            const skillManifest = path.join(skillDir, SKILL_MANIFEST_FILE);
+
+            try {
+              // Check if SKILL.md exists
+              await fs.access(skillManifest);
+
+              const config = await this.parseSkillFileInternal(
+                skillManifest,
+                'extension',
+              );
+              config.extensionName = extension.config.name;
+              skills.push(config);
+            } catch (error) {
+              // Skip directories without valid SKILL.md
+              if (error instanceof SkillError) {
+                // Parse error was already recorded
+                console.warn(
+                  `Failed to parse skill at ${skillDir}: ${error.message}`,
+                );
+              }
+              continue;
+            }
+          }
+        } catch (error) {
+          // Directory doesn't exist or can't be read, skip this path
+          console.warn(
+            `Failed to read skills from extension ${extension.config.name} at ${skillsPath}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          );
+          continue;
+        }
+      }
+    }
+
+    return skills;
   }
 
   /**

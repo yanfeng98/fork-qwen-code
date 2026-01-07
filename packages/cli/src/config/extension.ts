@@ -49,6 +49,10 @@ export interface Extension {
   config: ExtensionConfig;
   contextFiles: string[];
   installMetadata?: ExtensionInstallMetadata | undefined;
+  /** Absolute paths to skills directories from this extension */
+  skillsPaths?: string[];
+  /** Absolute paths to agents files from this extension */
+  agentsPaths?: string[];
 }
 
 export interface ExtensionConfig {
@@ -57,6 +61,17 @@ export interface ExtensionConfig {
   mcpServers?: Record<string, MCPServerConfig>;
   contextFileName?: string | string[];
   excludeTools?: string[];
+  commands?: string | string[];
+  skills?: string | string[];
+  agents?: string | string[];
+  settings?: ExtensionSetting[];
+}
+
+export interface ExtensionSetting {
+  name: string;
+  description: string;
+  envVar: string;
+  sensitive?: boolean;
 }
 
 export interface ExtensionUpdateInfo {
@@ -238,11 +253,22 @@ export function loadExtension(context: LoadExtensionContext): Extension | null {
       )
       .filter((contextFilePath) => fs.existsSync(contextFilePath));
 
+    const skillsPaths = collectPathsFromConfig(
+      config.skills,
+      effectiveExtensionPath,
+    );
+    const agentsPaths = collectPathsFromConfig(
+      config.agents,
+      effectiveExtensionPath,
+    );
+
     return {
       path: effectiveExtensionPath,
       config,
       contextFiles,
       installMetadata,
+      skillsPaths,
+      agentsPaths,
     };
   } catch (e) {
     console.error(
@@ -306,6 +332,27 @@ function getContextFileNames(config: ExtensionConfig): string[] {
     return [config.contextFileName];
   }
   return config.contextFileName;
+}
+
+function collectPathsFromConfig(
+  configValue: string | string[] | undefined,
+  extensionPath: string,
+): string[] {
+  if (!configValue) return [];
+
+  const pathArray = Array.isArray(configValue) ? configValue : [configValue];
+  const absolutePaths: string[] = [];
+
+  for (const relativePath of pathArray) {
+    const absolutePath = path.isAbsolute(relativePath)
+      ? relativePath
+      : path.join(extensionPath, relativePath);
+
+    if (fs.existsSync(absolutePath)) {
+      absolutePaths.push(absolutePath);
+    }
+  }
+  return absolutePaths;
 }
 
 /**

@@ -389,8 +389,16 @@ export class SubagentManager {
             break;
           case 'level': {
             // Project comes before user, user comes before builtin, session comes last
-            const levelOrder = { project: 0, user: 1, builtin: 2, session: 3 };
-            comparison = levelOrder[a.level] - levelOrder[b.level];
+            const levelOrder = {
+              project: 0,
+              user: 1,
+              builtin: 2,
+              session: 3,
+              extension: 4,
+            };
+            comparison =
+              levelOrder[a.level as SubagentLevel] -
+              levelOrder[b.level as SubagentLevel];
             break;
           }
           default:

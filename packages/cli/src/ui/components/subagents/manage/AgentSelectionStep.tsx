@@ -218,7 +218,7 @@ export const AgentSelectionStep = ({
   const renderAgentItem = (
     agent: {
       name: string;
-      level: 'project' | 'user' | 'builtin' | 'session';
+      level: 'project' | 'user' | 'builtin' | 'session' | 'extension';
       isBuiltin?: boolean;
     },
     index: number,
