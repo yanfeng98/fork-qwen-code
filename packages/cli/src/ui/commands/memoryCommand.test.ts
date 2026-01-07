@@ -13,9 +13,11 @@ import { MessageType } from '../types.js';
 import type { LoadedSettings } from '../../config/settings.js';
 import { readFile } from 'node:fs/promises';
 import os from 'node:os';
+import path from 'node:path';
 import {
   getErrorMessage,
   loadServerHierarchicalMemory,
+  QWEN_DIR,
   setGeminiMdFilename,
   type FileDiscoveryService,
   type LoadServerHierarchicalMemoryResponse,
@@ -133,14 +135,12 @@ describe('memoryCommand', () => {
 
       await projectCommand.action(mockContext, '');
 
-      expect(mockReadFile).toHaveBeenCalledWith(
-        '/test/project/AGENTS.md',
-        'utf-8',
-      );
+      const expectedProjectPath = path.join('/test/project', 'AGENTS.md');
+      expect(mockReadFile).toHaveBeenCalledWith(expectedProjectPath, 'utf-8');
       expect(mockContext.ui.addItem).toHaveBeenCalledWith(
         {
           type: MessageType.INFO,
-          text: expect.stringContaining('/test/project/AGENTS.md'),
+          text: expect.stringContaining(expectedProjectPath),
         },
         expect.any(Number),
       );
@@ -158,10 +158,8 @@ describe('memoryCommand', () => {
 
       await globalCommand.action(mockContext, '');
 
-      expect(mockReadFile).toHaveBeenCalledWith(
-        '/home/user/.qwen/AGENTS.md',
-        'utf-8',
-      );
+      const expectedGlobalPath = path.join('/home/user', QWEN_DIR, 'AGENTS.md');
+      expect(mockReadFile).toHaveBeenCalledWith(expectedGlobalPath, 'utf-8');
       expect(mockContext.ui.addItem).toHaveBeenCalledWith(
         {
           type: MessageType.INFO,
