@@ -452,9 +452,6 @@ export class ModelsConfig {
    */
   private applyResolvedModelDefaults(model: ResolvedModelConfig): void {
     this.strictModelProviderSelection = true;
-    const previousApiKey = this._generationConfig.apiKey;
-    const previousApiKeyEnvKey = this._generationConfig.apiKeyEnvKey;
-    const hadManualCredentials = this.hasManualCredentials;
     // We're explicitly applying modelProvider defaults now, so manual overrides
     // should no longer block syncAfterAuthRefresh from applying provider defaults.
     this.hasManualCredentials = false;
@@ -503,28 +500,6 @@ export class ModelsConfig {
             detail: 'envKey',
           },
         };
-      } else {
-        // If the user provided an API key via CLI/settings/updateCredentials, keep it.
-        // We only refuse to reuse a previous key when it is explicitly tied to a
-        // different envKey (e.g. switching between two configured accounts).
-        const canPreservePreviousKey =
-          !!previousApiKey &&
-          (hadManualCredentials ||
-            previousApiKeyEnvKey === undefined ||
-            previousApiKeyEnvKey === model.envKey);
-
-        if (canPreservePreviousKey) {
-          this._generationConfig.apiKey = previousApiKey;
-          this.generationConfigSources['apiKey'] = {
-            kind: 'computed',
-            detail: `preserved previous apiKey (missing env: ${model.envKey})`,
-          };
-        } else {
-          console.warn(
-            `[ModelsConfig] Environment variable '${model.envKey}' is not set for model '${model.id}'. ` +
-              `API key will not be available.`,
-          );
-        }
       }
       this._generationConfig.apiKeyEnvKey = model.envKey;
       this.generationConfigSources['apiKeyEnvKey'] = {

@@ -255,26 +255,10 @@ export function ModelDialog({ onClose }: ModelDialogProps): React.JSX.Element {
           );
         } catch (e) {
           const baseErrorMessage = e instanceof Error ? e.message : String(e);
-
-          // Some auth types (notably openai without modelProviders configured) can present
-          // env-based "raw" model IDs in the list. These are not registry-backed and will
-          // fail switchModel(). Fall back to setModel() to keep UX functional.
-          const isNotFound =
-            baseErrorMessage.includes('not found for authType') ||
-            (baseErrorMessage.includes('Model') &&
-              baseErrorMessage.includes('not found'));
-          if (!isNotFound) {
-            setErrorMessage(
-              `Failed to switch model to '${modelId}'.\n\n${baseErrorMessage}`,
-            );
-
-            // Keep the dialog open so the user can choose another model.
-            return;
-          }
-          await config.setModel(modelId, {
-            reason: 'user_manual',
-            context: 'Model set via /model dialog (raw)',
-          });
+          setErrorMessage(
+            `Failed to switch model to '${modelId}'.\n\n${baseErrorMessage}`,
+          );
+          return;
         }
         const event = new ModelSlashCommandEvent(modelId);
         logModelSlashCommand(config, event);

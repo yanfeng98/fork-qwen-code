@@ -66,12 +66,14 @@ function hasApiKeyForAuth(
   const defaultEnvKey = DEFAULT_ENV_KEYS[authType];
   if (defaultEnvKey) {
     const hasKey = !!process.env[defaultEnvKey];
-    return { hasKey, checkedEnvKey: defaultEnvKey };
+    if (hasKey) {
+      return { hasKey, checkedEnvKey: defaultEnvKey };
+    }
   }
 
   // Also check settings.security.auth.apiKey as fallback
   if (settings.security?.auth?.apiKey) {
-    return { hasKey: true, checkedEnvKey: undefined };
+    return { hasKey: true, checkedEnvKey: defaultEnvKey || undefined };
   }
 
   return { hasKey: false, checkedEnvKey: undefined };

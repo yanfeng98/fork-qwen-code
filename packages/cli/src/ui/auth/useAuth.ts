@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Config } from '@qwen-code/qwen-code-core';
+import type { Config, ModelProvidersConfig } from '@qwen-code/qwen-code-core';
 import {
   AuthEvent,
   AuthType,
@@ -152,11 +152,48 @@ export const useAuthCommand = (
     [config, handleAuthSuccess, handleAuthFailure],
   );
 
+  const isProviderManagedModel = useCallback(
+    (authType: AuthType, modelId: string | undefined) => {
+      if (!modelId) {
+        return false;
+      }
+
+      const modelProviders = settings.merged.modelProviders as
+        | ModelProvidersConfig
+        | undefined;
+      if (!modelProviders) {
+        return false;
+      }
+      const providerModels = modelProviders[authType];
+      if (!Array.isArray(providerModels)) {
+        return false;
+      }
+      return providerModels.some(
+        (providerModel) => providerModel.id === modelId,
+      );
+    },
+    [settings],
+  );
+
   const handleAuthSelect = useCallback(
     async (authType: AuthType | undefined, credentials?: OpenAICredentials) => {
       if (!authType) {
         setIsAuthDialogOpen(false);
         setAuthError(null);
+        return;
+      }
+
+      if (
+        authType === AuthType.USE_OPENAI &&
+        credentials?.model &&
+        isProviderManagedModel(authType, credentials.model)
+      ) {
+        onAuthError(
+          t(
+            'Model "{{modelName}}" is managed via settings.modelProviders. Please complete the fields in settings, or use another model id.',
+            { modelName: credentials.model },
+          ),
+        );
         return;
       }
 
@@ -179,7 +216,7 @@ export const useAuthCommand = (
 
       await performAuth(authType);
     },
-    [config, performAuth],
+    [config, performAuth, isProviderManagedModel, onAuthError],
   );
 
   const openAuthDialog = useCallback(() => {
