@@ -34,11 +34,17 @@ function getExecutableCommand(editorType: EditorType): string {
   const commands =
     process.platform === 'win32' ? commandConfig.win32 : commandConfig.default;
 
-  // Try to find the first available command
   const availableCommand = commands.find((cmd) => commandExists(cmd));
 
-  // Return the first available command, or fall back to the last one in the list
-  return availableCommand || commands[commands.length - 1];
+  if (!availableCommand) {
+    throw new Error(
+      `No available editor command found for ${editorType}. ` +
+        `Tried: ${commands.join(', ')}. ` +
+        `Please install one of these editors or set a different preferredEditor in settings.`,
+    );
+  }
+
+  return availableCommand;
 }
 
 /**
