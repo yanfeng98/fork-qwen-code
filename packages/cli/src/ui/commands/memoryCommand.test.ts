@@ -11,9 +11,12 @@ import type { SlashCommand, type CommandContext } from './types.js';
 import { createMockCommandContext } from '../../test-utils/mockCommandContext.js';
 import { MessageType } from '../types.js';
 import type { LoadedSettings } from '../../config/settings.js';
+import { readFile } from 'node:fs/promises';
+import os from 'node:os';
 import {
   getErrorMessage,
   loadServerHierarchicalMemory,
+  setGeminiMdFilename,
   type FileDiscoveryService,
   type LoadServerHierarchicalMemoryResponse,
 } from '@qwen-code/qwen-code-core';
@@ -31,7 +34,18 @@ vi.mock('@qwen-code/qwen-code-core', async (importOriginal) => {
   };
 });
 
+vi.mock('node:fs/promises', () => {
+  const readFile = vi.fn();
+  return {
+    readFile,
+    default: {
+      readFile,
+    },
+  };
+});
+
 const mockLoadServerHierarchicalMemory = loadServerHierarchicalMemory as Mock;
+const mockReadFile = readFile as unknown as Mock;
 
 describe('memoryCommand', () => {
   let mockContext: CommandContext;
@@ -52,6 +66,10 @@ describe('memoryCommand', () => {
     let mockGetGeminiMdFileCount: Mock;
 
     beforeEach(() => {
+      setGeminiMdFilename('QWEN.md');
+      mockReadFile.mockReset();
+      vi.restoreAllMocks();
+
       showCommand = getSubCommand('show');
 
       mockGetUserMemory = vi.fn();
@@ -98,6 +116,56 @@ describe('memoryCommand', () => {
         {
           type: MessageType.INFO,
           text: `Current memory content from 1 file(s):\n\n---\n${memoryContent}\n---`,
+        },
+        expect.any(Number),
+      );
+    });
+
+    it('should show project memory from the configured context file', async () => {
+      const projectCommand = showCommand.subCommands?.find(
+        (cmd) => cmd.name === '--project',
+      );
+      if (!projectCommand?.action) throw new Error('Command has no action');
+
+      setGeminiMdFilename('AGENTS.md');
+      vi.spyOn(process, 'cwd').mockReturnValue('/test/project');
+      mockReadFile.mockResolvedValue('project memory');
+
+      await projectCommand.action(mockContext, '');
+
+      expect(mockReadFile).toHaveBeenCalledWith(
+        '/test/project/AGENTS.md',
+        'utf-8',
+      );
+      expect(mockContext.ui.addItem).toHaveBeenCalledWith(
+        {
+          type: MessageType.INFO,
+          text: expect.stringContaining('/test/project/AGENTS.md'),
+        },
+        expect.any(Number),
+      );
+    });
+
+    it('should show global memory from the configured context file', async () => {
+      const globalCommand = showCommand.subCommands?.find(
+        (cmd) => cmd.name === '--global',
+      );
+      if (!globalCommand?.action) throw new Error('Command has no action');
+
+      setGeminiMdFilename('AGENTS.md');
+      vi.spyOn(os, 'homedir').mockReturnValue('/home/user');
+      mockReadFile.mockResolvedValue('global memory');
+
+      await globalCommand.action(mockContext, '');
+
+      expect(mockReadFile).toHaveBeenCalledWith(
+        '/home/user/.qwen/AGENTS.md',
+        'utf-8',
+      );
+      expect(mockContext.ui.addItem).toHaveBeenCalledWith(
+        {
+          type: MessageType.INFO,
+          text: expect.stringContaining('Global memory content'),
         },
         expect.any(Number),
       );
