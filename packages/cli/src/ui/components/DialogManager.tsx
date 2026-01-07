@@ -6,6 +6,7 @@
 
 import { Box, Text } from 'ink';
 import { IdeIntegrationNudge } from '../IdeIntegrationNudge.js';
+import { CommandFormatMigrationNudge } from '../CommandFormatMigrationNudge.js';
 import { LoopDetectionConfirmation } from './LoopDetectionConfirmation.js';
 import { FolderTrustDialog } from './FolderTrustDialog.js';
 import { ShellConfirmationDialog } from './ShellConfirmationDialog.js';
@@ -91,6 +92,14 @@ export const DialogManager = ({
       <IdeIntegrationNudge
         ide={uiState.currentIDE!}
         onComplete={uiActions.handleIdePromptComplete}
+      />
+    );
+  }
+  if (uiState.shouldShowCommandMigrationNudge) {
+    return (
+      <CommandFormatMigrationNudge
+        tomlFiles={uiState.commandMigrationTomlFiles}
+        onComplete={uiActions.handleCommandMigrationComplete}
       />
     );
   }

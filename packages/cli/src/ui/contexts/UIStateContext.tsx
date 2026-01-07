@@ -72,6 +72,8 @@ export interface UIState {
   suggestionsWidth: number;
   isInputActive: boolean;
   shouldShowIdePrompt: boolean;
+  shouldShowCommandMigrationNudge: boolean;
+  commandMigrationTomlFiles: string[];
   isFolderTrustDialogOpen: boolean;
   isTrustedFolder: boolean | undefined;
   constrainHeight: boolean;

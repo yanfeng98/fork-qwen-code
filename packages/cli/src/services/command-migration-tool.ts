@@ -17,7 +17,6 @@ export interface MigrationResult {
   success: boolean;
   convertedFiles: string[];
   failedFiles: Array<{ file: string; error: string }>;
-  backupDir?: string;
 }
 
 export interface MigrationOptions {
@@ -27,8 +26,6 @@ export interface MigrationOptions {
   createBackup?: boolean;
   /** Whether to delete original TOML files after migration (default: false) */
   deleteOriginal?: boolean;
-  /** Backup directory suffix (default: '.backup') */
-  backupSuffix?: string;
 }
 
 /**
@@ -63,12 +60,7 @@ export async function detectTomlCommands(
 export async function migrateTomlCommands(
   options: MigrationOptions,
 ): Promise<MigrationResult> {
-  const {
-    commandDir,
-    createBackup = true,
-    deleteOriginal = false,
-    backupSuffix = '.backup',
-  } = options;
+  const { commandDir, createBackup = true, deleteOriginal = false } = options;
 
   const result: MigrationResult = {
     success: true,
@@ -81,15 +73,6 @@ export async function migrateTomlCommands(
 
   if (tomlFiles.length === 0) {
     return result;
-  }
-
-  // Create backup directory if needed
-  let backupDir: string | undefined;
-  if (createBackup) {
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    backupDir = path.join(commandDir, `${backupSuffix}-${timestamp}`);
-    await fs.mkdir(backupDir, { recursive: true });
-    result.backupDir = backupDir;
   }
 
   // Process each TOML file
@@ -122,15 +105,12 @@ export async function migrateTomlCommands(
       // Write Markdown file
       await fs.writeFile(markdownPath, markdownContent, 'utf-8');
 
-      // Backup original if requested
-      if (backupDir) {
-        const backupPath = path.join(backupDir, relativeFile);
-        await fs.mkdir(path.dirname(backupPath), { recursive: true });
-        await fs.copyFile(tomlPath, backupPath);
-      }
-
-      // Delete original if requested
-      if (deleteOriginal) {
+      // Backup original if requested (rename to .toml.backup)
+      if (createBackup) {
+        const backupPath = `${tomlPath}.backup`;
+        await fs.rename(tomlPath, backupPath);
+      } else if (deleteOriginal) {
+        // Delete original if requested and no backup
         await fs.unlink(tomlPath);
       }
 

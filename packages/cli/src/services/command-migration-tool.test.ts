@@ -101,14 +101,20 @@ description = "Test description"`;
       expect(mdContent).toContain('description: Test description');
       expect(mdContent).toContain('Test prompt');
 
-      // Check backup was created
-      expect(result.backupDir).toBeDefined();
-      const backupPath = path.join(result.backupDir!, 'test.toml');
+      // Check backup was created (original renamed to .toml.backup)
+      const backupPath = path.join(tempDir, 'test.toml.backup');
       const backupExists = await fs
         .access(backupPath)
         .then(() => true)
         .catch(() => false);
       expect(backupExists).toBe(true);
+
+      // Original .toml file should not exist (renamed to .backup)
+      const tomlExists = await fs
+        .access(path.join(tempDir, 'test.toml'))
+        .then(() => true)
+        .catch(() => false);
+      expect(tomlExists).toBe(false);
     });
 
     it('should delete original TOML when deleteOriginal is true', async () => {
@@ -120,7 +126,7 @@ description = "Test description"`;
 
       await migrateTomlCommands({
         commandDir: tempDir,
-        createBackup: true,
+        createBackup: false,
         deleteOriginal: true,
       });
 
@@ -137,6 +143,13 @@ description = "Test description"`;
         .then(() => true)
         .catch(() => false);
       expect(mdExists).toBe(true);
+
+      // Backup should not exist (createBackup was false)
+      const backupExists = await fs
+        .access(path.join(tempDir, 'delete-me.toml.backup'))
+        .then(() => true)
+        .catch(() => false);
+      expect(backupExists).toBe(false);
     });
 
     it('should fail if Markdown file already exists', async () => {
@@ -172,10 +185,24 @@ description = "Test description"`;
       const result = await migrateTomlCommands({
         commandDir: tempDir,
         createBackup: false,
+        deleteOriginal: false,
       });
 
       expect(result.success).toBe(true);
-      expect(result.backupDir).toBeUndefined();
+
+      // Original TOML file should still exist (no backup, no delete)
+      const tomlExists = await fs
+        .access(path.join(tempDir, 'no-backup.toml'))
+        .then(() => true)
+        .catch(() => false);
+      expect(tomlExists).toBe(true);
+
+      // Backup should not exist
+      const backupExists = await fs
+        .access(path.join(tempDir, 'no-backup.toml.backup'))
+        .then(() => true)
+        .catch(() => false);
+      expect(backupExists).toBe(false);
     });
 
     it('should return success with empty results for no TOML files', async () => {
