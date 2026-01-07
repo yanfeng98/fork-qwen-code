@@ -117,7 +117,7 @@ export class NativeLspService {
     for (const config of serverConfigs) {
       this.serverHandles.set(config.name, {
         config,
-        status: 'NOT_STARTED',
+        status: 'NOT_STARTED' as LspServerStatus,
       });
     }
   }
@@ -126,7 +126,7 @@ export class NativeLspService {
    * 启动所有 LSP 服务器
    */
   async start(): Promise<void> {
-    for (const [name, handle] of this.serverHandles) {
+    for (const [name, handle] of Array.from(this.serverHandles)) {
       await this.startServer(name, handle);
     }
   }
@@ -135,7 +135,7 @@ export class NativeLspService {
    * 停止所有 LSP 服务器
    */
   async stop(): Promise<void> {
-    for (const [name, handle] of this.serverHandles) {
+    for (const [name, handle] of Array.from(this.serverHandles)) {
       await this.stopServer(name, handle);
     }
     this.serverHandles.clear();
@@ -146,7 +146,7 @@ export class NativeLspService {
    */
   getStatus(): Map<string, LspServerStatus> {
     const statusMap = new Map<string, LspServerStatus>();
-    for (const [name, handle] of this.serverHandles) {
+    for (const [name, handle] of Array.from(this.serverHandles)) {
       statusMap.set(name, handle.status);
     }
     return statusMap;
@@ -161,7 +161,7 @@ export class NativeLspService {
   ): Promise<LspSymbolInformation[]> {
     const results: LspSymbolInformation[] = [];
 
-    for (const [serverName, handle] of this.serverHandles) {
+    for (const [serverName, handle] of Array.from(this.serverHandles)) {
       if (handle.status !== 'READY' || !handle.connection) {
         continue;
       }
@@ -348,7 +348,7 @@ export class NativeLspService {
 
     // 统计不同语言的文件数量
     const languageCounts = new Map<string, number>();
-    for (const file of files) {
+    for (const file of Array.from(files)) {
       const ext = path.extname(file).slice(1).toLowerCase();
       if (ext) {
         const lang = this.mapExtensionToLanguage(ext);
@@ -466,27 +466,33 @@ export class NativeLspService {
     item: unknown,
     serverName: string,
   ): LspReference | null {
+    if (!item || typeof item !== 'object') {
+      return null;
+    }
+
     const itemObj = item as Record<string, unknown>;
-    const uri =
-      itemObj?.uri ??
-      itemObj?.targetUri ??
-      (itemObj?.target as Record<string, unknown>)?.uri;
-    const range =
-      itemObj?.range ??
-      itemObj?.targetSelectionRange ??
-      itemObj?.targetRange ??
-      (itemObj?.target as Record<string, unknown>)?.range;
+    const uri = (itemObj['uri'] ??
+      itemObj['targetUri'] ??
+      (itemObj['target'] as Record<string, unknown>)?.['uri']) as
+      | string
+      | undefined;
+
+    const range = (itemObj['range'] ??
+      itemObj['targetSelectionRange'] ??
+      itemObj['targetRange'] ??
+      (itemObj['target'] as Record<string, unknown>)?.['range']) as
+      | { start?: unknown; end?: unknown }
+      | undefined;
 
     if (!uri || !range?.start || !range?.end) {
       return null;
     }
 
-    const rangeObj = range as Record<string, unknown>;
-    const start = rangeObj.start as { line?: number; character?: number };
-    const end = rangeObj.end as { line?: number; character?: number };
+    const start = range.start as { line?: number; character?: number };
+    const end = range.end as { line?: number; character?: number };
 
     return {
-      uri: uri as string,
+      uri,
       range: {
         start: {
           line: Number(start?.line ?? 0),
@@ -505,29 +511,37 @@ export class NativeLspService {
     item: unknown,
     serverName: string,
   ): LspSymbolInformation | null {
-    const itemObj = item as Record<string, unknown>;
-    const location = itemObj?.location ?? itemObj?.target ?? item;
-    const locationObj = location as Record<string, unknown>;
-    const range =
-      locationObj?.range ??
-      locationObj?.targetRange ??
-      itemObj?.range ??
-      undefined;
-
-    if (!locationObj?.uri || !range?.start || !range?.end) {
+    if (!item || typeof item !== 'object') {
       return null;
     }
 
-    const rangeObj = range as Record<string, unknown>;
-    const start = rangeObj.start as { line?: number; character?: number };
-    const end = rangeObj.end as { line?: number; character?: number };
+    const itemObj = item as Record<string, unknown>;
+    const location = itemObj['location'] ?? itemObj['target'] ?? item;
+    if (!location || typeof location !== 'object') {
+      return null;
+    }
+
+    const locationObj = location as Record<string, unknown>;
+    const range = (locationObj['range'] ??
+      locationObj['targetRange'] ??
+      itemObj['range'] ??
+      undefined) as { start?: unknown; end?: unknown } | undefined;
+
+    if (!locationObj['uri'] || !range?.start || !range?.end) {
+      return null;
+    }
+
+    const start = range.start as { line?: number; character?: number };
+    const end = range.end as { line?: number; character?: number };
 
     return {
-      name: (itemObj?.name ?? itemObj?.label ?? 'symbol') as string,
-      kind: itemObj?.kind ? String(itemObj.kind) : undefined,
-      containerName: itemObj?.containerName ?? itemObj?.container,
+      name: (itemObj['name'] ?? itemObj['label'] ?? 'symbol') as string,
+      kind: itemObj['kind'] ? String(itemObj['kind']) : undefined,
+      containerName: (itemObj['containerName'] ?? itemObj['container']) as
+        | string
+        | undefined,
       location: {
-        uri: locationObj.uri as string,
+        uri: locationObj['uri'] as string,
         range: {
           start: {
             line: Number(start?.line ?? 0),
@@ -649,28 +663,41 @@ export class NativeLspService {
 
         // 验证并转换用户配置为内部格式
         if (userConfig && typeof userConfig === 'object') {
-          for (const [langId, serverSpec] of Object.entries(userConfig) as [
-            string,
-            Record<string, unknown>,
-          ]) {
+          for (const [langId, serverSpec] of Object.entries(
+            userConfig,
+          ) as Array<[string, Record<string, unknown>]>) {
             // 转换为文件 URI 格式
             const rootUri = pathToFileURL(this.workspaceRoot).toString();
 
-            // 验证 command 不为 undefined
-            if (!serverSpec.command) {
-              console.warn(`LSP 配置错误: ${langId} 缺少 command 属性`);
+            // 驗證 command 不為 undefined
+            if (!(serverSpec as Record<string, unknown>)['command']) {
+              console.warn(`LSP 配置錯誤: ${langId} 缺少 command 屬性`);
               continue;
             }
 
             const serverConfig: LspServerConfig = {
-              name: serverSpec.command,
+              name: (serverSpec as Record<string, unknown>)[
+                'command'
+              ] as string,
               languages: [langId],
-              command: serverSpec.command,
-              args: serverSpec.args || [],
-              transport: serverSpec.transport || 'stdio',
-              initializationOptions: serverSpec.initializationOptions,
+              command: (serverSpec as Record<string, unknown>)[
+                'command'
+              ] as string,
+              args:
+                ((serverSpec as Record<string, unknown>)['args'] as string[]) ||
+                [],
+              transport:
+                ((serverSpec as Record<string, unknown>)['transport'] as
+                  | 'stdio'
+                  | 'tcp') || 'stdio',
+              initializationOptions: (serverSpec as Record<string, unknown>)[
+                'initializationOptions'
+              ] as LspInitializationOptions,
               rootUri,
-              trustRequired: serverSpec.trustRequired ?? true,
+              trustRequired:
+                ((serverSpec as Record<string, unknown>)[
+                  'trustRequired'
+                ] as boolean) ?? true,
             };
 
             configs.push(serverConfig);
@@ -733,12 +760,7 @@ export class NativeLspService {
     }
 
     // 检查路径安全性
-    if (
-      !this.isPathSafe(
-        handle.config.command,
-        (this.config as { cwd: string }).cwd,
-      )
-    ) {
+    if (!this.isPathSafe(handle.config.command, this.workspaceRoot)) {
       console.warn(
         `LSP 服务器 ${name} 的命令路径不安全: ${handle.config.command}`,
       );
@@ -1044,8 +1066,8 @@ export class NativeLspService {
     const message =
       typeof response === 'string'
         ? response
-        : typeof (response as Record<string, unknown>)?.message === 'string'
-          ? ((response as Record<string, unknown>).message as string)
+        : typeof (response as Record<string, unknown>)['message'] === 'string'
+          ? ((response as Record<string, unknown>)['message'] as string)
           : '';
     return message.includes('No Project');
   }

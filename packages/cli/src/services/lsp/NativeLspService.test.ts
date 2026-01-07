@@ -87,11 +87,11 @@ describe('NativeLspService', () => {
     eventEmitter = new EventEmitter();
 
     lspService = new NativeLspService(
-      mockConfig as MockConfig,
-      mockWorkspace as MockWorkspaceContext,
+      mockConfig as unknown as CoreConfig,
+      mockWorkspace as unknown as WorkspaceContext,
       eventEmitter,
-      mockFileDiscovery as MockFileDiscoveryService,
-      mockIdeStore as MockIdeContextStore,
+      mockFileDiscovery as unknown as FileDiscoveryService,
+      mockIdeStore as unknown as IdeContextStore,
     );
   });
 

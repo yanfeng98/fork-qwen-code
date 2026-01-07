@@ -214,7 +214,7 @@ class JsonRpcConnection {
   }
 
   private disposePending(error?: Error): void {
-    for (const [, pending] of this.pendingRequests) {
+    for (const [, pending] of Array.from(this.pendingRequests)) {
       clearTimeout(pending.timer);
       pending.reject(error ?? new Error('LSP connection closed'));
     }
