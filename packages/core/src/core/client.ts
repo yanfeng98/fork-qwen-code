@@ -219,42 +219,45 @@ export class GeminiClient {
     }
 
     if (forceFullContext || !this.lastSentIdeContext) {
-      // Send full context as JSON
+      // Send full context as plain text
       const openFiles = currentIdeContext.workspaceState?.openFiles || [];
       const activeFile = openFiles.find((f) => f.isActive);
       const otherOpenFiles = openFiles
         .filter((f) => !f.isActive)
         .map((f) => f.path);
 
-      const contextData: Record<string, unknown> = {};
+      const contextLines: string[] = [];
 
       if (activeFile) {
-        contextData['activeFile'] = {
-          path: activeFile.path,
-          cursor: activeFile.cursor
-            ? {
-                line: activeFile.cursor.line,
-                character: activeFile.cursor.character,
-              }
-            : undefined,
-          selectedText: activeFile.selectedText || undefined,
-        };
+        contextLines.push('Active file:');
+        contextLines.push(`  Path: ${activeFile.path}`);
+        if (activeFile.cursor) {
+          contextLines.push(
+            `  Cursor: line ${activeFile.cursor.line}, character ${activeFile.cursor.character}`,
+          );
+        }
+        if (activeFile.selectedText) {
+          contextLines.push(`  Selected text: ${activeFile.selectedText}`);
+        }
       }
 
       if (otherOpenFiles.length > 0) {
-        contextData['otherOpenFiles'] = otherOpenFiles;
+        if (contextLines.length > 0) {
+          contextLines.push('');
+        }
+        contextLines.push('Other open files:');
+        for (const filePath of otherOpenFiles) {
+          contextLines.push(`  - ${filePath}`);
+        }
       }
 
-      if (Object.keys(contextData).length === 0) {
+      if (contextLines.length === 0) {
         return { contextParts: [], newIdeContext: currentIdeContext };
       }
 
-      const jsonString = JSON.stringify(contextData, null, 2);
       const contextParts = [
-        "Here is the user's editor context as a JSON object. This is for your information only.",
-        '```json',
-        jsonString,
-        '```',
+        "Here is the user's editor context. This is for your information only.",
+        contextLines.join('\n'),
       ];
 
       if (this.config.getDebugMode()) {
@@ -265,9 +268,8 @@ export class GeminiClient {
         newIdeContext: currentIdeContext,
       };
     } else {
-      // Calculate and send delta as JSON
-      const delta: Record<string, unknown> = {};
-      const changes: Record<string, unknown> = {};
+      // Calculate and send delta as plain text
+      const changeLines: string[] = [];
 
       const lastFiles = new Map(
         (this.lastSentIdeContext.workspaceState?.openFiles || []).map(
@@ -288,7 +290,10 @@ export class GeminiClient {
         }
       }
       if (openedFiles.length > 0) {
-        changes['filesOpened'] = openedFiles;
+        changeLines.push('Files opened:');
+        for (const filePath of openedFiles) {
+          changeLines.push(`  - ${filePath}`);
+        }
       }
 
       const closedFiles: string[] = [];
@@ -298,7 +303,13 @@ export class GeminiClient {
         }
       }
       if (closedFiles.length > 0) {
-        changes['filesClosed'] = closedFiles;
+        if (changeLines.length > 0) {
+          changeLines.push('');
+        }
+        changeLines.push('Files closed:');
+        for (const filePath of closedFiles) {
+          changeLines.push(`  - ${filePath}`);
+        }
       }
 
       const lastActiveFile = (
@@ -310,16 +321,21 @@ export class GeminiClient {
 
       if (currentActiveFile) {
         if (!lastActiveFile || lastActiveFile.path !== currentActiveFile.path) {
-          changes['activeFileChanged'] = {
-            path: currentActiveFile.path,
-            cursor: currentActiveFile.cursor
-              ? {
-                  line: currentActiveFile.cursor.line,
-                  character: currentActiveFile.cursor.character,
-                }
-              : undefined,
-            selectedText: currentActiveFile.selectedText || undefined,
-          };
+          if (changeLines.length > 0) {
+            changeLines.push('');
+          }
+          changeLines.push('Active file changed:');
+          changeLines.push(`  Path: ${currentActiveFile.path}`);
+          if (currentActiveFile.cursor) {
+            changeLines.push(
+              `  Cursor: line ${currentActiveFile.cursor.line}, character ${currentActiveFile.cursor.character}`,
+            );
+          }
+          if (currentActiveFile.selectedText) {
+            changeLines.push(
+              `  Selected text: ${currentActiveFile.selectedText}`,
+            );
+          }
         } else {
           const lastCursor = lastActiveFile.cursor;
           const currentCursor = currentActiveFile.cursor;
@@ -329,42 +345,47 @@ export class GeminiClient {
               lastCursor.line !== currentCursor.line ||
               lastCursor.character !== currentCursor.character)
           ) {
-            changes['cursorMoved'] = {
-              path: currentActiveFile.path,
-              cursor: {
-                line: currentCursor.line,
-                character: currentCursor.character,
-              },
-            };
+            if (changeLines.length > 0) {
+              changeLines.push('');
+            }
+            changeLines.push('Cursor moved:');
+            changeLines.push(`  Path: ${currentActiveFile.path}`);
+            changeLines.push(
+              `  New position: line ${currentCursor.line}, character ${currentCursor.character}`,
+            );
           }
 
           const lastSelectedText = lastActiveFile.selectedText || '';
           const currentSelectedText = currentActiveFile.selectedText || '';
           if (lastSelectedText !== currentSelectedText) {
-            changes['selectionChanged'] = {
-              path: currentActiveFile.path,
-              selectedText: currentSelectedText,
-            };
+            if (changeLines.length > 0) {
+              changeLines.push('');
+            }
+            changeLines.push('Selection changed:');
+            changeLines.push(`  Path: ${currentActiveFile.path}`);
+            if (currentSelectedText) {
+              changeLines.push(`  Selected text: ${currentSelectedText}`);
+            } else {
+              changeLines.push('  Selected text: (none)');
+            }
           }
         }
       } else if (lastActiveFile) {
-        changes['activeFileChanged'] = {
-          path: null,
-          previousPath: lastActiveFile.path,
-        };
+        if (changeLines.length > 0) {
+          changeLines.push('');
+        }
+        changeLines.push('Active file changed:');
+        changeLines.push('  No active file');
+        changeLines.push(`  Previous path: ${lastActiveFile.path}`);
       }
 
-      if (Object.keys(changes).length === 0) {
+      if (changeLines.length === 0) {
         return { contextParts: [], newIdeContext: currentIdeContext };
       }
 
-      delta['changes'] = changes;
-      const jsonString = JSON.stringify(delta, null, 2);
       const contextParts = [
-        "Here is a summary of changes in the user's editor context, in JSON format. This is for your information only.",
-        '```json',
-        jsonString,
-        '```',
+        "Here is a summary of changes in the user's editor context. This is for your information only.",
+        changeLines.join('\n'),
       ];
 
       if (this.config.getDebugMode()) {
