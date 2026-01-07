@@ -6,7 +6,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { AuthDialog } from './AuthDialog.js';
-import { LoadedSettings, SettingScope } from '../../config/settings.js';
+import { LoadedSettings } from '../../config/settings.js';
 import { AuthType } from '@qwen-code/qwen-code-core';
 import { renderWithProviders } from '../../test-utils/render.js';
 import { UIStateContext } from '../contexts/UIStateContext.js';
@@ -536,7 +536,7 @@ describe('AuthDialog', () => {
     await wait();
 
     // Should call handleAuthSelect with undefined to exit
-    expect(handleAuthSelect).toHaveBeenCalledWith(undefined, SettingScope.User);
+    expect(handleAuthSelect).toHaveBeenCalledWith(undefined);
     unmount();
   });
 });

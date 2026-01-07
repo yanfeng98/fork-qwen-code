@@ -8,7 +8,6 @@ import type React from 'react';
 import { useState } from 'react';
 import { AuthType } from '@qwen-code/qwen-code-core';
 import { Box, Text } from 'ink';
-import { SettingScope } from '../../config/settings.js';
 import { Colors } from '../colors.js';
 import { useKeypress } from '../hooks/useKeypress.js';
 import { RadioButtonSelect } from '../components/shared/RadioButtonSelect.js';
@@ -84,7 +83,7 @@ export function AuthDialog(): React.JSX.Element {
 
   const handleAuthSelect = async (authMethod: AuthType) => {
     setErrorMessage(null);
-    await onAuthSelect(authMethod, SettingScope.User);
+    await onAuthSelect(authMethod);
   };
 
   const handleHighlight = (authMethod: AuthType) => {
@@ -109,7 +108,7 @@ export function AuthDialog(): React.JSX.Element {
           );
           return;
         }
-        onAuthSelect(undefined, SettingScope.User);
+        onAuthSelect(undefined);
       }
     },
     { isActive: true },

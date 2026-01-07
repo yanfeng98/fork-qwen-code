@@ -12,7 +12,8 @@ import {
   logAuth,
 } from '@qwen-code/qwen-code-core';
 import { useCallback, useEffect, useState } from 'react';
-import type { LoadedSettings, SettingScope } from '../../config/settings.js';
+import type { LoadedSettings } from '../../config/settings.js';
+import { getPersistScopeForModelSelection } from '../../config/modelProvidersScope.js';
 import type { OpenAICredentials } from '../components/OpenAIKeyPrompt.js';
 import { useQwenAuth } from '../hooks/useQwenAuth.js';
 import { AuthState, MessageType } from '../types.js';
@@ -80,33 +81,34 @@ export const useAuthCommand = (
   );
 
   const handleAuthSuccess = useCallback(
-    async (
-      authType: AuthType,
-      scope: SettingScope,
-      credentials?: OpenAICredentials,
-    ) => {
+    async (authType: AuthType, credentials?: OpenAICredentials) => {
       try {
-        settings.setValue(scope, 'security.auth.selectedType', authType);
+        const authTypeScope = getPersistScopeForModelSelection(settings);
+        settings.setValue(
+          authTypeScope,
+          'security.auth.selectedType',
+          authType,
+        );
 
         // Only update credentials if not switching to QWEN_OAUTH,
         // so that OpenAI credentials are preserved when switching to QWEN_OAUTH.
         if (authType !== AuthType.QWEN_OAUTH && credentials) {
           if (credentials?.apiKey != null) {
             settings.setValue(
-              scope,
+              authTypeScope,
               'security.auth.apiKey',
               credentials.apiKey,
             );
           }
           if (credentials?.baseUrl != null) {
             settings.setValue(
-              scope,
+              authTypeScope,
               'security.auth.baseUrl',
               credentials.baseUrl,
             );
           }
           if (credentials?.model != null) {
-            settings.setValue(scope, 'model.name', credentials.model);
+            settings.setValue(authTypeScope, 'model.name', credentials.model);
           }
         }
       } catch (error) {
@@ -139,14 +141,10 @@ export const useAuthCommand = (
   );
 
   const performAuth = useCallback(
-    async (
-      authType: AuthType,
-      scope: SettingScope,
-      credentials?: OpenAICredentials,
-    ) => {
+    async (authType: AuthType, credentials?: OpenAICredentials) => {
       try {
         await config.refreshAuth(authType);
-        handleAuthSuccess(authType, scope, credentials);
+        handleAuthSuccess(authType, credentials);
       } catch (e) {
         handleAuthFailure(e);
       }
@@ -155,11 +153,7 @@ export const useAuthCommand = (
   );
 
   const handleAuthSelect = useCallback(
-    async (
-      authType: AuthType | undefined,
-      scope: SettingScope,
-      credentials?: OpenAICredentials,
-    ) => {
+    async (authType: AuthType | undefined, credentials?: OpenAICredentials) => {
       if (!authType) {
         setIsAuthDialogOpen(false);
         setAuthError(null);
@@ -178,12 +172,12 @@ export const useAuthCommand = (
             baseUrl: credentials.baseUrl,
             model: credentials.model,
           });
-          await performAuth(authType, scope, credentials);
+          await performAuth(authType, credentials);
         }
         return;
       }
 
-      await performAuth(authType, scope);
+      await performAuth(authType);
     },
     [config, performAuth],
   );
