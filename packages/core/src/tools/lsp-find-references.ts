@@ -10,11 +10,7 @@ import type { ToolInvocation, ToolResult } from './tools.js';
 import { BaseDeclarativeTool, BaseToolInvocation, Kind } from './tools.js';
 import { ToolDisplayNames, ToolNames } from './tool-names.js';
 import type { Config } from '../config/config.js';
-import type {
-  LspClient,
-  LspLocation,
-  LspReference,
-} from '../lsp/types.js';
+import type { LspClient, LspLocation, LspReference } from '../lsp/types.js';
 
 export interface LspFindReferencesParams {
   /**
@@ -121,9 +117,12 @@ class LspFindReferencesInvocation extends BaseToolInvocation<
     }
 
     const workspaceRoot = this.config.getProjectRoot();
-    const lines = references.slice(0, limit).map((reference, index) => {
-      return `${index + 1}. ${this.formatLocation(reference, workspaceRoot)}`;
-    });
+    const lines = references
+      .slice(0, limit)
+      .map(
+        (reference, index) =>
+          `${index + 1}. ${this.formatLocation(reference, workspaceRoot)}`,
+      );
 
     const heading = `References for ${target.description}:`;
     return {
