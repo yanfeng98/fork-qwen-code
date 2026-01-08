@@ -9,9 +9,6 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import {
-  EXTENSIONS_CONFIG_FILENAME,
-  ExtensionStorage,
-  INSTALL_METADATA_FILENAME,
   annotateActiveExtensions,
   disableExtension,
   enableExtension,
@@ -24,6 +21,11 @@ import {
   uninstallExtension,
   type Extension,
 } from './extension.js';
+import {
+  INSTALL_METADATA_FILENAME,
+  EXTENSIONS_CONFIG_FILENAME,
+} from './extensions/variables.js';
+import { ExtensionStorage } from './extensions/storage.js';
 import {
   QWEN_DIR,
   type GeminiCLIExtension,

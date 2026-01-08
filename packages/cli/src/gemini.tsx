@@ -15,7 +15,8 @@ import React from 'react';
 import { validateAuthMethod } from './config/auth.js';
 import * as cliConfig from './config/config.js';
 import { loadCliConfig, parseArguments } from './config/config.js';
-import { ExtensionStorage, loadExtensions } from './config/extension.js';
+import { loadExtensions } from './config/extension.js';
+import { ExtensionStorage } from './config/extensions/storage.js';
 import type { DnsResolutionOrder, LoadedSettings } from './config/settings.js';
 import { loadSettings, migrateDeprecatedSettings } from './config/settings.js';
 import {

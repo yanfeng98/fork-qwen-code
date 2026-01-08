@@ -115,6 +115,7 @@ export type {
   OAuthCredentials,
 } from './mcp/token-storage/types.js';
 export { MCPOAuthTokenStorage } from './mcp/oauth-token-storage.js';
+export { KeychainTokenStorage } from './mcp/token-storage/keychain-token-storage.js';
 export type { MCPOAuthConfig } from './mcp/oauth-provider.js';
 export type {
   OAuthAuthorizationServerMetadata,

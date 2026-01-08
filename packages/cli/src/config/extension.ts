@@ -10,7 +10,6 @@ import type {
   ExtensionInstallMetadata,
 } from '@qwen-code/qwen-code-core';
 import {
-  QWEN_DIR,
   Storage,
   Config,
   ExtensionInstallEvent,
@@ -27,12 +26,17 @@ import * as path from 'node:path';
 import * as os from 'node:os';
 import { SettingScope, loadSettings } from '../config/settings.js';
 import { getErrorMessage } from '../utils/errors.js';
-import { recursivelyHydrateStrings } from './extensions/variables.js';
+import {
+  EXTENSIONS_CONFIG_FILENAME,
+  INSTALL_METADATA_FILENAME,
+  recursivelyHydrateStrings,
+} from './extensions/variables.js';
 import { isWorkspaceTrusted } from './trustedFolders.js';
 import { resolveEnvVarsInObject } from '../utils/envVarResolver.js';
 import {
   cloneFromGit,
   downloadFromGitHubRelease,
+  parseGitHubRepoForReleases,
 } from './extensions/github.js';
 import type { LoadExtensionContext } from './extensions/variableSchema.js';
 import { ExtensionEnablementManager } from './extensions/extensionEnablement.js';
@@ -48,11 +52,13 @@ import {
   convertGeminiExtensionPackage,
 } from './extensions/gemini-converter.js';
 import { glob } from 'glob';
-
-export const EXTENSIONS_DIRECTORY_NAME = path.join(QWEN_DIR, 'extensions');
-
-export const EXTENSIONS_CONFIG_FILENAME = 'qwen-extension.json';
-export const INSTALL_METADATA_FILENAME = '.qwen-extension-install.json';
+import { createHash } from 'node:crypto';
+import { maybeRequestConsentOrFail } from './extensions/consent.js';
+import { ExtensionStorage } from './extensions/storage.js';
+import {
+  maybePromptForSettings,
+  promptForSetting,
+} from './extensions/extensionSettings.js';
 
 export interface Extension {
   path: string;
@@ -88,34 +94,6 @@ export interface ExtensionUpdateInfo {
   name: string;
   originalVersion: string;
   updatedVersion: string;
-}
-
-export class ExtensionStorage {
-  private readonly extensionName: string;
-
-  constructor(extensionName: string) {
-    this.extensionName = extensionName;
-  }
-
-  getExtensionDir(): string {
-    return path.join(
-      ExtensionStorage.getUserExtensionsDir(),
-      this.extensionName,
-    );
-  }
-
-  getConfigPath(): string {
-    return path.join(this.getExtensionDir(), EXTENSIONS_CONFIG_FILENAME);
-  }
-
-  static getUserExtensionsDir(): string {
-    const storage = new Storage(os.homedir());
-    return storage.getExtensionsDir();
-  }
-
-  static async createTmpDir(): Promise<string> {
-    return await fs.promises.mkdtemp(path.join(os.tmpdir(), 'qwen-extension'));
-  }
 }
 
 export function getWorkspaceExtensions(workspaceDir: string): Extension[] {
@@ -585,7 +563,14 @@ export async function installExtension(
         commands,
         previousExtensionConfig,
       );
+      const extensionId = getExtensionId(newExtensionConfig, installMetadata);
       await fs.promises.mkdir(destinationPath, { recursive: true });
+
+      await maybePromptForSettings(
+        newExtensionConfig,
+        extensionId,
+        promptForSetting,
+      );
 
       if (
         installMetadata.type === 'local' ||
@@ -645,78 +630,6 @@ export async function installExtension(
       ),
     );
     throw error;
-  }
-}
-
-/**
- * Builds a consent string for installing an extension based on it's
- * extensionConfig.
- */
-function extensionConsentString(
-  extensionConfig: ExtensionConfig,
-  commands?: string[],
-): string {
-  const output: string[] = [];
-  const mcpServerEntries = Object.entries(extensionConfig.mcpServers || {});
-  output.push(`Installing extension "${extensionConfig.name}".`);
-  output.push(
-    '**Extensions may introduce unexpected behavior. Ensure you have investigated the extension source and trust the author.**',
-  );
-
-  if (mcpServerEntries.length) {
-    output.push('This extension will run the following MCP servers:');
-    for (const [key, mcpServer] of mcpServerEntries) {
-      const isLocal = !!mcpServer.command;
-      const source =
-        mcpServer.httpUrl ??
-        `${mcpServer.command || ''}${mcpServer.args ? ' ' + mcpServer.args.join(' ') : ''}`;
-      output.push(`  * ${key} (${isLocal ? 'local' : 'remote'}): ${source}`);
-    }
-  }
-  if (commands && commands.length > 0) {
-    output.push(
-      `This extension will add the following commands: ${commands.join(', ')}.`,
-    );
-  }
-  if (extensionConfig.contextFileName) {
-    output.push(
-      `This extension will append info to your QWEN.md context using ${extensionConfig.contextFileName}`,
-    );
-  }
-  if (extensionConfig.excludeTools) {
-    output.push(
-      `This extension will exclude the following core tools: ${extensionConfig.excludeTools}`,
-    );
-  }
-  return output.join('\n');
-}
-
-/**
- * Requests consent from the user to install an extension (extensionConfig), if
- * there is any difference between the consent string for `extensionConfig` and
- * `previousExtensionConfig`.
- *
- * Always requests consent if previousExtensionConfig is null.
- *
- * Throws if the user does not consent.
- */
-async function maybeRequestConsentOrFail(
-  extensionConfig: ExtensionConfig,
-  requestConsent: (consent: string) => Promise<boolean>,
-  commands: string[],
-  previousExtensionConfig?: ExtensionConfig,
-) {
-  const extensionConsent = extensionConsentString(extensionConfig, commands);
-  if (previousExtensionConfig) {
-    const previousExtensionConsent = extensionConsentString(
-      previousExtensionConfig,
-    );
-    if (previousExtensionConsent === extensionConsent) {
-      return;
-    }
-  }
-  if (!(await requestConsent(extensionConsent))) {
-    throw new Error(`Installation cancelled for "${extensionConfig.name}".`);
   }
 }
 
@@ -801,6 +714,7 @@ export function loadExtensionConfig(
       '/': path.sep,
       pathSeparator: path.sep,
     }) as unknown as ExtensionConfig;
+
     if (!config.name || !config.version) {
       throw new Error(
         `Invalid configuration in ${configFilePath}: missing ${!config.name ? '"name"' : '"version"'}`,
@@ -940,4 +854,32 @@ export function enableExtension(
   manager.enable(name, true, scopePath);
   const config = getTelemetryConfig(cwd);
   logExtensionEnable(config, new ExtensionEnableEvent(name, scope));
+}
+
+export function getExtensionId(
+  config: ExtensionConfig,
+  installMetadata?: ExtensionInstallMetadata,
+): string {
+  // IDs are created by hashing details of the installation source in order to
+  // deduplicate extensions with conflicting names and also obfuscate any
+  // potentially sensitive information such as private git urls, system paths,
+  // or project names.
+  let idValue = config.name;
+  const githubUrlParts =
+    installMetadata &&
+    (installMetadata.type === 'git' ||
+      installMetadata.type === 'github-release')
+      ? parseGitHubRepoForReleases(installMetadata.source)
+      : null;
+  if (githubUrlParts) {
+    // For github repos, we use the https URI to the repo as the ID.
+    idValue = `https://github.com/${githubUrlParts.owner}/${githubUrlParts.repo}`;
+  } else {
+    idValue = installMetadata?.source ?? config.name;
+  }
+  return hashValue(idValue);
+}
+
+export function hashValue(value: string): string {
+  return createHash('sha256').update(value).digest('hex');
 }

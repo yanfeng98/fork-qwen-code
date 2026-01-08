@@ -320,38 +320,38 @@ export class SkillManager {
    * @param dir - provided directory
    * @returns Array of skill configurations
    */
-  async parseSkillsFromDir(dir: string): Promise<SkillConfig[]> {
-    const discoveredSkills: SkillConfig[] = [];
+  // async parseSkillsFromDir(dir: string): Promise<SkillConfig[]> {
+  //   const discoveredSkills: SkillConfig[] = [];
 
-    try {
-      const absoluteSearchPath = path.resolve(dir);
-      const stats = await fs.stat(absoluteSearchPath).catch(() => null);
-      if (!stats || !stats.isDirectory()) {
-        return [];
-      }
+  //   try {
+  //     const absoluteSearchPath = path.resolve(dir);
+  //     const stats = await fs.stat(absoluteSearchPath).catch(() => null);
+  //     if (!stats || !stats.isDirectory()) {
+  //       return [];
+  //     }
 
-      const skillFiles = await glob('*/SKILL.md', {
-        cwd: absoluteSearchPath,
-        absolute: true,
-        nodir: true,
-      });
+  //     const skillFiles = await glob('*/SKILL.md', {
+  //       cwd: absoluteSearchPath,
+  //       absolute: true,
+  //       nodir: true,
+  //     });
 
-      for (const skillFile of skillFiles) {
-        const metadata = await this.parseSkillFile(skillFile, 'extension');
-        if (metadata) {
-          discoveredSkills.push(metadata);
-        }
-      }
-    } catch (error) {
-      coreEvents.emitFeedback(
-        'warning',
-        `Error discovering skills in ${dir}:`,
-        error,
-      );
-    }
+  //     for (const skillFile of skillFiles) {
+  //       const metadata = await this.parseSkillFile(skillFile, 'extension');
+  //       if (metadata) {
+  //         discoveredSkills.push(metadata);
+  //       }
+  //     }
+  //   } catch (error) {
+  //     coreEvents.emitFeedback(
+  //       'warning',
+  //       `Error discovering skills in ${dir}:`,
+  //       error,
+  //     );
+  //   }
 
-    return discoveredSkills;
-  }
+  //   return discoveredSkills;
+  // }
 
   /**
    * Parses a SKILL.md file and returns the configuration.

@@ -263,6 +263,7 @@ describe('gemini.tsx main function', () => {
     const { loadSettings } = await import('./config/settings.js');
     const cleanupModule = await import('./utils/cleanup.js');
     const extensionModule = await import('./config/extension.js');
+    const { ExtensionStorage } = await import('./config/extensions/storage.js');
     const validatorModule = await import('./validateNonInterActiveAuth.js');
     const streamJsonModule = await import('./nonInteractive/session.js');
     const initializerModule = await import('./core/initializer.js');
@@ -276,10 +277,9 @@ describe('gemini.tsx main function', () => {
     const runExitCleanupMock = vi.mocked(cleanupModule.runExitCleanup);
     runExitCleanupMock.mockResolvedValue(undefined);
     vi.spyOn(extensionModule, 'loadExtensions').mockReturnValue([]);
-    vi.spyOn(
-      extensionModule.ExtensionStorage,
-      'getUserExtensionsDir',
-    ).mockReturnValue('/tmp/extensions');
+    vi.spyOn(ExtensionStorage, 'getUserExtensionsDir').mockReturnValue(
+      '/tmp/extensions',
+    );
     vi.spyOn(initializerModule, 'initializeApp').mockResolvedValue({
       authError: null,
       themeError: null,

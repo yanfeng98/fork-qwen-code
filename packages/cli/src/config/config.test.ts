@@ -16,7 +16,8 @@ import {
 } from '@qwen-code/qwen-code-core';
 import { loadCliConfig, parseArguments, type CliArgs } from './config.js';
 import type { Settings } from './settings.js';
-import { ExtensionStorage, type Extension } from './extension.js';
+import type { Extension } from './extension.js';
+import { ExtensionStorage } from './extensions/storage.js';
 import * as ServerConfig from '@qwen-code/qwen-code-core';
 import { isWorkspaceTrusted } from './trustedFolders.js';
 import { ExtensionEnablementManager } from './extensions/extensionEnablement.js';

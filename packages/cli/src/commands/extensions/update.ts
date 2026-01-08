@@ -8,9 +8,10 @@ import type { CommandModule } from 'yargs';
 import {
   loadExtensions,
   annotateActiveExtensions,
-  ExtensionStorage,
   requestConsentNonInteractive,
 } from '../../config/extension.js';
+import { ExtensionStorage } from '../../config/extensions/storage.js';
+
 import {
   updateAllUpdatableExtensions,
   type ExtensionUpdateInfo,

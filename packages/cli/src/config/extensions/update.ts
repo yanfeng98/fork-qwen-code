@@ -15,13 +15,14 @@ import {
   uninstallExtension,
   loadExtension,
   loadInstallMetadata,
-  ExtensionStorage,
   loadExtensionConfig,
 } from '../extension.js';
+
 import { checkForExtensionUpdate } from './github.js';
 import type { GeminiCLIExtension } from '@qwen-code/qwen-code-core';
 import * as fs from 'node:fs';
 import { getErrorMessage } from '../../utils/errors.js';
+import { ExtensionStorage } from './storage.js';
 
 export interface ExtensionUpdateInfo {
   name: string;

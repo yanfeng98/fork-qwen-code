@@ -22,7 +22,7 @@ import {
   type CommandDefinition,
 } from './command-factory.js';
 import type { SlashCommand } from '../ui/commands/types.js';
-import { EXTENSIONS_CONFIG_FILENAME } from '../config/extension.js';
+import { EXTENSIONS_CONFIG_FILENAME } from '../config/extensions/variables.js';
 
 interface CommandDirectory {
   path: string;

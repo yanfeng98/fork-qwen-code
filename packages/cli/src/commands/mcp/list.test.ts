@@ -7,7 +7,8 @@
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { listMcpServers } from './list.js';
 import { loadSettings } from '../../config/settings.js';
-import { ExtensionStorage, loadExtensions } from '../../config/extension.js';
+import { loadExtensions } from '../../config/extension.js';
+import { ExtensionStorage } from '../../config/extensions/storage.js';
 import { createTransport } from '@qwen-code/qwen-code-core';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 

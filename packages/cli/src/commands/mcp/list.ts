@@ -10,7 +10,8 @@ import { loadSettings } from '../../config/settings.js';
 import type { MCPServerConfig } from '@qwen-code/qwen-code-core';
 import { MCPServerStatus, createTransport } from '@qwen-code/qwen-code-core';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { ExtensionStorage, loadExtensions } from '../../config/extension.js';
+import { loadExtensions } from '../../config/extension.js';
+import { ExtensionStorage } from '../../config/extensions/storage.js';
 import { ExtensionEnablementManager } from '../../config/extensions/extensionEnablement.js';
 
 const COLOR_GREEN = '\u001b[32m';

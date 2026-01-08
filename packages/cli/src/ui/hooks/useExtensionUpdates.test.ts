@@ -9,10 +9,10 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import {
-  ExtensionStorage,
   annotateActiveExtensions,
   loadExtension,
 } from '../../config/extension.js';
+import { ExtensionStorage } from '../../config/extensions/storage.js';
 import { createExtension } from '../../test-utils/createExtension.js';
 import { useExtensionUpdates } from './useExtensionUpdates.js';
 import { QWEN_DIR, type GeminiCLIExtension } from '@qwen-code/qwen-code-core';

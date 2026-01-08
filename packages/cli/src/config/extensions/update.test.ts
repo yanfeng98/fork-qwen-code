@@ -8,13 +8,12 @@ import { vi } from 'vitest';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { annotateActiveExtensions, loadExtension } from '../extension.js';
 import {
   EXTENSIONS_CONFIG_FILENAME,
-  ExtensionStorage,
   INSTALL_METADATA_FILENAME,
-  annotateActiveExtensions,
-  loadExtension,
-} from '../extension.js';
+} from './variables.js';
+import { ExtensionStorage } from './storage.js';
 import { checkForAllExtensionUpdates, updateExtension } from './update.js';
 import { QWEN_DIR } from '@qwen-code/qwen-code-core';
 import { isWorkspaceTrusted } from '../trustedFolders.js';
