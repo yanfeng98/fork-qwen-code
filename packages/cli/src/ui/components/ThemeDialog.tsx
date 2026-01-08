@@ -39,7 +39,7 @@ export function ThemeDialog({
   terminalWidth,
 }: ThemeDialogProps): React.JSX.Element {
   const [selectedScope, setSelectedScope] = useState<SettingScope>(
-    SettingScope.User,
+    SettingScope.Workspace,
   );
 
   // Track the currently highlighted theme name

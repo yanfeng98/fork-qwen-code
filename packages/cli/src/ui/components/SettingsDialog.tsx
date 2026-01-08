@@ -63,7 +63,7 @@ export function SettingsDialog({
   );
   // Scope selector state (User by default)
   const [selectedScope, setSelectedScope] = useState<SettingScope>(
-    SettingScope.User,
+    SettingScope.Workspace,
   );
   // Active indices
   const [activeSettingIndex, setActiveSettingIndex] = useState(0);

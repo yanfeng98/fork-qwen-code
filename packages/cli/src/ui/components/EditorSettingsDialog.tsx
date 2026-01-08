@@ -33,7 +33,7 @@ export function EditorSettingsDialog({
   onExit,
 }: EditorDialogProps): React.JSX.Element {
   const [selectedScope, setSelectedScope] = useState<SettingScope>(
-    SettingScope.User,
+    SettingScope.Workspace,
   );
   const [focusedSection, setFocusedSection] = useState<'editor' | 'scope'>(
     'editor',
@@ -68,17 +68,17 @@ export function EditorSettingsDialog({
   const scopeItems = [
     {
       get label() {
-        return t('User Settings');
-      },
-      value: SettingScope.User,
-      key: SettingScope.User,
-    },
-    {
-      get label() {
         return t('Workspace Settings');
       },
       value: SettingScope.Workspace,
       key: SettingScope.Workspace,
+    },
+    {
+      get label() {
+        return t('User Settings');
+      },
+      value: SettingScope.User,
+      key: SettingScope.User,
     },
   ];
 
