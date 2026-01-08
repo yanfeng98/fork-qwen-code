@@ -464,6 +464,22 @@ describe('ModelsConfig', () => {
     expect(gc.apiKeyEnvKey).toBeUndefined();
   });
 
+  it('should apply Qwen OAuth apiKey placeholder during syncAfterAuthRefresh for fresh users', () => {
+    // Fresh user: authType not selected yet (currentAuthType undefined).
+    const modelsConfig = new ModelsConfig();
+
+    // Config.refreshAuth passes modelId from modelsConfig.getModel(), which falls back to DEFAULT_QWEN_MODEL.
+    modelsConfig.syncAfterAuthRefresh(
+      AuthType.QWEN_OAUTH,
+      modelsConfig.getModel(),
+    );
+
+    const gc = currentGenerationConfig(modelsConfig);
+    expect(gc.model).toBe('coder-model');
+    expect(gc.apiKey).toBe('QWEN_OAUTH_DYNAMIC_TOKEN');
+    expect(gc.apiKeyEnvKey).toBeUndefined();
+  });
+
   it('should maintain consistency between currentModelId and _generationConfig.model after initialization', () => {
     const modelProvidersConfig: ModelProvidersConfig = {
       openai: [

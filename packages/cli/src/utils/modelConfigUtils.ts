@@ -79,7 +79,7 @@ export function resolveCliGenerationConfig(
   const { argv, settings, selectedAuthType } = inputs;
   const env = inputs.env ?? (process.env as Record<string, string | undefined>);
 
-  const authType = selectedAuthType ?? AuthType.QWEN_OAUTH;
+  const authType = selectedAuthType;
 
   const configSources: ModelConfigSourcesInput = {
     authType,

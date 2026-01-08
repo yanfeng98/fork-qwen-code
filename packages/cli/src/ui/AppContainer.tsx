@@ -370,29 +370,30 @@ export const AppContainer = (props: AppContainerProps) => {
   // Check for enforced auth type mismatch
   useEffect(() => {
     // Check for initialization error first
+    const currentAuthType = config.modelsConfig.getCurrentAuthType();
 
     if (
       settings.merged.security?.auth?.enforcedType &&
-      config.modelsConfig.getCurrentAuthType() &&
-      settings.merged.security?.auth.enforcedType !==
-        config.modelsConfig.getCurrentAuthType()
+      currentAuthType &&
+      settings.merged.security?.auth.enforcedType !== currentAuthType
     ) {
       onAuthError(
         t(
           'Authentication is enforced to be {{enforcedType}}, but you are currently using {{currentType}}.',
           {
-            enforcedType: settings.merged.security?.auth.enforcedType,
-            currentType: config.modelsConfig.getCurrentAuthType(),
+            enforcedType: String(settings.merged.security?.auth.enforcedType),
+            currentType: String(currentAuthType),
           },
         ),
       );
     } else if (!settings.merged.security?.auth?.useExternal) {
-      const error = validateAuthMethod(
-        config.modelsConfig.getCurrentAuthType(),
-        config,
-      );
-      if (error) {
-        onAuthError(error);
+      // If no authType is selected yet, allow the auth UI flow to prompt the user.
+      // Only validate credentials once a concrete authType exists.
+      if (currentAuthType) {
+        const error = validateAuthMethod(currentAuthType, config);
+        if (error) {
+          onAuthError(error);
+        }
       }
     }
   }, [

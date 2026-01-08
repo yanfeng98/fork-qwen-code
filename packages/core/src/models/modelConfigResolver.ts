@@ -75,7 +75,7 @@ export interface ModelConfigSettingsInput {
  */
 export interface ModelConfigSourcesInput {
   /** Authentication type */
-  authType: AuthType;
+  authType?: AuthType;
 
   /** CLI arguments (highest priority for user-provided values) */
   cli?: ModelConfigCliInput;
@@ -128,9 +128,11 @@ export function resolveModelConfig(
     return resolveQwenOAuthConfig(input, warnings);
   }
 
-  // Get auth-specific env var mappings
-  const envMapping =
-    AUTH_ENV_MAPPINGS[authType] || AUTH_ENV_MAPPINGS[AuthType.USE_OPENAI];
+  // Get auth-specific env var mappings.
+  // If authType is not provided, do not read any auth env vars.
+  const envMapping = authType
+    ? AUTH_ENV_MAPPINGS[authType]
+    : { model: [], apiKey: [], baseUrl: [] };
 
   // Build layers for each field in priority order
   // Priority: modelProvider > cli > env > settings > default
@@ -138,7 +140,7 @@ export function resolveModelConfig(
   // ---- Model ----
   const modelLayers: Array<ConfigLayer<string>> = [];
 
-  if (modelProvider) {
+  if (authType && modelProvider) {
     modelLayers.push(
       layer(
         modelProvider.id,
@@ -156,7 +158,7 @@ export function resolveModelConfig(
     modelLayers.push(layer(settings.model, settingsSource('model.name')));
   }
 
-  const defaultModel = DEFAULT_MODELS[authType] || '';
+  const defaultModel = authType ? DEFAULT_MODELS[authType] : '';
   const modelResult = resolveField(
     modelLayers,
     defaultModel,
@@ -168,7 +170,7 @@ export function resolveModelConfig(
   const apiKeyLayers: Array<ConfigLayer<string>> = [];
 
   // For modelProvider, read from the specified envKey
-  if (modelProvider?.envKey) {
+  if (authType && modelProvider?.envKey) {
     const apiKeyFromEnv = env[modelProvider.envKey];
     if (apiKeyFromEnv) {
       apiKeyLayers.push(
@@ -200,7 +202,7 @@ export function resolveModelConfig(
   // ---- Base URL ----
   const baseUrlLayers: Array<ConfigLayer<string>> = [];
 
-  if (modelProvider?.baseUrl) {
+  if (authType && modelProvider?.baseUrl) {
     baseUrlLayers.push(
       layer(
         modelProvider.baseUrl,
@@ -227,7 +229,7 @@ export function resolveModelConfig(
 
   // ---- API Key Env Key (for error messages) ----
   let apiKeyEnvKey: string | undefined;
-  if (modelProvider?.envKey) {
+  if (authType && modelProvider?.envKey) {
     apiKeyEnvKey = modelProvider.envKey;
     sources['apiKeyEnvKey'] = modelProvidersSource(
       authType,
@@ -248,7 +250,7 @@ export function resolveModelConfig(
   // Build final config
   const config: ContentGeneratorConfig = {
     authType,
-    model: modelResult.value,
+    model: modelResult.value || '',
     apiKey: apiKeyResult?.value,
     apiKeyEnvKey,
     baseUrl: baseUrlResult?.value,
@@ -335,7 +337,7 @@ function resolveQwenOAuthConfig(
 function resolveGenerationConfig(
   settingsConfig: Partial<ContentGeneratorConfig> | undefined,
   modelProviderConfig: Partial<ContentGeneratorConfig> | undefined,
-  authType: AuthType,
+  authType: AuthType | undefined,
   modelId: string | undefined,
   sources: ConfigSources,
 ): Partial<ContentGeneratorConfig> {
@@ -343,7 +345,7 @@ function resolveGenerationConfig(
 
   for (const field of MODEL_GENERATION_CONFIG_FIELDS) {
     // ModelProvider config takes priority
-    if (modelProviderConfig && field in modelProviderConfig) {
+    if (authType && modelProviderConfig && field in modelProviderConfig) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (result as any)[field] = modelProviderConfig[field];
       sources[field] = modelProvidersSource(

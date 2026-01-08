@@ -256,12 +256,16 @@ export async function main() {
         // Validate authentication here because the sandbox will interfere with the Oauth2 web redirect.
         try {
           const authType = partialConfig.modelsConfig.getCurrentAuthType();
-          const err = validateAuthMethod(authType, partialConfig);
-          if (err) {
-            throw new Error(err);
-          }
+          // Fresh users may not have selected/persisted an authType yet.
+          // In that case, defer auth prompting/selection to the main interactive flow.
+          if (authType) {
+            const err = validateAuthMethod(authType, partialConfig);
+            if (err) {
+              throw new Error(err);
+            }
 
-          await partialConfig.refreshAuth(authType);
+            await partialConfig.refreshAuth(authType);
+          }
         } catch (err) {
           console.error('Error authenticating:', err);
           process.exit(1);

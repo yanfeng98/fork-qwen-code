@@ -20,21 +20,27 @@ export async function validateNonInteractiveAuth(
   try {
     // Get the actual authType from config which has already resolved CLI args, env vars, and settings
     const authType = nonInteractiveConfig.modelsConfig.getCurrentAuthType();
+    if (!authType) {
+      throw new Error(
+        'No auth type is selected. Please configure an auth type (e.g. via settings or `--auth-type`) before running in non-interactive mode.',
+      );
+    }
+    const resolvedAuthType: NonNullable<typeof authType> = authType;
 
     const enforcedType = settings.merged.security?.auth?.enforcedType;
-    if (enforcedType && enforcedType !== authType) {
-      const message = `The configured auth type is ${enforcedType}, but the current auth type is ${authType}. Please re-authenticate with the correct type.`;
+    if (enforcedType && enforcedType !== resolvedAuthType) {
+      const message = `The configured auth type is ${enforcedType}, but the current auth type is ${resolvedAuthType}. Please re-authenticate with the correct type.`;
       throw new Error(message);
     }
 
     if (!useExternalAuth) {
-      const err = validateAuthMethod(authType, nonInteractiveConfig);
+      const err = validateAuthMethod(resolvedAuthType, nonInteractiveConfig);
       if (err != null) {
         throw new Error(err);
       }
     }
 
-    await nonInteractiveConfig.refreshAuth(authType);
+    await nonInteractiveConfig.refreshAuth(resolvedAuthType);
     return nonInteractiveConfig;
   } catch (error) {
     const outputFormat = nonInteractiveConfig.getOutputFormat();
