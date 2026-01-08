@@ -49,7 +49,7 @@ export class SkillTool extends BaseDeclarativeTool<SkillParams, ToolResult> {
       'Execute a skill within the main conversation. Loading available skills...', // Initial description
       Kind.Read,
       initialSchema,
-      true, // isOutputMarkdown
+      false, // isOutputMarkdown
       false, // canUpdateOutput
     );
 
@@ -187,7 +187,7 @@ class SkillToolInvocation extends BaseToolInvocation<SkillParams, ToolResult> {
   }
 
   getDescription(): string {
-    return `Launching skill: "${this.params.skill}"`;
+    return `Use skill: "${this.params.skill}"`;
   }
 
   override async shouldConfirmExecute(): Promise<false> {
@@ -246,12 +246,12 @@ class SkillToolInvocation extends BaseToolInvocation<SkillParams, ToolResult> {
 
       return {
         llmContent: [{ text: llmContent }],
-        returnDisplay: `Launching skill: ${skill.name}`,
+        returnDisplay: skill.description,
       };
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      console.error(`[SkillsTool] Error launching skill: ${errorMessage}`);
+      console.error(`[SkillsTool] Error using skill: ${errorMessage}`);
 
       // Log failed skill launch
       logSkillLaunch(
