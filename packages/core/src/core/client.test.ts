@@ -1058,26 +1058,18 @@ describe('Gemini Client (client.ts)', () => {
 
       // Assert
       expect(ideContextStore.get).toHaveBeenCalled();
-      const expectedContext = `
-Here is the user's editor context as a JSON object. This is for your information only.
-\`\`\`json
-${JSON.stringify(
-  {
-    activeFile: {
-      path: '/path/to/active/file.ts',
-      cursor: {
-        line: 5,
-        character: 10,
-      },
-      selectedText: 'hello',
-    },
-    otherOpenFiles: ['/path/to/recent/file1.ts', '/path/to/recent/file2.ts'],
-  },
-  null,
-  2,
-)}
+      const expectedContext = `Here is the user's editor context. This is for your information only.
+Active file:
+  Path: /path/to/active/file.ts
+  Cursor: line 5, character 10
+  Selected text:
 \`\`\`
-      `.trim();
+hello
+\`\`\`
+
+Other open files:
+  - /path/to/recent/file1.ts
+  - /path/to/recent/file2.ts`;
       const expectedRequest = [{ text: expectedContext }];
       expect(mockChat.addHistory).toHaveBeenCalledWith({
         role: 'user',
@@ -1177,25 +1169,14 @@ ${JSON.stringify(
 
       // Assert
       expect(ideContextStore.get).toHaveBeenCalled();
-      const expectedContext = `
-Here is the user's editor context as a JSON object. This is for your information only.
-\`\`\`json
-${JSON.stringify(
-  {
-    activeFile: {
-      path: '/path/to/active/file.ts',
-      cursor: {
-        line: 5,
-        character: 10,
-      },
-      selectedText: 'hello',
-    },
-  },
-  null,
-  2,
-)}
+      const expectedContext = `Here is the user's editor context. This is for your information only.
+Active file:
+  Path: /path/to/active/file.ts
+  Cursor: line 5, character 10
+  Selected text:
 \`\`\`
-      `.trim();
+hello
+\`\`\``;
       const expectedRequest = [{ text: expectedContext }];
       expect(mockChat.addHistory).toHaveBeenCalledWith({
         role: 'user',
@@ -1254,18 +1235,10 @@ ${JSON.stringify(
 
       // Assert
       expect(ideContextStore.get).toHaveBeenCalled();
-      const expectedContext = `
-Here is the user's editor context as a JSON object. This is for your information only.
-\`\`\`json
-${JSON.stringify(
-  {
-    otherOpenFiles: ['/path/to/recent/file1.ts', '/path/to/recent/file2.ts'],
-  },
-  null,
-  2,
-)}
-\`\`\`
-      `.trim();
+      const expectedContext = `Here is the user's editor context. This is for your information only.
+Other open files:
+  - /path/to/recent/file1.ts
+  - /path/to/recent/file2.ts`;
       const expectedRequest = [{ text: expectedContext }];
       expect(mockChat.addHistory).toHaveBeenCalledWith({
         role: 'user',
@@ -1782,11 +1755,9 @@ ${JSON.stringify(
         // Also verify it's the full context, not a delta.
         const call = mockChat.addHistory.mock.calls[0][0];
         const contextText = call.parts[0].text;
-        const contextJson = JSON.parse(
-          contextText.match(/```json\n(.*)\n```/s)![1],
-        );
-        expect(contextJson).toHaveProperty('activeFile');
-        expect(contextJson.activeFile.path).toBe('/path/to/active/file.ts');
+        // Verify it contains the active file information in plain text format
+        expect(contextText).toContain('Active file:');
+        expect(contextText).toContain('Path: /path/to/active/file.ts');
       });
     });
 
@@ -1989,7 +1960,7 @@ ${JSON.stringify(
         );
         expect(contextCall).toBeDefined();
         expect(JSON.stringify(contextCall![0])).toContain(
-          "Here is the user's editor context as a JSON object",
+          "Here is the user's editor context.",
         );
         // Check that the sent context is the new one (fileB.ts)
         expect(JSON.stringify(contextCall![0])).toContain('fileB.ts');
@@ -2025,9 +1996,7 @@ ${JSON.stringify(
 
         // Assert: Full context for fileA.ts was sent and stored.
         const initialCall = vi.mocked(mockChat.addHistory!).mock.calls[0][0];
-        expect(JSON.stringify(initialCall)).toContain(
-          "user's editor context as a JSON object",
-        );
+        expect(JSON.stringify(initialCall)).toContain("user's editor context.");
         expect(JSON.stringify(initialCall)).toContain('fileA.ts');
         // This implicitly tests that `lastSentIdeContext` is now set internally by the client.
         vi.mocked(mockChat.addHistory!).mockClear();
@@ -2125,9 +2094,9 @@ ${JSON.stringify(
         const finalCall = vi.mocked(mockChat.addHistory!).mock.calls[0][0];
         expect(JSON.stringify(finalCall)).toContain('summary of changes');
         // The delta should reflect fileA being closed and fileC being opened.
-        expect(JSON.stringify(finalCall)).toContain('filesClosed');
+        expect(JSON.stringify(finalCall)).toContain('Files closed');
         expect(JSON.stringify(finalCall)).toContain('fileA.ts');
-        expect(JSON.stringify(finalCall)).toContain('activeFileChanged');
+        expect(JSON.stringify(finalCall)).toContain('Active file changed');
         expect(JSON.stringify(finalCall)).toContain('fileC.ts');
       });
     });
