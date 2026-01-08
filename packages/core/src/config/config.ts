@@ -1276,7 +1276,7 @@ export class Config {
   }
 
   getAuthType(): AuthType | undefined {
-    return this.contentGeneratorConfig.authType;
+    return this.contentGeneratorConfig?.authType;
   }
 
   getCliVersion(): string | undefined {

@@ -146,7 +146,7 @@ export function ModelDialog({ onClose }: ModelDialogProps): React.JSX.Element {
   // Local error state for displaying errors within the dialog
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const authType = config?.getAuthType() ?? AuthType.QWEN_OAUTH;
+  const authType = config?.getAuthType();
   const effectiveConfig =
     (config?.getContentGeneratorConfig?.() as
       | ContentGeneratorConfig
@@ -208,7 +208,7 @@ export function ModelDialog({ onClose }: ModelDialogProps): React.JSX.Element {
   );
 
   const preferredModelId = config?.getModel() || MAINLINE_CODER;
-  const preferredKey = `${authType}::${preferredModelId}`;
+  const preferredKey = authType ? `${authType}::${preferredModelId}` : '';
 
   useKeypress(
     (key) => {
@@ -339,7 +339,7 @@ export function ModelDialog({ onClose }: ModelDialogProps): React.JSX.Element {
             {t(
               'No models available for the current authentication type ({{authType}}).',
               {
-                authType,
+                authType: authType ? String(authType) : t('(none)'),
               },
             )}
           </Text>

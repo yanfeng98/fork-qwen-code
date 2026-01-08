@@ -70,7 +70,7 @@ export class ModelsConfig {
   private readonly modelRegistry: ModelRegistry;
 
   // Current selection state
-  private currentAuthType: AuthType;
+  private currentAuthType: AuthType | undefined;
 
   // Generation config state
   private _generationConfig: Partial<ContentGeneratorConfig>;
@@ -115,7 +115,7 @@ export class ModelsConfig {
   }
 
   private snapshotState(): {
-    currentAuthType: AuthType;
+    currentAuthType: AuthType | undefined;
     generationConfig: Partial<ContentGeneratorConfig>;
     generationConfigSources: ContentGeneratorConfigSources;
     strictModelProviderSelection: boolean;
@@ -162,7 +162,7 @@ export class ModelsConfig {
     this.authTypeWasExplicitlyProvided = options.initialAuthType !== undefined;
 
     // Initialize selection state
-    this.currentAuthType = options.initialAuthType || AuthType.QWEN_OAUTH;
+    this.currentAuthType = options.initialAuthType;
   }
 
   /**
@@ -175,13 +175,13 @@ export class ModelsConfig {
   /**
    * Get current authType
    */
-  getCurrentAuthType(): AuthType {
+  getCurrentAuthType(): AuthType | undefined {
     return this.currentAuthType;
   }
 
   /**
    * Check if authType was explicitly provided (via CLI or settings).
-   * If false, the default QWEN_OAUTH is being used.
+   * If false, no authType was provided yet (fresh user).
    */
   wasAuthTypeExplicitlyProvided(): boolean {
     return this.authTypeWasExplicitlyProvided;
@@ -191,7 +191,9 @@ export class ModelsConfig {
    * Get available models for current authType
    */
   getAvailableModels(): AvailableModel[] {
-    return this.modelRegistry.getModelsForAuthType(this.currentAuthType);
+    return this.currentAuthType
+      ? this.modelRegistry.getModelsForAuthType(this.currentAuthType)
+      : [];
   }
 
   /**
@@ -231,7 +233,10 @@ export class ModelsConfig {
     }
 
     // If model exists in registry, use full switch logic
-    if (this.modelRegistry.hasModel(this.currentAuthType, newModel)) {
+    if (
+      this.currentAuthType &&
+      this.modelRegistry.hasModel(this.currentAuthType, newModel)
+    ) {
       await this.switchModel(this.currentAuthType, newModel);
       return;
     }
@@ -538,19 +543,26 @@ export class ModelsConfig {
    * - Qwen OAuth -> OpenAI: handled by switchModel(authType, modelId), always refreshes
    */
   private checkRequiresRefresh(previousModelId: string): boolean {
+    // Defensive: this method is only called after switchModel() sets currentAuthType,
+    // but keep type safety for any future callsites.
+    const authType = this.currentAuthType;
+    if (!authType) {
+      return true;
+    }
+
     // For Qwen OAuth, model switches within the same authType can always be hot-updated
     // (coder-model <-> vision-model don't require ContentGenerator recreation)
-    if (this.currentAuthType === AuthType.QWEN_OAUTH) {
+    if (authType === AuthType.QWEN_OAUTH) {
       return false;
     }
 
     // Get previous and current model configs
     const previousModel = this.modelRegistry.getModel(
-      this.currentAuthType,
+      authType,
       previousModelId,
     );
     const currentModel = this.modelRegistry.getModel(
-      this.currentAuthType,
+      authType,
       this._generationConfig.model || '',
     );
 
