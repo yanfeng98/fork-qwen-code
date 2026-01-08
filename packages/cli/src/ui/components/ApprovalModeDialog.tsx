@@ -14,7 +14,6 @@ import type { LoadedSettings } from '../../config/settings.js';
 import { SettingScope } from '../../config/settings.js';
 import { getScopeMessageForSetting } from '../../utils/dialogScopeUtils.js';
 import { useKeypress } from '../hooks/useKeypress.js';
-// import { ScopeSelector } from './shared/ScopeSelector.js';
 import { t } from '../../i18n/index.js';
 
 interface ApprovalModeDialogProps {
@@ -103,10 +102,6 @@ export function ApprovalModeDialog({
     setHighlightedMode(mode);
   };
 
-  // const handleScopeHighlight = useCallback((scope: SettingScope) => {
-  //   setSelectedScope(scope);
-  // }, []);
-
   const handleScopeSelect = useCallback(
     (scope: SettingScope) => {
       onSelect(highlightedMode, scope);
@@ -173,12 +168,6 @@ export function ApprovalModeDialog({
 
         {/* Scope Selection */}
         <Box marginTop={1}>
-          {/* <ScopeSelector
-            onSelect={handleScopeSelect}
-            onHighlight={handleScopeHighlight}
-            isFocused={focusSection === 'scope'}
-            initialScope={selectedScope}
-          /> */}
           <RadioButtonSelect
             items={scopeItems}
             initialIndex={0}
