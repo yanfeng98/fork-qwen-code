@@ -79,7 +79,7 @@ export class BuiltinCommandLoader implements ICommandLoader {
       quitCommand,
       restoreCommand(this.config),
       resumeCommand,
-      ...(this.config?.getExperimentalSkills() ? [skillsCommand] : []),
+      ...(this.config?.getExperimentalSkills?.() ? [skillsCommand] : []),
       statsCommand,
       summaryCommand,
       themeCommand,
