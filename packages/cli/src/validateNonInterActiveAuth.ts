@@ -22,7 +22,7 @@ export async function validateNonInteractiveAuth(
     const authType = nonInteractiveConfig.modelsConfig.getCurrentAuthType();
     if (!authType) {
       throw new Error(
-        'No auth type is selected. Please configure an auth type (e.g. via settings) before running in non-interactive mode.',
+        'No auth type is selected. Please configure an auth type (e.g. via settings or `--auth-type`) before running in non-interactive mode.',
       );
     }
     const resolvedAuthType: NonNullable<typeof authType> = authType;

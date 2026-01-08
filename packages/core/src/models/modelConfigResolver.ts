@@ -128,10 +128,11 @@ export function resolveModelConfig(
     return resolveQwenOAuthConfig(input, warnings);
   }
 
-  // Get auth-specific env var mappings
+  // Get auth-specific env var mappings.
+  // If authType is not provided, do not read any auth env vars.
   const envMapping = authType
     ? AUTH_ENV_MAPPINGS[authType]
-    : AUTH_ENV_MAPPINGS[AuthType.USE_OPENAI];
+    : { model: [], apiKey: [], baseUrl: [] };
 
   // Build layers for each field in priority order
   // Priority: modelProvider > cli > env > settings > default
