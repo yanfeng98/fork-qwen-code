@@ -32,7 +32,7 @@ import {
   type ChatCompressionInfo,
 } from './turn.js';
 import { getCoreSystemPrompt } from './prompts.js';
-import { DEFAULT_GEMINI_FLASH_MODEL } from '../config/models.js';
+import { DEFAULT_QWEN_FLASH_MODEL } from '../config/models.js';
 import { FileDiscoveryService } from '../services/fileDiscoveryService.js';
 import { setSimulate429 } from '../utils/testUtils.js';
 import { tokenLimit } from './tokenLimits.js';
@@ -302,8 +302,6 @@ describe('Gemini Client (client.ts)', () => {
       getFileService: vi.fn().mockReturnValue(fileService),
       getMaxSessionTurns: vi.fn().mockReturnValue(0),
       getSessionTokenLimit: vi.fn().mockReturnValue(32000),
-      getQuotaErrorOccurred: vi.fn().mockReturnValue(false),
-      setQuotaErrorOccurred: vi.fn(),
       getNoBrowser: vi.fn().mockReturnValue(false),
       getUsageStatisticsEnabled: vi.fn().mockReturnValue(true),
       getApprovalMode: vi.fn().mockReturnValue(ApprovalMode.DEFAULT),
@@ -317,8 +315,6 @@ describe('Gemini Client (client.ts)', () => {
       getModelRouterService: vi.fn().mockReturnValue({
         route: vi.fn().mockResolvedValue({ model: 'default-routed-model' }),
       }),
-      isInFallbackMode: vi.fn().mockReturnValue(false),
-      setFallbackMode: vi.fn(),
       getCliVersion: vi.fn().mockReturnValue('1.0.0'),
       getChatCompression: vi.fn().mockReturnValue(undefined),
       getSkipNextSpeakerCheck: vi.fn().mockReturnValue(false),
@@ -2262,12 +2258,12 @@ ${JSON.stringify(
         contents,
         generationConfig,
         abortSignal,
-        DEFAULT_GEMINI_FLASH_MODEL,
+        DEFAULT_QWEN_FLASH_MODEL,
       );
 
       expect(mockContentGenerator.generateContent).toHaveBeenCalledWith(
         expect.objectContaining({
-          model: DEFAULT_GEMINI_FLASH_MODEL,
+          model: DEFAULT_QWEN_FLASH_MODEL,
           config: expect.objectContaining({
             abortSignal,
             systemInstruction: getCoreSystemPrompt(''),
@@ -2290,7 +2286,7 @@ ${JSON.stringify(
         contents,
         {},
         new AbortController().signal,
-        DEFAULT_GEMINI_FLASH_MODEL,
+        DEFAULT_QWEN_FLASH_MODEL,
       );
 
       expect(mockContentGenerator.generateContent).not.toHaveBeenCalledWith({
@@ -2300,7 +2296,7 @@ ${JSON.stringify(
       });
       expect(mockContentGenerator.generateContent).toHaveBeenCalledWith(
         {
-          model: DEFAULT_GEMINI_FLASH_MODEL,
+          model: DEFAULT_QWEN_FLASH_MODEL,
           config: expect.any(Object),
           contents,
         },
@@ -2308,28 +2304,7 @@ ${JSON.stringify(
       );
     });
 
-    it('should use the Flash model when fallback mode is active', async () => {
-      const contents = [{ role: 'user', parts: [{ text: 'hello' }] }];
-      const generationConfig = { temperature: 0.5 };
-      const abortSignal = new AbortController().signal;
-      const requestedModel = 'gemini-2.5-pro'; // A non-flash model
-
-      // Mock config to be in fallback mode
-      vi.spyOn(client['config'], 'isInFallbackMode').mockReturnValue(true);
-
-      await client.generateContent(
-        contents,
-        generationConfig,
-        abortSignal,
-        requestedModel,
-      );
-
-      expect(mockGenerateContentFn).toHaveBeenCalledWith(
-        expect.objectContaining({
-          model: DEFAULT_GEMINI_FLASH_MODEL,
-        }),
-        'test-session-id',
-      );
-    });
+    // Note: there is currently no "fallback mode" model routing; the model used
+    // is always the one explicitly requested by the caller.
   });
 });
