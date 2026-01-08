@@ -1066,7 +1066,10 @@ describe('Gemini Client (client.ts)', () => {
 Active file:
   Path: /path/to/active/file.ts
   Cursor: line 5, character 10
-  Selected text: hello
+  Selected text:
+\`\`\`
+hello
+\`\`\`
 
 Other open files:
   - /path/to/recent/file1.ts
@@ -1174,7 +1177,10 @@ Other open files:
 Active file:
   Path: /path/to/active/file.ts
   Cursor: line 5, character 10
-  Selected text: hello`;
+  Selected text:
+\`\`\`
+hello
+\`\`\``;
       const expectedRequest = [{ text: expectedContext }];
       expect(mockChat.addHistory).toHaveBeenCalledWith({
         role: 'user',

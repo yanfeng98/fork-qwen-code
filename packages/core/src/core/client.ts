@@ -237,7 +237,10 @@ export class GeminiClient {
           );
         }
         if (activeFile.selectedText) {
-          contextLines.push(`  Selected text: ${activeFile.selectedText}`);
+          contextLines.push('  Selected text:');
+          contextLines.push('```');
+          contextLines.push(activeFile.selectedText);
+          contextLines.push('```');
         }
       }
 
@@ -332,9 +335,10 @@ export class GeminiClient {
             );
           }
           if (currentActiveFile.selectedText) {
-            changeLines.push(
-              `  Selected text: ${currentActiveFile.selectedText}`,
-            );
+            changeLines.push('  Selected text:');
+            changeLines.push('```');
+            changeLines.push(currentActiveFile.selectedText);
+            changeLines.push('```');
           }
         } else {
           const lastCursor = lastActiveFile.cursor;
@@ -364,7 +368,10 @@ export class GeminiClient {
             changeLines.push('Selection changed:');
             changeLines.push(`  Path: ${currentActiveFile.path}`);
             if (currentSelectedText) {
-              changeLines.push(`  Selected text: ${currentSelectedText}`);
+              changeLines.push('  Selected text:');
+              changeLines.push('```');
+              changeLines.push(currentSelectedText);
+              changeLines.push('```');
             } else {
               changeLines.push('  Selected text: (none)');
             }
