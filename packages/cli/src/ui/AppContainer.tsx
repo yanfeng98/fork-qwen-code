@@ -373,34 +373,32 @@ export const AppContainer = (props: AppContainerProps) => {
 
     if (
       settings.merged.security?.auth?.enforcedType &&
-      settings.merged.security?.auth.selectedType &&
+      config.modelsConfig.getCurrentAuthType() &&
       settings.merged.security?.auth.enforcedType !==
-        settings.merged.security?.auth.selectedType
+        config.modelsConfig.getCurrentAuthType()
     ) {
       onAuthError(
         t(
           'Authentication is enforced to be {{enforcedType}}, but you are currently using {{currentType}}.',
           {
             enforcedType: settings.merged.security?.auth.enforcedType,
-            currentType: settings.merged.security?.auth.selectedType,
+            currentType: config.modelsConfig.getCurrentAuthType(),
           },
         ),
       );
-    } else if (
-      settings.merged.security?.auth?.selectedType &&
-      !settings.merged.security?.auth?.useExternal
-    ) {
+    } else if (!settings.merged.security?.auth?.useExternal) {
       const error = validateAuthMethod(
-        settings.merged.security.auth.selectedType,
+        config.modelsConfig.getCurrentAuthType(),
+        config,
       );
       if (error) {
         onAuthError(error);
       }
     }
   }, [
-    settings.merged.security?.auth?.selectedType,
     settings.merged.security?.auth?.enforcedType,
     settings.merged.security?.auth?.useExternal,
+    config,
     onAuthError,
   ]);
 

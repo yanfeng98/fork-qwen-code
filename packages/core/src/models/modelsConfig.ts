@@ -45,8 +45,6 @@ export type OnModelChangeCallback = (
 export interface ModelsConfigOptions {
   /** Initial authType from settings */
   initialAuthType?: AuthType;
-  /** Initial model ID from settings */
-  initialModelId?: string;
   /** Model providers configuration */
   modelProvidersConfig?: ModelProvidersConfig;
   /** Generation config from CLI/settings */
@@ -73,7 +71,6 @@ export class ModelsConfig {
 
   // Current selection state
   private currentAuthType: AuthType;
-  private currentModelId: string;
 
   // Generation config state
   private _generationConfig: Partial<ContentGeneratorConfig>;
@@ -119,7 +116,6 @@ export class ModelsConfig {
 
   private snapshotState(): {
     currentAuthType: AuthType;
-    currentModelId: string;
     generationConfig: Partial<ContentGeneratorConfig>;
     generationConfigSources: ContentGeneratorConfigSources;
     strictModelProviderSelection: boolean;
@@ -128,7 +124,6 @@ export class ModelsConfig {
   } {
     return {
       currentAuthType: this.currentAuthType,
-      currentModelId: this.currentModelId,
       generationConfig: ModelsConfig.deepClone(this._generationConfig),
       generationConfigSources: ModelsConfig.deepClone(
         this.generationConfigSources,
@@ -143,7 +138,6 @@ export class ModelsConfig {
     snapshot: ReturnType<ModelsConfig['snapshotState']>,
   ): void {
     this.currentAuthType = snapshot.currentAuthType;
-    this.currentModelId = snapshot.currentModelId;
     this._generationConfig = snapshot.generationConfig;
     this.generationConfigSources = snapshot.generationConfigSources;
     this.strictModelProviderSelection = snapshot.strictModelProviderSelection;
@@ -157,8 +151,9 @@ export class ModelsConfig {
     this.onModelChange = options.onModelChange;
 
     // Initialize generation config
+    // Note: generationConfig.model should already be fully resolved by ModelConfigResolver
+    // before ModelsConfig is instantiated, so we use it as the single source of truth
     this._generationConfig = {
-      model: options.initialModelId,
       ...(options.generationConfig || {}),
     };
     this.generationConfigSources = options.generationConfigSources || {};
@@ -168,54 +163,13 @@ export class ModelsConfig {
 
     // Initialize selection state
     this.currentAuthType = options.initialAuthType || AuthType.QWEN_OAUTH;
-    this.currentModelId = options.initialModelId || '';
-
-    // Validate and initialize default selection
-    this.initializeDefaultSelection();
-  }
-
-  /**
-   * Initialize default selection based on settings/environment.
-   *
-   * Note: The generationConfig passed to ModelsConfig should already be fully
-   * resolved by ModelConfigResolver, which handles CLI args, env vars, and settings.
-   * This method primarily validates and sets up internal state.
-   */
-  private initializeDefaultSelection(): void {
-    // If generationConfig already has a model (resolved by ModelConfigResolver),
-    // use that as the current selection
-    if (this._generationConfig.model) {
-      this.currentModelId = this._generationConfig.model;
-      return;
-    }
-
-    // Check if persisted model selection is valid
-    if (
-      this.currentModelId &&
-      this.modelRegistry.hasModel(this.currentAuthType, this.currentModelId)
-    ) {
-      return;
-    }
-
-    // Use registry default
-    const defaultModel = this.modelRegistry.getDefaultModelForAuthType(
-      this.currentAuthType,
-    );
-    if (defaultModel) {
-      this.currentModelId = defaultModel.id;
-      if (!this._generationConfig.model) {
-        this._generationConfig.model = defaultModel.id;
-      }
-    }
   }
 
   /**
    * Get current model ID
    */
   getModel(): string {
-    return (
-      this._generationConfig.model || this.currentModelId || DEFAULT_QWEN_MODEL
-    );
+    return this._generationConfig.model || DEFAULT_QWEN_MODEL;
   }
 
   /**
@@ -269,7 +223,6 @@ export class ModelsConfig {
     ) {
       this.strictModelProviderSelection = false;
       this._generationConfig.model = newModel;
-      this.currentModelId = newModel;
       this.generationConfigSources['model'] = {
         kind: 'programmatic',
         detail: metadata?.reason || 'setModel',
@@ -286,7 +239,6 @@ export class ModelsConfig {
     // Raw model override: update generation config in-place
     this.strictModelProviderSelection = false;
     this._generationConfig.model = newModel;
-    this.currentModelId = newModel;
     this.generationConfigSources['model'] = {
       kind: 'programmatic',
       detail: metadata?.reason || 'setModel',
@@ -322,12 +274,9 @@ export class ModelsConfig {
       // Apply model defaults
       this.applyResolvedModelDefaults(model);
 
-      // Update selection state
-      this.currentModelId = modelId;
-
       const requiresRefresh = isAuthTypeChange
         ? true
-        : this.checkRequiresRefresh(snapshot.currentModelId);
+        : this.checkRequiresRefresh(snapshot.generationConfig.model || '');
 
       if (this.onModelChange) {
         await this.onModelChange(authType, requiresRefresh);
@@ -395,7 +344,6 @@ export class ModelsConfig {
     }
     if (credentials.model) {
       this._generationConfig.model = credentials.model;
-      this.currentModelId = credentials.model;
       this.generationConfigSources['model'] = {
         kind: 'programmatic',
         detail: 'updateCredentials',
@@ -603,7 +551,7 @@ export class ModelsConfig {
     );
     const currentModel = this.modelRegistry.getModel(
       this.currentAuthType,
-      this.currentModelId,
+      this._generationConfig.model || '',
     );
 
     // If either model is not in registry, require refresh to be safe
@@ -644,7 +592,7 @@ export class ModelsConfig {
       this.strictModelProviderSelection = false;
       this.currentAuthType = authType;
       if (modelId) {
-        this.currentModelId = modelId;
+        this._generationConfig.model = modelId;
       }
       return;
     }
@@ -656,7 +604,6 @@ export class ModelsConfig {
       if (resolved) {
         this.applyResolvedModelDefaults(resolved);
         this.currentAuthType = authType;
-        this.currentModelId = modelId;
       }
     } else {
       this.currentAuthType = authType;

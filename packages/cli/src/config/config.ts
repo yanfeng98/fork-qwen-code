@@ -31,7 +31,10 @@ import {
 } from '@qwen-code/qwen-code-core';
 import { extensionsCommand } from '../commands/extensions.js';
 import type { Settings } from './settings.js';
-import { resolveCliGenerationConfig } from '../utils/modelConfigUtils.js';
+import {
+  resolveCliGenerationConfig,
+  getAuthTypeFromEnv,
+} from '../utils/modelConfigUtils.js';
 import yargs, { type Argv } from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import * as fs from 'node:fs';
@@ -925,7 +928,9 @@ export async function loadCliConfig(
 
   const selectedAuthType =
     (argv.authType as AuthType | undefined) ||
-    settings.security?.auth?.selectedType;
+    settings.security?.auth?.selectedType ||
+    /* getAuthTypeFromEnv means no authType was explicitly provided, we infer the authType from env vars */
+    getAuthTypeFromEnv();
 
   // Unified resolution of generation config with source attribution
   const resolvedCliConfig = resolveCliGenerationConfig({

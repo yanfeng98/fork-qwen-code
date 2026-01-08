@@ -632,7 +632,6 @@ export class Config {
     // - generationConfig.authType may have a default value from resolvers
     this._modelsConfig = new ModelsConfig({
       initialAuthType: params.authType ?? params.generationConfig?.authType,
-      initialModelId: params.model,
       modelProvidersConfig: this.modelProvidersConfig,
       generationConfig: {
         model: params.model,

@@ -4,10 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { AuthType } from '@qwen-code/qwen-code-core';
-import type {
-  ModelProvidersConfig,
-  ProviderModelConfig,
+import {
+  AuthType,
+  type Config,
+  type ModelProvidersConfig,
+  type ProviderModelConfig,
 } from '@qwen-code/qwen-code-core';
 import { loadEnvironment, loadSettings, type Settings } from './settings.js';
 import { t } from '../i18n/index.js';
@@ -45,14 +46,11 @@ function findModelConfig(
 /**
  * Check if API key is available for the given auth type and model configuration.
  * Prioritizes custom envKey from modelProviders over default environment variables.
- *
- * @returns hasKey - whether an API key is available
- * @returns checkedEnvKey - the environment variable name that was checked
- * @returns isExplicitEnvKey - true if model has explicit envKey configured (no apiKey fallback allowed)
  */
 function hasApiKeyForAuth(
   authType: string,
   settings: Settings,
+  config?: Config,
 ): {
   hasKey: boolean;
   checkedEnvKey: string | undefined;
@@ -61,7 +59,10 @@ function hasApiKeyForAuth(
   const modelProviders = settings.modelProviders as
     | ModelProvidersConfig
     | undefined;
-  const modelId = settings.model?.name;
+
+  // Use config.modelsConfig.getModel() if available for accurate model ID resolution
+  // that accounts for CLI args, env vars, and settings. Fall back to settings.model.name.
+  const modelId = config?.modelsConfig.getModel() ?? settings.model?.name;
 
   // Try to find model-specific envKey from modelProviders
   const modelConfig = findModelConfig(modelProviders, authType, modelId);
@@ -104,10 +105,15 @@ function hasApiKeyForAuth(
  * Generate API key error message based on auth check result.
  * Returns null if API key is present, otherwise returns the appropriate error message.
  */
-function getApiKeyError(authMethod: string, settings: Settings): string | null {
+function getApiKeyError(
+  authMethod: string,
+  settings: Settings,
+  config?: Config,
+): string | null {
   const { hasKey, checkedEnvKey, isExplicitEnvKey } = hasApiKeyForAuth(
     authMethod,
     settings,
+    config,
   );
   if (hasKey) {
     return null;
@@ -126,7 +132,13 @@ function getApiKeyError(authMethod: string, settings: Settings): string | null {
   );
 }
 
-export function validateAuthMethod(authMethod: string): string | null {
+/**
+ * Validate that the required credentials and configuration exist for the given auth method.
+ */
+export function validateAuthMethod(
+  authMethod: string,
+  config?: Config,
+): string | null {
   const settings = loadSettings();
   loadEnvironment(settings.merged);
 
@@ -134,6 +146,7 @@ export function validateAuthMethod(authMethod: string): string | null {
     const { hasKey, checkedEnvKey, isExplicitEnvKey } = hasApiKeyForAuth(
       authMethod,
       settings.merged,
+      config,
     );
     if (!hasKey) {
       const envKeyHint = checkedEnvKey
@@ -162,7 +175,7 @@ export function validateAuthMethod(authMethod: string): string | null {
   }
 
   if (authMethod === AuthType.USE_ANTHROPIC) {
-    const apiKeyError = getApiKeyError(authMethod, settings.merged);
+    const apiKeyError = getApiKeyError(authMethod, settings.merged, config);
     if (apiKeyError) {
       return apiKeyError;
     }
@@ -171,7 +184,9 @@ export function validateAuthMethod(authMethod: string): string | null {
     const modelProviders = settings.merged.modelProviders as
       | ModelProvidersConfig
       | undefined;
-    const modelId = settings.merged.model?.name;
+    // Use config.modelsConfig.getModel() if available for accurate model ID
+    const modelId =
+      config?.modelsConfig.getModel() ?? settings.merged.model?.name;
     const modelConfig = findModelConfig(modelProviders, authMethod, modelId);
 
     if (modelConfig && !modelConfig.baseUrl) {
@@ -187,7 +202,7 @@ export function validateAuthMethod(authMethod: string): string | null {
   }
 
   if (authMethod === AuthType.USE_GEMINI) {
-    const apiKeyError = getApiKeyError(authMethod, settings.merged);
+    const apiKeyError = getApiKeyError(authMethod, settings.merged, config);
     if (apiKeyError) {
       return apiKeyError;
     }
@@ -195,7 +210,7 @@ export function validateAuthMethod(authMethod: string): string | null {
   }
 
   if (authMethod === AuthType.USE_VERTEX_AI) {
-    const apiKeyError = getApiKeyError(authMethod, settings.merged);
+    const apiKeyError = getApiKeyError(authMethod, settings.merged, config);
     if (apiKeyError) {
       return apiKeyError;
     }

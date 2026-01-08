@@ -174,8 +174,10 @@ describe('ModelsConfig', () => {
 
     const modelsConfig = new ModelsConfig({
       initialAuthType: AuthType.USE_OPENAI,
-      initialModelId: 'model-a',
       modelProvidersConfig,
+      generationConfig: {
+        model: 'model-a',
+      },
     });
 
     // Simulate key prompt flow / explicit key provided via CLI/settings.
@@ -209,7 +211,6 @@ describe('ModelsConfig', () => {
     // Simulate settings.model.generationConfig being resolved into ModelsConfig.generationConfig
     const modelsConfig = new ModelsConfig({
       initialAuthType: AuthType.USE_OPENAI,
-      initialModelId: 'model-a',
       modelProvidersConfig,
       generationConfig: {
         model: 'model-a',
@@ -271,7 +272,6 @@ describe('ModelsConfig', () => {
 
     const modelsConfig = new ModelsConfig({
       initialAuthType: AuthType.USE_OPENAI,
-      initialModelId: 'model-a',
       modelProvidersConfig,
       generationConfig: {
         model: 'model-a',
@@ -462,5 +462,122 @@ describe('ModelsConfig', () => {
     const gc = currentGenerationConfig(modelsConfig);
     expect(gc.apiKey).toBe('QWEN_OAUTH_DYNAMIC_TOKEN');
     expect(gc.apiKeyEnvKey).toBeUndefined();
+  });
+
+  it('should maintain consistency between currentModelId and _generationConfig.model after initialization', () => {
+    const modelProvidersConfig: ModelProvidersConfig = {
+      openai: [
+        {
+          id: 'test-model',
+          name: 'Test Model',
+          baseUrl: 'https://api.example.com/v1',
+          envKey: 'TEST_API_KEY',
+        },
+      ],
+    };
+
+    // Test case 1: generationConfig.model provided with other config
+    const config1 = new ModelsConfig({
+      initialAuthType: AuthType.USE_OPENAI,
+      modelProvidersConfig,
+      generationConfig: {
+        model: 'test-model',
+        samplingParams: { temperature: 0.5 },
+      },
+    });
+    expect(config1.getModel()).toBe('test-model');
+    expect(config1.getGenerationConfig().model).toBe('test-model');
+
+    // Test case 2: generationConfig.model provided
+    const config2 = new ModelsConfig({
+      initialAuthType: AuthType.USE_OPENAI,
+      modelProvidersConfig,
+      generationConfig: {
+        model: 'test-model',
+      },
+    });
+    expect(config2.getModel()).toBe('test-model');
+    expect(config2.getGenerationConfig().model).toBe('test-model');
+
+    // Test case 3: no model provided (empty string fallback)
+    const config3 = new ModelsConfig({
+      initialAuthType: AuthType.USE_OPENAI,
+      modelProvidersConfig,
+      generationConfig: {},
+    });
+    expect(config3.getModel()).toBe('coder-model'); // Falls back to DEFAULT_QWEN_MODEL
+    expect(config3.getGenerationConfig().model).toBeUndefined();
+  });
+
+  it('should maintain consistency between currentModelId and _generationConfig.model during syncAfterAuthRefresh', () => {
+    const modelProvidersConfig: ModelProvidersConfig = {
+      openai: [
+        {
+          id: 'model-a',
+          name: 'Model A',
+          baseUrl: 'https://api.example.com/v1',
+          envKey: 'API_KEY_A',
+        },
+      ],
+    };
+
+    const modelsConfig = new ModelsConfig({
+      initialAuthType: AuthType.USE_OPENAI,
+      modelProvidersConfig,
+      generationConfig: {
+        model: 'model-a',
+      },
+    });
+
+    // Manually set credentials to trigger preserveManualCredentials path
+    modelsConfig.updateCredentials({ apiKey: 'manual-key' });
+
+    // syncAfterAuthRefresh with a different modelId
+    modelsConfig.syncAfterAuthRefresh(AuthType.USE_OPENAI, 'model-a');
+
+    // Both should be consistent
+    expect(modelsConfig.getModel()).toBe('model-a');
+    expect(modelsConfig.getGenerationConfig().model).toBe('model-a');
+  });
+
+  it('should maintain consistency between currentModelId and _generationConfig.model during setModel', async () => {
+    const modelProvidersConfig: ModelProvidersConfig = {
+      openai: [
+        {
+          id: 'model-a',
+          name: 'Model A',
+          baseUrl: 'https://api.example.com/v1',
+          envKey: 'API_KEY_A',
+        },
+      ],
+    };
+
+    const modelsConfig = new ModelsConfig({
+      initialAuthType: AuthType.USE_OPENAI,
+      modelProvidersConfig,
+    });
+
+    // setModel with a raw model ID
+    await modelsConfig.setModel('custom-model');
+
+    // Both should be consistent
+    expect(modelsConfig.getModel()).toBe('custom-model');
+    expect(modelsConfig.getGenerationConfig().model).toBe('custom-model');
+  });
+
+  it('should maintain consistency between currentModelId and _generationConfig.model during updateCredentials', () => {
+    const modelsConfig = new ModelsConfig({
+      initialAuthType: AuthType.USE_OPENAI,
+    });
+
+    // updateCredentials with model
+    modelsConfig.updateCredentials({
+      apiKey: 'test-key',
+      model: 'updated-model',
+    });
+
+    // Both should be consistent
+    expect(modelsConfig.getModel()).toBe('updated-model');
+    expect(modelsConfig.getGenerationConfig().model).toBe('updated-model');
   });
 });

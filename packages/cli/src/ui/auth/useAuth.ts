@@ -27,8 +27,7 @@ export const useAuthCommand = (
   config: Config,
   addItem: (item: Omit<HistoryItem, 'id'>, timestamp: number) => void,
 ) => {
-  const unAuthenticated =
-    settings.merged.security?.auth?.selectedType === undefined;
+  const unAuthenticated = config.getAuthType() === undefined;
 
   const [authState, setAuthState] = useState<AuthState>(
     unAuthenticated ? AuthState.Updating : AuthState.Unauthenticated,

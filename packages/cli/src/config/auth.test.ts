@@ -167,4 +167,64 @@ describe('validateAuthMethod', () => {
 
     expect(validateAuthMethod(AuthType.USE_VERTEX_AI)).toBeNull();
   });
+
+  it('should use config.modelsConfig.getModel() when Config is provided', () => {
+    // Settings has a different model
+    vi.mocked(settings.loadSettings).mockReturnValue({
+      merged: {
+        model: { name: 'settings-model' },
+        modelProviders: {
+          openai: [
+            { id: 'settings-model', envKey: 'SETTINGS_API_KEY' },
+            { id: 'cli-model', envKey: 'CLI_API_KEY' },
+          ],
+        },
+      },
+    } as unknown as ReturnType<typeof settings.loadSettings>);
+
+    // Mock Config object that returns a different model (e.g., from CLI args)
+    const mockConfig = {
+      modelsConfig: {
+        getModel: vi.fn().mockReturnValue('cli-model'),
+      },
+    } as unknown as import('@qwen-code/qwen-code-core').Config;
+
+    // Set the env key for the CLI model, not the settings model
+    process.env['CLI_API_KEY'] = 'cli-key';
+
+    // Should use 'cli-model' from config.modelsConfig.getModel(), not 'settings-model'
+    const result = validateAuthMethod(AuthType.USE_OPENAI, mockConfig);
+    expect(result).toBeNull();
+    expect(mockConfig.modelsConfig.getModel).toHaveBeenCalled();
+  });
+
+  it('should fail validation when Config provides different model without matching env key', () => {
+    // Clean up any existing env keys first
+    delete process.env['CLI_API_KEY'];
+    delete process.env['SETTINGS_API_KEY'];
+    delete process.env['OPENAI_API_KEY'];
+
+    vi.mocked(settings.loadSettings).mockReturnValue({
+      merged: {
+        model: { name: 'settings-model' },
+        modelProviders: {
+          openai: [
+            { id: 'settings-model', envKey: 'SETTINGS_API_KEY' },
+            { id: 'cli-model', envKey: 'CLI_API_KEY' },
+          ],
+        },
+      },
+    } as unknown as ReturnType<typeof settings.loadSettings>);
+
+    const mockConfig = {
+      modelsConfig: {
+        getModel: vi.fn().mockReturnValue('cli-model'),
+      },
+    } as unknown as import('@qwen-code/qwen-code-core').Config;
+
+    // Don't set CLI_API_KEY - validation should fail
+    const result = validateAuthMethod(AuthType.USE_OPENAI, mockConfig);
+    expect(result).not.toBeNull();
+    expect(result).toContain('CLI_API_KEY');
+  });
 });

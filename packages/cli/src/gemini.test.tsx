@@ -372,7 +372,6 @@ describe('gemini.tsx main function', () => {
 
     expect(validateAuthSpy).toHaveBeenCalledWith(
       undefined,
-      undefined,
       configStub,
       expect.any(Object),
     );
