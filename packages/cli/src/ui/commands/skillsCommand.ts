@@ -10,7 +10,7 @@ import {
   type CommandContext,
   type SlashCommand,
 } from './types.js';
-import { MessageType } from '../types.js';
+import { MessageType, type HistoryItemSkillsList } from '../types.js';
 import { t } from '../../i18n/index.js';
 import { AsyncFzf } from 'fzf';
 import type { SkillConfig } from '@qwen-code/qwen-code-core';
@@ -41,7 +41,7 @@ export const skillsCommand: SlashCommand = {
     if (skills.length === 0) {
       context.ui.addItem(
         {
-          type: MessageType.WARNING,
+          type: MessageType.INFO,
           text: t('No skills are currently available.'),
         },
         Date.now(),
@@ -50,13 +50,14 @@ export const skillsCommand: SlashCommand = {
     }
 
     if (!skillName) {
-      context.ui.addItem(
-        {
-          type: MessageType.INFO,
-          text: t('Use /skills <name> to select a skill'),
-        },
-        Date.now(),
+      const sortedSkills = [...skills].sort((left, right) =>
+        left.name.localeCompare(right.name),
       );
+      const skillsListItem: HistoryItemSkillsList = {
+        type: MessageType.SKILLS_LIST,
+        skills: sortedSkills.map((skill) => ({ name: skill.name })),
+      };
+      context.ui.addItem(skillsListItem, Date.now());
       return;
     }
     const normalizedName = skillName.toLowerCase();
