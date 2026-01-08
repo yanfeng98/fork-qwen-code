@@ -614,8 +614,11 @@ export class ModelsConfig {
     if (modelId && this.modelRegistry.hasModel(authType, modelId)) {
       const resolved = this.modelRegistry.getModel(authType, modelId);
       if (resolved) {
-        this.applyResolvedModelDefaults(resolved);
+        // Ensure applyResolvedModelDefaults can correctly apply authType-specific
+        // behavior (e.g., Qwen OAuth placeholder token) by setting currentAuthType
+        // before applying defaults.
         this.currentAuthType = authType;
+        this.applyResolvedModelDefaults(resolved);
       }
     } else {
       this.currentAuthType = authType;

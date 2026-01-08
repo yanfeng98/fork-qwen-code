@@ -219,10 +219,12 @@ export function ModelDialog({ onClose }: ModelDialogProps): React.JSX.Element {
     { isActive: true },
   );
 
-  const initialIndex = useMemo(
-    () => MODEL_OPTIONS.findIndex((option) => option.value === preferredKey),
-    [MODEL_OPTIONS, preferredKey],
-  );
+  const initialIndex = useMemo(() => {
+    const index = MODEL_OPTIONS.findIndex(
+      (option) => option.value === preferredKey,
+    );
+    return index === -1 ? 0 : index;
+  }, [MODEL_OPTIONS, preferredKey]);
 
   const handleSelect = useCallback(
     async (selected: string) => {
