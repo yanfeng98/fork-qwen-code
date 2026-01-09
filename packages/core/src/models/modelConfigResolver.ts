@@ -41,7 +41,7 @@ import {
   QWEN_OAUTH_ALLOWED_MODELS,
   MODEL_GENERATION_CONFIG_FIELDS,
 } from './constants.js';
-import type { ResolvedModelConfig } from './types.js';
+import type { ModelConfig as ModelProviderConfig } from './types.js';
 export {
   validateModelConfig,
   type ModelConfigValidationResult,
@@ -86,8 +86,8 @@ export interface ModelConfigSourcesInput {
   /** Environment variables (injected for testability) */
   env: Record<string, string | undefined>;
 
-  /** Resolved model from ModelProviders (explicit selection, highest priority) */
-  modelProvider?: ResolvedModelConfig;
+  /** Model from ModelProviders (explicit selection, highest priority) */
+  modelProvider?: ModelProviderConfig;
 
   /** Proxy URL (computed from Config) */
   proxy?: string;
