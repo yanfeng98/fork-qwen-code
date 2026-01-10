@@ -18,23 +18,10 @@ import { WebViewProvider } from './webview/WebViewProvider.js';
 import { registerNewCommands } from './commands/index.js';
 import { ReadonlyFileSystemProvider } from './services/readonlyFileSystemProvider.js';
 import { isWindows } from './utils/platform.js';
-import { execSync } from 'child_process';
 
 const CLI_IDE_COMPANION_IDENTIFIER = 'qwenlm.qwen-code-vscode-ide-companion';
 const INFO_MESSAGE_SHOWN_KEY = 'qwenCodeInfoMessageShown';
 export const DIFF_SCHEME = 'qwen-diff';
-
-/**
- * Check if Node.js is available in the system PATH
- */
-function isNodeAvailable(): boolean {
-  try {
-    execSync(isWindows ? 'where node' : 'which node', { stdio: 'ignore' });
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 /**
  * IDE environments where the installation greeting is hidden.  In these
@@ -326,22 +313,29 @@ export async function activate(context: vscode.ExtensionContext) {
             'qwen-cli',
             'cli.js',
           ).fsPath;
-          const quote = (s: string) => `"${s.replace(/"/g, '\\"')}"`;
+          const execPath = process.execPath;
+          const lowerExecPath = execPath.toLowerCase();
+          const needsElectronRunAsNode =
+            lowerExecPath.includes('code') ||
+            lowerExecPath.includes('electron');
 
           let qwenCmd: string;
-          if (isNodeAvailable()) {
-            // Prefer system Node.js
-            qwenCmd = `node ${quote(cliEntry)}`;
+          if (isWindows) {
+            // Wrap with PowerShell to avoid quoting issues in different Windows shells
+            const quotePwsh = (s: string) => `'${s.replace(/'/g, "''")}'`;
+            const psParts = [
+              needsElectronRunAsNode ? '$Env:ELECTRON_RUN_AS_NODE=1;' : '',
+              `& ${quotePwsh(execPath)}`,
+              needsElectronRunAsNode ? '--ms-enable-electron-run-as-node' : '',
+              quotePwsh(cliEntry),
+            ].filter(Boolean);
+            qwenCmd = `powershell -NoLogo -NoProfile -Command "& { ${psParts.join(' ')} }"`;
           } else {
-            // Fallback to VS Code's bundled Node.js runtime
-            const execPath = process.execPath;
-            const baseCmd = `${quote(execPath)} ${quote(cliEntry)}`;
-            if (isWindows) {
-              // PowerShell requires & call operator for quoted paths
-              qwenCmd = `& ${baseCmd}`;
-            } else if (execPath.toLowerCase().includes('code helper')) {
-              // macOS Electron helper needs ELECTRON_RUN_AS_NODE=1; add -i to force TUI mode
-              qwenCmd = `ELECTRON_RUN_AS_NODE=1 ${baseCmd} -i`;
+            const quotePosix = (s: string) => `"${s.replace(/"/g, '\\"')}"`;
+            const baseCmd = `${quotePosix(execPath)} ${quotePosix(cliEntry)}`;
+            if (needsElectronRunAsNode) {
+              // macOS Electron helper needs ELECTRON_RUN_AS_NODE=1;
+              qwenCmd = `ELECTRON_RUN_AS_NODE=1 ${baseCmd}`;
             } else {
               qwenCmd = baseCmd;
             }
