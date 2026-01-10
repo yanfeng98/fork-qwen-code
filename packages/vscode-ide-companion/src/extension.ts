@@ -319,17 +319,26 @@ export async function activate(context: vscode.ExtensionContext) {
             lowerExecPath.includes('code') ||
             lowerExecPath.includes('electron');
 
-          let qwenCmd: string;
+          let qwenCmd: string | undefined;
+          const terminalOptions: vscode.TerminalOptions = {
+            name: `Qwen Code (${selectedFolder.name})`,
+            cwd: selectedFolder.uri.fsPath,
+            location,
+          };
+
           if (isWindows) {
-            // Wrap with PowerShell to avoid quoting issues in different Windows shells
-            const quotePwsh = (s: string) => `'${s.replace(/'/g, "''")}'`;
-            const psParts = [
-              needsElectronRunAsNode ? '$Env:ELECTRON_RUN_AS_NODE=1;' : '',
-              `& ${quotePwsh(execPath)}`,
-              needsElectronRunAsNode ? '--ms-enable-electron-run-as-node' : '',
-              quotePwsh(cliEntry),
-            ].filter(Boolean);
-            qwenCmd = `powershell -NoLogo -NoProfile -Command "& { ${psParts.join(' ')} }"`;
+            // Use cmd.exe to avoid PowerShell parsing issues with quoted paths
+            const quoteCmd = (s: string) => `"${s.replace(/"/g, '""')}"`;
+            const execQuoted = quoteCmd(execPath);
+            const cliQuoted = quoteCmd(cliEntry);
+
+            terminalOptions.shellPath =
+              process.env.ComSpec || 'C:\\\\Windows\\\\System32\\\\cmd.exe';
+            const cmdLine = needsElectronRunAsNode
+              ? `set "ELECTRON_RUN_AS_NODE=1" && ${execQuoted} ${cliQuoted}`
+              : `${execQuoted} ${cliQuoted}`;
+            terminalOptions.shellArgs = ['/d', '/s', '/c', cmdLine];
+            qwenCmd = undefined;
           } else {
             const quotePosix = (s: string) => `"${s.replace(/"/g, '\\"')}"`;
             const baseCmd = `${quotePosix(execPath)} ${quotePosix(cliEntry)}`;
@@ -341,13 +350,11 @@ export async function activate(context: vscode.ExtensionContext) {
             }
           }
 
-          const terminal = vscode.window.createTerminal({
-            name: `Qwen Code (${selectedFolder.name})`,
-            cwd: selectedFolder.uri.fsPath,
-            location,
-          });
+          const terminal = vscode.window.createTerminal(terminalOptions);
           terminal.show();
-          terminal.sendText(qwenCmd);
+          if (qwenCmd) {
+            terminal.sendText(qwenCmd);
+          }
         }
       },
     ),
