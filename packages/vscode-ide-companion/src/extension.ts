@@ -319,7 +319,7 @@ export async function activate(context: vscode.ExtensionContext) {
             lowerExecPath.includes('code') ||
             lowerExecPath.includes('electron');
 
-          let qwenCmd: string | undefined;
+          let qwenCmd: string;
           const terminalOptions: vscode.TerminalOptions = {
             name: `Qwen Code (${selectedFolder.name})`,
             cwd: selectedFolder.uri.fsPath,
@@ -327,18 +327,11 @@ export async function activate(context: vscode.ExtensionContext) {
           };
 
           if (isWindows) {
-            // Use cmd.exe to avoid PowerShell parsing issues with quoted paths
+            // Use system Node via cmd.exe; avoid PowerShell parsing issues
             const quoteCmd = (s: string) => `"${s.replace(/"/g, '""')}"`;
-            const execQuoted = quoteCmd(execPath);
             const cliQuoted = quoteCmd(cliEntry);
-
-            terminalOptions.shellPath =
-              process.env.ComSpec || 'C:\\\\Windows\\\\System32\\\\cmd.exe';
-            const cmdLine = needsElectronRunAsNode
-              ? `set "ELECTRON_RUN_AS_NODE=1" && ${execQuoted} ${cliQuoted}`
-              : `${execQuoted} ${cliQuoted}`;
-            terminalOptions.shellArgs = ['/d', '/s', '/c', cmdLine];
-            qwenCmd = undefined;
+            qwenCmd = `node ${cliQuoted}`;
+            terminalOptions.shellPath = process.env.ComSpec;
           } else {
             const quotePosix = (s: string) => `"${s.replace(/"/g, '\\"')}"`;
             const baseCmd = `${quotePosix(execPath)} ${quotePosix(cliEntry)}`;
@@ -352,9 +345,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
           const terminal = vscode.window.createTerminal(terminalOptions);
           terminal.show();
-          if (qwenCmd) {
-            terminal.sendText(qwenCmd);
-          }
+          terminal.sendText(qwenCmd);
         }
       },
     ),
