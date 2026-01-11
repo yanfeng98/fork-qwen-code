@@ -16,7 +16,6 @@ import { execSync } from 'node:child_process';
 import {
   prepareSpawnInfo,
   findBundledCliPath,
-  findNativeCliPath,
 } from '../../src/utils/cliPath.js';
 
 // Mock fs module
@@ -60,12 +59,6 @@ describe('CLI Path Utilities', () => {
 
       expect(() => findBundledCliPath()).toThrow('Bundled qwen CLI not found');
       expect(() => findBundledCliPath()).toThrow('Searched locations:');
-    });
-  });
-
-  describe('findNativeCliPath (legacy alias)', () => {
-    it('should be an alias for findBundledCliPath', () => {
-      expect(findNativeCliPath).toBe(findBundledCliPath);
     });
   });
 

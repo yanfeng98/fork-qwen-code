@@ -370,6 +370,3 @@ export function prepareSpawnInfo(executableSpec?: string): SpawnInfo {
     originalInput: executableSpec,
   };
 }
-
-// Legacy export for backward compatibility
-export { findBundledCliPath as findNativeCliPath };
