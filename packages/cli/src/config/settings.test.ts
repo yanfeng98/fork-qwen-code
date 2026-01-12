@@ -419,7 +419,7 @@ describe('Settings Loading and Merging', () => {
       });
     });
 
-    it('should warn about deprecated legacy keys in a v2 settings file', () => {
+    it('should warn about ignored legacy keys in a v2 settings file', () => {
       (mockFsExistsSync as Mock).mockImplementation(
         (p: fs.PathLike) => p === USER_SETTINGS_PATH,
       );
@@ -440,7 +440,7 @@ describe('Settings Loading and Merging', () => {
       expect(getSettingsWarnings(settings)).toEqual(
         expect.arrayContaining([
           expect.stringContaining(
-            "Deprecated setting 'usageStatisticsEnabled'",
+            "Legacy setting 'usageStatisticsEnabled' will be ignored",
           ),
         ]),
       );
@@ -471,7 +471,9 @@ describe('Settings Loading and Merging', () => {
 
       expect(getSettingsWarnings(settings)).toEqual(
         expect.arrayContaining([
-          expect.stringContaining("Unknown setting 'someUnknownKey'"),
+          expect.stringContaining(
+            "Unknown setting 'someUnknownKey' will be ignored",
+          ),
         ]),
       );
     });

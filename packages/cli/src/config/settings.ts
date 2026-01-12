@@ -354,9 +354,9 @@ function getSettingsFileKeyWarnings(
   }
 
   const warnings: string[] = [];
-  const deprecatedKeys = new Set<string>();
+  const ignoredLegacyKeys = new Set<string>();
 
-  // Deprecated keys (V1 top-level keys that moved to a nested V2 path).
+  // Ignored legacy keys (V1 top-level keys that moved to a nested V2 path).
   for (const [oldKey, newPath] of Object.entries(MIGRATION_MAP)) {
     if (oldKey === newPath) {
       continue;
@@ -378,9 +378,9 @@ function getSettingsFileKeyWarnings(
       continue;
     }
 
-    deprecatedKeys.add(oldKey);
+    ignoredLegacyKeys.add(oldKey);
     warnings.push(
-      `⚠️  Warning: Deprecated setting '${oldKey}' in ${settingsFilePath}. Please use '${newPath}' instead.`,
+      `⚠️  Legacy setting '${oldKey}' will be ignored in ${settingsFilePath}. Please use '${newPath}' instead.`,
     );
   }
 
@@ -390,7 +390,7 @@ function getSettingsFileKeyWarnings(
     if (key === SETTINGS_VERSION_KEY) {
       continue;
     }
-    if (deprecatedKeys.has(key)) {
+    if (ignoredLegacyKeys.has(key)) {
       continue;
     }
     if (schemaKeys.has(key)) {
@@ -398,7 +398,7 @@ function getSettingsFileKeyWarnings(
     }
 
     warnings.push(
-      `⚠️  Warning: Unknown setting '${key}' in ${settingsFilePath}. This setting will be ignored.`,
+      `⚠️  Unknown setting '${key}' will be ignored in ${settingsFilePath}.`,
     );
   }
 
@@ -406,7 +406,7 @@ function getSettingsFileKeyWarnings(
 }
 
 /**
- * Collects warnings for deprecated and unknown settings keys.
+ * Collects warnings for ignored legacy and unknown settings keys.
  *
  * For `$version: 2` settings files, we do not apply implicit migrations.
  * Instead, we surface actionable, de-duplicated warnings in the terminal UI.
