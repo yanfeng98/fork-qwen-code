@@ -17,7 +17,11 @@ import * as cliConfig from './config/config.js';
 import { loadCliConfig, parseArguments } from './config/config.js';
 import { ExtensionStorage, loadExtensions } from './config/extension.js';
 import type { DnsResolutionOrder, LoadedSettings } from './config/settings.js';
-import { loadSettings, migrateDeprecatedSettings } from './config/settings.js';
+import {
+  getSettingsWarnings,
+  loadSettings,
+  migrateDeprecatedSettings,
+} from './config/settings.js';
 import {
   initializeApp,
   type InitializationResult,
@@ -400,12 +404,15 @@ export async function main() {
 
     let input = config.getQuestion();
     const startupWarnings = [
-      ...(await getStartupWarnings()),
-      ...(await getUserStartupWarnings({
-        workspaceRoot: process.cwd(),
-        useRipgrep: settings.merged.tools?.useRipgrep ?? true,
-        useBuiltinRipgrep: settings.merged.tools?.useBuiltinRipgrep ?? true,
-      })),
+      ...new Set([
+        ...(await getStartupWarnings()),
+        ...(await getUserStartupWarnings({
+          workspaceRoot: process.cwd(),
+          useRipgrep: settings.merged.tools?.useRipgrep ?? true,
+          useBuiltinRipgrep: settings.merged.tools?.useBuiltinRipgrep ?? true,
+        })),
+        ...getSettingsWarnings(settings),
+      ]),
     ];
 
     // Render UI, passing necessary config values. Check that there is no command line question.
