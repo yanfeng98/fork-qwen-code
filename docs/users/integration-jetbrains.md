@@ -19,7 +19,7 @@
 1. Install Qwen Code CLI:
 
    ```bash
-   npm install -g qwen-code
+   npm install -g @qwen-code/qwen-code
    ```
 
 2. Open your JetBrains IDE and navigate to AI Chat tool window.
@@ -31,7 +31,7 @@
   "agent_servers": {
     "qwen": {
       "command": "/path/to/qwen",
-      "args": ["--experimental-acp"],
+      "args": ["--acp"],
       "env": {}
     }
   }
@@ -39,6 +39,8 @@
 ```
 
 4. The Qwen Code agent should now be available in the AI Assistant panel
+
+![Qwen Code in JetBrains AI Chat](./images/jetbrains-acp.png)
 
 ## Troubleshooting
 
