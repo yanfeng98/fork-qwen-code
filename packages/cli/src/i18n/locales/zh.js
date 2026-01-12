@@ -278,8 +278,7 @@ export default {
   'Custom Witty Phrases': '自定义诙谐短语',
   'Enable Welcome Back': '启用欢迎回来',
   'Enable User Feedback': '启用用户反馈',
-  'How is Claude doing this session? (optional)':
-    'Claude 这次表现如何？（可选）',
+  'How is Qwen doing this session? (optional)': 'Qwen 这次表现如何？（可选）',
   Bad: '差',
   Fine: '一般',
   Good: '好',

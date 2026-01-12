@@ -9,6 +9,33 @@ import { StreamingState, MessageType, type HistoryItem } from '../types.js';
 import type { LoadedSettings } from '../../config/settings.js';
 import type { SessionStatsState } from '../contexts/SessionContext.js';
 
+const FEEDBACK_SHOW_PROBABILITY = 0.25; // 25% probability of showing feedback dialog
+
+/**
+ * Check if there's an AI response after the last user message in the conversation history
+ */
+const hasAIResponseAfterLastUserMessage = (history: HistoryItem[]): boolean => {
+  // Find the last user message
+  let lastUserMessageIndex = -1;
+  for (let i = history.length - 1; i >= 0; i--) {
+    if (history[i].type === MessageType.USER) {
+      lastUserMessageIndex = i;
+      break;
+    }
+  }
+
+  // Check if there's any AI response (GEMINI message) after the last user message
+  if (lastUserMessageIndex !== -1) {
+    for (let i = lastUserMessageIndex + 1; i < history.length; i++) {
+      if (history[i].type === MessageType.GEMINI) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+};
+
 export interface UseFeedbackDialogProps {
   config: Config;
   settings: LoadedSettings;
@@ -74,26 +101,8 @@ export const useFeedbackDialog = ({
     let timeoutId: NodeJS.Timeout;
 
     if (streamingState === StreamingState.Idle && history.length > 0) {
-      // Find the last user message and check if there's AI response after it
-      let lastUserMessageIndex = -1;
-      let hasAIResponseAfterLastUser = false;
-
-      for (let i = history.length - 1; i >= 0; i--) {
-        if (history[i].type === MessageType.USER) {
-          lastUserMessageIndex = i;
-          break;
-        }
-      }
-
-      // Check if there's any AI response (GEMINI message) after the last user message
-      if (lastUserMessageIndex !== -1) {
-        for (let i = lastUserMessageIndex + 1; i < history.length; i++) {
-          if (history[i].type === MessageType.GEMINI) {
-            hasAIResponseAfterLastUser = true;
-            break;
-          }
-        }
-      }
+      const hasAIResponseAfterLastUser =
+        hasAIResponseAfterLastUserMessage(history);
 
       const sessionDurationMs =
         Date.now() - sessionStats.sessionStartTime.getTime();
@@ -105,14 +114,13 @@ export const useFeedbackDialog = ({
       // 4. Session duration > 10 seconds (meaningful interaction)
       // 5. Not already shown for this session
       // 6. Random chance (25% probability)
-      // Note: We check !isFeedbackDialogOpen to ensure it's not already open
       if (
         config.getUsageStatisticsEnabled() && // Only show if telemetry is enabled
         settings.merged.ui?.enableUserFeedback !== false && // Default to true if not set
         hasAIResponseAfterLastUser &&
         sessionDurationMs > 10000 && // 10 seconds minimum for meaningful interaction
         !feedbackShownForSession &&
-        Math.random() < 0.25 // 25% probability
+        Math.random() < FEEDBACK_SHOW_PROBABILITY
       ) {
         timeoutId = setTimeout(() => {
           openFeedbackDialog();

@@ -290,8 +290,8 @@ export default {
   'Custom Witty Phrases': 'Пользовательские остроумные фразы',
   'Enable Welcome Back': 'Включить приветствие при возврате',
   'Enable User Feedback': 'Включить отзывы пользователей',
-  'How is Claude doing this session? (optional)':
-    'Как дела у Claude в этой сессии? (необязательно)',
+  'How is Qwen doing this session? (optional)':
+    'Как дела у Qwen в этой сессии? (необязательно)',
   Bad: 'Плохо',
   Fine: 'Нормально',
   Good: 'Хорошо',

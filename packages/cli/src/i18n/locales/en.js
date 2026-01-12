@@ -287,8 +287,8 @@ export default {
   'Custom Witty Phrases': 'Custom Witty Phrases',
   'Enable Welcome Back': 'Enable Welcome Back',
   'Enable User Feedback': 'Enable User Feedback',
-  'How is Claude doing this session? (optional)':
-    'How is Claude doing this session? (optional)',
+  'How is Qwen doing this session? (optional)':
+    'How is Qwen doing this session? (optional)',
   Bad: 'Bad',
   Fine: 'Fine',
   Good: 'Good',
