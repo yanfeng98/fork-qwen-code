@@ -37,6 +37,9 @@ import {
   getErrorMessage,
   getAllGeminiMdFilenames,
   ShellExecutionService,
+  logUserFeedback,
+  UserFeedbackEvent,
+  type UserFeedbackRating,
 } from '@qwen-code/qwen-code-core';
 import { buildResumedHistoryItems } from './utils/resumeHistoryUtils.js';
 import { validateAuthMethod } from '../config/auth.js';
@@ -182,6 +185,18 @@ export const AppContainer = (props: AppContainerProps) => {
   // Helper to determine the current model (polled, since Config has no model-change event).
   const getCurrentModel = useCallback(() => config.getModel(), [config]);
 
+  // Feedback dialog state
+  const [isFeedbackDialogOpen, setIsFeedbackDialogOpen] = useState(false);
+  const [feedbackShownForSession, setFeedbackShownForSession] = useState(false);
+  const openFeedbackDialog = useCallback(() => {
+    setIsFeedbackDialogOpen(true);
+    setFeedbackShownForSession(true);
+  }, []);
+  const closeFeedbackDialog = useCallback(
+    () => setIsFeedbackDialogOpen(false),
+    [],
+  );
+
   const [currentModel, setCurrentModel] = useState(getCurrentModel());
 
   const [isConfigInitialized, setConfigInitialized] = useState(false);
@@ -197,6 +212,40 @@ export const AppContainer = (props: AppContainerProps) => {
   const { stats: sessionStats, startNewSession } = useSessionStats();
   const logger = useLogger(config.storage, sessionStats.sessionId);
   const branchName = useGitBranchName(config.getTargetDir());
+
+  // Submit user feedback function
+  const submitFeedback = useCallback(
+    (rating: number) => {
+      // Calculate session duration and turn count
+      const sessionDurationMs =
+        Date.now() - sessionStats.sessionStartTime.getTime();
+      let lastUserMessageIndex = -1;
+      for (let i = historyManager.history.length - 1; i >= 0; i--) {
+        if (historyManager.history[i].type === MessageType.USER) {
+          lastUserMessageIndex = i;
+          break;
+        }
+      }
+      const turnCount =
+        lastUserMessageIndex === -1
+          ? 0
+          : historyManager.history.length - lastUserMessageIndex;
+
+      // Create and log the feedback event
+      const feedbackEvent = new UserFeedbackEvent(
+        sessionStats.sessionId,
+        rating as UserFeedbackRating,
+        sessionDurationMs,
+        turnCount,
+        config.getModel(),
+        config.getApprovalMode(),
+      );
+
+      logUserFeedback(config, feedbackEvent);
+      closeFeedbackDialog();
+    },
+    [sessionStats, historyManager.history, config, closeFeedbackDialog],
+  );
 
   // Layout measurements
   const mainControlsRef = useRef<DOMElement>(null);
@@ -1194,7 +1243,80 @@ export const AppContainer = (props: AppContainerProps) => {
     isSubagentCreateDialogOpen ||
     isAgentsManagerDialogOpen ||
     isApprovalModeDialogOpen ||
-    isResumeDialogOpen;
+    isResumeDialogOpen ||
+    isFeedbackDialogOpen;
+
+  // Track when to show feedback dialog
+  useEffect(() => {
+    if (
+      streamingState === StreamingState.Idle &&
+      historyManager.history.length > 0
+    ) {
+      // Find the last user message and check if there's AI response after it
+      let lastUserMessageIndex = -1;
+      let hasAIResponseAfterLastUser = false;
+
+      for (let i = historyManager.history.length - 1; i >= 0; i--) {
+        if (historyManager.history[i].type === MessageType.USER) {
+          lastUserMessageIndex = i;
+          break;
+        }
+      }
+
+      // Check if there's any AI response (GEMINI message) after the last user message
+      if (lastUserMessageIndex !== -1) {
+        for (
+          let i = lastUserMessageIndex + 1;
+          i < historyManager.history.length;
+          i++
+        ) {
+          if (historyManager.history[i].type === MessageType.GEMINI) {
+            hasAIResponseAfterLastUser = true;
+            break;
+          }
+        }
+      }
+
+      const sessionDurationMs =
+        Date.now() - sessionStats.sessionStartTime.getTime();
+
+      // Show feedback dialog if:
+      // 1. Telemetry is enabled (required for feedback submission)
+      // 2. User feedback is enabled in settings
+      // 3. There's an AI response after the last user message (real AI conversation)
+      // 4. Session duration > 10 seconds (meaningful interaction)
+      // 5. No other dialogs are open
+      // 6. Not already shown for this session
+      // 7. Random chance (25% probability)
+      if (
+        config.getUsageStatisticsEnabled() && // Only show if telemetry is enabled
+        settings.merged.ui?.enableUserFeedback !== false && // Default to true if not set
+        hasAIResponseAfterLastUser &&
+        sessionDurationMs > 10000 && // 10 seconds minimum for meaningful interaction
+        !dialogsVisible &&
+        !isFeedbackDialogOpen &&
+        !feedbackShownForSession &&
+        Math.random() < 0.25 // 25% probability
+      ) {
+        setTimeout(() => {
+          // Double check no dialogs opened in the meantime
+          if (!dialogsVisible && !isFeedbackDialogOpen) {
+            openFeedbackDialog();
+          }
+        }, 1000); // Delay to ensure user has time to see the completion
+      }
+    }
+  }, [
+    streamingState,
+    historyManager.history,
+    sessionStats,
+    dialogsVisible,
+    isFeedbackDialogOpen,
+    feedbackShownForSession,
+    openFeedbackDialog,
+    settings.merged.ui?.enableUserFeedback,
+    config,
+  ]);
 
   const pendingHistoryItems = useMemo(
     () => [...pendingSlashCommandHistoryItems, ...pendingGeminiHistoryItems],
@@ -1292,6 +1414,8 @@ export const AppContainer = (props: AppContainerProps) => {
       // Subagent dialogs
       isSubagentCreateDialogOpen,
       isAgentsManagerDialogOpen,
+      // Feedback dialog
+      isFeedbackDialogOpen,
     }),
     [
       isThemeDialogOpen,
@@ -1382,6 +1506,8 @@ export const AppContainer = (props: AppContainerProps) => {
       // Subagent dialogs
       isSubagentCreateDialogOpen,
       isAgentsManagerDialogOpen,
+      // Feedback dialog
+      isFeedbackDialogOpen,
     ],
   );
 
@@ -1422,6 +1548,10 @@ export const AppContainer = (props: AppContainerProps) => {
       openResumeDialog,
       closeResumeDialog,
       handleResume,
+      // Feedback dialog
+      openFeedbackDialog,
+      closeFeedbackDialog,
+      submitFeedback,
     }),
     [
       handleThemeSelect,
@@ -1457,6 +1587,10 @@ export const AppContainer = (props: AppContainerProps) => {
       openResumeDialog,
       closeResumeDialog,
       handleResume,
+      // Feedback dialog
+      openFeedbackDialog,
+      closeFeedbackDialog,
+      submitFeedback,
     ],
   );
 

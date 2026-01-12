@@ -289,6 +289,13 @@ export default {
   'Show Citations': 'Quellenangaben anzeigen',
   'Custom Witty Phrases': 'Benutzerdefinierte Witzige Sprüche',
   'Enable Welcome Back': 'Willkommen-zurück aktivieren',
+  'Enable User Feedback': 'Benutzerfeedback aktivieren',
+  'How is Claude doing this session? (optional)':
+    'Wie macht sich Claude in dieser Sitzung? (optional)',
+  Bad: 'Schlecht',
+  Fine: 'In Ordnung',
+  Good: 'Gut',
+  Dismiss: 'Verwerfen',
   'Disable Loading Phrases': 'Ladesprüche deaktivieren',
   'Screen Reader Mode': 'Bildschirmleser-Modus',
   'IDE Mode': 'IDE-Modus',

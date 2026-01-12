@@ -286,6 +286,13 @@ export default {
   'Show Citations': 'Show Citations',
   'Custom Witty Phrases': 'Custom Witty Phrases',
   'Enable Welcome Back': 'Enable Welcome Back',
+  'Enable User Feedback': 'Enable User Feedback',
+  'How is Claude doing this session? (optional)':
+    'How is Claude doing this session? (optional)',
+  Bad: 'Bad',
+  Fine: 'Fine',
+  Good: 'Good',
+  Dismiss: 'Dismiss',
   'Disable Loading Phrases': 'Disable Loading Phrases',
   'Screen Reader Mode': 'Screen Reader Mode',
   'IDE Mode': 'IDE Mode',

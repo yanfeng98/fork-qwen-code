@@ -289,6 +289,13 @@ export default {
   'Show Citations': 'Показывать цитаты',
   'Custom Witty Phrases': 'Пользовательские остроумные фразы',
   'Enable Welcome Back': 'Включить приветствие при возврате',
+  'Enable User Feedback': 'Включить отзывы пользователей',
+  'How is Claude doing this session? (optional)':
+    'Как дела у Claude в этой сессии? (необязательно)',
+  Bad: 'Плохо',
+  Fine: 'Нормально',
+  Good: 'Хорошо',
+  Dismiss: 'Отклонить',
   'Disable Loading Phrases': 'Отключить фразы при загрузке',
   'Screen Reader Mode': 'Режим программы чтения с экрана',
   'IDE Mode': 'Режим IDE',

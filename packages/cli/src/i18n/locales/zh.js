@@ -277,6 +277,13 @@ export default {
   'Show Citations': '显示引用',
   'Custom Witty Phrases': '自定义诙谐短语',
   'Enable Welcome Back': '启用欢迎回来',
+  'Enable User Feedback': '启用用户反馈',
+  'How is Claude doing this session? (optional)':
+    'Claude 这次表现如何？（可选）',
+  Bad: '差',
+  Fine: '一般',
+  Good: '好',
+  Dismiss: '忽略',
   'Disable Loading Phrases': '禁用加载短语',
   'Screen Reader Mode': '屏幕阅读器模式',
   'IDE Mode': 'IDE 模式',
