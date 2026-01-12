@@ -344,33 +344,7 @@ function resolveGenerationConfig(
   const result: Partial<ContentGeneratorConfig> = {};
 
   for (const field of MODEL_GENERATION_CONFIG_FIELDS) {
-    // Special handling for defaultHeaders: merge instead of replace
-    if (field === 'defaultHeaders') {
-      const settingsHeaders = settingsConfig?.defaultHeaders;
-      const providerHeaders = modelProviderConfig?.defaultHeaders;
-
-      if (settingsHeaders || providerHeaders) {
-        // Merge headers: provider headers override settings headers
-        result.defaultHeaders = {
-          ...(settingsHeaders || {}),
-          ...(providerHeaders || {}),
-        };
-
-        // Track source for merged headers
-        if (providerHeaders && authType) {
-          sources[field] = modelProvidersSource(
-            authType,
-            modelId || '',
-            `generationConfig.${field}`,
-          );
-        } else if (settingsHeaders) {
-          sources[field] = settingsSource(`model.generationConfig.${field}`);
-        }
-      }
-      continue;
-    }
-
-    // ModelProvider config takes priority for other fields
+    // ModelProvider config takes priority over settings config
     if (authType && modelProviderConfig && field in modelProviderConfig) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (result as any)[field] = modelProviderConfig[field];

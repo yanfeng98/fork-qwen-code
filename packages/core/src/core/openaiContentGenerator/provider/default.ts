@@ -25,15 +25,15 @@ export class DefaultOpenAICompatibleProvider
   buildHeaders(): Record<string, string | undefined> {
     const version = this.cliConfig.getCliVersion() || 'unknown';
     const userAgent = `QwenCode/${version} (${process.platform}; ${process.arch})`;
-    const baseHeaders: Record<string, string | undefined> = {
-      'User-Agent': userAgent,
-    };
+    const { customHeaders } = this.contentGeneratorConfig;
 
-    // Merge with custom defaultHeaders from config
-    const customHeaders = this.contentGeneratorConfig.defaultHeaders || {};
+    // If customHeaders is provided, use it directly; otherwise use default headers
+    if (customHeaders) {
+      return customHeaders;
+    }
+
     return {
-      ...baseHeaders,
-      ...customHeaders,
+      'User-Agent': userAgent,
     };
   }
 
