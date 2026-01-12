@@ -13,6 +13,7 @@ import open from 'open';
 import { EventEmitter } from 'events';
 import type { Config } from '../config/config.js';
 import { randomUUID } from 'node:crypto';
+import { formatFetchErrorForUser } from '../utils/fetch.js';
 import {
   SharedTokenManager,
   TokenManagerError,
@@ -847,8 +848,12 @@ async function authWithQwenDeviceFlow(
     console.error('\n' + timeoutMessage);
     return { success: false, reason: 'timeout', message: timeoutMessage };
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    const message = `Device authorization flow failed: ${errorMessage}`;
+    const fullErrorMessage = formatFetchErrorForUser(error, {
+      url: QWEN_OAUTH_BASE_URL,
+    });
+    const message = `Device authorization flow failed: ${fullErrorMessage}`;
+
+    qwenOAuth2Events.emit(QwenOAuth2Event.AuthProgress, 'error', message);
     console.error(message);
     return { success: false, reason: 'error', message };
   } finally {
