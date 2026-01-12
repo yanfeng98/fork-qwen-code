@@ -285,24 +285,17 @@ function isTsxAvailable(): boolean {
 }
 
 /**
- * Get JavaScript runtime command (bun if running under bun, otherwise node)
+ * Get JavaScript runtime type (bun if running under bun, otherwise node)
  */
-function getJsRuntimeCommand(): { command: string; type: ExecutableType } {
+function getJsRuntimeType(): 'bun' | 'node' {
   if (
     typeof process !== 'undefined' &&
     'versions' in process &&
     'bun' in process.versions
   ) {
-    return {
-      command: 'bun',
-      type: 'bun',
-    };
+    return 'bun';
   }
-
-  return {
-    command: process.execPath,
-    type: 'node',
-  };
+  return 'node';
 }
 
 /**
@@ -315,11 +308,10 @@ export function prepareSpawnInfo(executableSpec?: string): SpawnInfo {
 
   if (executableSpec === undefined) {
     const bundledCliPath = findBundledCliPath();
-    const runtime = getJsRuntimeCommand();
     return {
-      command: runtime.command,
+      command: process.execPath,
       args: [bundledCliPath],
-      type: runtime.type,
+      type: getJsRuntimeType(),
       originalInput: '',
     };
   }
@@ -343,11 +335,10 @@ export function prepareSpawnInfo(executableSpec?: string): SpawnInfo {
   validateFilePath(resolvedPath);
 
   if (isJavaScriptFile(resolvedPath)) {
-    const runtime = getJsRuntimeCommand();
     return {
-      command: runtime.command,
+      command: process.execPath,
       args: [resolvedPath],
-      type: runtime.type,
+      type: getJsRuntimeType(),
       originalInput: executableSpec,
     };
   }
