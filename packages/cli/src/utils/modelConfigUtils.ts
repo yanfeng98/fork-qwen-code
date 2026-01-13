@@ -103,7 +103,7 @@ export function resolveCliGenerationConfig(
 
   // Log warnings if any
   for (const warning of resolved.warnings) {
-    console.warn(`[modelProviderUtils] ${warning}`);
+    console.warn(warning);
   }
 
   // Resolve OpenAI logging config (CLI-specific, not part of core resolver)
