@@ -360,10 +360,10 @@ export async function start_sandbox(
     //
     // note this can only be done with binary linked from gemini-cli repo
     if (process.env['BUILD_SANDBOX']) {
-      if (!gcPath.includes('gemini-cli/packages/')) {
+      if (!gcPath.includes('qwen-code/packages/')) {
         throw new FatalSandboxError(
-          'Cannot build sandbox using installed gemini binary; ' +
-            'run `npm link ./packages/cli` under gemini-cli repo to switch to linked binary.',
+          'Cannot build sandbox using installed qwencode binary; ' +
+            'run `npm link ./packages/cli` under qwencode-cli repo to switch to linked binary.',
         );
       } else {
         console.error('building sandbox ...');
