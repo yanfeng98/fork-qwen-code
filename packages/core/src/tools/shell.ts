@@ -34,6 +34,7 @@ import type {
 import { ShellExecutionService } from '../services/shellExecutionService.js';
 import { formatMemoryUsage } from '../utils/formatters.js';
 import type { AnsiOutput } from '../utils/terminalSerializer.js';
+import { isSubpath } from '../utils/paths.js';
 import {
   getCommandRoots,
   isCommandAllowed,
@@ -603,6 +604,17 @@ export class ShellTool extends BaseDeclarativeTool<
       if (!path.isAbsolute(params.directory)) {
         return 'Directory must be an absolute path.';
       }
+
+      const userSkillsDir = this.config.storage.getUserSkillsDir();
+      const resolvedDirectoryPath = path.resolve(params.directory);
+      const isWithinUserSkills = isSubpath(
+        userSkillsDir,
+        resolvedDirectoryPath,
+      );
+      if (isWithinUserSkills) {
+        return `Explicitly running shell commands from within the user skills directory is not allowed. Please use absolute paths for command parameter instead.`;
+      }
+
       const workspaceDirs = this.config.getWorkspaceContext().getDirectories();
       const isWithinWorkspace = workspaceDirs.some((wsDir) =>
         params.directory!.startsWith(wsDir),
