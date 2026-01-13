@@ -92,7 +92,7 @@ export type ContentGeneratorConfig = {
   // Schema compliance mode for tool definitions
   schemaCompliance?: 'auto' | 'openapi_30';
   // Custom HTTP headers to be sent with requests
-  defaultHeaders?: Record<string, string>;
+  customHeaders?: Record<string, string>;
 };
 
 // Keep the public ContentGeneratorConfigSources API, but reuse the generic
