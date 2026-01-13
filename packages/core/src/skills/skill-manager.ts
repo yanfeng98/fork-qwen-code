@@ -8,6 +8,7 @@ import * as fs from 'fs/promises';
 import * as fsSync from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import { watch as watchFs, type FSWatcher } from 'chokidar';
 import { parse as parseYaml } from '../utils/yaml-parser.js';
 import type {
   SkillConfig,
@@ -30,7 +31,7 @@ export class SkillManager {
   private skillsCache: Map<SkillLevel, SkillConfig[]> | null = null;
   private readonly changeListeners: Set<() => void> = new Set();
   private parseErrors: Map<string, SkillError> = new Map();
-  private readonly watchers: Map<string, fsSync.FSWatcher> = new Map();
+  private readonly watchers: Map<string, FSWatcher> = new Map();
   private watchStarted = false;
   private refreshTimer: NodeJS.Timeout | null = null;
 
@@ -243,7 +244,9 @@ export class SkillManager {
    */
   stopWatching(): void {
     for (const watcher of this.watchers.values()) {
-      watcher.close();
+      void watcher.close().catch((error) => {
+        console.warn('Failed to close skills watcher:', error);
+      });
     }
     this.watchers.clear();
     this.watchStarted = false;
@@ -484,8 +487,6 @@ export class SkillManager {
 
   private updateWatchersFromCache(): void {
     const desiredPaths = new Set<string>();
-    const recursiveSupported =
-      process.platform === 'darwin' || process.platform === 'win32';
 
     for (const level of ['project', 'user'] as const) {
       const baseDir = this.getSkillsBaseDir(level);
@@ -508,7 +509,15 @@ export class SkillManager {
 
     for (const existingPath of this.watchers.keys()) {
       if (!desiredPaths.has(existingPath)) {
-        this.watchers.get(existingPath)?.close();
+        void this.watchers
+          .get(existingPath)
+          ?.close()
+          .catch((error) => {
+            console.warn(
+              `Failed to close skills watcher for ${existingPath}:`,
+              error,
+            );
+          });
         this.watchers.delete(existingPath);
       }
     }
@@ -519,13 +528,15 @@ export class SkillManager {
       }
 
       try {
-        const watcher = fsSync.watch(
-          watchPath,
-          { recursive: recursiveSupported },
-          () => {
+        const watcher = watchFs(watchPath, {
+          ignoreInitial: true,
+        })
+          .on('all', () => {
             this.scheduleRefresh();
-          },
-        );
+          })
+          .on('error', (error) => {
+            console.warn(`Skills watcher error for ${watchPath}:`, error);
+          });
         this.watchers.set(watchPath, watcher);
       } catch (error) {
         console.warn(
