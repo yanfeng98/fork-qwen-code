@@ -330,6 +330,7 @@ export async function activate(context: vscode.ExtensionContext) {
             // Use system Node via cmd.exe; avoid PowerShell parsing issues
             const quoteCmd = (s: string) => `"${s.replace(/"/g, '""')}"`;
             const cliQuoted = quoteCmd(cliEntry);
+            // TODO: @yiliang114, temporarily run through node, and later hope to decouple from the local node
             qwenCmd = `node ${cliQuoted}`;
             terminalOptions.shellPath = process.env.ComSpec;
           } else {
