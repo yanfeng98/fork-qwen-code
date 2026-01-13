@@ -10,6 +10,8 @@ import type { LoadedSettings } from '../../config/settings.js';
 import type { SessionStatsState } from '../contexts/SessionContext.js';
 
 const FEEDBACK_SHOW_PROBABILITY = 0.25; // 25% probability of showing feedback dialog
+const MIN_TOOL_CALLS = 10; // Minimum tool calls to show feedback dialog
+const MIN_USER_MESSAGES = 5; // Minimum user messages to show feedback dialog
 
 /**
  * Check if there's an AI response after the last user message in the conversation history
@@ -35,6 +37,12 @@ const hasAIResponseAfterLastUserMessage = (history: HistoryItem[]): boolean => {
 
   return false;
 };
+
+/**
+ * Count the number of user messages in the conversation history
+ */
+const countUserMessages = (history: HistoryItem[]): number =>
+  history.filter((item) => item.type === MessageType.USER).length;
 
 export interface UseFeedbackDialogProps {
   config: Config;
@@ -107,6 +115,16 @@ export const useFeedbackDialog = ({
       const sessionDurationMs =
         Date.now() - sessionStats.sessionStartTime.getTime();
 
+      // Get tool calls count and user messages count
+      const toolCallsCount = sessionStats.metrics.tools.totalCalls;
+      const userMessagesCount = countUserMessages(history);
+
+      // Check if the session meets the minimum requirements:
+      // Either tool calls > 10 OR user messages > 5
+      const meetsMinimumRequirements =
+        toolCallsCount > MIN_TOOL_CALLS ||
+        userMessagesCount > MIN_USER_MESSAGES;
+
       // Show feedback dialog if:
       // 1. Telemetry is enabled (required for feedback submission)
       // 2. User feedback is enabled in settings
@@ -114,13 +132,15 @@ export const useFeedbackDialog = ({
       // 4. Session duration > 10 seconds (meaningful interaction)
       // 5. Not already shown for this session
       // 6. Random chance (25% probability)
+      // 7. Meets minimum requirements (tool calls > 10 OR user messages > 5)
       if (
         config.getUsageStatisticsEnabled() && // Only show if telemetry is enabled
         settings.merged.ui?.enableUserFeedback !== false && // Default to true if not set
         hasAIResponseAfterLastUser &&
         sessionDurationMs > 10000 && // 10 seconds minimum for meaningful interaction
         !feedbackShownForSession &&
-        Math.random() < FEEDBACK_SHOW_PROBABILITY
+        Math.random() < FEEDBACK_SHOW_PROBABILITY &&
+        meetsMinimumRequirements
       ) {
         timeoutId = setTimeout(() => {
           openFeedbackDialog();
