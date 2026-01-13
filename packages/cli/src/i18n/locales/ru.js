@@ -293,9 +293,8 @@ export default {
   'How is Qwen doing this session? (optional)':
     'Как дела у Qwen в этой сессии? (необязательно)',
   Bad: 'Плохо',
-  Fine: 'Нормально',
   Good: 'Хорошо',
-  Dismiss: 'Отклонить',
+  'Not Sure Yet': 'Пока не уверен',
   'Disable Loading Phrases': 'Отключить фразы при загрузке',
   'Screen Reader Mode': 'Режим программы чтения с экрана',
   'IDE Mode': 'Режим IDE',

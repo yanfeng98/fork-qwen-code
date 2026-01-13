@@ -293,9 +293,8 @@ export default {
   'How is Qwen doing this session? (optional)':
     'Wie macht sich Qwen in dieser Sitzung? (optional)',
   Bad: 'Schlecht',
-  Fine: 'In Ordnung',
   Good: 'Gut',
-  Dismiss: 'Verwerfen',
+  'Not Sure Yet': 'Noch nicht sicher',
   'Disable Loading Phrases': 'Ladesprüche deaktivieren',
   'Screen Reader Mode': 'Bildschirmleser-Modus',
   'IDE Mode': 'IDE-Modus',

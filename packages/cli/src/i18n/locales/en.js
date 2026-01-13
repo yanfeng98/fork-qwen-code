@@ -290,9 +290,8 @@ export default {
   'How is Qwen doing this session? (optional)':
     'How is Qwen doing this session? (optional)',
   Bad: 'Bad',
-  Fine: 'Fine',
   Good: 'Good',
-  Dismiss: 'Dismiss',
+  'Not Sure Yet': 'Not Sure Yet',
   'Disable Loading Phrases': 'Disable Loading Phrases',
   'Screen Reader Mode': 'Screen Reader Mode',
   'IDE Mode': 'IDE Mode',

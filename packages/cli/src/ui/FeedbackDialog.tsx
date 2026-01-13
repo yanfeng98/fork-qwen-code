@@ -38,16 +38,13 @@ export const FeedbackDialog: React.FC = () => {
       </Box>
       <Box marginTop={1}>
         <Text color="cyan">1: </Text>
-        <Text>{t('Bad')}</Text>
-        <Text> </Text>
-        <Text color="cyan">2: </Text>
-        <Text>{t('Fine')}</Text>
-        <Text> </Text>
-        <Text color="cyan">3: </Text>
         <Text>{t('Good')}</Text>
         <Text> </Text>
-        <Text color="cyan">0: </Text>
-        <Text>{t('Dismiss')}</Text>
+        <Text color="cyan">2: </Text>
+        <Text>{t('Bad')}</Text>
+        <Text> </Text>
+        <Text color="cyan">3: </Text>
+        <Text>{t('Not Sure Yet')}</Text>
       </Box>
     </Box>
   );
