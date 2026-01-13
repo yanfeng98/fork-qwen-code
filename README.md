@@ -201,6 +201,11 @@ If you encounter issues, check the [troubleshooting guide](https://qwenlm.github
 
 To report a bug from within the CLI, run `/bug` and include a short title and repro steps.
 
+## Connect with Us
+
+- Discord: https://discord.gg/ycKBjdNd
+- Dingtalk: https://qr.dingtalk.com/action/joingroup?code=v1,k1,+FX6Gf/ZDlTahTIRi8AEQhIaBlqykA0j+eBKKdhLeAE=&_dt_no_comment=1&origin=1
+
 ## Acknowledgments
 
 This project is based on [Google Gemini CLI](https://github.com/google-gemini/gemini-cli). We acknowledge and appreciate the excellent work of the Gemini CLI team. Our main contribution focuses on parser-level adaptations to better support Qwen-Coder models.
