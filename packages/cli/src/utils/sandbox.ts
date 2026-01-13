@@ -362,8 +362,8 @@ export async function start_sandbox(
     if (process.env['BUILD_SANDBOX']) {
       if (!gcPath.includes('qwen-code/packages/')) {
         throw new FatalSandboxError(
-          'Cannot build sandbox using installed qwencode binary; ' +
-            'run `npm link ./packages/cli` under qwencode-cli repo to switch to linked binary.',
+          'Cannot build sandbox using installed Qwen Code binary; ' +
+            'run `npm link ./packages/cli` under QwenCode-cli repo to switch to linked binary.',
         );
       } else {
         console.error('building sandbox ...');
