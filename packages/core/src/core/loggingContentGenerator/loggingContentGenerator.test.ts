@@ -51,14 +51,17 @@ const convertGeminiResponseToOpenAISpy = vi
     choices: [],
   } as OpenAI.Chat.ChatCompletion);
 
-const createConfig = (overrides: Record<string, unknown> = {}): Config =>
-  ({
-    getContentGeneratorConfig: () => ({
-      authType: 'openai',
-      enableOpenAILogging: false,
-      ...overrides,
-    }),
-  }) as Config;
+const createConfig = (overrides: Record<string, unknown> = {}): Config => {
+  const configContent = {
+    authType: 'openai',
+    enableOpenAILogging: false,
+    ...overrides,
+  };
+  return {
+    getContentGeneratorConfig: () => configContent,
+    getAuthType: () => configContent.authType as AuthType | undefined,
+  } as Config;
+};
 
 const createWrappedGenerator = (
   generateContent: ContentGenerator['generateContent'],
