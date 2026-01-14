@@ -4,26 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { vi } from 'vitest';
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import {
-  annotateActiveExtensions,
-  loadExtension,
-  ExtensionManager,
-} from '../../config/extension.js';
-import { createExtension } from '../../test-utils/createExtension.js';
+
 import { useExtensionUpdates } from './useExtensionUpdates.js';
-import { QWEN_DIR, type GeminiCLIExtension } from '@qwen-code/qwen-code-core';
+import {
+  QWEN_DIR,
+  type ExtensionManager,
+  type Extension,
+  type ExtensionUpdateInfo,
+  ExtensionUpdateState,
+} from '@qwen-code/qwen-code-core';
 import { renderHook, waitFor } from '@testing-library/react';
 import { MessageType } from '../types.js';
-
-import {
-  checkForAllExtensionUpdates,
-  updateExtension,
-} from '../../config/extensions/update.js';
-import { ExtensionUpdateState } from '../state/extensions.js';
 
 vi.mock('os', async (importOriginal) => {
   const mockedOs = await importOriginal<typeof os>();
@@ -33,63 +28,85 @@ vi.mock('os', async (importOriginal) => {
   };
 });
 
-vi.mock('../../config/extensions/update.js', () => ({
-  checkForAllExtensionUpdates: vi.fn(),
-  updateExtension: vi.fn(),
-}));
+function createMockExtension(overrides: Partial<Extension> = {}): Extension {
+  return {
+    id: 'test-extension-id',
+    name: 'test-extension',
+    version: '1.0.0',
+    path: '/some/path',
+    isActive: true,
+    config: {
+      name: 'test-extension',
+      version: '1.0.0',
+    },
+    contextFiles: [],
+    installMetadata: {
+      type: 'git',
+      source: 'https://some/repo',
+      autoUpdate: false,
+    },
+    ...overrides,
+  };
+}
+
+function createMockExtensionManager(
+  extensions: Extension[],
+  checkCallback?: (
+    callback: (extensionName: string, state: ExtensionUpdateState) => void,
+  ) => Promise<void>,
+  updateResult?: ExtensionUpdateInfo | undefined,
+): ExtensionManager {
+  return {
+    getLoadedExtensions: vi.fn(() => extensions),
+    checkForAllExtensionUpdates: vi.fn(
+      async (
+        callback: (extensionName: string, state: ExtensionUpdateState) => void,
+      ) => {
+        if (checkCallback) {
+          await checkCallback(callback);
+        }
+      },
+    ),
+    updateExtension: vi.fn(async () => updateResult),
+  } as unknown as ExtensionManager;
+}
 
 describe('useExtensionUpdates', () => {
   let tempHomeDir: string;
   let userExtensionsDir: string;
 
   beforeEach(() => {
-    tempHomeDir = fs.mkdtempSync(
-      path.join(os.tmpdir(), 'gemini-cli-test-home-'),
-    );
+    tempHomeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'qwen-cli-test-home-'));
     vi.mocked(os.homedir).mockReturnValue(tempHomeDir);
     userExtensionsDir = path.join(tempHomeDir, QWEN_DIR, 'extensions');
     fs.mkdirSync(userExtensionsDir, { recursive: true });
-    vi.mocked(checkForAllExtensionUpdates).mockReset();
-    vi.mocked(updateExtension).mockReset();
   });
 
   afterEach(() => {
     fs.rmSync(tempHomeDir, { recursive: true, force: true });
+    vi.clearAllMocks();
   });
 
   it('should check for updates and log a message if an update is available', async () => {
-    const extensions = [
-      {
-        name: 'test-extension',
+    const extension = createMockExtension({
+      name: 'test-extension',
+      installMetadata: {
         type: 'git',
-        version: '1.0.0',
-        path: '/some/path',
-        isActive: true,
-        installMetadata: {
-          type: 'git',
-          source: 'https://some/repo',
-          autoUpdate: false,
-        },
+        source: 'https://some/repo',
+        autoUpdate: false,
       },
-    ];
+    });
     const addItem = vi.fn();
     const cwd = '/test/cwd';
 
-    vi.mocked(checkForAllExtensionUpdates).mockImplementation(
-      async (extensions, dispatch) => {
-        dispatch({
-          type: 'SET_STATE',
-          payload: {
-            name: 'test-extension',
-            state: ExtensionUpdateState.UPDATE_AVAILABLE,
-          },
-        });
+    const extensionManager = createMockExtensionManager(
+      [extension],
+      async (callback) => {
+        callback('test-extension', ExtensionUpdateState.UPDATE_AVAILABLE);
       },
     );
 
-    renderHook(() =>
-      useExtensionUpdates(extensions as GeminiCLIExtension[], addItem, cwd),
-    );
+    renderHook(() => useExtensionUpdates(extensionManager, addItem, cwd));
 
     await waitFor(() => {
       expect(addItem).toHaveBeenCalledWith(
@@ -103,43 +120,32 @@ describe('useExtensionUpdates', () => {
   });
 
   it('should check for updates and automatically update if autoUpdate is true', async () => {
-    const extensionDir = createExtension({
-      extensionsDir: userExtensionsDir,
+    const extension = createMockExtension({
       name: 'test-extension',
-      version: '1.0.0',
       installMetadata: {
-        source: 'https://some.git/repo',
         type: 'git',
+        source: 'https://some.git/repo',
         autoUpdate: true,
       },
     });
-    const extension = annotateActiveExtensions(
-      [loadExtension({ extensionDir, workspaceDir: tempHomeDir })!],
-      tempHomeDir,
-      new ExtensionManager(),
-    )[0];
 
     const addItem = vi.fn();
 
-    vi.mocked(checkForAllExtensionUpdates).mockImplementation(
-      async (extensions, dispatch) => {
-        dispatch({
-          type: 'SET_STATE',
-          payload: {
-            name: 'test-extension',
-            state: ExtensionUpdateState.UPDATE_AVAILABLE,
-          },
-        });
+    const extensionManager = createMockExtensionManager(
+      [extension],
+      async (callback) => {
+        callback('test-extension', ExtensionUpdateState.UPDATE_AVAILABLE);
+      },
+      {
+        originalVersion: '1.0.0',
+        updatedVersion: '1.1.0',
+        name: 'test-extension',
       },
     );
 
-    vi.mocked(updateExtension).mockResolvedValue({
-      originalVersion: '1.0.0',
-      updatedVersion: '1.1.0',
-      name: '',
-    });
-
-    renderHook(() => useExtensionUpdates([extension], addItem, tempHomeDir));
+    renderHook(() =>
+      useExtensionUpdates(extensionManager, addItem, tempHomeDir),
+    );
 
     await waitFor(
       () => {
@@ -156,76 +162,63 @@ describe('useExtensionUpdates', () => {
   });
 
   it('should batch update notifications for multiple extensions', async () => {
-    const extensionDir1 = createExtension({
-      extensionsDir: userExtensionsDir,
+    const extension1 = createMockExtension({
+      id: 'test-extension-1-id',
       name: 'test-extension-1',
       version: '1.0.0',
       installMetadata: {
-        source: 'https://some.git/repo1',
         type: 'git',
+        source: 'https://some.git/repo1',
         autoUpdate: true,
       },
     });
-    const extensionDir2 = createExtension({
-      extensionsDir: userExtensionsDir,
+    const extension2 = createMockExtension({
+      id: 'test-extension-2-id',
       name: 'test-extension-2',
       version: '2.0.0',
       installMetadata: {
-        source: 'https://some.git/repo2',
         type: 'git',
+        source: 'https://some.git/repo2',
         autoUpdate: true,
       },
     });
 
-    const extensions = annotateActiveExtensions(
-      [
-        loadExtension({
-          extensionDir: extensionDir1,
-          workspaceDir: tempHomeDir,
-        })!,
-        loadExtension({
-          extensionDir: extensionDir2,
-          workspaceDir: tempHomeDir,
-        })!,
-      ],
-      tempHomeDir,
-      new ExtensionManager(),
-    );
-
     const addItem = vi.fn();
+    let updateCallCount = 0;
 
-    vi.mocked(checkForAllExtensionUpdates).mockImplementation(
-      async (extensions, dispatch) => {
-        dispatch({
-          type: 'SET_STATE',
-          payload: {
+    const extensionManager = {
+      getLoadedExtensions: vi.fn(() => [extension1, extension2]),
+      checkForAllExtensionUpdates: vi.fn(
+        async (
+          callback: (
+            extensionName: string,
+            state: ExtensionUpdateState,
+          ) => void,
+        ) => {
+          callback('test-extension-1', ExtensionUpdateState.UPDATE_AVAILABLE);
+          callback('test-extension-2', ExtensionUpdateState.UPDATE_AVAILABLE);
+        },
+      ),
+      updateExtension: vi.fn(async () => {
+        updateCallCount++;
+        if (updateCallCount === 1) {
+          return {
+            originalVersion: '1.0.0',
+            updatedVersion: '1.1.0',
             name: 'test-extension-1',
-            state: ExtensionUpdateState.UPDATE_AVAILABLE,
-          },
-        });
-        dispatch({
-          type: 'SET_STATE',
-          payload: {
-            name: 'test-extension-2',
-            state: ExtensionUpdateState.UPDATE_AVAILABLE,
-          },
-        });
-      },
+          };
+        }
+        return {
+          originalVersion: '2.0.0',
+          updatedVersion: '2.1.0',
+          name: 'test-extension-2',
+        };
+      }),
+    } as unknown as ExtensionManager;
+
+    renderHook(() =>
+      useExtensionUpdates(extensionManager, addItem, tempHomeDir),
     );
-
-    vi.mocked(updateExtension)
-      .mockResolvedValueOnce({
-        originalVersion: '1.0.0',
-        updatedVersion: '1.1.0',
-        name: '',
-      })
-      .mockResolvedValueOnce({
-        originalVersion: '2.0.0',
-        updatedVersion: '2.1.0',
-        name: '',
-      });
-
-    renderHook(() => useExtensionUpdates(extensions, addItem, tempHomeDir));
 
     await waitFor(
       () => {
@@ -250,60 +243,40 @@ describe('useExtensionUpdates', () => {
   });
 
   it('should batch update notifications for multiple extensions with autoUpdate: false', async () => {
-    const extensions = [
-      {
-        name: 'test-extension-1',
+    const extension1 = createMockExtension({
+      id: 'test-extension-1-id',
+      name: 'test-extension-1',
+      version: '1.0.0',
+      installMetadata: {
         type: 'git',
-        version: '1.0.0',
-        path: '/some/path1',
-        isActive: true,
-        installMetadata: {
-          type: 'git',
-          source: 'https://some/repo1',
-          autoUpdate: false,
-        },
+        source: 'https://some/repo1',
+        autoUpdate: false,
       },
-      {
-        name: 'test-extension-2',
+    });
+    const extension2 = createMockExtension({
+      id: 'test-extension-2-id',
+      name: 'test-extension-2',
+      version: '2.0.0',
+      installMetadata: {
         type: 'git',
-        version: '2.0.0',
-        path: '/some/path2',
-        isActive: true,
-        installMetadata: {
-          type: 'git',
-          source: 'https://some/repo2',
-          autoUpdate: false,
-        },
+        source: 'https://some/repo2',
+        autoUpdate: false,
       },
-    ];
+    });
+
     const addItem = vi.fn();
     const cwd = '/test/cwd';
 
-    vi.mocked(checkForAllExtensionUpdates).mockImplementation(
-      async (extensions, dispatch) => {
-        dispatch({ type: 'BATCH_CHECK_START' });
-        dispatch({
-          type: 'SET_STATE',
-          payload: {
-            name: 'test-extension-1',
-            state: ExtensionUpdateState.UPDATE_AVAILABLE,
-          },
-        });
+    const extensionManager = createMockExtensionManager(
+      [extension1, extension2],
+      async (callback) => {
+        callback('test-extension-1', ExtensionUpdateState.UPDATE_AVAILABLE);
         await new Promise((r) => setTimeout(r, 50));
-        dispatch({
-          type: 'SET_STATE',
-          payload: {
-            name: 'test-extension-2',
-            state: ExtensionUpdateState.UPDATE_AVAILABLE,
-          },
-        });
-        dispatch({ type: 'BATCH_CHECK_END' });
+        callback('test-extension-2', ExtensionUpdateState.UPDATE_AVAILABLE);
       },
     );
 
-    renderHook(() =>
-      useExtensionUpdates(extensions as GeminiCLIExtension[], addItem, cwd),
-    );
+    renderHook(() => useExtensionUpdates(extensionManager, addItem, cwd));
 
     await waitFor(() => {
       expect(addItem).toHaveBeenCalledTimes(1);

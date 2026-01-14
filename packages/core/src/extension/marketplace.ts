@@ -22,7 +22,7 @@ import {
   type ClaudePluginConfig,
 } from './claude-converter.js';
 import { cloneFromGit, downloadFromGitHubRelease } from './github.js';
-import type { ExtensionInstallMetadata } from '@qwen-code/qwen-code-core';
+import type { ExtensionInstallMetadata } from '../config/config.js';
 
 export interface MarketplaceInstallOptions {
   marketplaceUrl: string;

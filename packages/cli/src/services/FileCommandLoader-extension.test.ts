@@ -62,10 +62,13 @@ describe('FileCommandLoader - Extension Commands Support', () => {
     // Mock config to return the extension
     mockConfig.getExtensions = () => [
       {
+        id: 'test-ext',
+        config: extensionConfig,
         name: 'test-ext',
         version: '1.0.0',
         isActive: true,
         path: extensionDir,
+        contextFiles: [],
       },
     ];
 
@@ -111,6 +114,9 @@ describe('FileCommandLoader - Extension Commands Support', () => {
     // Mock config to return the extension
     mockConfig.getExtensions = () => [
       {
+        id: 'multi-ext',
+        config: extensionConfig,
+        contextFiles: [],
         name: 'multi-ext',
         version: '1.0.0',
         isActive: true,
@@ -156,6 +162,9 @@ describe('FileCommandLoader - Extension Commands Support', () => {
     // Mock config to return the extension
     mockConfig.getExtensions = () => [
       {
+        id: 'default-ext',
+        config: extensionConfig,
+        contextFiles: [],
         name: 'default-ext',
         version: '1.0.0',
         isActive: true,
@@ -193,6 +202,9 @@ describe('FileCommandLoader - Extension Commands Support', () => {
     // Mock config to return the extension
     mockConfig.getExtensions = () => [
       {
+        id: 'no-cmds-ext',
+        config: extensionConfig,
+        contextFiles: [],
         name: 'no-cmds-ext',
         version: '1.0.0',
         isActive: true,
@@ -234,6 +246,9 @@ describe('FileCommandLoader - Extension Commands Support', () => {
 
     mockConfig.getExtensions = () => [
       {
+        id: 'prefix-ext',
+        config: extensionConfig,
+        contextFiles: [],
         name: 'prefix-ext',
         version: '1.0.0',
         isActive: true,
@@ -281,8 +296,24 @@ describe('FileCommandLoader - Extension Commands Support', () => {
     );
 
     mockConfig.getExtensions = () => [
-      { name: 'ext-b', version: '1.0.0', isActive: true, path: ext1Dir },
-      { name: 'ext-a', version: '1.0.0', isActive: true, path: ext2Dir },
+      {
+        id: 'ext-b',
+        config: { name: 'ext-b', version: '1.0.0' },
+        contextFiles: [],
+        name: 'ext-b',
+        version: '1.0.0',
+        isActive: true,
+        path: ext1Dir,
+      },
+      {
+        id: 'ext-a',
+        config: { name: 'ext-a', version: '1.0.0' },
+        contextFiles: [],
+        name: 'ext-a',
+        version: '1.0.0',
+        isActive: true,
+        path: ext2Dir,
+      },
     ];
 
     const loader = new FileCommandLoader(mockConfig as Config);

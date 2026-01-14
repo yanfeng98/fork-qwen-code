@@ -1,4 +1,4 @@
-import { Storage } from '@qwen-code/qwen-code-core';
+import { Storage } from '../config/storage.js';
 import path from 'node:path';
 import * as os from 'node:os';
 import {

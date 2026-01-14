@@ -11,8 +11,8 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { glob } from 'glob';
 import type { ExtensionConfig } from './extensionManager.js';
-import type { MCPServerConfig } from '@qwen-code/qwen-code-core';
 import { ExtensionStorage } from './storage.js';
+import type { MCPServerConfig } from '../config/config.js';
 
 export interface ClaudePluginConfig {
   name: string;

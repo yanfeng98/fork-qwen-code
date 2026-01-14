@@ -11,7 +11,7 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { glob } from 'glob';
-import { convertTomlToMarkdown } from '@qwen-code/qwen-code-core/src/utils/toml-to-markdown-converter.js';
+import { convertTomlToMarkdown } from '@qwen-code/qwen-code-core';
 
 export interface MigrationResult {
   success: boolean;

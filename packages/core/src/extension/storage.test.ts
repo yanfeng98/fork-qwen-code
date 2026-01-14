@@ -13,7 +13,7 @@ import {
   EXTENSION_SETTINGS_FILENAME,
   EXTENSIONS_CONFIG_FILENAME,
 } from './variables.js';
-import { Storage } from '@qwen-code/qwen-code-core';
+import { Storage } from '../config/storage.js';
 
 vi.mock('node:os');
 vi.mock('node:fs', async (importOriginal) => {

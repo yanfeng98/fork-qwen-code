@@ -6,7 +6,6 @@
 
 import { simpleGit } from 'simple-git';
 import { getErrorMessage } from '../utils/errors.js';
-import type { ExtensionInstallMetadata } from '@qwen-code/qwen-code-core';
 import * as os from 'node:os';
 import * as https from 'node:https';
 import * as fs from 'node:fs';
@@ -20,6 +19,7 @@ import {
   type ExtensionConfig,
   type ExtensionManager,
 } from './extensionManager.js';
+import type { ExtensionInstallMetadata } from '../config/config.js';
 
 interface GithubReleaseData {
   assets: Asset[];

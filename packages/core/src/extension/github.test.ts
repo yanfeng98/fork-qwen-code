@@ -19,8 +19,11 @@ import * as fsSync from 'node:fs';
 import * as path from 'node:path';
 import * as tar from 'tar';
 import * as archiver from 'archiver';
-import type { GeminiCLIExtension } from '@qwen-code/qwen-code-core';
-import type { ExtensionUpdateState } from './update.js';
+import {
+  ExtensionUpdateState,
+  type Extension,
+  type ExtensionManager,
+} from './extensionManager.js';
 
 const mockPlatform = vi.hoisted(() => vi.fn());
 const mockArch = vi.hoisted(() => vi.fn());
@@ -123,116 +126,108 @@ describe('git extension helpers', () => {
       revparse: vi.fn(),
     };
 
+    const mockExtensionManager = {
+      loadExtensionConfig: vi.fn(),
+    } as unknown as ExtensionManager;
+
     beforeEach(() => {
       vi.mocked(simpleGit).mockReturnValue(mockGit as unknown as SimpleGit);
     });
 
-    it('should return NOT_UPDATABLE for non-git extensions', async () => {
-      const extension: GeminiCLIExtension = {
+    function createExtension(overrides: Partial<Extension> = {}): Extension {
+      return {
+        id: 'test-id',
         name: 'test',
         path: '/ext',
         version: '1.0.0',
         isActive: true,
+        config: { name: 'test', version: '1.0.0' },
+        contextFiles: [],
+        ...overrides,
+      };
+    }
+
+    it('should return NOT_UPDATABLE for non-git extensions', async () => {
+      const extension = createExtension({
         installMetadata: {
           type: 'link',
           source: '',
         },
-      };
-      let result: ExtensionUpdateState | undefined = undefined;
-      await checkForExtensionUpdate(
+      });
+      const result = await checkForExtensionUpdate(
         extension,
-        (newState) => (result = newState),
+        mockExtensionManager,
       );
       expect(result).toBe(ExtensionUpdateState.NOT_UPDATABLE);
     });
 
     it('should return ERROR if no remotes found', async () => {
-      const extension: GeminiCLIExtension = {
-        name: 'test',
-        path: '/ext',
-        version: '1.0.0',
-        isActive: true,
+      const extension = createExtension({
         installMetadata: {
           type: 'git',
           source: '',
         },
-      };
+      });
       mockGit.getRemotes.mockResolvedValue([]);
-      let result: ExtensionUpdateState | undefined = undefined;
-      await checkForExtensionUpdate(
+      const result = await checkForExtensionUpdate(
         extension,
-        (newState) => (result = newState),
+        mockExtensionManager,
       );
       expect(result).toBe(ExtensionUpdateState.ERROR);
     });
 
     it('should return UPDATE_AVAILABLE when remote hash is different', async () => {
-      const extension: GeminiCLIExtension = {
-        name: 'test',
-        path: '/ext',
-        version: '1.0.0',
-        isActive: true,
+      const extension = createExtension({
         installMetadata: {
           type: 'git',
           source: 'my/ext',
         },
-      };
+      });
       mockGit.getRemotes.mockResolvedValue([
         { name: 'origin', refs: { fetch: 'http://my-repo.com' } },
       ]);
       mockGit.listRemote.mockResolvedValue('remote-hash\tHEAD');
       mockGit.revparse.mockResolvedValue('local-hash');
 
-      let result: ExtensionUpdateState | undefined = undefined;
-      await checkForExtensionUpdate(
+      const result = await checkForExtensionUpdate(
         extension,
-        (newState) => (result = newState),
+        mockExtensionManager,
       );
       expect(result).toBe(ExtensionUpdateState.UPDATE_AVAILABLE);
     });
 
     it('should return UP_TO_DATE when remote and local hashes are the same', async () => {
-      const extension: GeminiCLIExtension = {
-        name: 'test',
-        path: '/ext',
-        version: '1.0.0',
-        isActive: true,
+      const extension = createExtension({
         installMetadata: {
           type: 'git',
           source: 'my/ext',
         },
-      };
+      });
       mockGit.getRemotes.mockResolvedValue([
         { name: 'origin', refs: { fetch: 'http://my-repo.com' } },
       ]);
       mockGit.listRemote.mockResolvedValue('same-hash\tHEAD');
       mockGit.revparse.mockResolvedValue('same-hash');
 
-      let result: ExtensionUpdateState | undefined = undefined;
-      await checkForExtensionUpdate(
+      const result = await checkForExtensionUpdate(
         extension,
-        (newState) => (result = newState),
+        mockExtensionManager,
       );
       expect(result).toBe(ExtensionUpdateState.UP_TO_DATE);
     });
 
     it('should return ERROR on git error', async () => {
-      const extension: GeminiCLIExtension = {
-        name: 'test',
-        path: '/ext',
-        version: '1.0.0',
-        isActive: true,
+      const extension = createExtension({
         installMetadata: {
           type: 'git',
           source: 'my/ext',
         },
-      };
+      });
       mockGit.getRemotes.mockRejectedValue(new Error('git error'));
 
-      let result: ExtensionUpdateState | undefined = undefined;
-      await checkForExtensionUpdate(
+      const result = await checkForExtensionUpdate(
         extension,
-        (newState) => (result = newState),
+        mockExtensionManager,
       );
       expect(result).toBe(ExtensionUpdateState.ERROR);
     });

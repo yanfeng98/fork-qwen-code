@@ -27,14 +27,19 @@ vi.mock('os', async (importOriginal) => {
   };
 });
 
-vi.mock('@qwen-code/qwen-code-core', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@qwen-code/qwen-code-core')>();
-  return {
-    ...actual,
-    KeychainTokenStorage: vi.fn(),
-  };
-});
+vi.mock(
+  '../mcp/token-storage/keychain-token-storage.js',
+  async (importOriginal) => {
+    const actual =
+      await importOriginal<
+        typeof import('../mcp/token-storage/keychain-token-storage.js')
+      >();
+    return {
+      ...actual,
+      KeychainTokenStorage: vi.fn(),
+    };
+  },
+);
 
 describe('extensionSettings', () => {
   let tempHomeDir: string;
