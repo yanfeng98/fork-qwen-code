@@ -49,19 +49,17 @@ interface StructuredError {
 export class LoggingContentGenerator implements ContentGenerator {
   private openaiLogger?: OpenAILogger;
   private schemaCompliance?: 'auto' | 'openapi_30';
-  private readonly generatorConfig: ContentGeneratorConfig;
 
   constructor(
     private readonly wrapped: ContentGenerator,
     private readonly config: Config,
     generatorConfig: ContentGeneratorConfig,
   ) {
-    this.generatorConfig = generatorConfig;
-    if (this.generatorConfig.enableOpenAILogging) {
-      this.openaiLogger = new OpenAILogger(
-        this.generatorConfig.openAILoggingDir,
-      );
-      this.schemaCompliance = this.generatorConfig.schemaCompliance;
+    // Extract fields needed for initialization from passed config
+    // (config.getContentGeneratorConfig() may not be available yet during refreshAuth)
+    if (generatorConfig.enableOpenAILogging) {
+      this.openaiLogger = new OpenAILogger(generatorConfig.openAILoggingDir);
+      this.schemaCompliance = generatorConfig.schemaCompliance;
     }
   }
 
@@ -96,7 +94,7 @@ export class LoggingContentGenerator implements ContentGenerator {
         model,
         durationMs,
         prompt_id,
-        this.generatorConfig.authType,
+        this.config.getAuthType(),
         usageMetadata,
         responseText,
       ),
@@ -133,7 +131,7 @@ export class LoggingContentGenerator implements ContentGenerator {
         errorMessage,
         durationMs,
         prompt_id,
-        this.generatorConfig.authType,
+        this.config.getAuthType(),
         errorType,
         errorStatus,
       ),
