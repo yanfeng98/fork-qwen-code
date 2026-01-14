@@ -1334,5 +1334,3 @@ export async function parseInstallSource(
   }
   return installMetadata;
 }
-
-export { checkForExtensionUpdate };

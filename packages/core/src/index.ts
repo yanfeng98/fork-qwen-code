@@ -84,7 +84,7 @@ export * from './subagents/index.js';
 export * from './skills/index.js';
 
 // Export extension
-export * from './extension/extensionManager.js';
+export * from './extension/index.js';
 
 // Export prompt logic
 export * from './prompts/mcp-prompts.js';

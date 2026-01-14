@@ -11,7 +11,7 @@ import toml from '@iarna/toml';
 import { glob } from 'glob';
 import { z } from 'zod';
 import type { Config } from '@qwen-code/qwen-code-core';
-import { Storage } from '@qwen-code/qwen-code-core';
+import { EXTENSIONS_CONFIG_FILENAME, Storage } from '@qwen-code/qwen-code-core';
 import type { ICommandLoader } from './types.js';
 import {
   parseMarkdownCommand,
@@ -22,7 +22,6 @@ import {
   type CommandDefinition,
 } from './command-factory.js';
 import type { SlashCommand } from '../ui/commands/types.js';
-import { EXTENSIONS_CONFIG_FILENAME } from '../config/extensions/variables.js';
 
 interface CommandDirectory {
   path: string;
