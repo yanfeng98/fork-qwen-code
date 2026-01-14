@@ -21,7 +21,7 @@ This guide shows you how to create, use, and manage Agent Skills in **Qwen Code*
 qwen --experimental-skills
 
 # Short form
-qwen --skills
+qwen -x
 ```
 
 ### Via settings.json
