@@ -1,0 +1,36 @@
+{
+  "name": "@qwen-code/webui",
+  "version": "0.1.0",
+  "description": "Shared UI components for Qwen Code packages",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc && rollup -c",
+    "dev": "tsc --watch",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "typescript": "^5.0.0",
+    "@rollup/plugin-typescript": "^11.0.0",
+    "rollup": "^4.0.0",
+    "rollup-plugin-dts": "^6.0.0"
+  },
+  "keywords": [
+    "qwen",
+    "ui",
+    "components",
+    "shared"
+  ],
+  "author": "Qwen Team",
+  "license": "MIT"
+}

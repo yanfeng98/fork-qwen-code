@@ -152,6 +152,7 @@
     "vitest": "^3.2.4"
   },
   "dependencies": {
+    "@qwen-code/webui": "workspace:*",
     "semver": "^7.7.2",
     "@modelcontextprotocol/sdk": "^1.25.1",
     "cors": "^2.8.5",
