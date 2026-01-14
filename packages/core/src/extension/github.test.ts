@@ -231,6 +231,65 @@ describe('git extension helpers', () => {
       );
       expect(result).toBe(ExtensionUpdateState.ERROR);
     });
+
+    it('should return UPDATE_AVAILABLE for local extension with different version', async () => {
+      const extension = createExtension({
+        version: '1.0.0',
+        installMetadata: {
+          type: 'local',
+          source: '/path/to/source',
+        },
+      });
+
+      const mockManager = {
+        loadExtensionConfig: vi.fn().mockReturnValue({
+          name: 'test',
+          version: '2.0.0',
+        }),
+      } as unknown as ExtensionManager;
+
+      const result = await checkForExtensionUpdate(extension, mockManager);
+      expect(result).toBe(ExtensionUpdateState.UPDATE_AVAILABLE);
+    });
+
+    it('should return UP_TO_DATE for local extension with same version', async () => {
+      const extension = createExtension({
+        version: '1.0.0',
+        installMetadata: {
+          type: 'local',
+          source: '/path/to/source',
+        },
+      });
+
+      const mockManager = {
+        loadExtensionConfig: vi.fn().mockReturnValue({
+          name: 'test',
+          version: '1.0.0',
+        }),
+      } as unknown as ExtensionManager;
+
+      const result = await checkForExtensionUpdate(extension, mockManager);
+      expect(result).toBe(ExtensionUpdateState.UP_TO_DATE);
+    });
+
+    it('should return NOT_UPDATABLE for local extension when source cannot be loaded', async () => {
+      const extension = createExtension({
+        version: '1.0.0',
+        installMetadata: {
+          type: 'local',
+          source: '/path/to/source',
+        },
+      });
+
+      const mockManager = {
+        loadExtensionConfig: vi.fn().mockImplementation(() => {
+          throw new Error('Cannot load config');
+        }),
+      } as unknown as ExtensionManager;
+
+      const result = await checkForExtensionUpdate(extension, mockManager);
+      expect(result).toBe(ExtensionUpdateState.NOT_UPDATABLE);
+    });
   });
 
   describe('findReleaseAsset', () => {

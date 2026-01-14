@@ -51,7 +51,7 @@ export async function handleInstall(args: InstallArgs) {
     });
     await extensionManager.refreshCache();
 
-    const name = await extensionManager.installExtension(
+    const extension = await extensionManager.installExtension(
       {
         ...installMetadata,
         ref: args.ref,
@@ -60,7 +60,9 @@ export async function handleInstall(args: InstallArgs) {
       },
       requestConsent,
     );
-    console.log(`Extension "${name}" installed successfully and enabled.`);
+    console.log(
+      `Extension "${extension.name}" installed successfully and enabled.`,
+    );
   } catch (error) {
     console.error(getErrorMessage(error));
     process.exit(1);

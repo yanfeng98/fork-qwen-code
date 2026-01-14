@@ -17,6 +17,13 @@ import {
   ExtensionManager,
   SettingScope,
   type ExtensionManagerOptions,
+  validateName,
+  getExtensionId,
+  hashValue,
+  extensionConsentString,
+  maybeRequestConsentOrFail,
+  parseInstallSource,
+  type ExtensionConfig,
 } from './extensionManager.js';
 import type { MCPServerConfig, ExtensionInstallMetadata } from '../index.js';
 
@@ -598,6 +605,228 @@ describe('extension tests', () => {
       expect(serverConfig.env).toBeDefined();
       expect(serverConfig.env!['MISSING_VAR']).toBe('$UNDEFINED_ENV_VAR');
       expect(serverConfig.env!['MISSING_VAR_BRACES']).toBe('${ALSO_UNDEFINED}');
+    });
+  });
+});
+
+describe('extensionManager utility functions', () => {
+  describe('validateName', () => {
+    it('should accept valid extension names', () => {
+      expect(() => validateName('my-extension')).not.toThrow();
+      expect(() => validateName('Extension123')).not.toThrow();
+      expect(() => validateName('test-ext-1')).not.toThrow();
+      expect(() => validateName('UPPERCASE')).not.toThrow();
+    });
+
+    it('should reject names with invalid characters', () => {
+      expect(() => validateName('my_extension')).toThrow(
+        'Invalid extension name',
+      );
+      expect(() => validateName('my.extension')).toThrow(
+        'Invalid extension name',
+      );
+      expect(() => validateName('my extension')).toThrow(
+        'Invalid extension name',
+      );
+      expect(() => validateName('my@ext')).toThrow('Invalid extension name');
+    });
+
+    it('should reject empty names', () => {
+      expect(() => validateName('')).toThrow('Invalid extension name');
+    });
+  });
+
+  describe('hashValue', () => {
+    it('should generate consistent hash for same input', () => {
+      const hash1 = hashValue('test-input');
+      const hash2 = hashValue('test-input');
+      expect(hash1).toBe(hash2);
+    });
+
+    it('should generate different hashes for different inputs', () => {
+      const hash1 = hashValue('input-1');
+      const hash2 = hashValue('input-2');
+      expect(hash1).not.toBe(hash2);
+    });
+
+    it('should generate a valid SHA256 hash', () => {
+      const hash = hashValue('test');
+      expect(hash).toMatch(/^[a-f0-9]{64}$/);
+    });
+  });
+
+  describe('getExtensionId', () => {
+    it('should use hashed name when no install metadata', () => {
+      const config: ExtensionConfig = { name: 'test-ext', version: '1.0.0' };
+      const id = getExtensionId(config);
+      expect(id).toBe(hashValue('test-ext'));
+    });
+
+    it('should use hashed source for local install', () => {
+      const config: ExtensionConfig = { name: 'test-ext', version: '1.0.0' };
+      const metadata = { type: 'local' as const, source: '/path/to/ext' };
+      const id = getExtensionId(config, metadata);
+      expect(id).toBe(hashValue('/path/to/ext'));
+    });
+
+    it('should use GitHub URL for git install', () => {
+      const config: ExtensionConfig = { name: 'test-ext', version: '1.0.0' };
+      const metadata = {
+        type: 'git' as const,
+        source: 'https://github.com/owner/repo',
+      };
+      const id = getExtensionId(config, metadata);
+      expect(id).toBe(hashValue('https://github.com/owner/repo'));
+    });
+  });
+
+  describe('extensionConsentString', () => {
+    it('should generate basic consent string', () => {
+      const config: ExtensionConfig = { name: 'test-ext', version: '1.0.0' };
+      const consent = extensionConsentString(config);
+      expect(consent).toContain('Installing extension "test-ext"');
+      expect(consent).toContain('Extensions may introduce unexpected behavior');
+    });
+
+    it('should include MCP servers in consent string', () => {
+      const config: ExtensionConfig = {
+        name: 'test-ext',
+        version: '1.0.0',
+        mcpServers: {
+          'my-server': { command: 'node', args: ['server.js'] },
+        },
+      };
+      const consent = extensionConsentString(config);
+      expect(consent).toContain(
+        'This extension will run the following MCP servers',
+      );
+      expect(consent).toContain('my-server');
+    });
+
+    it('should include commands in consent string', () => {
+      const config: ExtensionConfig = { name: 'test-ext', version: '1.0.0' };
+      const consent = extensionConsentString(config, ['cmd1', 'cmd2']);
+      expect(consent).toContain(
+        'This extension will add the following commands',
+      );
+      expect(consent).toContain('cmd1, cmd2');
+    });
+
+    it('should include context file info', () => {
+      const config: ExtensionConfig = {
+        name: 'test-ext',
+        version: '1.0.0',
+        contextFileName: 'CONTEXT.md',
+      };
+      const consent = extensionConsentString(config);
+      expect(consent).toContain('CONTEXT.md');
+    });
+
+    it('should include excluded tools', () => {
+      const config: ExtensionConfig = {
+        name: 'test-ext',
+        version: '1.0.0',
+        excludeTools: ['tool1', 'tool2'],
+      };
+      const consent = extensionConsentString(config);
+      expect(consent).toContain('exclude the following core tools');
+    });
+  });
+
+  describe('maybeRequestConsentOrFail', () => {
+    it('should request consent for new installation', async () => {
+      const config: ExtensionConfig = { name: 'test-ext', version: '1.0.0' };
+      const requestConsent = vi.fn().mockResolvedValue(true);
+
+      await maybeRequestConsentOrFail(config, requestConsent, []);
+
+      expect(requestConsent).toHaveBeenCalledTimes(1);
+    });
+
+    it('should throw if user declines consent', async () => {
+      const config: ExtensionConfig = { name: 'test-ext', version: '1.0.0' };
+      const requestConsent = vi.fn().mockResolvedValue(false);
+
+      await expect(
+        maybeRequestConsentOrFail(config, requestConsent, []),
+      ).rejects.toThrow('Installation cancelled');
+    });
+
+    it('should skip consent if config unchanged during update', async () => {
+      const config: ExtensionConfig = { name: 'test-ext', version: '1.0.0' };
+      const previousConfig: ExtensionConfig = {
+        name: 'test-ext',
+        version: '0.9.0',
+      };
+      const requestConsent = vi.fn().mockResolvedValue(true);
+
+      await maybeRequestConsentOrFail(
+        config,
+        requestConsent,
+        [],
+        previousConfig,
+      );
+
+      expect(requestConsent).not.toHaveBeenCalled();
+    });
+
+    it('should request consent if config changed during update', async () => {
+      const config: ExtensionConfig = {
+        name: 'test-ext',
+        version: '1.0.0',
+        mcpServers: { server: { command: 'node' } },
+      };
+      const previousConfig: ExtensionConfig = {
+        name: 'test-ext',
+        version: '0.9.0',
+      };
+      const requestConsent = vi.fn().mockResolvedValue(true);
+
+      await maybeRequestConsentOrFail(
+        config,
+        requestConsent,
+        [],
+        previousConfig,
+      );
+
+      expect(requestConsent).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('parseInstallSource', () => {
+    it('should parse HTTPS URL as git type', async () => {
+      const result = await parseInstallSource('https://github.com/owner/repo');
+      expect(result.type).toBe('git');
+      expect(result.source).toBe('https://github.com/owner/repo');
+    });
+
+    it('should parse HTTP URL as git type', async () => {
+      const result = await parseInstallSource('http://example.com/repo');
+      expect(result.type).toBe('git');
+    });
+
+    it('should parse git@ URL as git type', async () => {
+      const result = await parseInstallSource('git@github.com:owner/repo.git');
+      expect(result.type).toBe('git');
+    });
+
+    it('should parse sso:// URL as git type', async () => {
+      const result = await parseInstallSource('sso://some/path');
+      expect(result.type).toBe('git');
+    });
+
+    it('should parse marketplace URL correctly', async () => {
+      const result = await parseInstallSource(
+        'https://example.com/marketplace:plugin-name',
+      );
+      expect(result.type).toBe('marketplace');
+      expect(result.marketplace?.pluginName).toBe('plugin-name');
+    });
+
+    it('should throw for non-existent local path', async () => {
+      await expect(
+        parseInstallSource('/nonexistent/path/to/extension'),
+      ).rejects.toThrow('Install source not found');
     });
   });
 });
