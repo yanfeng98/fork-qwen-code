@@ -245,14 +245,9 @@ export class SkillManager {
    */
   stopWatching(): void {
     for (const watcher of this.watchers.values()) {
-      try {
-        const closePromise = watcher.close();
-        void closePromise.catch((error) => {
-          console.warn('Failed to close skills watcher:', error);
-        });
-      } catch (error) {
+      void watcher.close().catch((error) => {
         console.warn('Failed to close skills watcher:', error);
-      }
+      });
     }
     this.watchers.clear();
     this.watchStarted = false;

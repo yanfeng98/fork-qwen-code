@@ -1441,12 +1441,7 @@ export class Config {
     return this.subagentManager;
   }
 
-  getSkillManager(): SkillManager {
-    if (!this.skillManager) {
-      throw new Error(
-        'Skills are disabled. Enable with --experimental-skills to use SkillManager.',
-      );
-    }
+  getSkillManager(): SkillManager | null {
     return this.skillManager;
   }
 
