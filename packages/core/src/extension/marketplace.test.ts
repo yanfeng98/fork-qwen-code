@@ -14,7 +14,7 @@ describe('Marketplace Installation', () => {
         'http://example.com/marketplace:my-plugin',
       );
       expect(result).toEqual({
-        marketplaceUrl: 'http://example.com/marketplace',
+        marketplaceSource: 'http://example.com/marketplace',
         pluginName: 'my-plugin',
       });
     });
@@ -24,7 +24,7 @@ describe('Marketplace Installation', () => {
         'https://github.com/example/marketplace:awesome-plugin',
       );
       expect(result).toEqual({
-        marketplaceUrl: 'https://github.com/example/marketplace',
+        marketplaceSource: 'https://github.com/example/marketplace',
         pluginName: 'awesome-plugin',
       });
     });
@@ -34,7 +34,7 @@ describe('Marketplace Installation', () => {
         'https://example.com:my-super-plugin',
       );
       expect(result).toEqual({
-        marketplaceUrl: 'https://example.com',
+        marketplaceSource: 'https://example.com',
         pluginName: 'my-super-plugin',
       });
     });
@@ -44,7 +44,7 @@ describe('Marketplace Installation', () => {
         'https://example.com:8080/marketplace:plugin',
       );
       expect(result).toEqual({
-        marketplaceUrl: 'https://example.com:8080/marketplace',
+        marketplaceSource: 'https://example.com:8080/marketplace',
         pluginName: 'plugin',
       });
     });
@@ -70,7 +70,7 @@ describe('Marketplace Installation', () => {
         'https://example.com:8080:my-plugin',
       );
       expect(result).toEqual({
-        marketplaceUrl: 'https://example.com:8080',
+        marketplaceSource: 'https://example.com:8080',
         pluginName: 'my-plugin',
       });
     });

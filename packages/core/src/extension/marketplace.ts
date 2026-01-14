@@ -13,7 +13,7 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { ExtensionConfig } from '../extension.js';
+import type { ExtensionConfig } from './extensionManager.js';
 import {
   convertClaudeToQwenConfig,
   mergeClaudeConfigs,
@@ -42,7 +42,7 @@ export interface MarketplaceInstallResult {
  * Format: marketplace-url:plugin-name
  */
 export function parseMarketplaceSource(source: string): {
-  marketplaceUrl: string;
+  marketplaceSource: string;
   pluginName: string;
 } | null {
   // Check if source contains a colon separator
@@ -52,13 +52,13 @@ export function parseMarketplaceSource(source: string): {
   }
 
   // Split at the last colon to separate URL from plugin name
-  const marketplaceUrl = source.substring(0, lastColonIndex);
+  const marketplaceSource = source.substring(0, lastColonIndex);
   const pluginName = source.substring(lastColonIndex + 1);
 
   // Validate that marketplace URL looks like a URL
   if (
-    !marketplaceUrl.startsWith('http://') &&
-    !marketplaceUrl.startsWith('https://')
+    !marketplaceSource.startsWith('http://') &&
+    !marketplaceSource.startsWith('https://')
   ) {
     return null;
   }
@@ -67,7 +67,7 @@ export function parseMarketplaceSource(source: string): {
     return null;
   }
 
-  return { marketplaceUrl, pluginName };
+  return { marketplaceSource, pluginName };
 }
 
 /**

@@ -11,14 +11,14 @@ import * as path from 'node:path';
 import {
   annotateActiveExtensions,
   loadExtension,
+  ExtensionManager,
 } from '../../config/extension.js';
-import { ExtensionStorage } from '../../config/extensions/storage.js';
 import { createExtension } from '../../test-utils/createExtension.js';
 import { useExtensionUpdates } from './useExtensionUpdates.js';
 import { QWEN_DIR, type GeminiCLIExtension } from '@qwen-code/qwen-code-core';
 import { renderHook, waitFor } from '@testing-library/react';
 import { MessageType } from '../types.js';
-import { ExtensionEnablementManager } from '../../config/extensions/extensionEnablement.js';
+
 import {
   checkForAllExtensionUpdates,
   updateExtension,
@@ -116,7 +116,7 @@ describe('useExtensionUpdates', () => {
     const extension = annotateActiveExtensions(
       [loadExtension({ extensionDir, workspaceDir: tempHomeDir })!],
       tempHomeDir,
-      new ExtensionEnablementManager(ExtensionStorage.getUserExtensionsDir()),
+      new ExtensionManager(),
     )[0];
 
     const addItem = vi.fn();
@@ -189,7 +189,7 @@ describe('useExtensionUpdates', () => {
         })!,
       ],
       tempHomeDir,
-      new ExtensionEnablementManager(ExtensionStorage.getUserExtensionsDir()),
+      new ExtensionManager(),
     );
 
     const addItem = vi.fn();

@@ -87,10 +87,12 @@ import { ConsolePatcher } from './utils/ConsolePatcher.js';
 import { registerCleanup, runExitCleanup } from '../utils/cleanup.js';
 import { useMessageQueue } from './hooks/useMessageQueue.js';
 import { useAutoAcceptIndicator } from './hooks/useAutoAcceptIndicator.js';
-import { useWorkspaceMigration } from './hooks/useWorkspaceMigration.js';
 import { useSessionStats } from './contexts/SessionContext.js';
 import { useGitBranchName } from './hooks/useGitBranchName.js';
-import { useExtensionUpdates } from './hooks/useExtensionUpdates.js';
+import {
+  useExtensionUpdates,
+  useConfirmUpdateRequests,
+} from './hooks/useExtensionUpdates.js';
 import { ShellFocusContext } from './contexts/ShellFocusContext.js';
 import { t } from '../i18n/index.js';
 import { useWelcomeBack } from './hooks/useWelcomeBack.js';
@@ -101,6 +103,7 @@ import { processVisionSwitchOutcome } from './hooks/useVisionAutoSwitch.js';
 import { useSubagentCreateDialog } from './hooks/useSubagentCreateDialog.js';
 import { useAgentsManagerDialog } from './hooks/useAgentsManagerDialog.js';
 import { useAttentionNotifications } from './hooks/useAttentionNotifications.js';
+import { requestConsentInteractive } from '../commands/extensions/consent.js';
 
 const CTRL_EXIT_PROMPT_DURATION_MS = 1000;
 
@@ -161,15 +164,21 @@ export const AppContainer = (props: AppContainerProps) => {
     config.isTrustedFolder(),
   );
 
-  const extensions = config.getExtensions();
+  const extensionManager = config.getExtensionManager();
+
+  extensionManager.setRequestConsent((description) =>
+    requestConsentInteractive(description, addConfirmUpdateExtensionRequest),
+  );
+
+  const { addConfirmUpdateExtensionRequest, confirmUpdateExtensionRequests } =
+    useConfirmUpdateRequests();
+
   const {
     extensionsUpdateState,
     extensionsUpdateStateInternal,
     dispatchExtensionStateUpdate,
-    confirmUpdateExtensionRequests,
-    addConfirmUpdateExtensionRequest,
   } = useExtensionUpdates(
-    extensions,
+    extensionManager,
     historyManager.addItem,
     config.getWorkingDir(),
   );
@@ -440,13 +449,6 @@ export const AppContainer = (props: AppContainerProps) => {
     remount: refreshStatic,
   });
 
-  const {
-    showWorkspaceMigrationDialog,
-    workspaceExtensions,
-    onWorkspaceMigrationDialogOpen,
-    onWorkspaceMigrationDialogClose,
-  } = useWorkspaceMigration(settings);
-
   const { toggleVimEnabled } = useVimMode();
 
   const {
@@ -582,11 +584,11 @@ export const AppContainer = (props: AppContainerProps) => {
           : [],
         config.getDebugMode(),
         config.getFileService(),
-        settings.merged,
         config.getExtensionContextFilePaths(),
         config.isTrustedFolder(),
         settings.merged.context?.importFormat || 'tree', // Use setting or default to 'tree'
         config.getFileFilteringOptions(),
+        config.getDiscoveryMaxDirs(),
       );
 
       config.setUserMemory(memoryContent);
@@ -1274,7 +1276,6 @@ export const AppContainer = (props: AppContainerProps) => {
 
   const dialogsVisible =
     showWelcomeBackDialog ||
-    showWorkspaceMigrationDialog ||
     shouldShowIdePrompt ||
     shouldShowCommandMigrationNudge ||
     isFolderTrustDialogOpen ||
@@ -1360,8 +1361,6 @@ export const AppContainer = (props: AppContainerProps) => {
       historyRemountKey,
       messageQueue,
       showAutoAcceptIndicator,
-      showWorkspaceMigrationDialog,
-      workspaceExtensions,
       currentModel,
       contextFileNames,
       errorCount,
@@ -1451,8 +1450,6 @@ export const AppContainer = (props: AppContainerProps) => {
       historyRemountKey,
       messageQueue,
       showAutoAcceptIndicator,
-      showWorkspaceMigrationDialog,
-      workspaceExtensions,
       contextFileNames,
       errorCount,
       availableTerminalHeight,
@@ -1513,8 +1510,6 @@ export const AppContainer = (props: AppContainerProps) => {
       refreshStatic,
       handleFinalSubmit,
       handleClearScreen,
-      onWorkspaceMigrationDialogOpen,
-      onWorkspaceMigrationDialogClose,
       // Vision switch dialog
       handleVisionSwitchSelect,
       // Welcome back dialog
@@ -1551,8 +1546,6 @@ export const AppContainer = (props: AppContainerProps) => {
       refreshStatic,
       handleFinalSubmit,
       handleClearScreen,
-      onWorkspaceMigrationDialogOpen,
-      onWorkspaceMigrationDialogClose,
       handleVisionSwitchSelect,
       handleWelcomeBackSelection,
       handleWelcomeBackClose,

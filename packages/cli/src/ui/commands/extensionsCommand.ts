@@ -4,13 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { requestConsentInteractive } from '../../config/extension.js';
-import {
-  updateAllUpdatableExtensions,
-  type ExtensionUpdateInfo,
-  updateExtension,
-  checkForAllExtensionUpdates,
-} from '../../config/extensions/update.js';
 import { getErrorMessage } from '../../utils/errors.js';
 import { ExtensionUpdateState } from '../state/extensions.js';
 import { MessageType } from '../types.js';
@@ -20,8 +13,34 @@ import {
   CommandKind,
 } from './types.js';
 import { t } from '../../i18n/index.js';
+import type { ExtensionUpdateInfo } from '@qwen-code/qwen-code-core';
+
+function showMessageIfNoExtensions(
+  context: CommandContext,
+  extensions: unknown[],
+): boolean {
+  if (extensions.length === 0) {
+    context.ui.addItem(
+      {
+        type: MessageType.INFO,
+        text: 'No extensions installed. Run `/extensions explore` to check out the gallery.',
+      },
+      Date.now(),
+    );
+    return true;
+  }
+  return false;
+}
 
 async function listAction(context: CommandContext) {
+  const extensions = context.services.config
+    ? context.services.config.getExtensions()
+    : [];
+
+  if (showMessageIfNoExtensions(context, extensions)) {
+    return;
+  }
+
   context.ui.addItem(
     {
       type: MessageType.EXTENSIONS_LIST,
@@ -34,7 +53,6 @@ async function updateAction(context: CommandContext, args: string) {
   const updateArgs = args.split(' ').filter((value) => value.length > 0);
   const all = updateArgs.length === 1 && updateArgs[0] === '--all';
   const names = all ? undefined : updateArgs;
-  let updateInfos: ExtensionUpdateInfo[] = [];
 
   if (!all && names?.length === 0) {
     context.ui.addItem(
@@ -47,29 +65,40 @@ async function updateAction(context: CommandContext, args: string) {
     return;
   }
 
+  let updateInfos: ExtensionUpdateInfo[] = [];
+
+  const extensionManager = context.services.config!.getExtensionManager();
+  const extensions = context.services.config
+    ? context.services.config.getExtensions()
+    : [];
+
+  if (showMessageIfNoExtensions(context, extensions)) {
+    return Promise.resolve();
+  }
+
   try {
-    await checkForAllExtensionUpdates(
-      context.services.config!.getExtensions(),
-      context.ui.dispatchExtensionStateUpdate,
+    context.ui.dispatchExtensionStateUpdate({ type: 'BATCH_CHECK_START' });
+    await extensionManager.checkForAllExtensionUpdates((extensionName, state) =>
+      context.ui.dispatchExtensionStateUpdate({
+        type: 'SET_STATE',
+        payload: { name: extensionName, state },
+      }),
     );
+    context.ui.dispatchExtensionStateUpdate({ type: 'BATCH_CHECK_END' });
+
     context.ui.setPendingItem({
       type: MessageType.EXTENSIONS_LIST,
     });
     if (all) {
-      updateInfos = await updateAllUpdatableExtensions(
-        context.services.config!.getWorkingDir(),
-        // We don't have the ability to prompt for consent yet in this flow.
-        (description) =>
-          requestConsentInteractive(
-            description,
-            context.ui.addConfirmUpdateExtensionRequest,
-          ),
-        context.services.config!.getExtensions(),
+      updateInfos = await extensionManager.updateAllUpdatableExtensions(
         context.ui.extensionsUpdateState,
-        context.ui.dispatchExtensionStateUpdate,
+        (extensionName, state) =>
+          context.ui.dispatchExtensionStateUpdate({
+            type: 'SET_STATE',
+            payload: { name: extensionName, state },
+          }),
       );
     } else if (names?.length) {
-      const workingDir = context.services.config!.getWorkingDir();
       const extensions = context.services.config!.getExtensions();
       for (const name of names) {
         const extension = extensions.find(
@@ -85,17 +114,15 @@ async function updateAction(context: CommandContext, args: string) {
           );
           continue;
         }
-        const updateInfo = await updateExtension(
+        const updateInfo = await extensionManager.updateExtension(
           extension,
-          workingDir,
-          (description) =>
-            requestConsentInteractive(
-              description,
-              context.ui.addConfirmUpdateExtensionRequest,
-            ),
           context.ui.extensionsUpdateState.get(extension.name)?.status ??
             ExtensionUpdateState.UNKNOWN,
-          context.ui.dispatchExtensionStateUpdate,
+          (extensionName, state) =>
+            context.ui.dispatchExtensionStateUpdate({
+              type: 'SET_STATE',
+              payload: { name: extensionName, state },
+            }),
         );
         if (updateInfo) updateInfos.push(updateInfo);
       }

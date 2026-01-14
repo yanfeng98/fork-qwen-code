@@ -5,19 +5,23 @@
  */
 
 import type { CommandModule } from 'yargs';
-import { loadUserExtensions, toOutputString } from '../../config/extension.js';
 import { getErrorMessage } from '../../utils/errors.js';
+import { getExtensionManager } from './utils.js';
 
 export async function handleList() {
   try {
-    const extensions = loadUserExtensions();
+    const extensionManager = await getExtensionManager();
+    const extensions = extensionManager.getLoadedExtensions();
+
     if (extensions.length === 0) {
       console.log('No extensions installed.');
       return;
     }
     console.log(
       extensions
-        .map((extension, _): string => toOutputString(extension, process.cwd()))
+        .map((extension, _): string =>
+          extensionManager.toOutputString(extension, process.cwd()),
+        )
         .join('\n\n'),
     );
   } catch (error) {

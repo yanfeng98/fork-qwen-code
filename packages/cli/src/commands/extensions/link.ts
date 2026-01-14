@@ -5,13 +5,10 @@
  */
 
 import type { CommandModule } from 'yargs';
-import {
-  installExtension,
-  requestConsentNonInteractive,
-} from '../../config/extension.js';
-import type { ExtensionInstallMetadata } from '@qwen-code/qwen-code-core';
-
+import { type ExtensionInstallMetadata } from '@qwen-code/qwen-code-core';
 import { getErrorMessage } from '../../utils/errors.js';
+import { requestConsentNonInteractive } from './consent.js';
+import { getExtensionManager } from './utils.js';
 
 interface InstallArgs {
   path: string;
@@ -23,12 +20,14 @@ export async function handleLink(args: InstallArgs) {
       source: args.path,
       type: 'link',
     };
-    const extensionName = await installExtension(
+    const extensionManager = await getExtensionManager();
+
+    const extension = await extensionManager.installExtension(
       installMetadata,
       requestConsentNonInteractive,
     );
     console.log(
-      `Extension "${extensionName}" linked successfully and enabled.`,
+      `Extension "${extension.name}" linked successfully and enabled.`,
     );
   } catch (error) {
     console.error(getErrorMessage(error));

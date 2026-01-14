@@ -17,7 +17,7 @@ export interface VariableSchema {
 
 export interface LoadExtensionContext {
   extensionDir: string;
-  workspaceDir: string;
+  workspaceDir?: string;
 }
 
 const PATH_SEPARATOR_DEFINITION = {
@@ -27,6 +27,10 @@ const PATH_SEPARATOR_DEFINITION = {
 
 export const VARIABLE_SCHEMA = {
   extensionPath: {
+    type: 'string',
+    description: 'The path of the extension in the filesystem.',
+  },
+  CLAUDE_PLUGIN_ROOT: {
     type: 'string',
     description: 'The path of the extension in the filesystem.',
   },

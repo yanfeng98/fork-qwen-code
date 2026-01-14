@@ -89,9 +89,6 @@ export interface UIState {
   historyRemountKey: number;
   messageQueue: string[];
   showAutoAcceptIndicator: ApprovalMode;
-  showWorkspaceMigrationDialog: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  workspaceExtensions: any[]; // Extension[]
   // Quota-related state
   currentModel: string;
   contextFileNames: string[];

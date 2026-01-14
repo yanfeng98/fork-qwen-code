@@ -1,5 +1,4 @@
 import type { ConfirmationRequest } from '../../ui/types.js';
-import type { ExtensionConfig } from '../extension.js';
 
 /**
  * Requests consent from the user to perform an action, by reading a Y/n
@@ -10,7 +9,10 @@ import type { ExtensionConfig } from '../extension.js';
  * @param consentDescription The description of the thing they will be consenting to.
  * @returns boolean, whether they consented or not.
  */
-export async function requestConsentNonInteractive(): Promise<boolean> {
+export async function requestConsentNonInteractive(
+  consentDescription: string,
+): Promise<boolean> {
+  console.info(consentDescription);
   const result = await promptForConsentNonInteractive(
     'Do you want to continue? [Y/n]: ',
   );
@@ -82,76 +84,4 @@ async function promptForConsentInteractive(
       },
     });
   });
-}
-
-/**
- * Builds a consent string for installing an extension based on it's
- * extensionConfig.
- */
-export function extensionConsentString(
-  extensionConfig: ExtensionConfig,
-  commands?: string[],
-): string {
-  const output: string[] = [];
-  const mcpServerEntries = Object.entries(extensionConfig.mcpServers || {});
-  output.push(`Installing extension "${extensionConfig.name}".`);
-  output.push(
-    '**Extensions may introduce unexpected behavior. Ensure you have investigated the extension source and trust the author.**',
-  );
-
-  if (mcpServerEntries.length) {
-    output.push('This extension will run the following MCP servers:');
-    for (const [key, mcpServer] of mcpServerEntries) {
-      const isLocal = !!mcpServer.command;
-      const source =
-        mcpServer.httpUrl ??
-        `${mcpServer.command || ''}${mcpServer.args ? ' ' + mcpServer.args.join(' ') : ''}`;
-      output.push(`  * ${key} (${isLocal ? 'local' : 'remote'}): ${source}`);
-    }
-  }
-  if (commands && commands.length > 0) {
-    output.push(
-      `This extension will add the following commands: ${commands.join(', ')}.`,
-    );
-  }
-  if (extensionConfig.contextFileName) {
-    output.push(
-      `This extension will append info to your QWEN.md context using ${extensionConfig.contextFileName}`,
-    );
-  }
-  if (extensionConfig.excludeTools) {
-    output.push(
-      `This extension will exclude the following core tools: ${extensionConfig.excludeTools}`,
-    );
-  }
-  return output.join('\n');
-}
-
-/**
- * Requests consent from the user to install an extension (extensionConfig), if
- * there is any difference between the consent string for `extensionConfig` and
- * `previousExtensionConfig`.
- *
- * Always requests consent if previousExtensionConfig is null.
- *
- * Throws if the user does not consent.
- */
-export async function maybeRequestConsentOrFail(
-  extensionConfig: ExtensionConfig,
-  requestConsent: (consent: string) => Promise<boolean>,
-  commands: string[],
-  previousExtensionConfig?: ExtensionConfig,
-) {
-  const extensionConsent = extensionConsentString(extensionConfig, commands);
-  if (previousExtensionConfig) {
-    const previousExtensionConsent = extensionConsentString(
-      previousExtensionConfig,
-    );
-    if (previousExtensionConsent === extensionConsent) {
-      return;
-    }
-  }
-  if (!(await requestConsent(extensionConsent))) {
-    throw new Error(`Installation cancelled for "${extensionConfig.name}".`);
-  }
 }

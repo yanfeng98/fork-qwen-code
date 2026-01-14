@@ -10,12 +10,12 @@ import {
   ExtensionSettingScope,
   getScopedEnvContents,
 } from './extensionSettings.js';
-import type { ExtensionConfig } from '../extension.js';
+import type { ExtensionConfig } from './extensionManager.js';
 import { ExtensionStorage } from './storage.js';
 import prompts from 'prompts';
 import * as fsPromises from 'node:fs/promises';
 import * as fs from 'node:fs';
-import { KeychainTokenStorage } from '@qwen-code/qwen-code-core';
+import { KeychainTokenStorage } from '../mcp/token-storage/keychain-token-storage.js';
 import { EXTENSION_SETTINGS_FILENAME } from './variables.js';
 
 vi.mock('prompts');

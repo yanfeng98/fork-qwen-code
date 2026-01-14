@@ -11,7 +11,7 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { ExtensionSetting } from '../extension.js';
+import type { ExtensionSetting } from './extensionManager.js';
 
 /**
  * Parse .env file content into key-value pairs.

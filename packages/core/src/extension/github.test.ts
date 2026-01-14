@@ -13,7 +13,6 @@ import {
   parseGitHubRepoForReleases,
 } from './github.js';
 import { simpleGit, type SimpleGit } from 'simple-git';
-import { ExtensionUpdateState } from '../../ui/state/extensions.js';
 import * as os from 'node:os';
 import * as fs from 'node:fs/promises';
 import * as fsSync from 'node:fs';
@@ -21,6 +20,7 @@ import * as path from 'node:path';
 import * as tar from 'tar';
 import * as archiver from 'archiver';
 import type { GeminiCLIExtension } from '@qwen-code/qwen-code-core';
+import type { ExtensionUpdateState } from './update.js';
 
 const mockPlatform = vi.hoisted(() => vi.fn());
 const mockArch = vi.hoisted(() => vi.fn());

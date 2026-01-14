@@ -41,6 +41,7 @@ import type {
   SkillLaunchEvent,
   RipgrepFallbackEvent,
   EndSessionEvent,
+  ExtensionUpdateEvent,
 } from '../types.js';
 import type {
   RumEvent,
@@ -734,6 +735,22 @@ export class QwenLogger {
         },
       },
     );
+
+    this.enqueueLogEvent(rumEvent);
+    this.flushIfNeeded();
+  }
+
+  logExtensionUpdateEvent(event: ExtensionUpdateEvent): void {
+    const rumEvent = this.createActionEvent('extension', 'extension_update', {
+      properties: {
+        extension_name: event.extension_name,
+        status: event.status,
+        extension_id: event.extension_id,
+        extension_previous_version: event.extension_previous_version,
+        extension_version: event.extension_version,
+        extension_source: event.extension_source,
+      },
+    });
 
     this.enqueueLogEvent(rumEvent);
     this.flushIfNeeded();

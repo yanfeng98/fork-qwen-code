@@ -345,7 +345,7 @@ export class SubagentManager {
     // Normal mode: load from project, user, and builtin levels
     const levelsToCheck: SubagentLevel[] = options.level
       ? [options.level]
-      : ['project', 'user', 'builtin'];
+      : ['project', 'user', 'builtin', 'extension'];
 
     // Check if we should use cache or force refresh
     const shouldUseCache = !options.force && this.subagentsCache !== null;
@@ -443,7 +443,7 @@ export class SubagentManager {
   private async refreshCache(): Promise<void> {
     const subagentsCache = new Map();
 
-    const levels: SubagentLevel[] = ['project', 'user', 'builtin'];
+    const levels: SubagentLevel[] = ['project', 'user', 'builtin', 'extension'];
 
     for (const level of levels) {
       const levelSubagents = await this.listSubagentsAtLevel(level);
@@ -832,6 +832,14 @@ export class SubagentManager {
     let baseDir = level === 'project' ? projectRoot : homeDir;
     baseDir = path.join(baseDir, QWEN_CONFIG_DIR, AGENT_CONFIG_DIR);
 
+    const subagents = await this.loadSubagentFromDir(baseDir, level);
+    return subagents;
+  }
+
+  async loadSubagentFromDir(
+    baseDir: string,
+    level: SubagentLevel,
+  ): Promise<SubagentConfig[]> {
     try {
       const files = await fs.readdir(baseDir);
       const subagents: SubagentConfig[] = [];

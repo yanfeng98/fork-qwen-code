@@ -11,9 +11,9 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { glob } from 'glob';
-import type { ExtensionConfig, ExtensionSetting } from '../extension.js';
-import { ExtensionStorage } from '../extensions/storage.js';
-import { convertTomlToMarkdown } from '../../services/toml-to-markdown-converter.js';
+import type { ExtensionConfig, ExtensionSetting } from './extensionManager.js';
+import { ExtensionStorage } from './storage.js';
+import { convertTomlToMarkdown } from '../utils/toml-to-markdown-converter.js';
 
 export interface GeminiExtensionConfig {
   name: string;

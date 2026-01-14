@@ -5,8 +5,11 @@
  */
 
 import type { CommandModule } from 'yargs';
-import { uninstallExtension } from '../../config/extension.js';
 import { getErrorMessage } from '../../utils/errors.js';
+import { ExtensionManager } from '@qwen-code/qwen-code-core';
+import { requestConsentNonInteractive } from './consent.js';
+import { isWorkspaceTrusted } from '../../config/trustedFolders.js';
+import { loadSettings } from '../../config/settings.js';
 
 interface UninstallArgs {
   name: string; // can be extension name or source URL.
@@ -14,7 +17,16 @@ interface UninstallArgs {
 
 export async function handleUninstall(args: UninstallArgs) {
   try {
-    await uninstallExtension(args.name);
+    const workspaceDir = process.cwd();
+    const extensionManager = new ExtensionManager({
+      workspaceDir,
+      requestConsent: requestConsentNonInteractive,
+      isWorkspaceTrusted: !!isWorkspaceTrusted(
+        loadSettings(workspaceDir).merged,
+      ),
+    });
+    await extensionManager.refreshCache();
+    await extensionManager.uninstallExtension(args.name, false);
     console.log(`Extension "${args.name}" successfully uninstalled.`);
   } catch (error) {
     console.error(getErrorMessage(error));

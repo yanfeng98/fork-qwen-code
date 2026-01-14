@@ -6,20 +6,22 @@
 
 import { type CommandModule } from 'yargs';
 import { FatalConfigError, getErrorMessage } from '@qwen-code/qwen-code-core';
-import { enableExtension } from '../../config/extension.js';
 import { SettingScope } from '../../config/settings.js';
+import { getExtensionManager } from './utils.js';
 
 interface EnableArgs {
   name: string;
   scope?: string;
 }
 
-export function handleEnable(args: EnableArgs) {
+export async function handleEnable(args: EnableArgs) {
+  const extensionManager = await getExtensionManager();
+
   try {
     if (args.scope?.toLowerCase() === 'workspace') {
-      enableExtension(args.name, SettingScope.Workspace);
+      extensionManager.enableExtension(args.name, SettingScope.Workspace);
     } else {
-      enableExtension(args.name, SettingScope.User);
+      extensionManager.enableExtension(args.name, SettingScope.User);
     }
     if (args.scope) {
       console.log(
@@ -66,8 +68,8 @@ export const enableCommand: CommandModule = {
         }
         return true;
       }),
-  handler: (argv) => {
-    handleEnable({
+  handler: async (argv) => {
+    await handleEnable({
       name: argv['name'] as string,
       scope: argv['scope'] as string,
     });

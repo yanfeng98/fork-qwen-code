@@ -80,6 +80,10 @@ import {
   type TelemetryTarget,
   uiTelemetryService,
 } from '../telemetry/index.js';
+import {
+  ExtensionManager,
+  type Extension,
+} from '../extension/extensionManager.js';
 
 // Utils
 import { shouldAttemptBrowserLaunch } from '../utils/browser.js';
@@ -102,6 +106,7 @@ import {
   type ResumedSessionData,
 } from '../services/sessionService.js';
 import { randomUUID } from 'node:crypto';
+import { loadServerHierarchicalMemory } from '../utils/memoryDiscovery.js';
 
 // Re-export types
 export type { AnyToolInvocation, FileFilteringOptions, MCPOAuthConfig };
@@ -192,20 +197,17 @@ export interface GitCoAuthorSettings {
   email?: string;
 }
 
-export interface GeminiCLIExtension {
-  name: string;
-  version: string;
-  isActive: boolean;
-  path: string;
-  installMetadata?: ExtensionInstallMetadata;
-}
-
 export interface ExtensionInstallMetadata {
   source: string;
   type: 'git' | 'local' | 'link' | 'github-release' | 'marketplace';
   releaseTag?: string; // Only present for github-release installs.
   ref?: string;
   autoUpdate?: boolean;
+  allowPreRelease?: boolean;
+  marketplace?: {
+    marketplaceSource: string;
+    pluginName: string;
+  };
 }
 
 export const DEFAULT_TRUNCATE_TOOL_OUTPUT_THRESHOLD = 25_000;
@@ -303,14 +305,15 @@ export interface ConfigParameters {
   includeDirectories?: string[];
   bugCommand?: BugCommandSettings;
   model?: string;
-  extensionContextFilePaths?: string[];
+  outputLanguageFilePath?: string;
   maxSessionTurns?: number;
   sessionTokenLimit?: number;
   experimentalSkills?: boolean;
   experimentalZedIntegration?: boolean;
   listExtensions?: boolean;
-  extensions?: GeminiCLIExtension[];
-  blockedMcpServers?: Array<{ name: string; extensionName: string }>;
+  overrideExtensions?: string[];
+  allowedMcpServers?: string[];
+  excludedMcpServers?: string[];
   noBrowser?: boolean;
   summarizeToolOutput?: Record<string, SummarizeToolOutputSettings>;
   folderTrustFeature?: boolean;
@@ -320,6 +323,8 @@ export interface ConfigParameters {
   generationConfig?: Partial<ContentGeneratorConfig>;
   cliVersion?: string;
   loadMemoryFromIncludeDirectories?: boolean;
+  importFormat?: 'tree' | 'flat';
+  discoveryMaxDirs?: number;
   chatRecording?: boolean;
   // Web search providers
   webSearch?: {
@@ -338,7 +343,6 @@ export interface ConfigParameters {
   shouldUseNodePtyShell?: boolean;
   skipNextSpeakerCheck?: boolean;
   shellExecutionConfig?: ShellExecutionConfig;
-  extensionManagement?: boolean;
   skipLoopDetection?: boolean;
   vlmSwitchMode?: string;
   truncateToolOutputThreshold?: number;
@@ -391,6 +395,7 @@ export class Config {
   private toolRegistry!: ToolRegistry;
   private promptRegistry!: PromptRegistry;
   private subagentManager!: SubagentManager;
+  private extensionManager!: ExtensionManager;
   private skillManager!: SkillManager;
   private fileSystemService: FileSystemService;
   private contentGeneratorConfig!: ContentGeneratorConfig;
@@ -413,6 +418,8 @@ export class Config {
   private readonly toolCallCommand: string | undefined;
   private readonly mcpServerCommand: string | undefined;
   private mcpServers: Record<string, MCPServerConfig> | undefined;
+  private readonly allowedMcpServers?: string[];
+  private readonly excludedMcpServers?: string[];
   private sessionSubagents: SubagentConfig[];
   private userMemory: string;
   private sdkMode: boolean;
@@ -435,11 +442,12 @@ export class Config {
   private gitService: GitService | undefined = undefined;
   private sessionService: SessionService | undefined = undefined;
   private chatRecordingService: ChatRecordingService | undefined = undefined;
+  private extensionContextFilePaths: string[] = [];
   private readonly checkpointing: boolean;
   private readonly proxy: string | undefined;
   private readonly cwd: string;
   private readonly bugCommand: BugCommandSettings | undefined;
-  private readonly extensionContextFilePaths: string[];
+  private readonly outputLanguageFilePath?: string;
   private readonly noBrowser: boolean;
   private readonly folderTrustFeature: boolean;
   private readonly folderTrust: boolean;
@@ -449,11 +457,8 @@ export class Config {
   private readonly maxSessionTurns: number;
   private readonly sessionTokenLimit: number;
   private readonly listExtensions: boolean;
-  private readonly _extensions: GeminiCLIExtension[];
-  private readonly _blockedMcpServers: Array<{
-    name: string;
-    extensionName: string;
-  }>;
+  private readonly overrideExtensions?: string[];
+
   fallbackModelHandler?: FallbackModelHandler;
   private quotaErrorOccurred: boolean = false;
   private readonly summarizeToolOutput:
@@ -464,6 +469,8 @@ export class Config {
   private readonly experimentalSkills: boolean = false;
   private readonly chatRecordingEnabled: boolean;
   private readonly loadMemoryFromIncludeDirectories: boolean = false;
+  private readonly importFormat: 'tree' | 'flat';
+  private readonly discoveryMaxDirs: number;
   private readonly webSearch?: {
     provider: Array<{
       type: 'tavily' | 'google' | 'dashscope';
@@ -480,7 +487,6 @@ export class Config {
   private readonly shouldUseNodePtyShell: boolean;
   private readonly skipNextSpeakerCheck: boolean;
   private shellExecutionConfig: ShellExecutionConfig;
-  private readonly extensionManagement: boolean = true;
   private readonly skipLoopDetection: boolean;
   private readonly skipStartupContext: boolean;
   private readonly vlmSwitchMode: string | undefined;
@@ -521,6 +527,8 @@ export class Config {
     this.toolCallCommand = params.toolCallCommand;
     this.mcpServerCommand = params.mcpServerCommand;
     this.mcpServers = params.mcpServers;
+    this.allowedMcpServers = params.allowedMcpServers;
+    this.excludedMcpServers = params.excludedMcpServers;
     this.sessionSubagents = params.sessionSubagents ?? [];
     this.sdkMode = params.sdkMode ?? false;
     this.userMemory = params.userMemory ?? '';
@@ -543,6 +551,7 @@ export class Config {
       email: 'qwen-coder@alibabacloud.com',
     };
     this.usageStatisticsEnabled = params.usageStatisticsEnabled ?? true;
+    this.outputLanguageFilePath = params.outputLanguageFilePath;
 
     this.fileFiltering = {
       respectGitIgnore: params.fileFiltering?.respectGitIgnore ?? true,
@@ -556,15 +565,13 @@ export class Config {
     this.cwd = params.cwd ?? process.cwd();
     this.fileDiscoveryService = params.fileDiscoveryService ?? null;
     this.bugCommand = params.bugCommand;
-    this.extensionContextFilePaths = params.extensionContextFilePaths ?? [];
     this.maxSessionTurns = params.maxSessionTurns ?? -1;
     this.sessionTokenLimit = params.sessionTokenLimit ?? -1;
     this.experimentalZedIntegration =
       params.experimentalZedIntegration ?? false;
     this.experimentalSkills = params.experimentalSkills ?? false;
     this.listExtensions = params.listExtensions ?? false;
-    this._extensions = params.extensions ?? [];
-    this._blockedMcpServers = params.blockedMcpServers ?? [];
+    this.overrideExtensions = params.overrideExtensions;
     this.noBrowser = params.noBrowser ?? false;
     this.summarizeToolOutput = params.summarizeToolOutput;
     this.folderTrustFeature = params.folderTrustFeature ?? false;
@@ -583,6 +590,8 @@ export class Config {
 
     this.loadMemoryFromIncludeDirectories =
       params.loadMemoryFromIncludeDirectories ?? false;
+    this.importFormat = params.importFormat ?? 'tree';
+    this.discoveryMaxDirs = params.discoveryMaxDirs ?? 200;
     this.chatCompression = params.chatCompression;
     this.interactive = params.interactive ?? false;
     this.trustedFolder = params.trustedFolder;
@@ -608,7 +617,6 @@ export class Config {
       params.truncateToolOutputLines ?? DEFAULT_TRUNCATE_TOOL_OUTPUT_LINES;
     this.enableToolOutputTruncation = params.enableToolOutputTruncation ?? true;
     this.useSmartEdit = params.useSmartEdit ?? false;
-    this.extensionManagement = params.extensionManagement ?? true;
     this.channel = params.channel;
     this.storage = new Storage(this.targetDir);
     this.vlmSwitchMode = params.vlmSwitchMode;
@@ -656,6 +664,23 @@ export class Config {
       this.subagentManager.loadSessionSubagents(this.sessionSubagents);
     }
 
+    this.extensionManager = new ExtensionManager({
+      workspaceDir: this.targetDir,
+      enabledExtensionOverrides: this.overrideExtensions,
+      config: this,
+      isWorkspaceTrusted: this.isTrustedFolder(),
+    });
+
+    await this.extensionManager.refreshCache();
+    const activeExtensions = await this.extensionManager
+      .getLoadedExtensions()
+      .filter((e) => e.isActive);
+    this.extensionContextFilePaths = activeExtensions.flatMap(
+      (e) => e.contextFiles,
+    );
+
+    await this.refreshHierarchicalMemory();
+
     this.toolRegistry = await this.createToolRegistry(
       options?.sendSdkMcpMessage,
     );
@@ -663,6 +688,24 @@ export class Config {
     await this.geminiClient.initialize();
 
     logStartSession(this, new StartSessionEvent(this));
+  }
+
+  async refreshHierarchicalMemory(): Promise<void> {
+    const { memoryContent, fileCount } = await loadServerHierarchicalMemory(
+      this.getWorkingDir(),
+      this.shouldLoadMemoryFromIncludeDirectories()
+        ? this.getWorkspaceContext().getDirectories()
+        : [],
+      this.getDebugMode(),
+      this.getFileService(),
+      this.getExtensionContextFilePaths(),
+      this.getFolderTrust(),
+      this.getImportFormat(),
+      this.getFileFilteringOptions(),
+      this.getDiscoveryMaxDirs(),
+    );
+    this.setUserMemory(memoryContent);
+    this.setGeminiMdFileCount(fileCount);
   }
 
   getContentGenerator(): ContentGenerator {
@@ -761,6 +804,14 @@ export class Config {
 
   shouldLoadMemoryFromIncludeDirectories(): boolean {
     return this.loadMemoryFromIncludeDirectories;
+  }
+
+  getImportFormat(): 'tree' | 'flat' {
+    return this.importFormat;
+  }
+
+  getDiscoveryMaxDirs(): number {
+    return this.discoveryMaxDirs;
   }
 
   getContentGeneratorConfig(): ContentGeneratorConfig {
@@ -870,7 +921,14 @@ export class Config {
   }
 
   getExcludeTools(): string[] | undefined {
-    return this.excludeTools;
+    const allExcludeTools = new Set(this.excludeTools || []);
+    const extensions = this.getActiveExtensions();
+    for (const extension of extensions) {
+      for (const tool of extension.config.excludeTools || []) {
+        allExcludeTools.add(tool);
+      }
+    }
+    return [...allExcludeTools];
   }
 
   getToolDiscoveryCommand(): string | undefined {
@@ -886,7 +944,37 @@ export class Config {
   }
 
   getMcpServers(): Record<string, MCPServerConfig> | undefined {
-    return this.mcpServers;
+    let mcpServers = { ...(this.mcpServers || {}) };
+    const extensions = this.getActiveExtensions();
+    for (const extension of extensions) {
+      Object.entries(extension.config.mcpServers || {}).forEach(
+        ([key, server]) => {
+          if (mcpServers[key]) return;
+          mcpServers[key] = {
+            ...server,
+            extensionName: extension.config.name,
+          };
+        },
+      );
+    }
+
+    if (this.allowedMcpServers) {
+      mcpServers = Object.fromEntries(
+        Object.entries(mcpServers).filter(([key]) =>
+          this.allowedMcpServers?.includes(key),
+        ),
+      );
+    }
+
+    if (this.excludedMcpServers) {
+      mcpServers = Object.fromEntries(
+        Object.entries(mcpServers).filter(
+          ([key]) => !this.excludedMcpServers?.includes(key),
+        ),
+      );
+    }
+
+    return mcpServers;
   }
 
   addMcpServers(servers: Record<string, MCPServerConfig>): void {
@@ -1065,7 +1153,10 @@ export class Config {
   }
 
   getExtensionContextFilePaths(): string[] {
-    return this.extensionContextFilePaths;
+    return [
+      ...this.extensionContextFilePaths,
+      ...(this.outputLanguageFilePath ? [this.outputLanguageFilePath] : []),
+    ];
   }
 
   getExperimentalZedIntegration(): boolean {
@@ -1080,16 +1171,54 @@ export class Config {
     return this.listExtensions;
   }
 
-  getExtensionManagement(): boolean {
-    return this.extensionManagement;
+  getExtensionManager(): ExtensionManager {
+    return this.extensionManager;
   }
 
-  getExtensions(): GeminiCLIExtension[] {
-    return this._extensions;
+  getExtensions(): Extension[] {
+    const extensions = this.extensionManager.getLoadedExtensions();
+    if (this.overrideExtensions) {
+      return extensions.filter((e) =>
+        this.overrideExtensions?.includes(e.name),
+      );
+    } else {
+      return extensions;
+    }
+  }
+
+  getActiveExtensions(): Extension[] {
+    return this.getExtensions().filter((e) => e.isActive);
   }
 
   getBlockedMcpServers(): Array<{ name: string; extensionName: string }> {
-    return this._blockedMcpServers;
+    const mcpServers = { ...(this.mcpServers || {}) };
+    const extensions = this.getActiveExtensions();
+    for (const extension of extensions) {
+      Object.entries(extension.config.mcpServers || {}).forEach(
+        ([key, server]) => {
+          if (mcpServers[key]) return;
+          mcpServers[key] = {
+            ...server,
+            extensionName: extension.config.name,
+          };
+        },
+      );
+    }
+    const blockedMcpServers: Array<{ name: string; extensionName: string }> =
+      [];
+
+    if (this.allowedMcpServers) {
+      Object.entries(mcpServers).forEach(([key, server]) => {
+        const isAllowed = this.allowedMcpServers?.includes(key);
+        if (!isAllowed) {
+          blockedMcpServers.push({
+            name: key,
+            extensionName: server.extensionName || '',
+          });
+        }
+      });
+    }
+    return blockedMcpServers;
   }
 
   getNoBrowser(): boolean {

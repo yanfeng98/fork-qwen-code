@@ -9,10 +9,10 @@ import * as fsSync from 'node:fs';
 import * as dotenv from 'dotenv';
 import * as path from 'node:path';
 import { ExtensionStorage } from './storage.js';
-import type { ExtensionConfig } from '../extension.js';
+import type { ExtensionConfig } from './extensionManager.js';
 import prompts from 'prompts';
 import { EXTENSION_SETTINGS_FILENAME } from './variables.js';
-import { KeychainTokenStorage } from '@qwen-code/qwen-code-core';
+import { KeychainTokenStorage } from '../mcp/token-storage/keychain-token-storage.js';
 
 export enum ExtensionSettingScope {
   USER = 'user',

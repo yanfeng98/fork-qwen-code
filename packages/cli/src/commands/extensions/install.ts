@@ -5,70 +5,60 @@
  */
 
 import type { CommandModule } from 'yargs';
+
 import {
-  installExtension,
-  requestConsentNonInteractive,
-} from '../../config/extension.js';
-import type { ExtensionInstallMetadata } from '@qwen-code/qwen-code-core';
+  ExtensionManager,
+  parseInstallSource,
+} from '@qwen-code/qwen-code-core';
 import { getErrorMessage } from '../../utils/errors.js';
-import { stat } from 'node:fs/promises';
-import { parseMarketplaceSource } from '../../config/extensions/marketplace.js';
+import { isWorkspaceTrusted } from '../../config/trustedFolders.js';
+import { loadSettings } from '../../config/settings.js';
+import { requestConsentNonInteractive } from './consent.js';
 
 interface InstallArgs {
   source: string;
   ref?: string;
   autoUpdate?: boolean;
+  allowPreRelease?: boolean;
+  consent?: boolean;
 }
 
 export async function handleInstall(args: InstallArgs) {
   try {
-    let installMetadata: ExtensionInstallMetadata;
-    const { source } = args;
+    const installMetadata = await parseInstallSource(args.source);
 
-    // Check if it's a marketplace source (format: marketplace-url:plugin-name)
-    const marketplaceParsed = parseMarketplaceSource(source);
-    if (marketplaceParsed) {
+    if (
+      installMetadata.type !== 'git' &&
+      installMetadata.type !== 'github-release'
+    ) {
       if (args.ref || args.autoUpdate) {
         throw new Error(
           '--ref and --auto-update are not applicable for marketplace extensions.',
         );
       }
-      installMetadata = {
-        source,
-        type: 'marketplace',
-      };
-    } else if (
-      source.startsWith('http://') ||
-      source.startsWith('https://') ||
-      source.startsWith('git@') ||
-      source.startsWith('sso://')
-    ) {
-      installMetadata = {
-        source,
-        type: 'git',
-        ref: args.ref,
-        autoUpdate: args.autoUpdate,
-      };
-    } else {
-      if (args.ref || args.autoUpdate) {
-        throw new Error(
-          '--ref and --auto-update are not applicable for local extensions.',
-        );
-      }
-      try {
-        await stat(source);
-        installMetadata = {
-          source,
-          type: 'local',
-        };
-      } catch {
-        throw new Error('Install source not found.');
-      }
     }
 
-    const name = await installExtension(
-      installMetadata,
-      requestConsentNonInteractive,
+    const requestConsent = args.consent
+      ? () => Promise.resolve(true)
+      : requestConsentNonInteractive;
+    const workspaceDir = process.cwd();
+    const extensionManager = new ExtensionManager({
+      workspaceDir,
+      isWorkspaceTrusted: !!isWorkspaceTrusted(
+        loadSettings(workspaceDir).merged,
+      ),
+      requestConsent,
+    });
+    await extensionManager.refreshCache();
+
+    const name = await extensionManager.installExtension(
+      {
+        ...installMetadata,
+        ref: args.ref,
+        autoUpdate: args.autoUpdate,
+        allowPreRelease: args.allowPreRelease,
+      },
+      requestConsent,
     );
     console.log(`Extension "${name}" installed successfully and enabled.`);
   } catch (error) {
@@ -97,6 +87,16 @@ export const installCommand: CommandModule = {
         describe: 'Enable auto-update for this extension.',
         type: 'boolean',
       })
+      .option('pre-release', {
+        describe: 'Enable pre-release versions for this extension.',
+        type: 'boolean',
+      })
+      .option('consent', {
+        describe:
+          'Acknowledge the security risks of installing an extension and skip the confirmation prompt.',
+        type: 'boolean',
+        default: false,
+      })
       .check((argv) => {
         if (!argv.source) {
           throw new Error('The source argument must be provided.');
@@ -108,6 +108,8 @@ export const installCommand: CommandModule = {
       source: argv['source'] as string,
       ref: argv['ref'] as string | undefined,
       autoUpdate: argv['auto-update'] as boolean | undefined,
+      allowPreRelease: argv['pre-release'] as boolean | undefined,
+      consent: argv['consent'] as boolean | undefined,
     });
   },
 };
