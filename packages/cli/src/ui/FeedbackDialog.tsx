@@ -5,30 +5,38 @@ import { useUIActions } from './contexts/UIActionsContext.js';
 import { useUIState } from './contexts/UIStateContext.js';
 import { useKeypress } from './hooks/useKeypress.js';
 
+const FEEDBACK_OPTIONS = {
+  GOOD: 1,
+  BAD: 2,
+  NOT_SURE: 3,
+} as const;
+
+const FEEDBACK_OPTION_KEYS = {
+  [FEEDBACK_OPTIONS.GOOD]: '1',
+  [FEEDBACK_OPTIONS.BAD]: '2',
+  [FEEDBACK_OPTIONS.NOT_SURE]: '3',
+} as const;
+
+export const FEEDBACK_DIALOG_KEYS = ['1', '2', '3'] as const;
+
 export const FeedbackDialog: React.FC = () => {
   const uiState = useUIState();
   const uiActions = useUIActions();
 
   useKeypress(
     (key) => {
-      if (key.name === 'escape') {
-        uiActions.closeFeedbackDialog();
-      } else if (key.name === '1') {
-        uiActions.submitFeedback(1);
-      } else if (key.name === '2') {
-        uiActions.submitFeedback(2);
-      } else if (key.name === '3') {
-        uiActions.submitFeedback(3);
-      } else if (key.name === '0') {
-        uiActions.closeFeedbackDialog();
+      if (key.name === FEEDBACK_OPTION_KEYS[FEEDBACK_OPTIONS.GOOD]) {
+        uiActions.submitFeedback(FEEDBACK_OPTIONS.GOOD);
+      } else if (key.name === FEEDBACK_OPTION_KEYS[FEEDBACK_OPTIONS.BAD]) {
+        uiActions.submitFeedback(FEEDBACK_OPTIONS.BAD);
+      } else if (key.name === FEEDBACK_OPTION_KEYS[FEEDBACK_OPTIONS.NOT_SURE]) {
+        uiActions.submitFeedback(FEEDBACK_OPTIONS.NOT_SURE);
       }
+
+      uiActions.closeFeedbackDialog();
     },
     { isActive: uiState.isFeedbackDialogOpen },
   );
-
-  if (!uiState.isFeedbackDialogOpen) {
-    return null;
-  }
 
   return (
     <Box flexDirection="column" marginY={1}>
@@ -37,13 +45,17 @@ export const FeedbackDialog: React.FC = () => {
         <Text bold>{t('How is Qwen doing this session? (optional)')}</Text>
       </Box>
       <Box marginTop={1}>
-        <Text color="cyan">1: </Text>
+        <Text color="cyan">
+          {FEEDBACK_OPTION_KEYS[FEEDBACK_OPTIONS.GOOD]}:{' '}
+        </Text>
         <Text>{t('Good')}</Text>
         <Text> </Text>
-        <Text color="cyan">2: </Text>
+        <Text color="cyan">{FEEDBACK_OPTION_KEYS[FEEDBACK_OPTIONS.BAD]}: </Text>
         <Text>{t('Bad')}</Text>
         <Text> </Text>
-        <Text color="cyan">3: </Text>
+        <Text color="cyan">
+          {FEEDBACK_OPTION_KEYS[FEEDBACK_OPTIONS.NOT_SURE]}:{' '}
+        </Text>
         <Text>{t('Not Sure Yet')}</Text>
       </Box>
     </Box>

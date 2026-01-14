@@ -1208,8 +1208,7 @@ export const AppContainer = (props: AppContainerProps) => {
     isSubagentCreateDialogOpen ||
     isAgentsManagerDialogOpen ||
     isApprovalModeDialogOpen ||
-    isResumeDialogOpen ||
-    isFeedbackDialogOpen;
+    isResumeDialogOpen;
 
   const pendingHistoryItems = useMemo(
     () => [...pendingSlashCommandHistoryItems, ...pendingGeminiHistoryItems],
