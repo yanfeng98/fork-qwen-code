@@ -400,6 +400,12 @@ export async function loadServerHierarchicalMemory(
     contentsWithPaths,
     currentWorkingDirectory,
   );
+
+  // Filter out output-language.md from the count
+  const qwenMdFileCount = contentsWithPaths.filter(
+    (item) => !item.filePath.endsWith('output-language.md'),
+  ).length;
+
   if (debugMode)
     logger.debug(
       `Combined instructions length: ${combinedInstructions.length}`,
@@ -410,6 +416,6 @@ export async function loadServerHierarchicalMemory(
     );
   return {
     memoryContent: combinedInstructions,
-    fileCount: contentsWithPaths.length,
+    fileCount: qwenMdFileCount, // Use filtered count instead of contentsWithPaths.length
   };
 }
