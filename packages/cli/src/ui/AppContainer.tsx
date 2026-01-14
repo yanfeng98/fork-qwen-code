@@ -1174,19 +1174,6 @@ export const AppContainer = (props: AppContainerProps) => {
 
   const nightly = props.version.includes('nightly');
 
-  const {
-    isFeedbackDialogOpen,
-    openFeedbackDialog,
-    closeFeedbackDialog,
-    submitFeedback,
-  } = useFeedbackDialog({
-    config,
-    settings,
-    streamingState,
-    history: historyManager.history,
-    sessionStats,
-  });
-
   const dialogsVisible =
     showWelcomeBackDialog ||
     showWorkspaceMigrationDialog ||
@@ -1209,6 +1196,20 @@ export const AppContainer = (props: AppContainerProps) => {
     isAgentsManagerDialogOpen ||
     isApprovalModeDialogOpen ||
     isResumeDialogOpen;
+
+  const {
+    isFeedbackDialogOpen,
+    openFeedbackDialog,
+    closeFeedbackDialog,
+    submitFeedback,
+  } = useFeedbackDialog({
+    config,
+    settings,
+    streamingState,
+    history: historyManager.history,
+    sessionStats,
+    dialogsVisible,
+  });
 
   const pendingHistoryItems = useMemo(
     () => [...pendingSlashCommandHistoryItems, ...pendingGeminiHistoryItems],

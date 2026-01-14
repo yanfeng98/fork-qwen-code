@@ -122,6 +122,7 @@ export interface UseFeedbackDialogProps {
   streamingState: StreamingState;
   history: HistoryItem[];
   sessionStats: SessionStatsState;
+  dialogsVisible: boolean;
 }
 
 export const useFeedbackDialog = ({
@@ -130,14 +131,13 @@ export const useFeedbackDialog = ({
   streamingState,
   history,
   sessionStats,
+  dialogsVisible,
 }: UseFeedbackDialogProps) => {
   // Feedback dialog state
   const [isFeedbackDialogOpen, setIsFeedbackDialogOpen] = useState(false);
-  const [feedbackShownForSession, setFeedbackShownForSession] = useState(false);
 
   const openFeedbackDialog = useCallback(() => {
     setIsFeedbackDialogOpen(true);
-    setFeedbackShownForSession(true);
 
     // Record the timestamp when feedback dialog is shown (fire and forget)
     saveFeedbackHistory({
@@ -187,9 +187,6 @@ export const useFeedbackDialog = ({
         const hasAIResponseAfterLastUser =
           hasAIResponseAfterLastUserMessage(history);
 
-        const sessionDurationMs =
-          Date.now() - sessionStats.sessionStartTime.getTime();
-
         // Get tool calls count and user messages count
         const toolCallsCount = sessionStats.metrics.tools.totalCalls;
         const userMessagesCount = countUserMessages(history);
@@ -209,20 +206,18 @@ export const useFeedbackDialog = ({
         }
 
         // Show feedback dialog if:
-        // 1. Telemetry is enabled (required for feedback submission)
+        // 1. Qwen logger is enabled (required for feedback submission)
         // 2. User feedback is enabled in settings
         // 3. There's an AI response after the last user message (real AI conversation)
-        // 4. Session duration > 10 seconds (meaningful interaction)
-        // 5. Not already shown for this session
-        // 6. Random chance (25% probability)
-        // 7. Meets minimum requirements (tool calls > 10 OR user messages > 5)
-        // 8. Fatigue mechanism allows showing (not shown recently across sessions)
+        // 4. No other dialogs are currently visible
+        // 5. Random chance (25% probability)
+        // 6. Meets minimum requirements (tool calls > 10 OR user messages > 5)
+        // 7. Fatigue mechanism allows showing (not shown recently across sessions)
         if (
           config.getUsageStatisticsEnabled() &&
           settings.merged.ui?.enableUserFeedback !== false &&
           hasAIResponseAfterLastUser &&
-          sessionDurationMs > 10000 &&
-          !feedbackShownForSession &&
+          !dialogsVisible &&
           Math.random() < FEEDBACK_SHOW_PROBABILITY &&
           meetsMinimumRequirements &&
           passedFatigueCheck
@@ -240,10 +235,10 @@ export const useFeedbackDialog = ({
     history,
     sessionStats,
     isFeedbackDialogOpen,
-    feedbackShownForSession,
     openFeedbackDialog,
     settings.merged.ui?.enableUserFeedback,
     config,
+    dialogsVisible,
   ]);
 
   return {
