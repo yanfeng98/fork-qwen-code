@@ -31,7 +31,10 @@ import {
   logApiRequest,
   logApiResponse,
 } from '../../telemetry/loggers.js';
-import type { ContentGenerator } from '../contentGenerator.js';
+import type {
+  ContentGenerator,
+  ContentGeneratorConfig,
+} from '../contentGenerator.js';
 import { isStructuredError } from '../../utils/quotaErrorDetection.js';
 import { OpenAIContentConverter } from '../openaiContentGenerator/converter.js';
 import { OpenAILogger } from '../../utils/openaiLogger.js';
@@ -46,15 +49,19 @@ interface StructuredError {
 export class LoggingContentGenerator implements ContentGenerator {
   private openaiLogger?: OpenAILogger;
   private schemaCompliance?: 'auto' | 'openapi_30';
+  private readonly generatorConfig: ContentGeneratorConfig;
 
   constructor(
     private readonly wrapped: ContentGenerator,
     private readonly config: Config,
+    generatorConfig: ContentGeneratorConfig,
   ) {
-    const generatorConfig = this.config.getContentGeneratorConfig();
-    if (generatorConfig?.enableOpenAILogging) {
-      this.openaiLogger = new OpenAILogger(generatorConfig.openAILoggingDir);
-      this.schemaCompliance = generatorConfig.schemaCompliance;
+    this.generatorConfig = generatorConfig;
+    if (this.generatorConfig.enableOpenAILogging) {
+      this.openaiLogger = new OpenAILogger(
+        this.generatorConfig.openAILoggingDir,
+      );
+      this.schemaCompliance = this.generatorConfig.schemaCompliance;
     }
   }
 
@@ -89,7 +96,7 @@ export class LoggingContentGenerator implements ContentGenerator {
         model,
         durationMs,
         prompt_id,
-        this.config.getContentGeneratorConfig()?.authType,
+        this.generatorConfig.authType,
         usageMetadata,
         responseText,
       ),
@@ -126,7 +133,7 @@ export class LoggingContentGenerator implements ContentGenerator {
         errorMessage,
         durationMs,
         prompt_id,
-        this.config.getContentGeneratorConfig()?.authType,
+        this.generatorConfig.authType,
         errorType,
         errorStatus,
       ),
