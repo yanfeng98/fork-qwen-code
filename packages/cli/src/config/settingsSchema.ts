@@ -981,6 +981,16 @@ const SETTINGS_SCHEMA = {
         description: 'The number of lines to keep when truncating tool output.',
         showInDialog: true,
       },
+      experimentalSkills: {
+        type: 'boolean',
+        label: 'Experimental Skills',
+        category: 'Tools',
+        requiresRestart: true,
+        default: false,
+        description:
+          'Enable experimental Agent Skills feature.  When enabled, Qwen Code can use Skills from . qwen/skills/ and ~/. qwen/skills/.',
+        showInDialog: true,
+      },
     },
   },
 
