@@ -5,7 +5,7 @@
     <groupId>com.alibaba</groupId>
     <artifactId>qwencode-sdk</artifactId>
     <packaging>jar</packaging>
-    <version>0.0.1-alpha</version>
+    <version>0.0.2-alpha</version>
     <name>qwencode-sdk</name>
     <description>The Qwen Code Java SDK is a minimum experimental SDK for programmatic access to Qwen Code functionality. It provides a Java interface
         to interact with the Qwen Code CLI, allowing developers to integrate Qwen Code capabilities into their Java applications.
