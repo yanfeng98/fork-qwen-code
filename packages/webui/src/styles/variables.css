@@ -1,0 +1,52 @@
+/**
+ * @license
+ * Copyright 2025 Qwen Team
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/**
+ * Default CSS variables for @qwen-code/webui
+ * Consumers can override these variables to customize the theme.
+ */
+:root {
+  /* Primary colors */
+  --app-primary: #3b82f6;
+  --app-primary-hover: #2563eb;
+  --app-primary-foreground: #ffffff;
+
+  /* Background colors */
+  --app-background: #ffffff;
+  --app-background-secondary: #f3f4f6;
+  --app-background-tertiary: #e5e7eb;
+
+  /* Foreground/text colors */
+  --app-foreground: #111827;
+  --app-foreground-secondary: #6b7280;
+  --app-foreground-muted: #9ca3af;
+
+  /* Border colors */
+  --app-border: #e5e7eb;
+  --app-border-focus: #3b82f6;
+
+  /* Status colors */
+  --app-success: #10b981;
+  --app-warning: #f59e0b;
+  --app-error: #ef4444;
+  --app-info: #3b82f6;
+
+  /* Typography */
+  --app-font-sans: system-ui, -apple-system, sans-serif;
+  --app-font-mono: ui-monospace, monospace;
+
+  /* Border radius */
+  --app-radius-sm: 0.25rem;
+  --app-radius-md: 0.375rem;
+  --app-radius-lg: 0.5rem;
+
+  /* Spacing */
+  --app-spacing-xs: 0.25rem;
+  --app-spacing-sm: 0.5rem;
+  --app-spacing-md: 1rem;
+  --app-spacing-lg: 1.5rem;
+  --app-spacing-xl: 2rem;
+}

@@ -1,6 +1,18 @@
 // Shared UI Components Export
 // Export all shared components from this package
 
+// Context
+export {
+  PlatformContext,
+  PlatformProvider,
+  usePlatform,
+} from './context/PlatformContext';
+export type {
+  PlatformContextValue,
+  PlatformProviderProps,
+  PlatformType,
+} from './context/PlatformContext';
+
 // Layout components
 export { default as Container } from './components/layout/Container';
 export { default as Header } from './components/layout/Header';
@@ -33,3 +45,10 @@ export { useLocalStorage } from './hooks/useLocalStorage';
 // Types
 export type { Theme } from './types/theme';
 export type { MessageProps } from './types/messages';
+export type { ChatMessage, MessageRole, PlanEntry } from './types/chat';
+export type {
+  ToolCallStatus,
+  ToolCallLocation,
+  ToolCallContentItem,
+  ToolCallUpdate,
+} from './types/toolCall';
