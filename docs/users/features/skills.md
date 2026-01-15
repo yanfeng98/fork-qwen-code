@@ -31,7 +31,9 @@ Add to your `~/.qwen/settings.json` or project's `.qwen/settings.json`:
 ```json
 {
   "tools": {
-    "experimentalSkills": true
+    "experimental":  {
+      "skills": true
+    }
   }
 }
 ```
