@@ -7,14 +7,14 @@
 import type React from 'react';
 import { MessageContent } from './MessageContent.js';
 
-interface FileContext {
+export interface FileContext {
   fileName: string;
   filePath: string;
   startLine?: number;
   endLine?: number;
 }
 
-interface UserMessageProps {
+export interface UserMessageProps {
   content: string;
   timestamp: number;
   onFileClick?: (path: string) => void;
@@ -27,16 +27,17 @@ export const UserMessage: React.FC<UserMessageProps> = ({
   onFileClick,
   fileContext,
 }) => {
-  // Generate display text for file context
   const getFileContextDisplay = () => {
     if (!fileContext) {
       return null;
     }
     const { fileName, startLine, endLine } = fileContext;
-    if (startLine && endLine) {
-      return startLine === endLine
-        ? `${fileName}#${startLine}`
-        : `${fileName}#${startLine}-${endLine}`;
+    // Use != null to handle line number 0 and support start-only line
+    if (startLine != null) {
+      if (endLine != null && endLine !== startLine) {
+        return `${fileName}#${startLine}-${endLine}`;
+      }
+      return `${fileName}#${startLine}`;
     }
     return fileName;
   };
@@ -58,7 +59,6 @@ export const UserMessage: React.FC<UserMessageProps> = ({
           color: 'var(--app-primary-foreground)',
         }}
       >
-        {/* For user messages, do NOT convert filenames to clickable links */}
         <MessageContent
           content={content}
           onFileClick={onFileClick}
@@ -66,22 +66,15 @@ export const UserMessage: React.FC<UserMessageProps> = ({
         />
       </div>
 
-      {/* File context indicator */}
       {fileContextDisplay && (
         <div className="mt-1">
-          <div
-            role="button"
-            tabIndex={0}
-            className="mr inline-flex items-center py-0 pr-2 gap-1 rounded-sm cursor-pointer relative opacity-50"
+          <button
+            type="button"
+            className="inline-flex items-center py-0 pr-2 gap-1 rounded-sm cursor-pointer relative opacity-50 bg-transparent border-none"
             onClick={() => fileContext && onFileClick?.(fileContext.filePath)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                fileContext && onFileClick?.(fileContext.filePath);
-              }
-            }}
+            disabled={!onFileClick}
           >
-            <div
-              className="gr"
+            <span
               title={fileContextDisplay}
               style={{
                 fontSize: '12px',
@@ -89,8 +82,8 @@ export const UserMessage: React.FC<UserMessageProps> = ({
               }}
             >
               {fileContextDisplay}
-            </div>
-          </div>
+            </span>
+          </button>
         </div>
       )}
     </div>

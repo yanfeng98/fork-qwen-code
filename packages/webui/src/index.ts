@@ -32,6 +32,17 @@ export { default as MessageInput } from './components/messages/MessageInput';
 export { default as MessageList } from './components/messages/MessageList';
 export { WaitingMessage } from './components/messages/Waiting/WaitingMessage';
 export { InterruptedMessage } from './components/messages/Waiting/InterruptedMessage';
+export { MarkdownRenderer } from './components/messages/MarkdownRenderer/MarkdownRenderer';
+export type { MarkdownRendererProps } from './components/messages/MarkdownRenderer/MarkdownRenderer';
+export { MessageContent } from './components/messages/MessageContent';
+export type { MessageContentProps } from './components/messages/MessageContent';
+export { UserMessage } from './components/messages/UserMessage';
+export type {
+  UserMessageProps,
+  FileContext,
+} from './components/messages/UserMessage';
+export { ThinkingMessage } from './components/messages/ThinkingMessage';
+export type { ThinkingMessageProps } from './components/messages/ThinkingMessage';
 
 // UI Elements
 export { default as Button } from './components/ui/Button';

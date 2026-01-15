@@ -5,15 +5,16 @@
  */
 
 import type React from 'react';
+import { memo } from 'react';
 import { MarkdownRenderer } from './MarkdownRenderer/MarkdownRenderer.js';
 
-interface MessageContentProps {
+export interface MessageContentProps {
   content: string;
   onFileClick?: (filePath: string) => void;
   enableFileLinks?: boolean;
 }
 
-export const MessageContent: React.FC<MessageContentProps> = ({
+const MessageContentBase: React.FC<MessageContentProps> = ({
   content,
   onFileClick,
   enableFileLinks,
@@ -24,3 +25,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
     enableFileLinks={enableFileLinks}
   />
 );
+
+MessageContentBase.displayName = 'MessageContent';
+
+export const MessageContent = memo(MessageContentBase);

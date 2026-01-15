@@ -7,7 +7,7 @@
 import type React from 'react';
 import { MessageContent } from './MessageContent.js';
 
-interface ThinkingMessageProps {
+export interface ThinkingMessageProps {
   content: string;
   timestamp: number;
   onFileClick?: (path: string) => void;
@@ -30,7 +30,7 @@ export const ThinkingMessage: React.FC<ThinkingMessageProps> = ({
         color: 'var(--app-primary-foreground)',
       }}
     >
-      <span className="inline-flex items-center gap-1 mr-2">
+      <span className="inline-flex items-center gap-1 mr-2" aria-hidden="true">
         <span className="inline-block w-1.5 h-1.5 bg-[var(--app-secondary-foreground)] rounded-full opacity-60 animate-[typingPulse_1.4s_infinite_ease-in-out] [animation-delay:0s]"></span>
         <span className="inline-block w-1.5 h-1.5 bg-[var(--app-secondary-foreground)] rounded-full opacity-60 animate-[typingPulse_1.4s_infinite_ease-in-out] [animation-delay:0.2s]"></span>
         <span className="inline-block w-1.5 h-1.5 bg-[var(--app-secondary-foreground)] rounded-full opacity-60 animate-[typingPulse_1.4s_infinite_ease-in-out] [animation-delay:0.4s]"></span>

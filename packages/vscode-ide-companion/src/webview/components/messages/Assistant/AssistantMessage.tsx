@@ -5,7 +5,7 @@
  */
 
 import type React from 'react';
-import { MessageContent } from '../MessageContent.js';
+import { MessageContent } from '@qwen-code/webui';
 import './AssistantMessage.css';
 
 interface AssistantMessageProps {
