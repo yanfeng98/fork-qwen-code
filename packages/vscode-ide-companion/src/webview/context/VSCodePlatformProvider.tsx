@@ -1,0 +1,119 @@
+/**
+ * @license
+ * Copyright 2025 Qwen Team
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * VSCode Platform Provider - Adapts VSCode API to PlatformContext
+ * This allows webui components to work with VSCode's messaging system
+ */
+
+import type React from 'react';
+import { useMemo, useCallback, useEffect, useRef } from 'react';
+import { PlatformProvider } from '@qwen-code/webui';
+import type { PlatformContextValue } from '@qwen-code/webui';
+import { useVSCode } from '../hooks/useVSCode.js';
+
+/**
+ * Props for VSCodePlatformProvider
+ */
+interface VSCodePlatformProviderProps {
+  children: React.ReactNode;
+}
+
+/**
+ * VSCodePlatformProvider - Provides platform context for VSCode extension
+ *
+ * This component bridges the VSCode API with the platform-agnostic webui components.
+ * It wraps children with PlatformProvider and provides VSCode-specific implementations.
+ */
+export const VSCodePlatformProvider: React.FC<VSCodePlatformProviderProps> = ({
+  children,
+}) => {
+  const vscode = useVSCode();
+  const messageHandlersRef = useRef<Set<(message: unknown) => void>>(new Set());
+
+  // Set up message listener
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      messageHandlersRef.current.forEach((handler) => {
+        handler(event.data);
+      });
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  // Open file handler
+  const openFile = useCallback(
+    (path: string) => {
+      vscode.postMessage({
+        type: 'openFile',
+        data: { path },
+      });
+    },
+    [vscode],
+  );
+
+  // Attach file handler
+  const attachFile = useCallback(() => {
+    vscode.postMessage({
+      type: 'attachFile',
+      data: {},
+    });
+  }, [vscode]);
+
+  // Login handler
+  const login = useCallback(() => {
+    vscode.postMessage({
+      type: 'login',
+      data: {},
+    });
+  }, [vscode]);
+
+  // Copy to clipboard handler
+  const copyToClipboard = useCallback(async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err);
+    }
+  }, []);
+
+  // Subscribe to messages
+  const onMessage = useCallback((handler: (message: unknown) => void) => {
+    messageHandlersRef.current.add(handler);
+    return () => {
+      messageHandlersRef.current.delete(handler);
+    };
+  }, []);
+
+  // Build platform context value
+  const platformValue = useMemo<PlatformContextValue>(
+    () => ({
+      platform: 'vscode',
+      postMessage: vscode.postMessage,
+      onMessage,
+      openFile,
+      attachFile,
+      login,
+      copyToClipboard,
+      features: {
+        canOpenFile: true,
+        canAttachFile: true,
+        canLogin: true,
+        canCopy: true,
+      },
+    }),
+    [
+      vscode.postMessage,
+      onMessage,
+      openFile,
+      attachFile,
+      login,
+      copyToClipboard,
+    ],
+  );
+
+  return <PlatformProvider value={platformValue}>{children}</PlatformProvider>;
+};

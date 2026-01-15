@@ -33,8 +33,8 @@ import { Onboarding } from './components/layout/Onboarding.js';
 import { type CompletionItem } from '../types/completionItemTypes.js';
 import { useCompletionTrigger } from './hooks/useCompletionTrigger.js';
 import { ChatHeader } from './components/layout/ChatHeader.js';
-import { AssistantMessage } from './components/messages/index.js';
 import {
+  AssistantMessage,
   UserMessage,
   ThinkingMessage,
   WaitingMessage,

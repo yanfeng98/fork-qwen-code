@@ -7,14 +7,15 @@
  */
 
 import type React from 'react';
-import type { BaseToolCallProps } from './shared/types.js';
 import {
   ToolCallContainer,
   ToolCallCard,
   ToolCallRow,
   LocationsList,
-} from './shared/LayoutComponents.js';
-import { safeTitle, groupContent } from '../../../utils/utils.js';
+  safeTitle,
+  groupContent,
+} from '@qwen-code/webui';
+import type { BaseToolCallProps } from '@qwen-code/webui';
 
 /**
  * Generic tool call component that can display any tool call type

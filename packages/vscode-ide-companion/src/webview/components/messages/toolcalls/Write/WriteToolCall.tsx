@@ -7,13 +7,13 @@
  */
 
 import type React from 'react';
-import type { BaseToolCallProps } from '../shared/types.js';
-import { ToolCallContainer } from '../shared/LayoutComponents.js';
 import {
+  ToolCallContainer,
+  FileLink,
   groupContent,
   mapToolStatusToContainerStatus,
-} from '../../../../utils/utils.js';
-import { FileLink } from '../../../layout/FileLink.js';
+} from '@qwen-code/webui';
+import type { BaseToolCallProps } from '@qwen-code/webui';
 
 /**
  * Specialized component for Write tool calls

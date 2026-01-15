@@ -7,13 +7,13 @@
  */
 
 import type React from 'react';
-import type { BaseToolCallProps } from '../shared/types.js';
-import { FileLink } from '../../../layout/FileLink.js';
 import {
+  FileLink,
   safeTitle,
   groupContent,
   mapToolStatusToContainerStatus,
-} from '../../../../utils/utils.js';
+} from '@qwen-code/webui';
+import type { BaseToolCallProps } from '@qwen-code/webui';
 
 /**
  * Specialized component for Search tool calls

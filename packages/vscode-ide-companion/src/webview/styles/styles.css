@@ -6,7 +6,7 @@
 
 /* Import component styles */
 @import './timeline.css';
-@import '../components/messages/MarkdownRenderer/MarkdownRenderer.css';
+/* MarkdownRenderer styles are now bundled with @qwen-code/webui */
 
 /* ===========================
    CSS Variables

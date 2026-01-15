@@ -7,8 +7,8 @@
  */
 
 import type React from 'react';
-import type { BaseToolCallProps } from './shared/types.js';
-import { shouldShowToolCall } from '../../../utils/utils.js';
+import { shouldShowToolCall } from '@qwen-code/webui';
+import type { BaseToolCallProps } from '@qwen-code/webui';
 import { GenericToolCall } from './GenericToolCall.js';
 import { ReadToolCall } from './Read/ReadToolCall.js';
 import { WriteToolCall } from './Write/WriteToolCall.js';
@@ -84,4 +84,4 @@ export const ToolCallRouter: React.FC<
 };
 
 // Re-export types for convenience
-export type { BaseToolCallProps, ToolCallData } from './shared/types.js';
+export type { BaseToolCallProps, ToolCallData } from '@qwen-code/webui';

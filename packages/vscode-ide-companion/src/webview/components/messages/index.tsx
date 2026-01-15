@@ -4,5 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { AssistantMessage } from './Assistant/AssistantMessage.js';
-// UserMessage, ThinkingMessage, WaitingMessage and InterruptedMessage are now imported from @qwen-code/webui
+// All message components are now imported from @qwen-code/webui:
+// - AssistantMessage
+// - UserMessage
+// - ThinkingMessage
+// - WaitingMessage
+// - InterruptedMessage

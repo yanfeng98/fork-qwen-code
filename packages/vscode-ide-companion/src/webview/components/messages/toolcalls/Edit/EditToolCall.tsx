@@ -7,13 +7,15 @@
  */
 
 import { useMemo } from 'react';
-import type { BaseToolCallProps } from '../shared/types.js';
 import {
+  FileLink,
   groupContent,
   mapToolStatusToContainerStatus,
-} from '../../../../utils/utils.js';
-import { FileLink } from '../../../layout/FileLink.js';
-import type { ToolCallContainerProps } from '../shared/LayoutComponents.js';
+} from '@qwen-code/webui';
+import type {
+  BaseToolCallProps,
+  ToolCallContainerProps,
+} from '@qwen-code/webui';
 
 export const ToolCallContainer: React.FC<ToolCallContainerProps> = ({
   label,

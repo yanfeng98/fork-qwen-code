@@ -8,15 +8,17 @@
 
 import type React from 'react';
 import { useCallback, useEffect, useMemo } from 'react';
-import type { BaseToolCallProps } from '../shared/types.js';
 import {
+  FileLink,
   groupContent,
   mapToolStatusToContainerStatus,
-} from '../../../../utils/utils.js';
-import { FileLink } from '../../../layout/FileLink.js';
+} from '@qwen-code/webui';
+import type {
+  BaseToolCallProps,
+  ToolCallContainerProps,
+} from '@qwen-code/webui';
 import { useVSCode } from '../../../../hooks/useVSCode.js';
 import { handleOpenDiff } from '../../../../utils/diffUtils.js';
-import type { ToolCallContainerProps } from '../shared/LayoutComponents.js';
 
 export const ToolCallContainer: React.FC<ToolCallContainerProps> = ({
   label,

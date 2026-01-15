@@ -7,13 +7,13 @@
  */
 
 import type React from 'react';
-import type { BaseToolCallProps } from '../shared/types.js';
 import {
   ToolCallContainer,
   ToolCallCard,
   ToolCallRow,
-} from '../shared/LayoutComponents.js';
-import { groupContent } from '../../../../utils/utils.js';
+  groupContent,
+} from '@qwen-code/webui';
+import type { BaseToolCallProps } from '@qwen-code/webui';
 
 /**
  * Specialized component for Think tool calls

@@ -7,9 +7,12 @@
  */
 
 import type React from 'react';
-import type { BaseToolCallProps } from '../shared/types.js';
-import type { ToolCallContainerProps } from '../shared/LayoutComponents.js';
-import { groupContent, safeTitle } from '../../../../utils/utils.js';
+import { groupContent, safeTitle } from '@qwen-code/webui';
+import type {
+  BaseToolCallProps,
+  ToolCallContainerProps,
+  ToolCallStatus,
+} from '@qwen-code/webui';
 import { CheckboxDisplay } from './CheckboxDisplay.js';
 import type { PlanEntry } from '../../../../../types/chatTypes.js';
 
@@ -45,7 +48,7 @@ export const ToolCallContainer: React.FC<ToolCallContainerProps> = ({
 );
 
 const mapToolStatusToBullet = (
-  status: import('../shared/types.js').ToolCallStatus,
+  status: ToolCallStatus,
 ): 'success' | 'error' | 'warning' | 'loading' | 'default' => {
   switch (status) {
     case 'completed':

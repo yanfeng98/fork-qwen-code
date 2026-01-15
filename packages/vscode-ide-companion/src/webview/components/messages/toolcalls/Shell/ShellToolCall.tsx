@@ -7,13 +7,18 @@
  */
 
 import type React from 'react';
-import type { BaseToolCallProps } from '../shared/types.js';
-import type { ToolCallContainerProps } from '../shared/LayoutComponents.js';
-import { ToolCallContainer as SharedToolCallContainer } from '../shared/LayoutComponents.js';
-import { safeTitle, groupContent } from '../../../../utils/utils.js';
+import {
+  ToolCallContainer as SharedToolCallContainer,
+  CopyButton,
+  safeTitle,
+  groupContent,
+} from '@qwen-code/webui';
+import type {
+  BaseToolCallProps,
+  ToolCallContainerProps,
+} from '@qwen-code/webui';
 import { useVSCode } from '../../../../hooks/useVSCode.js';
 import { createAndOpenTempFile } from '../../../../utils/diffUtils.js';
-import { CopyButton } from '../shared/copyUtils.js';
 
 import './ShellToolCall.css';
 
