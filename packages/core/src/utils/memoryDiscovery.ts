@@ -8,7 +8,7 @@ import * as fs from 'node:fs/promises';
 import * as fsSync from 'node:fs';
 import * as path from 'node:path';
 import { homedir } from 'node:os';
-import { bfsFileSearch } from './bfsFileSearch.js';
+// import { bfsFileSearch } from './bfsFileSearch.js';
 import { getAllGeminiMdFilenames } from '../tools/memoryTool.js';
 import type { FileDiscoveryService } from '../services/fileDiscoveryService.js';
 import { processImports } from './memoryImportProcessor.js';
@@ -139,8 +139,8 @@ async function getGeminiMdFilePathsInternalForEachDir(
   fileService: FileDiscoveryService,
   extensionContextFilePaths: string[] = [],
   folderTrust: boolean,
-  fileFilteringOptions: FileFilteringOptions,
-  maxDirs: number,
+  _fileFilteringOptions: FileFilteringOptions,
+  _maxDirs: number,
 ): Promise<string[]> {
   const allPaths = new Set<string>();
   const geminiMdFilenames = getAllGeminiMdFilenames();
@@ -225,23 +225,6 @@ async function getGeminiMdFilePathsInternalForEachDir(
         currentDir = path.dirname(currentDir);
       }
       upwardPaths.forEach((p) => allPaths.add(p));
-
-      const mergedOptions: FileFilteringOptions = {
-        ...DEFAULT_MEMORY_FILE_FILTERING_OPTIONS,
-        ...fileFilteringOptions,
-      };
-
-      const downwardPaths = await bfsFileSearch(resolvedCwd, {
-        fileName: geminiMdFilename,
-        maxDirs,
-        debug: debugMode,
-        fileService,
-        fileFilteringOptions: mergedOptions,
-      });
-      downwardPaths.sort();
-      for (const dPath of downwardPaths) {
-        allPaths.add(dPath);
-      }
     }
   }
 
