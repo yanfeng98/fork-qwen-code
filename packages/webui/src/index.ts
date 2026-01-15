@@ -25,6 +25,8 @@ export { default as Header } from './components/layout/Header';
 export { default as Sidebar } from './components/layout/Sidebar';
 export { default as Main } from './components/layout/Main';
 export { default as Footer } from './components/layout/Footer';
+export { FileLink } from './components/layout/FileLink';
+export type { FileLinkProps } from './components/layout/FileLink';
 
 // Message components
 export { default as Message } from './components/messages/Message';
@@ -43,6 +45,11 @@ export type {
 } from './components/messages/UserMessage';
 export { ThinkingMessage } from './components/messages/ThinkingMessage';
 export type { ThinkingMessageProps } from './components/messages/ThinkingMessage';
+export { AssistantMessage } from './components/messages/Assistant/AssistantMessage';
+export type {
+  AssistantMessageProps,
+  AssistantMessageStatus,
+} from './components/messages/Assistant/AssistantMessage';
 
 // UI Elements
 export { default as Button } from './components/ui/Button';
@@ -52,6 +59,34 @@ export type { TooltipProps } from './components/ui/Tooltip';
 
 // Permission components
 export { default as PermissionDrawer } from './components/PermissionDrawer';
+
+// ToolCall shared components
+export {
+  ToolCallContainer,
+  ToolCallCard,
+  ToolCallRow,
+  StatusIndicator,
+  CodeBlock,
+  LocationsList,
+  handleCopyToClipboard,
+  CopyButton,
+  // Utility functions
+  extractCommandOutput,
+  formatValue,
+  safeTitle,
+  shouldShowToolCall,
+  groupContent,
+  hasToolCallOutput,
+  mapToolStatusToContainerStatus,
+} from './components/toolcalls';
+export type {
+  ToolCallContainerProps,
+  ToolCallContent,
+  ToolCallData,
+  BaseToolCallProps,
+  GroupedContent,
+  ContainerStatus,
+} from './components/toolcalls';
 
 // Icons
 export { default as Icon } from './components/icons/Icon';
@@ -116,9 +151,7 @@ export { useLocalStorage } from './hooks/useLocalStorage';
 export type { Theme } from './types/theme';
 export type { MessageProps } from './types/messages';
 export type { ChatMessage, MessageRole, PlanEntry } from './types/chat';
-export type {
-  ToolCallStatus,
-  ToolCallLocation,
-  ToolCallContentItem,
-  ToolCallUpdate,
-} from './types/toolCall';
+// ToolCallStatus and ToolCallLocation are now exported from './components/toolcalls'
+export type { ToolCallContentItem, ToolCallUpdate } from './types/toolCall';
+// Re-export ToolCallStatus and ToolCallLocation for backward compatibility
+export type { ToolCallStatus, ToolCallLocation } from './components/toolcalls';
