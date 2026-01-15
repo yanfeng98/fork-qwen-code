@@ -8,7 +8,6 @@ import * as fs from 'node:fs/promises';
 import * as fsSync from 'node:fs';
 import * as path from 'node:path';
 import { homedir } from 'node:os';
-// import { bfsFileSearch } from './bfsFileSearch.js';
 import { getAllGeminiMdFilenames } from '../tools/memoryTool.js';
 import type { FileDiscoveryService } from '../services/fileDiscoveryService.js';
 import { processImports } from './memoryImportProcessor.js';
@@ -385,7 +384,7 @@ export async function loadServerHierarchicalMemory(
   );
 
   // Filter out output-language.md from the count
-  const qwenMdFileCount = contentsWithPaths.filter(
+  const fileCount = contentsWithPaths.filter(
     (item) => !item.filePath.endsWith('output-language.md'),
   ).length;
 
@@ -399,6 +398,6 @@ export async function loadServerHierarchicalMemory(
     );
   return {
     memoryContent: combinedInstructions,
-    fileCount: qwenMdFileCount, // Use filtered count instead of contentsWithPaths.length
+    fileCount, // Only count the context files
   };
 }
