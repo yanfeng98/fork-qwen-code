@@ -7,20 +7,28 @@
  */
 
 import type React from 'react';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { usePlatform } from '../../../context/PlatformContext.js';
 
 /**
- * Handle copy to clipboard
+ * Handle copy to clipboard using platform-specific API with fallback
  * @param text Text to copy
  * @param event Mouse event to stop propagation
+ * @param platformCopy Optional platform-specific copy function
  */
 export const handleCopyToClipboard = async (
   text: string,
   event: React.MouseEvent,
+  platformCopy?: (text: string) => Promise<void>,
 ): Promise<void> => {
   event.stopPropagation(); // Prevent triggering the row click
   try {
-    await navigator.clipboard.writeText(text);
+    // Use platform-specific copy if available, otherwise fall back to navigator.clipboard
+    if (platformCopy) {
+      await platformCopy(text);
+    } else {
+      await navigator.clipboard.writeText(text);
+    }
   } catch (err) {
     console.error('Failed to copy text:', err);
   }
@@ -35,21 +43,36 @@ interface CopyButtonProps {
 
 /**
  * CopyButton - Shared copy button component with Tailwind styles
+ * Uses PlatformContext for platform-specific clipboard access with fallback
  * Note: Parent element should have 'group' class for hover effect
  */
 export const CopyButton: React.FC<CopyButtonProps> = ({ text }) => {
   const [showTooltip, setShowTooltip] = useState(false);
+  const platform = usePlatform();
+
+  const handleClick = useCallback(
+    async (e: React.MouseEvent) => {
+      await handleCopyToClipboard(text, e, platform.copyToClipboard);
+      setShowTooltip(true);
+      setTimeout(() => setShowTooltip(false), 1000);
+    },
+    [text, platform.copyToClipboard],
+  );
+
+  // Check if copy feature is available
+  const canCopy = platform.features?.canCopy !== false;
+
+  if (!canCopy) {
+    return null;
+  }
 
   return (
     <button
       className="col-start-3 bg-transparent border-none px-2 py-1.5 cursor-pointer text-[var(--app-secondary-foreground)] opacity-0 transition-opacity duration-200 ease-out flex items-center justify-center rounded relative group-hover:opacity-70 hover:!opacity-100 hover:bg-[var(--app-input-border)] active:scale-95"
-      onClick={async (e) => {
-        await handleCopyToClipboard(text, e);
-        setShowTooltip(true);
-        setTimeout(() => setShowTooltip(false), 1000);
-      }}
+      onClick={handleClick}
       title="Copy"
       aria-label="Copy to clipboard"
+      type="button"
     >
       <svg
         width="14"

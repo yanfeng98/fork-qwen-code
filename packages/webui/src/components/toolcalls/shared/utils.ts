@@ -128,13 +128,19 @@ export const formatValue = (value: unknown): string => {
 /**
  * Safely convert title to string, handling object types
  * Returns empty string if no meaningful title
+ * Uses try/catch to handle circular references safely
  */
 export const safeTitle = (title: unknown): string => {
   if (typeof title === 'string' && title.trim()) {
     return title;
   }
   if (title && typeof title === 'object') {
-    return JSON.stringify(title);
+    try {
+      return JSON.stringify(title);
+    } catch (_e) {
+      // Handle circular references or BigInt
+      return String(title);
+    }
   }
   return '';
 };
@@ -148,6 +154,8 @@ export const shouldShowToolCall = (kind: string): boolean =>
 
 /**
  * Group tool call content by type to avoid duplicate labels
+ * Note: Only treats content as error if contentObj.type === 'error'
+ * or if contentObj.error is explicitly set (not null/undefined)
  */
 export const groupContent = (content?: ToolCallContent[]): GroupedContent => {
   const textOutputs: string[] = [];
@@ -161,7 +169,11 @@ export const groupContent = (content?: ToolCallContent[]): GroupedContent => {
     } else if (item.content) {
       const contentObj = item.content;
 
-      if (contentObj.type === 'error' || 'error' in contentObj) {
+      // Only treat as error if type is explicitly 'error'
+      // or if error field has a truthy value (not null/undefined)
+      const hasError = contentObj.type === 'error' || contentObj.error != null;
+
+      if (hasError) {
         let errorMsg = '';
 
         if (typeof contentObj.error === 'string') {

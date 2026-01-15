@@ -69,6 +69,7 @@ function buildFullPath(
  * - Support line and column number navigation
  * - Hover to show full path
  * - Optional display mode (full path vs filename only)
+ * - Full keyboard accessibility (Enter and Space keys)
  *
  * @example
  * ```tsx
@@ -86,21 +87,17 @@ export const FileLink: React.FC<FileLinkProps> = ({
 }) => {
   const platform = usePlatform();
 
-  /**
-   * Handle click event - Open file using platform-specific method
-   */
-  const handleClick = (e: React.MouseEvent) => {
-    // Always prevent default behavior (prevent <a> tag # navigation)
-    e.preventDefault();
+  // Check if file opening is available
+  const canOpenFile = platform.features?.canOpenFile !== false;
+  const isDisabled = disableClick || !canOpenFile;
 
-    if (disableClick) {
-      // If click is disabled, return directly without stopping propagation
-      // This allows parent elements to handle click events
+  /**
+   * Open file using platform-specific method
+   */
+  const openFile = () => {
+    if (isDisabled) {
       return;
     }
-
-    // If click is enabled, stop event propagation
-    e.stopPropagation();
 
     // Build full path including line and column numbers
     const fullPath = buildFullPath(path, line, column);
@@ -116,6 +113,32 @@ export const FileLink: React.FC<FileLinkProps> = ({
     }
   };
 
+  /**
+   * Handle click event
+   */
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!isDisabled) {
+      e.stopPropagation();
+      openFile();
+    }
+  };
+
+  /**
+   * Handle keyboard event - Support Space key for button behavior
+   */
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (isDisabled) {
+      return;
+    }
+    // Space key triggers button action (Enter is handled by default for buttons)
+    if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+      openFile();
+    }
+  };
+
   // Build display text
   const displayPath = showFullPath ? path : getFileName(path);
 
@@ -123,31 +146,36 @@ export const FileLink: React.FC<FileLinkProps> = ({
   const fullDisplayText = buildFullPath(path, line, column);
 
   return (
-    <a
-      href="#"
+    <button
+      type="button"
       className={[
         'file-link',
+        // Reset button styles
+        'bg-transparent border-none p-0 m-0 font-inherit',
         // Layout + interaction
-        // Use items-center + leading-none to vertically center within surrounding rows
         'inline-flex items-center leading-none',
-        disableClick
-          ? 'pointer-events-none cursor-[inherit] hover:no-underline'
-          : 'cursor-pointer',
+        isDisabled
+          ? 'cursor-default opacity-60'
+          : 'cursor-pointer hover:underline',
         // Typography + color: match theme body text and fixed size
-        'text-[11px] no-underline hover:underline',
+        'text-[11px] no-underline',
         'text-[var(--app-primary-foreground)]',
         // Transitions
         'transition-colors duration-100 ease-in-out',
         // Focus ring (keyboard nav)
         'focus:outline focus:outline-1 focus:outline-[var(--vscode-focusBorder)] focus:outline-offset-2 focus:rounded-[2px]',
         // Active state
-        'active:opacity-80',
+        !isDisabled && 'active:opacity-80',
         className,
-      ].join(' ')}
+      ]
+        .filter(Boolean)
+        .join(' ')}
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
       title={fullDisplayText}
-      role="button"
       aria-label={`Open file: ${fullDisplayText}`}
+      aria-disabled={isDisabled}
+      disabled={isDisabled}
     >
       <span className="file-link-path">{displayPath}</span>
       {line !== null && line !== undefined && (
@@ -156,6 +184,6 @@ export const FileLink: React.FC<FileLinkProps> = ({
           {column !== null && column !== undefined && <>:{column}</>}
         </span>
       )}
-    </a>
+    </button>
   );
 };
