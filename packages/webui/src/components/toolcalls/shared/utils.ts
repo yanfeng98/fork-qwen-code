@@ -154,8 +154,10 @@ export const shouldShowToolCall = (kind: string): boolean =>
 
 /**
  * Group tool call content by type to avoid duplicate labels
- * Note: Only treats content as error if contentObj.type === 'error'
- * or if contentObj.error is explicitly set (not null/undefined)
+ * Error detection logic:
+ * - If contentObj.error is set (not null/undefined), treat as error
+ * - If contentObj.type === 'error' AND has content (text or error), treat as error
+ * This avoids false positives from empty error markers while not missing real errors
  */
 export const groupContent = (content?: ToolCallContent[]): GroupedContent => {
   const textOutputs: string[] = [];
@@ -169,9 +171,14 @@ export const groupContent = (content?: ToolCallContent[]): GroupedContent => {
     } else if (item.content) {
       const contentObj = item.content;
 
-      // Only treat as error if type is explicitly 'error'
-      // or if error field has a truthy value (not null/undefined)
-      const hasError = contentObj.type === 'error' || contentObj.error != null;
+      // Determine if this is an error:
+      // 1. error field is explicitly set (not null/undefined)
+      // 2. type is 'error' AND has actual content (text or error field)
+      const hasErrorField = contentObj.error != null;
+      const isErrorType =
+        contentObj.type === 'error' &&
+        (contentObj.text != null || contentObj.error != null);
+      const hasError = hasErrorField || isErrorType;
 
       if (hasError) {
         let errorMsg = '';
