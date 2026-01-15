@@ -12,6 +12,11 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./icons": {
+      "types": "./dist/components/icons/index.d.ts",
+      "import": "./dist/components/icons/index.js",
+      "require": "./dist/components/icons/index.cjs"
+    },
     "./tailwind.preset": "./tailwind.preset.cjs",
     "./styles.css": "./dist/styles.css"
   },

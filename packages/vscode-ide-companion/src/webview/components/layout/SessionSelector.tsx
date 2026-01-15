@@ -9,7 +9,7 @@ import {
   getTimeAgo,
   groupSessionsByDate,
 } from '../../utils/sessionGrouping.js';
-import { SearchIcon } from '../icons/index.js';
+import { SearchIcon } from '@qwen-code/webui';
 
 interface SessionSelectorProps {
   visible: boolean;

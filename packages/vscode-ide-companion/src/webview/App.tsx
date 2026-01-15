@@ -37,12 +37,11 @@ import {
   UserMessage,
   AssistantMessage,
   ThinkingMessage,
-  WaitingMessage,
-  InterruptedMessage,
 } from './components/messages/index.js';
+import { WaitingMessage, InterruptedMessage } from '@qwen-code/webui';
 import { InputForm } from './components/layout/InputForm.js';
 import { SessionSelector } from './components/layout/SessionSelector.js';
-import { FileIcon, UserIcon } from './components/icons/index.js';
+import { FileIcon, UserIcon } from '@qwen-code/webui';
 import { ApprovalMode, NEXT_APPROVAL_MODE } from '../types/acpTypes.js';
 import type { ApprovalModeValue } from '../types/approvalModeValueTypes.js';
 import type { PlanEntry, UsageStatsPayload } from '../types/chatTypes.js';

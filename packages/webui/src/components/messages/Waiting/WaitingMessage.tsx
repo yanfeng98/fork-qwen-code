@@ -6,8 +6,6 @@
 
 import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import './WaitingMessage.css';
-import { WITTY_LOADING_PHRASES } from '../../../../constants/loadingMessages.js';
 
 interface WaitingMessageProps {
   loadingMessage: string;
@@ -15,6 +13,16 @@ interface WaitingMessageProps {
 
 // Rotate message every few seconds while waiting
 const ROTATE_INTERVAL_MS = 3000; // rotate every 3s per request
+
+// Default witty loading phrases
+const DEFAULT_LOADING_PHRASES = [
+  'Processing...',
+  'Working on it...',
+  'Just a moment...',
+  'Loading...',
+  'Hold tight...',
+  'Almost there...',
+];
 
 export const WaitingMessage: React.FC<WaitingMessageProps> = ({
   loadingMessage,
@@ -27,7 +35,7 @@ export const WaitingMessage: React.FC<WaitingMessageProps> = ({
       list.push(loadingMessage);
       set.add(loadingMessage);
     }
-    for (const p of WITTY_LOADING_PHRASES) {
+    for (const p of DEFAULT_LOADING_PHRASES) {
       if (!set.has(p)) {
         list.push(p);
       }

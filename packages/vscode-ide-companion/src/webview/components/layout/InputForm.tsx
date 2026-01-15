@@ -16,7 +16,7 @@ import {
   LinkIcon,
   ArrowUpIcon,
   StopIcon,
-} from '../icons/index.js';
+} from '@qwen-code/webui';
 import { CompletionMenu } from '../layout/CompletionMenu.js';
 import type { CompletionItem } from '../../../types/completionItemTypes.js';
 import { getApprovalModeInfoFromString } from '../../../types/acpTypes.js';

@@ -5,7 +5,7 @@
  */
 
 import type React from 'react';
-import { ChevronDownIcon, PlusIcon } from '../icons/index.js';
+import { ChevronDownIcon, PlusIcon } from '@qwen-code/webui';
 
 interface ChatHeaderProps {
   currentSessionTitle: string;

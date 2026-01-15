@@ -1,93 +1,73 @@
-import React, { useState } from 'react';
+/**
+ * @license
+ * Copyright 2025 Qwen Team
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-interface ChildProps {
-  onMouseEnter?: () => void;
-  onMouseLeave?: () => void;
-  onFocus?: () => void;
-  onBlur?: () => void;
-  tabIndex?: number;
+import type React from 'react';
+
+/**
+ * Tooltip component props
+ */
+export interface TooltipProps {
+  /** Content to wrap with tooltip */
+  children: React.ReactNode;
+  /** Tooltip content (can be string or ReactNode) */
+  content: React.ReactNode;
+  /** Tooltip position relative to children */
+  position?: 'top' | 'bottom' | 'left' | 'right';
 }
 
-interface TooltipProps {
-  children: React.ReactElement<ChildProps>;
-  content: string;
-  position?: 'top' | 'right' | 'bottom' | 'left';
-}
-
-const Tooltip: React.FC<TooltipProps> = ({
+/**
+ * Tooltip component using CSS group-hover for display
+ * Supports CSS variables for theming
+ */
+export const Tooltip: React.FC<TooltipProps> = ({
   children,
   content,
   position = 'top',
-}) => {
-  const [isVisible, setIsVisible] = useState(false);
-
-  const positionClasses = {
-    top: 'bottom-full left-1/2 transform -translate-x-1/2 mb-2',
-    right: 'top-1/2 left-full transform -translate-y-1/2 ml-2',
-    bottom: 'top-full left-1/2 transform -translate-x-1/2 mt-2',
-    left: 'top-1/2 right-full transform -translate-y-1/2 mr-2',
-  };
-
-  const arrowPositionClasses = {
-    top: 'top-full left-1/2 transform -translate-x-1/2 -mt-1',
-    right: 'top-1/2 left-0 transform -translate-y-1/2 -ml-1',
-    bottom: 'top-0 left-1/2 transform -translate-x-1/2 -mb-1',
-    left: 'top-1/2 right-0 transform -translate-y-1/2 -mr-1',
-  };
-
-  const tooltipClass = `absolute ${positionClasses[position]} bg-gray-800 text-white text-xs rounded py-1 px-2 pointer-events-none z-10`;
-  const arrowClass = `absolute w-2 h-2 bg-gray-800 transform rotate-45 ${arrowPositionClasses[position]}`;
-
-  return (
-    <div className="relative inline-block">
+}) => (
+  <div className="relative inline-block">
+    <div className="group relative">
+      {children}
       <div
-        onMouseEnter={() => setIsVisible(true)}
-        onMouseLeave={() => setIsVisible(false)}
-        onFocus={() => setIsVisible(true)}
-        onBlur={() => setIsVisible(false)}
-        tabIndex={0}
+        className={`
+          absolute z-50 px-2 py-1 text-xs rounded-md shadow-lg
+          bg-[var(--app-primary-background,#1f2937)] border border-[var(--app-input-border,#374151)]
+          text-[var(--app-primary-foreground,#f9fafb)] whitespace-nowrap
+          opacity-0 group-hover:opacity-100 transition-opacity duration-150
+          -translate-x-1/2 left-1/2
+          ${
+            position === 'top'
+              ? '-translate-y-1 bottom-full mb-1'
+              : position === 'bottom'
+                ? 'translate-y-1 top-full mt-1'
+                : position === 'left'
+                  ? '-translate-x-full left-0 translate-y-[-50%] top-1/2'
+                  : 'translate-x-0 right-0 translate-y-[-50%] top-1/2'
+          }
+          pointer-events-none
+        `}
       >
-        {React.cloneElement(children, {
-          onMouseEnter: () => {
-            setIsVisible(true);
-            const typedChildren = children as React.ReactElement<ChildProps>;
-            if (typeof typedChildren.props.onMouseEnter === 'function') {
-              typedChildren.props.onMouseEnter();
+        {content}
+        <div
+          className={`
+            absolute w-2 h-2 bg-[var(--app-primary-background,#1f2937)] border-l border-b border-[var(--app-input-border,#374151)]
+            -rotate-45
+            ${
+              position === 'top'
+                ? 'top-full left-1/2 -translate-x-1/2 -translate-y-1/2'
+                : position === 'bottom'
+                  ? 'bottom-full left-1/2 -translate-x-1/2 translate-y-1/2'
+                  : position === 'left'
+                    ? 'right-full top-1/2 translate-x-1/2 -translate-y-1/2'
+                    : 'left-full top-1/2 -translate-x-1/2 -translate-y-1/2'
             }
-          },
-          onMouseLeave: () => {
-            setIsVisible(false);
-            const typedChildren = children as React.ReactElement<ChildProps>;
-            if (typeof typedChildren.props.onMouseLeave === 'function') {
-              typedChildren.props.onMouseLeave();
-            }
-          },
-          onFocus: () => {
-            setIsVisible(true);
-            const typedChildren = children as React.ReactElement<ChildProps>;
-            if (typeof typedChildren.props.onFocus === 'function') {
-              typedChildren.props.onFocus();
-            }
-          },
-          onBlur: () => {
-            setIsVisible(false);
-            const typedChildren = children as React.ReactElement<ChildProps>;
-            if (typeof typedChildren.props.onBlur === 'function') {
-              typedChildren.props.onBlur();
-            }
-          },
-          tabIndex:
-            (children as React.ReactElement<ChildProps>).props.tabIndex || 0,
-        })}
+          `}
+        />
       </div>
-      {isVisible && (
-        <div className={tooltipClass}>
-          {content}
-          <div className={arrowClass}></div>
-        </div>
-      )}
     </div>
-  );
-};
+  </div>
+);
 
 export default Tooltip;

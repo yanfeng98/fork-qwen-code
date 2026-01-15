@@ -5,7 +5,14 @@
  */
 
 export type { IconProps } from './types.js';
-export { FileIcon, FileListIcon, FolderIcon } from './FileIcons.js';
+
+// File icons
+export {
+  FileIcon,
+  FileListIcon,
+  SaveDocumentIcon,
+  FolderIcon,
+} from './FileIcons.js';
 
 // Navigation icons
 export {
@@ -29,6 +36,7 @@ export {
   SlashCommandIcon,
   LinkIcon,
   OpenDiffIcon,
+  UndoIcon,
 } from './EditIcons.js';
 
 // Status icons

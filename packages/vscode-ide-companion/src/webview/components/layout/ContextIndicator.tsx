@@ -5,7 +5,7 @@
  */
 
 import type React from 'react';
-import { Tooltip } from '../Tooltip.js';
+import { Tooltip } from '@qwen-code/webui';
 
 interface ContextUsage {
   percentLeft: number;

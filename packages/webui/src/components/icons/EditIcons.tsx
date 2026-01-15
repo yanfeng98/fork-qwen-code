@@ -213,3 +213,193 @@ export const OpenDiffIcon: React.FC<IconProps> = ({
     <path d="M13.5 7l-4-4v3h-6v2h6v3l4-4z" />
   </svg>
 );
+
+/**
+ * Undo edit icon (16x16)
+ * Used for undoing edits in diff views
+ */
+export const UndoIcon: React.FC<IconProps> = ({
+  size = 16,
+  className,
+  ...props
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 16 16"
+    fill="none"
+    width={size}
+    height={size}
+    className={className}
+    aria-hidden="true"
+    {...props}
+  >
+    <path
+      d="M9 10.6667L12.3333 14L9 17.3333M12.3333 14H4.66667C3.56112 14 2.66667 13.1056 2.66667 12V4.66667C2.66667 3.56112 3.56112 2.66667 4.66667 2.66667H13.3333C14.4389 2.66667 15.3333 3.56112 15.3333 4.66667V8.66667"
+      stroke="currentColor"
+      strokeWidth="1.33333"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+/**
+ * Redo edit icon (16x16)
+ * Used for redoing edits in diff views
+ */
+export const RedoIcon: React.FC<IconProps> = ({
+  size = 16,
+  className,
+  ...props
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 16 16"
+    fill="none"
+    width={size}
+    height={size}
+    className={className}
+    aria-hidden="true"
+    {...props}
+  >
+    <path
+      d="M7 10.6667L3.66667 14L7 17.3333M3.66667 14H11.3333C12.4389 14 13.3333 13.1056 13.3333 12V4.66667C13.3333 3.56112 12.4389 2.66667 11.3333 2.66667H2.66667C1.56112 2.66667 0.666667 3.56112 0.666667 4.66667V8.66667"
+      stroke="currentColor"
+      strokeWidth="1.33333"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+/**
+ * Replace all icon (16x16)
+ * Used for replacing all occurrences in search/replace
+ */
+export const ReplaceAllIcon: React.FC<IconProps> = ({
+  size = 16,
+  className,
+  ...props
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 16 16"
+    fill="none"
+    width={size}
+    height={size}
+    className={className}
+    aria-hidden="true"
+    {...props}
+  >
+    <path
+      d="M11.3333 5.33333L14 8L11.3333 10.6667M14 8H6C3.79086 8 2 9.79086 2 12M2.66667 10.6667L0 8L2.66667 5.33333M2.66667 8H10C12.2091 8 14 6.20914 14 4V4"
+      stroke="currentColor"
+      strokeWidth="1.33333"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+/**
+ * Copy icon (16x16)
+ * Used for copying content
+ */
+export const CopyIcon: React.FC<IconProps> = ({
+  size = 16,
+  className,
+  ...props
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 16 16"
+    fill="none"
+    width={size}
+    height={size}
+    className={className}
+    aria-hidden="true"
+    {...props}
+  >
+    <rect
+      x="4.6665"
+      y="4"
+      width="8"
+      height="8"
+      rx="1.33333"
+      stroke="currentColor"
+      strokeWidth="1.33333"
+    />
+    <path
+      d="M6 6H5.33333C4.04767 6 3 7.04767 3 8.33333V10.6667C3 11.9523 4.04767 13 5.33333 13H7.66667C8.95233 13 10 11.9523 10 10.6667V10"
+      stroke="currentColor"
+      strokeWidth="1.33333"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+/**
+ * Paste icon (16x16)
+ * Used for pasting content
+ */
+export const PasteIcon: React.FC<IconProps> = ({
+  size = 16,
+  className,
+  ...props
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 16 16"
+    fill="none"
+    width={size}
+    height={size}
+    className={className}
+    aria-hidden="true"
+    {...props}
+  >
+    <path
+      d="M5.3335 4.66669V4.00002C5.3335 3.62305 5.48315 3.26159 5.75181 2.99293C6.02047 2.72427 6.38193 2.57467 6.7589 2.57467H9.2589C9.63587 2.57467 9.99733 2.72427 10.266 2.99293C10.5346 3.26159 10.6842 3.62305 10.6842 4.00002V4.66669M12.0176 4.66669H12.6842C13.0612 4.66669 13.4227 4.81628 13.6913 5.08494C13.96 5.3536 14.1096 5.71506 14.1096 6.09203V10.9254C14.1096 11.3023 13.96 11.6638 13.6913 11.9325C13.4227 12.2011 13.0612 12.3507 12.6842 12.3507H3.35089C2.97392 12.3507 2.61246 12.2011 2.3438 11.9325C2.07514 11.6638 1.92554 11.3023 1.92554 10.9254V6.09203C1.92554 5.71506 2.07514 5.3536 2.3438 5.08494C2.61246 4.81628 2.97392 4.66669 3.35089 4.66669H4.01756M12.0176 4.66669V7.33335C12.0176 8.06973 11.7253 8.77607 11.2093 9.29205C10.6933 9.80803 9.98698 10.0999 9.2506 10.0999H6.77573C6.03935 10.0999 5.33301 9.80803 4.81703 9.29205C4.30105 8.77607 4.00918 8.06973 4.00918 7.33335V4.66669M12.0176 4.66669H4.01756"
+      stroke="currentColor"
+      strokeWidth="1.33333"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+/**
+ * Select all icon (16x16)
+ * Used for selecting all content
+ */
+export const SelectAllIcon: React.FC<IconProps> = ({
+  size = 16,
+  className,
+  ...props
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 16 16"
+    fill="none"
+    width={size}
+    height={size}
+    className={className}
+    aria-hidden="true"
+    {...props}
+  >
+    <rect
+      x="2.6665"
+      y="2"
+      width="10.6667"
+      height="12"
+      rx="1.33333"
+      stroke="currentColor"
+      strokeWidth="1.33333"
+    />
+    <path
+      d="M5.3335 5.33333H8.00016M5.3335 8H10.6668M5.3335 10.6667H10.6668"
+      stroke="currentColor"
+      strokeWidth="1.33333"
+      strokeLinecap="round"
+    />
+  </svg>
+);
