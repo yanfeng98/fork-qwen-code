@@ -18,6 +18,7 @@ import type {
 } from './types.js';
 import { SkillError, SkillErrorCode } from './types.js';
 import type { Config } from '../config/config.js';
+import { validateConfig } from './skill-load.js';
 
 const QWEN_CONFIG_DIR = '.qwen';
 const SKILLS_CONFIG_DIR = 'skills';
@@ -166,46 +167,7 @@ export class SkillManager {
    * @returns Validation result
    */
   validateConfig(config: Partial<SkillConfig>): SkillValidationResult {
-    const errors: string[] = [];
-    const warnings: string[] = [];
-
-    // Check required fields
-    if (typeof config.name !== 'string') {
-      errors.push('Missing or invalid "name" field');
-    } else if (config.name.trim() === '') {
-      errors.push('"name" cannot be empty');
-    }
-
-    if (typeof config.description !== 'string') {
-      errors.push('Missing or invalid "description" field');
-    } else if (config.description.trim() === '') {
-      errors.push('"description" cannot be empty');
-    }
-
-    // Validate allowedTools if present
-    if (config.allowedTools !== undefined) {
-      if (!Array.isArray(config.allowedTools)) {
-        errors.push('"allowedTools" must be an array');
-      } else {
-        for (const tool of config.allowedTools) {
-          if (typeof tool !== 'string') {
-            errors.push('"allowedTools" must contain only strings');
-            break;
-          }
-        }
-      }
-    }
-
-    // Warn if body is empty
-    if (!config.body || config.body.trim() === '') {
-      warnings.push('Skill body is empty');
-    }
-
-    return {
-      isValid: errors.length === 0,
-      errors,
-      warnings,
-    };
+    return validateConfig(config);
   }
 
   /**
@@ -411,9 +373,17 @@ export class SkillManager {
       return [];
     }
 
-    // if (level === 'extension') {
-    //   const extensions = this.config.getExtensions();
-    // }
+    if (level === 'extension') {
+      const extensions = this.config.getExtensions();
+      const skills: SkillConfig[] = [];
+      for (const extension of extensions) {
+        extension.skills?.forEach((skill) => {
+          skills.push(skill);
+        });
+      }
+
+      return skills;
+    }
 
     const baseDir = this.getSkillsBaseDir(level);
     const skills = await this.loadSkillsFromDir(baseDir, level);

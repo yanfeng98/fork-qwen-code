@@ -764,6 +764,8 @@ describe('extensionManager utility functions', () => {
         config,
         requestConsent,
         [],
+        [],
+        [],
         previousConfig,
       );
 
@@ -785,6 +787,8 @@ describe('extensionManager utility functions', () => {
       await maybeRequestConsentOrFail(
         config,
         requestConsent,
+        [],
+        [],
         [],
         previousConfig,
       );

@@ -474,8 +474,6 @@ export class Config {
   private readonly listExtensions: boolean;
   private readonly overrideExtensions?: string[];
 
-  fallbackModelHandler?: FallbackModelHandler;
-  private quotaErrorOccurred: boolean = false;
   private readonly summarizeToolOutput:
     | Record<string, SummarizeToolOutputSettings>
     | undefined;
@@ -663,6 +661,11 @@ export class Config {
     this.chatRecordingService = this.chatRecordingEnabled
       ? new ChatRecordingService(this)
       : undefined;
+    this.extensionManager = new ExtensionManager({
+      workspaceDir: this.targetDir,
+      enabledExtensionOverrides: this.overrideExtensions,
+      isWorkspaceTrusted: this.isTrustedFolder(),
+    });
   }
 
   /**
@@ -681,6 +684,9 @@ export class Config {
       await this.getGitService();
     }
     this.promptRegistry = new PromptRegistry();
+    this.extensionManager.setConfig(this);
+    await this.extensionManager.refreshCache();
+
     this.subagentManager = new SubagentManager(this);
     this.skillManager = new SkillManager(this);
     await this.skillManager.startWatching();
@@ -689,13 +695,6 @@ export class Config {
     if (this.sessionSubagents.length > 0) {
       this.subagentManager.loadSessionSubagents(this.sessionSubagents);
     }
-
-    this.extensionManager = new ExtensionManager({
-      workspaceDir: this.targetDir,
-      enabledExtensionOverrides: this.overrideExtensions,
-      config: this,
-      isWorkspaceTrusted: this.isTrustedFolder(),
-    });
 
     await this.extensionManager.refreshCache();
     const activeExtensions = await this.extensionManager

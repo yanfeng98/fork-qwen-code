@@ -37,10 +37,7 @@ import {
 import type { LoadExtensionContext } from './variableSchema.js';
 import { Override, type AllExtensionsEnablementConfig } from './override.js';
 import chalk from 'chalk';
-import {
-  installFromMarketplace,
-  parseMarketplaceSource,
-} from './marketplace.js';
+import { parseMarketplaceSource } from './marketplace.js';
 import {
   isGeminiExtensionConfig,
   convertGeminiExtensionPackage,
@@ -63,6 +60,9 @@ import {
   ExtensionUpdateEvent,
 } from '../telemetry/types.js';
 import { stat } from 'node:fs/promises';
+import { loadSkillsFromDir } from '../skills/skill-load.js';
+import { convertClaudePluginPackage } from './claude-converter.js';
+import { loadSubagentFromDir } from '../subagents/subagent-manager.js';
 
 // ============================================================================
 // Types and Interfaces
@@ -82,13 +82,14 @@ export interface Extension {
   isActive: boolean;
   path: string;
   config: ExtensionConfig;
-
   installMetadata?: ExtensionInstallMetadata;
+
   mcpServers?: Record<string, MCPServerConfig>;
   contextFiles: string[];
   excludeTools?: string[];
   settings?: ExtensionSetting[];
   resolvedSettings?: ResolvedExtensionSetting[];
+  commands?: string[];
   skills?: SkillConfig[];
   agents?: SubagentConfig[];
 }
@@ -243,7 +244,10 @@ async function loadCommandsFromDir(
   }
 }
 
-async function convertGeminiOrClaudeExtension(extensionDir: string) {
+async function convertGeminiOrClaudeExtension(
+  extensionDir: string,
+  pluginName?: string,
+) {
   let newExtensionDir = extensionDir;
   const configFilePath = path.join(extensionDir, EXTENSIONS_CONFIG_FILENAME);
   if (fs.existsSync(configFilePath)) {
@@ -251,6 +255,10 @@ async function convertGeminiOrClaudeExtension(extensionDir: string) {
   } else if (isGeminiExtensionConfig(extensionDir)) {
     newExtensionDir = (await convertGeminiExtensionPackage(extensionDir))
       .convertedDir;
+  } else if (pluginName) {
+    newExtensionDir = (
+      await convertClaudePluginPackage(extensionDir, pluginName)
+    ).convertedDir;
   }
   // Claude plugin conversion not yet implemented
   return newExtensionDir;
@@ -296,6 +304,10 @@ export class ExtensionManager {
     this.config = options.config;
     this.telemetrySettings = options.telemetrySettings;
     this.isWorkspaceTrusted = options.isWorkspaceTrusted;
+  }
+
+  setConfig(config: Config): void {
+    this.config = config;
   }
 
   setRequestConsent(
@@ -622,20 +634,23 @@ export class ExtensionManager {
         );
       }
 
+      extension.commands = await loadCommandsFromDir(
+        `${effectiveExtensionPath}/commands`,
+        extension.name,
+      );
+
       extension.contextFiles = getContextFileNames(config)
         .map((contextFileName) =>
           path.join(effectiveExtensionPath, contextFileName),
         )
         .filter((contextFilePath) => fs.existsSync(contextFilePath));
 
-      if (this.config) {
-        extension.skills = await this.config
-          .getSkillManager()
-          .loadSkillsFromDir(effectiveExtensionPath, 'extension');
-        extension.agents = await this.config
-          .getSubagentManager()
-          .loadSubagentFromDir(effectiveExtensionPath, 'extension');
-      }
+      extension.skills = await loadSkillsFromDir(
+        `${effectiveExtensionPath}/skills`,
+      );
+      extension.agents = await loadSubagentFromDir(
+        `${effectiveExtensionPath}/agents`,
+      );
 
       return extension;
     } catch (e) {
@@ -738,6 +753,7 @@ export class ExtensionManager {
       }
 
       let tempDir: string | undefined;
+      let claudePluginName: string | undefined;
 
       // Handle marketplace installation
       if (installMetadata.type === 'marketplace') {
@@ -751,16 +767,20 @@ export class ExtensionManager {
         }
 
         tempDir = await ExtensionStorage.createTmpDir();
-        const marketplaceResult = await installFromMarketplace({
-          marketplaceUrl: marketplaceParsed.marketplaceSource,
-          pluginName: marketplaceParsed.pluginName,
-          tempDir,
-          requestConsent: requestConsent || this.requestConsent,
-        });
-
-        newExtensionConfig = marketplaceResult.config;
-        localSourcePath = marketplaceResult.sourcePath;
-        installMetadata = marketplaceResult.installMetadata;
+        try {
+          await downloadFromGitHubRelease(
+            {
+              source: marketplaceParsed.marketplaceSource,
+              type: 'git',
+            },
+            tempDir,
+          );
+        } catch (_error) {
+          await cloneFromGit(installMetadata, tempDir);
+          installMetadata.type = 'git';
+        }
+        localSourcePath = tempDir;
+        claudePluginName = marketplaceParsed.pluginName;
       } else if (
         installMetadata.type === 'git' ||
         installMetadata.type === 'github-release'
@@ -788,13 +808,14 @@ export class ExtensionManager {
       }
 
       try {
-        localSourcePath = await convertGeminiOrClaudeExtension(localSourcePath);
-        if (!newExtensionConfig) {
-          newExtensionConfig = this.loadExtensionConfig({
-            extensionDir: localSourcePath,
-            workspaceDir: currentDir,
-          });
-        }
+        localSourcePath = await convertGeminiOrClaudeExtension(
+          localSourcePath,
+          claudePluginName,
+        );
+        newExtensionConfig = this.loadExtensionConfig({
+          extensionDir: localSourcePath,
+          workspaceDir: currentDir,
+        });
 
         if (isUpdate && installMetadata.autoUpdate) {
           const oldSettings = new Set(
@@ -833,12 +854,24 @@ export class ExtensionManager {
           `${localSourcePath}/commands`,
           newExtensionConfig.name,
         );
+        const previousCommands = previous?.commands ?? [];
+
+        const skills = await loadSkillsFromDir(`${localSourcePath}/skills`);
+        const previousSkills = previous?.skills ?? [];
+
+        const agents = await loadSubagentFromDir(`${localSourcePath}/agents`);
+        const previousAgents = previous?.agents ?? [];
 
         await maybeRequestConsentOrFail(
           newExtensionConfig,
           requestConsent || this.requestConsent,
           commands,
+          skills,
+          agents,
           previousExtensionConfig,
+          previousCommands,
+          previousSkills,
+          previousAgents,
         );
 
         const extensionStorage = new ExtensionStorage(newExtensionName);
@@ -873,7 +906,8 @@ export class ExtensionManager {
         if (
           installMetadata.type === 'local' ||
           installMetadata.type === 'git' ||
-          installMetadata.type === 'github-release'
+          installMetadata.type === 'github-release' ||
+          installMetadata.type === 'marketplace'
         ) {
           await copyExtension(localSourcePath, destinationPath);
         }
@@ -1041,6 +1075,12 @@ export class ExtensionManager {
         output += `\n  ${contextFile}`;
       });
     }
+    if (extension.commands && extension.commands.length > 0) {
+      output += `\n Commands:`;
+      extension.commands.forEach((command) => {
+        output += `\n  /${command}`;
+      });
+    }
     if (extension.config.mcpServers) {
       output += `\n MCP servers:`;
       Object.keys(extension.config.mcpServers).forEach((key) => {
@@ -1188,6 +1228,12 @@ export class ExtensionManager {
       )
     ).filter((updateInfo) => !!updateInfo);
   }
+
+  async refreshMemory(): Promise<void> {
+    if (!this.config) return;
+    this.config.getSkillManager().refreshCache();
+    this.config.getSubagentManager().refreshCache();
+  }
 }
 
 export async function copyExtension(
@@ -1234,7 +1280,9 @@ export function validateName(name: string) {
  */
 export function extensionConsentString(
   extensionConfig: ExtensionConfig,
-  commands?: string[],
+  commands: string[] = [],
+  skills: SkillConfig[] = [],
+  subagents: SubagentConfig[] = [],
 ): string {
   const output: string[] = [];
   const mcpServerEntries = Object.entries(extensionConfig.mcpServers || {});
@@ -1268,6 +1316,18 @@ export function extensionConsentString(
       `This extension will exclude the following core tools: ${extensionConfig.excludeTools}`,
     );
   }
+  if (skills.length > 0) {
+    output.push('This extension will install the following skills:');
+    for (const skill of skills) {
+      output.push(`  * ${chalk.bold(skill.name)}: ${skill.description}`);
+    }
+  }
+  if (subagents.length > 0) {
+    output.push('This extension will install the following subagents:');
+    for (const subagent of subagents) {
+      output.push(`  * ${chalk.bold(subagent.name)}: ${subagent.description}`);
+    }
+  }
   return output.join('\n');
 }
 
@@ -1284,12 +1344,25 @@ export async function maybeRequestConsentOrFail(
   extensionConfig: ExtensionConfig,
   requestConsent: (consent: string) => Promise<boolean>,
   commands: string[],
+  skills: SkillConfig[] = [],
+  subagents: SubagentConfig[] = [],
   previousExtensionConfig?: ExtensionConfig,
+  previousCommands: string[] = [],
+  previousSkills: SkillConfig[] = [],
+  previousSubagents: SubagentConfig[] = [],
 ) {
-  const extensionConsent = extensionConsentString(extensionConfig, commands);
+  const extensionConsent = extensionConsentString(
+    extensionConfig,
+    commands,
+    skills,
+    subagents,
+  );
   if (previousExtensionConfig) {
     const previousExtensionConsent = extensionConsentString(
       previousExtensionConfig,
+      previousCommands,
+      previousSkills,
+      previousSubagents,
     );
     if (previousExtensionConsent === extensionConsent) {
       return;

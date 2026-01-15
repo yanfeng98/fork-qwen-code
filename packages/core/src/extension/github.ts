@@ -303,7 +303,22 @@ export async function downloadFromGitHubRelease(
         const hasGeminiConfig = fs.existsSync(
           path.join(destination, lonelyDir.name, 'gemini-extension.json'),
         );
-        if (hasQwenConfig || hasGeminiConfig) {
+        const hasMarketplaceConfig = fs.existsSync(
+          path.join(
+            destination,
+            lonelyDir.name,
+            '.claude-plugin/marketplace.json',
+          ),
+        );
+        const hasClaudePluginConfig = fs.existsSync(
+          path.join(destination, lonelyDir.name, '.claude-plugin/plugin.json'),
+        );
+        if (
+          hasQwenConfig ||
+          hasGeminiConfig ||
+          hasMarketplaceConfig ||
+          hasClaudePluginConfig
+        ) {
           const dirPathToExtract = path.join(destination, lonelyDir.name);
           const extractedDirFiles = await fs.promises.readdir(dirPathToExtract);
           for (const file of extractedDirFiles) {

@@ -111,7 +111,7 @@ export async function convertGeminiExtensionPackage(
  * @param source Source directory path
  * @param destination Destination directory path
  */
-async function copyDirectory(
+export async function copyDirectory(
   source: string,
   destination: string,
 ): Promise<void> {
