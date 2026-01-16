@@ -374,7 +374,11 @@ export class ExtensionManager {
   /**
    * Enables an extension at the specified scope.
    */
-  enableExtension(name: string, scope: SettingScope, cwd?: string): void {
+  async enableExtension(
+    name: string,
+    scope: SettingScope,
+    cwd?: string,
+  ): Promise<void> {
     const currentDir = cwd ?? this.workspaceDir;
     if (
       scope === SettingScope.System ||
@@ -382,7 +386,7 @@ export class ExtensionManager {
     ) {
       throw new Error('System and SystemDefaults scopes are not supported.');
     }
-    const extension = this.loadExtensionByName(name, currentDir);
+    const extension = await this.loadExtensionByName(name, currentDir);
     if (!extension) {
       throw new Error(`Extension with name ${name} does not exist.`);
     }
@@ -391,12 +395,17 @@ export class ExtensionManager {
     this.enableByPath(name, true, scopePath);
     const config = getTelemetryConfig(currentDir, this.telemetrySettings);
     logExtensionEnable(config, new ExtensionEnableEvent(name, scope));
+    await this.refreshTools(extension);
   }
 
   /**
    * Disables an extension at the specified scope.
    */
-  disableExtension(name: string, scope: SettingScope, cwd?: string): void {
+  async disableExtension(
+    name: string,
+    scope: SettingScope,
+    cwd?: string,
+  ): Promise<void> {
     const currentDir = cwd ?? this.workspaceDir;
     const config = getTelemetryConfig(currentDir, this.telemetrySettings);
     if (
@@ -405,7 +414,7 @@ export class ExtensionManager {
     ) {
       throw new Error('System and SystemDefaults scopes are not supported.');
     }
-    const extension = this.loadExtensionByName(name, currentDir);
+    const extension = await this.loadExtensionByName(name, currentDir);
     if (!extension) {
       throw new Error(`Extension with name ${name} does not exist.`);
     }
@@ -413,6 +422,7 @@ export class ExtensionManager {
       scope === SettingScope.Workspace ? currentDir : os.homedir();
     this.disableByPath(name, true, scopePath);
     logExtensionDisable(config, new ExtensionDisableEvent(name, scope));
+    await this.refreshTools(extension);
   }
 
   /**
@@ -936,6 +946,7 @@ export class ExtensionManager {
               'success',
             ),
           );
+          this.refreshTools(extension);
         } else {
           logExtensionInstallEvent(
             telemetryConfig,
@@ -952,7 +963,11 @@ export class ExtensionManager {
         if (tempDir) {
           await fs.promises.rm(tempDir, { recursive: true, force: true });
         }
-        if (localSourcePath !== tempDir) {
+        if (
+          localSourcePath !== tempDir &&
+          installMetadata.type !== 'link' &&
+          installMetadata.type !== 'local'
+        ) {
           await fs.promises.rm(localSourcePath, {
             recursive: true,
             force: true,
@@ -1231,8 +1246,26 @@ export class ExtensionManager {
 
   async refreshMemory(): Promise<void> {
     if (!this.config) return;
+    // refresh mcp servers
+    // FIXME: restart all mcp servers, can be optimized by only restarting changed ones and move to 'refreshTools'
+    this.config.getToolRegistry().restartMcpServers();
+    // refresh skills
     this.config.getSkillManager().refreshCache();
+    // refresh subagents
     this.config.getSubagentManager().refreshCache();
+    // refresh context files
+    this.config.refreshHierarchicalMemory();
+  }
+
+  async refreshTools(extension: Extension): Promise<void> {
+    if (!this.config) return;
+    if (extension.excludeTools && extension.excludeTools.length > 0) {
+      const geminiClient = this.config?.getGeminiClient();
+      if (geminiClient?.isInitialized()) {
+        await geminiClient.setTools();
+      }
+    }
+    this.refreshMemory();
   }
 }
 

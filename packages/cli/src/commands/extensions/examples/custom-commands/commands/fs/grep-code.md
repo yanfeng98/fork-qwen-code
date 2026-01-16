@@ -1,6 +1,3 @@
-prompt = """
 Please summarize the findings for the pattern `{{args}}`.
 
 Search Results:
-!{grep -r {{args}} .}
-"""
