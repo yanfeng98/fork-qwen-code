@@ -17,11 +17,7 @@ This guide shows you how to create, use, and manage Agent Skills in **Qwen Code*
 ### Via CLI flag
 
 ```bash
-# Long form
 qwen --experimental-skills
-
-# Short form
-qwen -x
 ```
 
 ### Via settings.json
@@ -31,7 +27,7 @@ Add to your `~/.qwen/settings.json` or project's `.qwen/settings.json`:
 ```json
 {
   "tools": {
-    "experimental":  {
+    "experimental": {
       "skills": true
     }
   }

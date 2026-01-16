@@ -982,8 +982,8 @@ const SETTINGS_SCHEMA = {
         showInDialog: true,
       },
       experimental: {
-        type:  'object',
-        label:  'Experimental',
+        type: 'object',
+        label: 'Experimental',
         category: 'Tools',
         requiresRestart: true,
         default: {},
@@ -997,7 +997,7 @@ const SETTINGS_SCHEMA = {
             requiresRestart: true,
             default: false,
             description:
-              'Enable experimental Agent Skills feature. When enabled, Qwen Code can use Skills from . qwen/skills/ and ~/. qwen/skills/.',
+              'Enable experimental Agent Skills feature. When enabled, Qwen Code can use Skills from .qwen/skills/ and ~/.qwen/skills/.',
             showInDialog: true,
           },
         },
