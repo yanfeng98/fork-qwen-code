@@ -2,20 +2,53 @@
  * @license
  * Copyright 2025 Qwen Team
  * SPDX-License-Identifier: Apache-2.0
+ *
+ * CompletionMenu component - Autocomplete dropdown menu
+ * Supports keyboard navigation and mouse interaction
  */
 
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
-import type { CompletionItem } from '../../../types/completionItemTypes.js';
+import type { CompletionItem } from '../../types/completion.js';
 
-interface CompletionMenuProps {
+/**
+ * Props for CompletionMenu component
+ */
+export interface CompletionMenuProps {
+  /** List of completion items to display */
   items: CompletionItem[];
+  /** Callback when an item is selected */
   onSelect: (item: CompletionItem) => void;
+  /** Callback when menu should close */
   onClose: () => void;
+  /** Optional section title */
   title?: string;
+  /** Initial selected index */
   selectedIndex?: number;
 }
 
+/**
+ * CompletionMenu component
+ *
+ * Features:
+ * - Keyboard navigation (Arrow Up/Down, Enter, Escape)
+ * - Mouse hover selection
+ * - Click outside to close
+ * - Auto-scroll to selected item
+ * - Smooth enter animation
+ *
+ * @example
+ * ```tsx
+ * <CompletionMenu
+ *   items={[
+ *     { id: '1', label: 'file.ts', type: 'file' },
+ *     { id: '2', label: 'folder', type: 'folder' }
+ *   ]}
+ *   onSelect={(item) => console.log('Selected:', item)}
+ *   onClose={() => console.log('Closed')}
+ * />
+ * ```
+ */
 export const CompletionMenu: React.FC<CompletionMenuProps> = ({
   items,
   onSelect,
@@ -28,7 +61,13 @@ export const CompletionMenu: React.FC<CompletionMenuProps> = ({
   // Mount state to drive a simple Tailwind transition (replaces CSS keyframes)
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => setSelected(selectedIndex), [selectedIndex]);
+  useEffect(() => {
+    if (!items.length) {
+      return;
+    }
+    const nextIndex = Math.min(Math.max(selectedIndex, 0), items.length - 1);
+    setSelected(nextIndex);
+  }, [items.length, selectedIndex]);
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
@@ -90,7 +129,8 @@ export const CompletionMenu: React.FC<CompletionMenuProps> = ({
   return (
     <div
       ref={containerRef}
-      role="menu"
+      role="listbox"
+      aria-label={title ? `${title} suggestions` : 'Suggestions'}
       className={[
         'completion-menu',
         // Positioning and container styling
@@ -124,7 +164,8 @@ export const CompletionMenu: React.FC<CompletionMenuProps> = ({
             <div
               key={item.id}
               data-index={index}
-              role="menuitem"
+              role="option"
+              aria-selected={isActive}
               onClick={() => onSelect(item)}
               onMouseEnter={() => setSelected(index)}
               className={[

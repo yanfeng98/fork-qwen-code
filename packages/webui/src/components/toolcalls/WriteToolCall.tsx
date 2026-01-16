@@ -9,11 +9,11 @@
 import type React from 'react';
 import {
   ToolCallContainer,
-  FileLink,
   groupContent,
   mapToolStatusToContainerStatus,
-} from '@qwen-code/webui';
-import type { BaseToolCallProps } from '@qwen-code/webui';
+} from './shared/index.js';
+import type { BaseToolCallProps } from './shared/index.js';
+import { FileLink } from '../layout/FileLink.js';
 
 /**
  * Specialized component for Write tool calls
@@ -24,9 +24,6 @@ export const WriteToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
 
   // Group content by type
   const { errors, textOutputs } = groupContent(content);
-
-  // Extract filename from path
-  // const getFileName = (path: string): string => path.split('/').pop() || path;
 
   // Extract content to write from rawInput
   let writeContent = '';

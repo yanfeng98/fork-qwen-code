@@ -7,16 +7,20 @@
  */
 
 import type React from 'react';
-import { shouldShowToolCall } from '@qwen-code/webui';
+import {
+  shouldShowToolCall,
+  // Pure UI ToolCall components from webui
+  GenericToolCall,
+  ThinkToolCall,
+  EditToolCall,
+  WriteToolCall,
+  SearchToolCall,
+  UpdatedPlanToolCall,
+} from '@qwen-code/webui';
 import type { BaseToolCallProps } from '@qwen-code/webui';
-import { GenericToolCall } from './GenericToolCall.js';
+// VSCode-specific components (have platform dependencies)
 import { ReadToolCall } from './Read/ReadToolCall.js';
-import { WriteToolCall } from './Write/WriteToolCall.js';
-import { EditToolCall } from './Edit/EditToolCall.js';
 import { ShellToolCall } from './Shell/ShellToolCall.js';
-import { UpdatedPlanToolCall } from './UpdatedPlan/UpdatedPlanToolCall.js';
-import { SearchToolCall } from './Search/SearchToolCall.js';
-import { ThinkToolCall } from './Think/ThinkToolCall.js';
 
 /**
  * Factory function that returns the appropriate tool call component based on kind

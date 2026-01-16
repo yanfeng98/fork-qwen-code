@@ -7,18 +7,20 @@
  */
 
 import type React from 'react';
-import { groupContent, safeTitle } from '@qwen-code/webui';
+import { groupContent, safeTitle } from './shared/index.js';
 import type {
   BaseToolCallProps,
   ToolCallContainerProps,
   ToolCallStatus,
-} from '@qwen-code/webui';
+  PlanEntry,
+  PlanEntryStatus,
+} from './shared/index.js';
 import { CheckboxDisplay } from './CheckboxDisplay.js';
-import type { PlanEntry } from '../../../../../types/chatTypes.js';
 
-type EntryStatus = 'pending' | 'in_progress' | 'completed';
-
-export const ToolCallContainer: React.FC<ToolCallContainerProps> = ({
+/**
+ * Custom container for UpdatedPlanToolCall with specific styling
+ */
+const PlanToolCallContainer: React.FC<ToolCallContainerProps> = ({
   label,
   status = 'success',
   children,
@@ -47,6 +49,9 @@ export const ToolCallContainer: React.FC<ToolCallContainerProps> = ({
   </div>
 );
 
+/**
+ * Map tool status to bullet status
+ */
 const mapToolStatusToBullet = (
   status: ToolCallStatus,
 ): 'success' | 'error' | 'warning' | 'loading' | 'default' => {
@@ -64,7 +69,9 @@ const mapToolStatusToBullet = (
   }
 };
 
-// Parse plan entries with - [ ] / - [x] from text as much as possible
+/**
+ * Parse plan entries with - [ ] / - [x] from text
+ */
 const parsePlanEntries = (textOutputs: string[]): PlanEntry[] => {
   const text = textOutputs.join('\n');
   const lines = text.split(/\r?\n/);
@@ -77,7 +84,7 @@ const parsePlanEntries = (textOutputs: string[]): PlanEntry[] => {
     if (m) {
       const mark = m[1];
       const title = m[2].trim();
-      const status: EntryStatus =
+      const status: PlanEntryStatus =
         mark === 'x' || mark === 'X'
           ? 'completed'
           : mark === '-' || mark === '*'
@@ -89,7 +96,7 @@ const parsePlanEntries = (textOutputs: string[]): PlanEntry[] => {
     }
   }
 
-  // If no match is found, fall back to treating non-empty lines as pending items
+  // Fallback: treat non-empty lines as pending items
   if (entries.length === 0) {
     for (const line of lines) {
       const title = line.trim();
@@ -115,18 +122,17 @@ export const UpdatedPlanToolCall: React.FC<BaseToolCallProps> = ({
   // Error-first display
   if (errors.length > 0) {
     return (
-      <ToolCallContainer label="TodoWrite" status="error">
+      <PlanToolCallContainer label="TodoWrite" status="error">
         {errors.join('\n')}
-      </ToolCallContainer>
+      </PlanToolCallContainer>
     );
   }
 
   const entries = parsePlanEntries(textOutputs);
-
   const label = safeTitle(toolCall.title) || 'TodoWrite';
 
   return (
-    <ToolCallContainer
+    <PlanToolCallContainer
       label={label}
       status={mapToolStatusToBullet(status)}
       className="update-plan-toolcall"
@@ -149,7 +155,6 @@ export const UpdatedPlanToolCall: React.FC<BaseToolCallProps> = ({
                   indeterminate={isIndeterminate}
                 />
               </label>
-
               <div
                 className={[
                   'vo flex-1 text-xs leading-[1.5] text-[var(--app-primary-foreground)]',
@@ -164,6 +169,6 @@ export const UpdatedPlanToolCall: React.FC<BaseToolCallProps> = ({
           );
         })}
       </ul>
-    </ToolCallContainer>
+    </PlanToolCallContainer>
   );
 };

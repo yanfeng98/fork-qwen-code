@@ -27,6 +27,25 @@ export { default as Main } from './components/layout/Main';
 export { default as Footer } from './components/layout/Footer';
 export { FileLink } from './components/layout/FileLink';
 export type { FileLinkProps } from './components/layout/FileLink';
+export { ChatHeader } from './components/layout/ChatHeader';
+export type { ChatHeaderProps } from './components/layout/ChatHeader';
+export { ContextIndicator } from './components/layout/ContextIndicator';
+export type {
+  ContextIndicatorProps,
+  ContextUsage,
+} from './components/layout/ContextIndicator';
+export { CompletionMenu } from './components/layout/CompletionMenu';
+export type { CompletionMenuProps } from './components/layout/CompletionMenu';
+export { SessionSelector } from './components/layout/SessionSelector';
+export type { SessionSelectorProps } from './components/layout/SessionSelector';
+export { EmptyState } from './components/layout/EmptyState';
+export type { EmptyStateProps } from './components/layout/EmptyState';
+export { InputForm, getEditModeIcon } from './components/layout/InputForm';
+export type {
+  InputFormProps,
+  EditModeInfo,
+  EditModeIconType,
+} from './components/layout/InputForm';
 
 // Message components
 export { default as Message } from './components/messages/Message';
@@ -78,6 +97,14 @@ export {
   groupContent,
   hasToolCallOutput,
   mapToolStatusToContainerStatus,
+  // Business ToolCall components
+  ThinkToolCall,
+  GenericToolCall,
+  EditToolCall,
+  WriteToolCall,
+  SearchToolCall,
+  UpdatedPlanToolCall,
+  CheckboxDisplay,
 } from './components/toolcalls';
 export type {
   ToolCallContainerProps,
@@ -86,6 +113,8 @@ export type {
   BaseToolCallProps,
   GroupedContent,
   ContainerStatus,
+  PlanEntryStatus,
+  CheckboxDisplayProps,
 } from './components/toolcalls';
 
 // Icons
@@ -155,3 +184,8 @@ export type { ChatMessage, MessageRole, PlanEntry } from './types/chat';
 export type { ToolCallContentItem, ToolCallUpdate } from './types/toolCall';
 // Re-export ToolCallStatus and ToolCallLocation for backward compatibility
 export type { ToolCallStatus, ToolCallLocation } from './components/toolcalls';
+export type { CompletionItem, CompletionItemType } from './types/completion';
+
+// Utils
+export { groupSessionsByDate, getTimeAgo } from './utils/sessionGrouping';
+export type { SessionGroup } from './utils/sessionGrouping';

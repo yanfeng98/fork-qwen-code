@@ -4,8 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/* Import CSS variables BEFORE Tailwind so they're available */
+@import '../src/styles/variables.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import '../src/styles/variables.css';
+/* Ensure text color is inherited properly in Storybook */
+body {
+  color: var(--app-primary-foreground);
+}

@@ -14,8 +14,8 @@ import {
   LocationsList,
   safeTitle,
   groupContent,
-} from '@qwen-code/webui';
-import type { BaseToolCallProps } from '@qwen-code/webui';
+} from './shared/index.js';
+import type { BaseToolCallProps } from './shared/index.js';
 
 /**
  * Generic tool call component that can display any tool call type
@@ -26,7 +26,9 @@ export const GenericToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
   const { kind, title, content, locations, toolCallId } = toolCall;
   const operationText = safeTitle(title);
 
-  // Map tool call kind to appropriate display name
+  /**
+   * Map tool call kind to appropriate display name
+   */
   const getDisplayLabel = (): string => {
     const normalizedKind = kind.toLowerCase();
     if (normalizedKind === 'task') {

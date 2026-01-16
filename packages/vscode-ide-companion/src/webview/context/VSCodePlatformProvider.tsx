@@ -12,6 +12,7 @@ import { useMemo, useCallback, useEffect, useRef } from 'react';
 import { PlatformProvider } from '@qwen-code/webui';
 import type { PlatformContextValue } from '@qwen-code/webui';
 import { useVSCode } from '../hooks/useVSCode.js';
+import { generateIconUrl } from '../utils/resourceUrl.js';
 
 /**
  * Props for VSCodePlatformProvider
@@ -80,6 +81,9 @@ export const VSCodePlatformProvider: React.FC<VSCodePlatformProviderProps> = ({
     }
   }, []);
 
+  // Get resource URL handler (for icons and other assets)
+  const getResourceUrl = useCallback((resourceName: string) => generateIconUrl(resourceName) || undefined, []);
+
   // Subscribe to messages
   const onMessage = useCallback((handler: (message: unknown) => void) => {
     messageHandlersRef.current.add(handler);
@@ -98,6 +102,7 @@ export const VSCodePlatformProvider: React.FC<VSCodePlatformProviderProps> = ({
       attachFile,
       login,
       copyToClipboard,
+      getResourceUrl,
       features: {
         canOpenFile: true,
         canAttachFile: true,
@@ -112,6 +117,7 @@ export const VSCodePlatformProvider: React.FC<VSCodePlatformProviderProps> = ({
       attachFile,
       login,
       copyToClipboard,
+      getResourceUrl,
     ],
   );
 

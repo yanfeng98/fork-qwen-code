@@ -8,16 +8,19 @@
 
 import { useMemo } from 'react';
 import {
-  FileLink,
   groupContent,
   mapToolStatusToContainerStatus,
-} from '@qwen-code/webui';
+} from './shared/index.js';
 import type {
   BaseToolCallProps,
   ToolCallContainerProps,
-} from '@qwen-code/webui';
+} from './shared/index.js';
+import { FileLink } from '../layout/FileLink.js';
 
-export const ToolCallContainer: React.FC<ToolCallContainerProps> = ({
+/**
+ * Custom ToolCallContainer for EditToolCall with specific styling
+ */
+const EditToolCallContainer: React.FC<ToolCallContainerProps> = ({
   label,
   status = 'success',
   children,
@@ -111,7 +114,7 @@ export const EditToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
   if (errors.length > 0) {
     const path = diffs[0]?.path || locations?.[0]?.path || '';
     return (
-      <ToolCallContainer
+      <EditToolCallContainer
         label={'Edit'}
         status="error"
         toolCallId={toolCallId}
@@ -126,11 +129,11 @@ export const EditToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
         }
       >
         {errors.join('\n')}
-      </ToolCallContainer>
+      </EditToolCallContainer>
     );
   }
 
-  // Success case with diff: show minimal inline preview; clicking the title opens VS Code diff
+  // Success case with diff: show minimal inline preview
   if (diffs.length > 0) {
     const firstDiff = diffs[0];
     const path = firstDiff.path || (locations && locations[0]?.path) || '';
@@ -143,7 +146,6 @@ export const EditToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
         <div className="toolcall-edit-content flex flex-col gap-1 min-w-0 max-w-full">
           <div className="flex items-center justify-between min-w-0">
             <div className="flex items-baseline gap-1.5 min-w-0">
-              {/* Align the inline Edit label styling with shared toolcall label: larger + bold */}
               <span className="text-[13px] leading-none font-bold text-[var(--app-primary-foreground)]">
                 Edit
               </span>
@@ -169,7 +171,7 @@ export const EditToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
   if (locations && locations.length > 0) {
     const containerStatus = mapToolStatusToContainerStatus(toolCall.status);
     return (
-      <ToolCallContainer
+      <EditToolCallContainer
         label={`Edit`}
         status={containerStatus}
         toolCallId={toolCallId}
@@ -189,7 +191,7 @@ export const EditToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
             showFullPath={true}
           />
         </div>
-      </ToolCallContainer>
+      </EditToolCallContainer>
     );
   }
 

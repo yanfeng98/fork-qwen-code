@@ -2,31 +2,67 @@
  * @license
  * Copyright 2025 Qwen Team
  * SPDX-License-Identifier: Apache-2.0
+ *
+ * SessionSelector component - Session list dropdown
+ * Displays sessions grouped by date with search and infinite scroll
  */
 
-import React from 'react';
+import type React from 'react';
+import { Fragment } from 'react';
 import {
   getTimeAgo,
   groupSessionsByDate,
 } from '../../utils/sessionGrouping.js';
-import { SearchIcon } from '@qwen-code/webui';
+import { SearchIcon } from '../icons/NavigationIcons.js';
 
-interface SessionSelectorProps {
+/**
+ * Props for SessionSelector component
+ */
+export interface SessionSelectorProps {
+  /** Whether the selector is visible */
   visible: boolean;
+  /** List of session objects */
   sessions: Array<Record<string, unknown>>;
+  /** Currently selected session ID */
   currentSessionId: string | null;
+  /** Current search query */
   searchQuery: string;
+  /** Callback when search query changes */
   onSearchChange: (query: string) => void;
+  /** Callback when a session is selected */
   onSelectSession: (sessionId: string) => void;
+  /** Callback when selector should close */
   onClose: () => void;
+  /** Whether there are more sessions to load */
   hasMore?: boolean;
+  /** Whether loading is in progress */
   isLoading?: boolean;
+  /** Callback to load more sessions */
   onLoadMore?: () => void;
 }
 
 /**
- * Session selector component
- * Display session list and support search and selection
+ * SessionSelector component
+ *
+ * Features:
+ * - Sessions grouped by date (Today, Yesterday, This Week, Older)
+ * - Search filtering
+ * - Infinite scroll to load more sessions
+ * - Click outside to close
+ * - Active session highlighting
+ *
+ * @example
+ * ```tsx
+ * <SessionSelector
+ *   visible={true}
+ *   sessions={sessions}
+ *   currentSessionId="abc123"
+ *   searchQuery=""
+ *   onSearchChange={(q) => setQuery(q)}
+ *   onSelectSession={(id) => loadSession(id)}
+ *   onClose={() => setVisible(false)}
+ * />
+ * ```
  */
 export const SessionSelector: React.FC<SessionSelectorProps> = ({
   visible,
@@ -68,6 +104,7 @@ export const SessionSelector: React.FC<SessionSelectorProps> = ({
             type="text"
             className="session-search-input flex-1 bg-transparent border-none outline-none text-[var(--app-menu-foreground)] text-[var(--vscode-chat-font-size,13px)] font-[var(--vscode-chat-font-family)] p-0 placeholder:text-[var(--app-input-placeholder-foreground)] placeholder:opacity-60"
             placeholder="Search sessions…"
+            aria-label="Search sessions"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
           />
@@ -98,7 +135,7 @@ export const SessionSelector: React.FC<SessionSelectorProps> = ({
             </div>
           ) : (
             groupSessionsByDate(sessions).map((group) => (
-              <React.Fragment key={group.label}>
+              <Fragment key={group.label}>
                 <div className="session-group-label p-1 px-2 text-[var(--app-primary-foreground)] opacity-50 text-[0.9em] font-medium [&:not(:first-child)]:mt-2">
                   {group.label}
                 </div>
@@ -121,6 +158,7 @@ export const SessionSelector: React.FC<SessionSelectorProps> = ({
                     return (
                       <button
                         key={sessionId}
+                        type="button"
                         className={`session-item flex items-center justify-between py-1.5 px-2 bg-transparent border-none rounded-md cursor-pointer text-left w-full text-[var(--vscode-chat-font-size,13px)] font-[var(--vscode-chat-font-family)] text-[var(--app-primary-foreground)] transition-colors duration-100 hover:bg-[var(--app-list-hover-background)] ${
                           isActive
                             ? 'active bg-[var(--app-list-active-background)] text-[var(--app-list-active-foreground)] font-[600]'
@@ -141,7 +179,7 @@ export const SessionSelector: React.FC<SessionSelectorProps> = ({
                     );
                   })}
                 </div>
-              </React.Fragment>
+              </Fragment>
             ))
           )}
           {hasMore && (

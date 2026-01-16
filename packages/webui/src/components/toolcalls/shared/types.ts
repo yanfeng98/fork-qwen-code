@@ -80,3 +80,16 @@ export type ContainerStatus =
   | 'warning'
   | 'loading'
   | 'default';
+
+/**
+ * Plan entry status type
+ */
+export type PlanEntryStatus = 'pending' | 'in_progress' | 'completed';
+
+/**
+ * Plan entry interface for UpdatedPlanToolCall
+ */
+export interface PlanEntry {
+  content: string;
+  status: PlanEntryStatus;
+}

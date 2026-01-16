@@ -8,17 +8,15 @@
 
 import type React from 'react';
 import {
-  FileLink,
   safeTitle,
   groupContent,
   mapToolStatusToContainerStatus,
-} from '@qwen-code/webui';
-import type { BaseToolCallProps } from '@qwen-code/webui';
+} from './shared/index.js';
+import type { BaseToolCallProps } from './shared/index.js';
+import { FileLink } from '../layout/FileLink.js';
 
 /**
- * Specialized component for Search tool calls
- * Optimized for displaying search operations and results
- * Shows query + result count or file list
+ * Inline container for compact search results display
  */
 const InlineContainer: React.FC<{
   status: 'success' | 'error' | 'warning' | 'loading' | 'default';
@@ -67,7 +65,9 @@ const InlineContainer: React.FC<{
   );
 };
 
-// Local card layout for multi-result or error display
+/**
+ * Card layout for multi-result or error display
+ */
 const SearchCard: React.FC<{
   status: 'success' | 'error' | 'warning' | 'loading' | 'default';
   children: React.ReactNode;
@@ -106,6 +106,9 @@ const SearchCard: React.FC<{
   );
 };
 
+/**
+ * Row component for search card layout
+ */
 const SearchRow: React.FC<{ label: string; children: React.ReactNode }> = ({
   label,
   children,
@@ -120,6 +123,9 @@ const SearchRow: React.FC<{ label: string; children: React.ReactNode }> = ({
   </div>
 );
 
+/**
+ * Local locations list component
+ */
 const LocationsListLocal: React.FC<{
   locations: Array<{ path: string; line?: number | null }>;
 }> = ({ locations }) => (
@@ -130,6 +136,26 @@ const LocationsListLocal: React.FC<{
   </div>
 );
 
+/**
+ * Map tool call kind to appropriate display name
+ */
+const getDisplayLabel = (kind: string): string => {
+  const normalizedKind = kind.toLowerCase();
+  if (normalizedKind === 'grep' || normalizedKind === 'grep_search') {
+    return 'Grep';
+  } else if (normalizedKind === 'glob') {
+    return 'Glob';
+  } else if (normalizedKind === 'web_search') {
+    return 'WebSearch';
+  } else {
+    return 'Search';
+  }
+};
+
+/**
+ * Specialized component for Search tool calls
+ * Optimized for displaying search operations and results
+ */
 export const SearchToolCall: React.FC<BaseToolCallProps> = ({
   toolCall,
   isFirst,
@@ -137,20 +163,7 @@ export const SearchToolCall: React.FC<BaseToolCallProps> = ({
 }) => {
   const { kind, title, content, locations } = toolCall;
   const queryText = safeTitle(title);
-
-  // Map tool call kind to appropriate display name
-  const getDisplayLabel = (): string => {
-    const normalizedKind = kind.toLowerCase();
-    if (normalizedKind === 'grep' || normalizedKind === 'grep_search') {
-      return 'Grep';
-    } else if (normalizedKind === 'glob') {
-      return 'Glob';
-    } else if (normalizedKind === 'web_search') {
-      return 'WebSearch';
-    } else {
-      return 'Search'; // fallback for other search-like tools
-    }
-  };
+  const displayLabel = getDisplayLabel(kind);
 
   // Group content by type
   const { errors, textOutputs } = groupContent(content);
@@ -159,7 +172,7 @@ export const SearchToolCall: React.FC<BaseToolCallProps> = ({
   if (errors.length > 0) {
     return (
       <SearchCard status="error" isFirst={isFirst} isLast={isLast}>
-        <SearchRow label={getDisplayLabel()}>
+        <SearchRow label={displayLabel}>
           <div className="font-mono">{queryText}</div>
         </SearchRow>
         <SearchRow label="Error">
@@ -172,11 +185,11 @@ export const SearchToolCall: React.FC<BaseToolCallProps> = ({
   // Success case with results: show search query + file list
   if (locations && locations.length > 0) {
     const containerStatus = mapToolStatusToContainerStatus(toolCall.status);
-    // If multiple results, use card layout; otherwise use compact format
+    // Multiple results use card layout
     if (locations.length > 1) {
       return (
         <SearchCard status={containerStatus} isFirst={isFirst} isLast={isLast}>
-          <SearchRow label={getDisplayLabel()}>
+          <SearchRow label={displayLabel}>
             <div className="font-mono">{queryText}</div>
           </SearchRow>
           <SearchRow label={`Found (${locations.length})`}>
@@ -192,7 +205,7 @@ export const SearchToolCall: React.FC<BaseToolCallProps> = ({
         labelSuffix={`(${queryText})`}
         isFirst={isFirst}
         isLast={isLast}
-        displayLabel={getDisplayLabel()}
+        displayLabel={displayLabel}
       >
         <span className="mx-2 opacity-50">→</span>
         <LocationsListLocal locations={locations} />
@@ -200,7 +213,7 @@ export const SearchToolCall: React.FC<BaseToolCallProps> = ({
     );
   }
 
-  // Show content text if available (e.g., "Listed 4 item(s).")
+  // Show content text if available
   if (textOutputs.length > 0) {
     const containerStatus = mapToolStatusToContainerStatus(toolCall.status);
     return (
@@ -209,7 +222,7 @@ export const SearchToolCall: React.FC<BaseToolCallProps> = ({
         labelSuffix={queryText ? `(${queryText})` : undefined}
         isFirst={isFirst}
         isLast={isLast}
-        displayLabel={getDisplayLabel()}
+        displayLabel={displayLabel}
       >
         <div className="flex flex-col">
           {textOutputs.map((text: string, index: number) => (
@@ -234,7 +247,7 @@ export const SearchToolCall: React.FC<BaseToolCallProps> = ({
         status={containerStatus}
         isFirst={isFirst}
         isLast={isLast}
-        displayLabel={getDisplayLabel()}
+        displayLabel={displayLabel}
       >
         <span className="font-mono">{queryText}</span>
       </InlineContainer>

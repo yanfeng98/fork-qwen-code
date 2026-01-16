@@ -28,11 +28,9 @@ import type { ToolCallData } from './components/messages/toolcalls/ToolCall.js';
 import { PermissionDrawer } from './components/PermissionDrawer/PermissionDrawer.js';
 import { ToolCall } from './components/messages/toolcalls/ToolCall.js';
 import { hasToolCallOutput } from './utils/utils.js';
-import { EmptyState } from './components/layout/EmptyState.js';
 import { Onboarding } from './components/layout/Onboarding.js';
 import { type CompletionItem } from '../types/completionItemTypes.js';
 import { useCompletionTrigger } from './hooks/useCompletionTrigger.js';
-import { ChatHeader } from './components/layout/ChatHeader.js';
 import {
   AssistantMessage,
   UserMessage,
@@ -41,9 +39,12 @@ import {
   InterruptedMessage,
   FileIcon,
   UserIcon,
+  // Layout components imported directly from webui
+  EmptyState,
+  ChatHeader,
+  SessionSelector,
 } from '@qwen-code/webui';
 import { InputForm } from './components/layout/InputForm.js';
-import { SessionSelector } from './components/layout/SessionSelector.js';
 import { ApprovalMode, NEXT_APPROVAL_MODE } from '../types/acpTypes.js';
 import type { ApprovalModeValue } from '../types/approvalModeValueTypes.js';
 import type { PlanEntry, UsageStatsPayload } from '../types/chatTypes.js';

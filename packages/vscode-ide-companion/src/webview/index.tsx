@@ -8,6 +8,9 @@ import ReactDOM from 'react-dom/client';
 import { App } from './App.js';
 import { VSCodePlatformProvider } from './context/VSCodePlatformProvider.js';
 
+// Import webui shared styles (CSS variables, component-specific styles)
+import '@qwen-code/webui/styles.css';
+
 // eslint-disable-next-line import/no-internal-modules
 import './styles/tailwind.css';
 // eslint-disable-next-line import/no-internal-modules

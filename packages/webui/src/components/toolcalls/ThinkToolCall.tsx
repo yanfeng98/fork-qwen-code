@@ -12,8 +12,8 @@ import {
   ToolCallCard,
   ToolCallRow,
   groupContent,
-} from '@qwen-code/webui';
-import type { BaseToolCallProps } from '@qwen-code/webui';
+} from './shared/index.js';
+import type { BaseToolCallProps } from './shared/index.js';
 
 /**
  * Specialized component for Think tool calls

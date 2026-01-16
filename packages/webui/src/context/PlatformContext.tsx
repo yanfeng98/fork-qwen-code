@@ -38,6 +38,9 @@ export interface PlatformContextValue {
   /** Copy text to clipboard */
   copyToClipboard?: (text: string) => Promise<void>;
 
+  /** Get resource URL for platform-specific assets (e.g., icons) */
+  getResourceUrl?: (resourceName: string) => string | undefined;
+
   /** Platform-specific feature flags */
   features?: {
     canOpenFile?: boolean;

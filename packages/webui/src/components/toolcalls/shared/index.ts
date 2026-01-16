@@ -38,4 +38,6 @@ export type {
   BaseToolCallProps,
   GroupedContent,
   ContainerStatus,
+  PlanEntryStatus,
+  PlanEntry,
 } from './types.js';
