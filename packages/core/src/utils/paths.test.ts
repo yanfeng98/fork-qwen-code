@@ -627,6 +627,7 @@ describe('tildeifyPath', () => {
 
 describe('shortenPath', () => {
   const sep = path.sep;
+  const sepForRegex = sep.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
   it('returns path unchanged if it is already short enough', () => {
     expect(shortenPath('/short/path', 50)).toBe('/short/path');
@@ -764,7 +765,7 @@ describe('shortenPath', () => {
 
     // Should show start and end with ellipsis
     expect(result).toMatch(
-      new RegExp(`^${sep}path${sep}\\.\\.\\..+file\\.txt$`),
+      new RegExp(`^${sepForRegex}path${sepForRegex}\\.\\.\\..+file\\.txt$`),
     );
     expect(result.length).toBeLessThanOrEqual(35);
   });
