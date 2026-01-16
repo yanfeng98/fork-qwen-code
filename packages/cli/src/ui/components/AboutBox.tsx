@@ -15,9 +15,11 @@ import {
 } from '../../utils/systemInfoFields.js';
 import { t } from '../../i18n/index.js';
 
-type AboutBoxProps = ExtendedSystemInfo;
+type AboutBoxProps = ExtendedSystemInfo & {
+  width?: number;
+};
 
-export const AboutBox: React.FC<AboutBoxProps> = (props) => {
+export const AboutBox: React.FC<AboutBoxProps> = ({ width, ...props }) => {
   const fields = getSystemInfoFields(props);
 
   return (
@@ -26,8 +28,7 @@ export const AboutBox: React.FC<AboutBoxProps> = (props) => {
       borderColor={theme.border.default}
       flexDirection="column"
       padding={1}
-      marginY={1}
-      width="100%"
+      width={width}
     >
       <Box marginBottom={1}>
         <Text bold color={theme.text.accent}>

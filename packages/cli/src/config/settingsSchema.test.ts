@@ -157,9 +157,6 @@ describe('SettingsSchema', () => {
 
     it('should have showInDialog property configured', () => {
       // Check that user-facing settings are marked for dialog display
-      expect(
-        getSettingsSchema().ui.properties.showMemoryUsage.showInDialog,
-      ).toBe(true);
       expect(getSettingsSchema().general.properties.vimMode.showInDialog).toBe(
         true,
       );
@@ -173,9 +170,6 @@ describe('SettingsSchema', () => {
         getSettingsSchema().ui.properties.hideWindowTitle.showInDialog,
       ).toBe(true);
       expect(getSettingsSchema().ui.properties.hideTips.showInDialog).toBe(
-        true,
-      );
-      expect(getSettingsSchema().ui.properties.hideBanner.showInDialog).toBe(
         true,
       );
       expect(

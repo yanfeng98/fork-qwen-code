@@ -1275,7 +1275,6 @@ describe('SettingsDialog', () => {
         ui: {
           hideWindowTitle: true,
           hideTips: true,
-          showMemoryUsage: true,
           showLineNumbers: true,
           showCitations: true,
           accessibility: {
@@ -1324,7 +1323,6 @@ describe('SettingsDialog', () => {
           disableAutoUpdate: true,
         },
         ui: {
-          showMemoryUsage: true,
           hideWindowTitle: false,
         },
         tools: {
@@ -1375,9 +1373,7 @@ describe('SettingsDialog', () => {
             vimMode: true,
             disableAutoUpdate: false,
           },
-          ui: {
-            showMemoryUsage: true,
-          },
+          ui: {},
         },
       );
       const onSelect = vi.fn();
@@ -1438,7 +1434,6 @@ describe('SettingsDialog', () => {
             disableLoadingPhrases: true,
             screenReader: true,
           },
-          showMemoryUsage: true,
           showLineNumbers: true,
         },
         general: {
@@ -1520,7 +1515,6 @@ describe('SettingsDialog', () => {
         ui: {
           hideWindowTitle: false,
           hideTips: false,
-          showMemoryUsage: false,
           showLineNumbers: false,
           showCitations: false,
           accessibility: {

@@ -52,6 +52,9 @@ export interface InputPromptProps {
   setShellModeActive: (value: boolean) => void;
   approvalMode: ApprovalMode;
   onEscapePromptChange?: (showPrompt: boolean) => void;
+  onToggleShortcuts?: () => void;
+  showShortcuts?: boolean;
+  onSuggestionsVisibilityChange?: (visible: boolean) => void;
   vimHandleInput?: (key: Key) => boolean;
   isEmbeddedShellFocused?: boolean;
 }
@@ -96,6 +99,9 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
   setShellModeActive,
   approvalMode,
   onEscapePromptChange,
+  onToggleShortcuts,
+  showShortcuts,
+  onSuggestionsVisibilityChange,
   vimHandleInput,
   isEmbeddedShellFocused,
 }) => {
@@ -338,9 +344,29 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
         buffer.text === '' &&
         !completion.showSuggestions
       ) {
+        // Hide shortcuts when toggling shell mode
+        if (showShortcuts && onToggleShortcuts) {
+          onToggleShortcuts();
+        }
         setShellModeActive(!shellModeActive);
         buffer.setText(''); // Clear the '!' from input
         return;
+      }
+
+      // Toggle keyboard shortcuts display with "?" when buffer is empty
+      if (
+        key.sequence === '?' &&
+        buffer.text === '' &&
+        !completion.showSuggestions &&
+        onToggleShortcuts
+      ) {
+        onToggleShortcuts();
+        return;
+      }
+
+      // Hide shortcuts on any other key press
+      if (showShortcuts && onToggleShortcuts) {
+        onToggleShortcuts();
       }
 
       if (keyMatchers[Command.ESCAPE](key)) {
@@ -670,6 +696,8 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
       recentPasteTime,
       commandSearchActive,
       commandSearchCompletion,
+      onToggleShortcuts,
+      showShortcuts,
     ],
   );
 
@@ -688,6 +716,13 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
 
   const activeCompletion = getActiveCompletion();
   const shouldShowSuggestions = activeCompletion.showSuggestions;
+
+  // Notify parent about suggestions visibility changes
+  useEffect(() => {
+    if (onSuggestionsVisibilityChange) {
+      onSuggestionsVisibilityChange(shouldShowSuggestions);
+    }
+  }, [shouldShowSuggestions, onSuggestionsVisibilityChange]);
 
   const showAutoAcceptStyling =
     !shellModeActive && approvalMode === ApprovalMode.AUTO_EDIT;
@@ -721,7 +756,6 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
         borderLeft={false}
         borderRight={false}
         borderColor={borderColor}
-        paddingX={1}
       >
         <Text
           color={statusColor ?? theme.text.accent}
@@ -852,7 +886,7 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
         </Box>
       </Box>
       {shouldShowSuggestions && (
-        <Box paddingRight={2}>
+        <Box marginLeft={2} marginRight={2}>
           <SuggestionsDisplay
             suggestions={activeCompletion.suggestions}
             activeIndex={activeCompletion.activeSuggestionIndex}

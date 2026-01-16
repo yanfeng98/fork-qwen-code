@@ -321,82 +321,6 @@ const SETTINGS_SCHEMA = {
         description: 'Hide helpful tips in the UI',
         showInDialog: true,
       },
-      hideBanner: {
-        type: 'boolean',
-        label: 'Hide Banner',
-        category: 'UI',
-        requiresRestart: false,
-        default: false,
-        description: 'Hide the application banner',
-        showInDialog: true,
-      },
-      hideContextSummary: {
-        type: 'boolean',
-        label: 'Hide Context Summary',
-        category: 'UI',
-        requiresRestart: false,
-        default: false,
-        description:
-          'Hide the context summary (QWEN.md, MCP servers) above the input.',
-        showInDialog: true,
-      },
-      footer: {
-        type: 'object',
-        label: 'Footer',
-        category: 'UI',
-        requiresRestart: false,
-        default: {},
-        description: 'Settings for the footer.',
-        showInDialog: false,
-        properties: {
-          hideCWD: {
-            type: 'boolean',
-            label: 'Hide CWD',
-            category: 'UI',
-            requiresRestart: false,
-            default: false,
-            description:
-              'Hide the current working directory path in the footer.',
-            showInDialog: true,
-          },
-          hideSandboxStatus: {
-            type: 'boolean',
-            label: 'Hide Sandbox Status',
-            category: 'UI',
-            requiresRestart: false,
-            default: false,
-            description: 'Hide the sandbox status indicator in the footer.',
-            showInDialog: true,
-          },
-          hideModelInfo: {
-            type: 'boolean',
-            label: 'Hide Model Info',
-            category: 'UI',
-            requiresRestart: false,
-            default: false,
-            description: 'Hide the model name and context usage in the footer.',
-            showInDialog: true,
-          },
-        },
-      },
-      hideFooter: {
-        type: 'boolean',
-        label: 'Hide Footer',
-        category: 'UI',
-        requiresRestart: false,
-        default: false,
-        description: 'Hide the footer from the UI',
-        showInDialog: true,
-      },
-      showMemoryUsage: {
-        type: 'boolean',
-        label: 'Show Memory Usage',
-        category: 'UI',
-        requiresRestart: false,
-        default: false,
-        description: 'Display memory usage information in the UI',
-        showInDialog: true,
-      },
       showLineNumbers: {
         type: 'boolean',
         label: 'Show Line Numbers',
@@ -1292,9 +1216,3 @@ type InferSettings<T extends SettingsSchema> = {
 };
 
 export type Settings = InferSettings<SettingsSchemaType>;
-
-export interface FooterSettings {
-  hideCWD?: boolean;
-  hideSandboxStatus?: boolean;
-  hideModelInfo?: boolean;
-}

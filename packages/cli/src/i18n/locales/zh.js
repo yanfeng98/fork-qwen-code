@@ -32,6 +32,25 @@ export default {
   'Model Context Protocol command (from external servers)':
     '模型上下文协议命令（来自外部服务器）',
   'Keyboard Shortcuts:': '键盘快捷键：',
+  'Toggle this help display': '切换此帮助显示',
+  'Toggle shell mode': '切换命令行模式',
+  'Open command menu': '打开命令菜单',
+  'Add file context': '添加文件上下文',
+  'Accept suggestion / Autocomplete': '接受建议 / 自动补全',
+  'Reverse search history': '反向搜索历史',
+  'Press ? again to close': '再次按 ? 关闭',
+  // Keyboard shortcuts panel descriptions
+  'for shell mode': '命令行模式',
+  'for commands': '命令菜单',
+  'for file paths': '文件路径',
+  'to clear input': '清空输入',
+  'to cycle approvals': '切换审批模式',
+  'to quit': '退出',
+  'for newline': '换行',
+  'to clear screen': '清屏',
+  'to search history': '搜索历史',
+  'to paste images': '粘贴图片',
+  'for external editor': '外部编辑器',
   'Jump through words in the input': '在输入中按单词跳转',
   'Close dialogs, cancel requests, or quit application':
     '关闭对话框、取消请求或退出应用程序',
@@ -45,6 +64,7 @@ export default {
   'Connecting to MCP servers... ({{connected}}/{{total}})':
     '正在连接到 MCP 服务器... ({{connected}}/{{total}})',
   'Type your message or @path/to/file': '输入您的消息或 @ 文件路径',
+  '? for shortcuts': '按 ? 查看快捷键',
   "Press 'i' for INSERT mode and 'Esc' for NORMAL mode.":
     "按 'i' 进入插入模式，按 'Esc' 进入普通模式",
   'Cancel operation / Clear input (double press)':
@@ -266,13 +286,6 @@ export default {
   'Hide Window Title': '隐藏窗口标题',
   'Show Status in Title': '在标题中显示状态',
   'Hide Tips': '隐藏提示',
-  'Hide Banner': '隐藏横幅',
-  'Hide Context Summary': '隐藏上下文摘要',
-  'Hide CWD': '隐藏当前工作目录',
-  'Hide Sandbox Status': '隐藏沙箱状态',
-  'Hide Model Info': '隐藏模型信息',
-  'Hide Footer': '隐藏页脚',
-  'Show Memory Usage': '显示内存使用',
   'Show Line Numbers': '显示行号',
   'Show Citations': '显示引用',
   'Custom Witty Phrases': '自定义诙谐短语',
@@ -845,13 +858,22 @@ export default {
   // ============================================================================
   // Startup Tips
   // ============================================================================
-  'Tips for getting started:': '入门提示：',
-  '1. Ask questions, edit files, or run commands.':
-    '1. 提问、编辑文件或运行命令',
-  '2. Be specific for the best results.': '2. 具体描述以获得最佳结果',
-  'files to customize your interactions with Qwen Code.':
-    '文件以自定义您与 Qwen Code 的交互',
-  'for more information.': '获取更多信息',
+  'Tips:': '提示：',
+  'Use /compress when the conversation gets long to summarize history and free up context.':
+    '对话变长时用 /compress，总结历史并释放上下文。',
+  'Start a fresh idea with /clear or /new; the previous session stays available in history.':
+    '用 /clear 或 /new 开启新思路；之前的会话会保留在历史记录中。',
+  'Use /bug to submit issues to the maintainers when something goes off.':
+    '遇到问题时，用 /bug 将问题提交给维护者。',
+  'Switch auth type quickly with /auth.': '用 /auth 快速切换认证方式。',
+  'You can run any shell commands from Qwen Code using ! (e.g. !ls).':
+    '在 Qwen Code 中使用 ! 可运行任意 shell 命令（例如 !ls）。',
+  'Type / to open the command popup; Tab autocompletes slash commands and saved prompts.':
+    '输入 / 打开命令弹窗；按 Tab 自动补全斜杠命令和保存的提示词。',
+  'You can resume a previous conversation by running qwen --continue or qwen --resume.':
+    '运行 qwen --continue 或 qwen --resume 可继续之前的会话。',
+  'You can switch permission mode quickly with Shift+Tab or /approval-mode.':
+    '按 Shift+Tab 或输入 /approval-mode 可快速切换权限模式。',
 
   // ============================================================================
   // Exit Screen / Stats

@@ -33,6 +33,13 @@ export default {
   'Model Context Protocol command (from external servers)':
     'Команда Model Context Protocol (из внешних серверов)',
   'Keyboard Shortcuts:': 'Горячие клавиши:',
+  'Toggle this help display': 'Показать/скрыть эту справку',
+  'Toggle shell mode': 'Переключить режим оболочки',
+  'Open command menu': 'Открыть меню команд',
+  'Add file context': 'Добавить файл в контекст',
+  'Accept suggestion / Autocomplete': 'Принять подсказку / Автодополнение',
+  'Reverse search history': 'Обратный поиск по истории',
+  'Press ? again to close': 'Нажмите ? ещё раз, чтобы закрыть',
   'Jump through words in the input': 'Переход по словам во вводе',
   'Close dialogs, cancel requests, or quit application':
     'Закрыть диалоги, отменить запросы или выйти из приложения',
@@ -46,6 +53,7 @@ export default {
   'Connecting to MCP servers... ({{connected}}/{{total}})':
     'Подключение к MCP-серверам... ({{connected}}/{{total}})',
   'Type your message or @path/to/file': 'Введите сообщение или @путь/к/файлу',
+  '? for shortcuts': '? — горячие клавиши',
   "Press 'i' for INSERT mode and 'Esc' for NORMAL mode.":
     "Нажмите 'i' для режима ВСТАВКА и 'Esc' для ОБЫЧНОГО режима.",
   'Cancel operation / Clear input (double press)':
@@ -59,6 +67,19 @@ export default {
   'show version info': 'Просмотр информации о версии',
   'submit a bug report': 'Отправка отчёта об ошибке',
   'About Qwen Code': 'Об Qwen Code',
+
+  // Keyboard shortcuts panel descriptions
+  'for shell mode': 'режим оболочки',
+  'for commands': 'меню команд',
+  'for file paths': 'пути к файлам',
+  'to clear input': 'очистить ввод',
+  'to cycle approvals': 'переключить режим',
+  'to quit': 'выход',
+  'for newline': 'новая строка',
+  'to clear screen': 'очистить экран',
+  'to search history': 'поиск в истории',
+  'to paste images': 'вставить изображения',
+  'for external editor': 'внешний редактор',
 
   // ============================================================================
   // Поля системной информации
@@ -278,13 +299,6 @@ export default {
   'Hide Window Title': 'Скрыть заголовок окна',
   'Show Status in Title': 'Показывать статус в заголовке',
   'Hide Tips': 'Скрыть подсказки',
-  'Hide Banner': 'Скрыть баннер',
-  'Hide Context Summary': 'Скрыть сводку контекста',
-  'Hide CWD': 'Скрыть текущую директорию',
-  'Hide Sandbox Status': 'Скрыть статус песочницы',
-  'Hide Model Info': 'Скрыть информацию о модели',
-  'Hide Footer': 'Скрыть нижний колонтитул',
-  'Show Memory Usage': 'Показывать использование памяти',
   'Show Line Numbers': 'Показывать номера строк',
   'Show Citations': 'Показывать цитаты',
   'Custom Witty Phrases': 'Пользовательские остроумные фразы',
