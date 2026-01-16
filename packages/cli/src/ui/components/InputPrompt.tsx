@@ -135,6 +135,8 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
     commandContext,
     reverseSearchActive,
     config,
+    // Suppress completion when history navigation just occurred
+    !justNavigatedHistory,
   );
 
   const reverseSearchCompletion = useReverseSearchCompletion(
@@ -219,9 +221,9 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
   const inputHistory = useInputHistory({
     userMessages,
     onSubmit: handleSubmitAndClear,
-    isActive:
-      (!completion.showSuggestions || completion.suggestions.length === 1) &&
-      !shellModeActive,
+    // History navigation (Ctrl+P/N) now always works since completion navigation
+    // only uses arrow keys. Only disable in shell mode.
+    isActive: !shellModeActive,
     currentQuery: buffer.text,
     onChange: customSetTextAndResetCompletionSignal,
   });
