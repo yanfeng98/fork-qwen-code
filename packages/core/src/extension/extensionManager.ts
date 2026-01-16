@@ -1139,7 +1139,7 @@ export class ExtensionManager {
     extension: Extension,
     currentState: ExtensionUpdateState,
     callback: (extensionName: string, state: ExtensionUpdateState) => void,
-    enableExtensionReloading?: boolean,
+    enableExtensionReloading: boolean = true,
   ): Promise<ExtensionUpdateInfo | undefined> {
     if (currentState === ExtensionUpdateState.UPDATING) {
       return undefined;
@@ -1205,7 +1205,7 @@ export class ExtensionManager {
   async updateAllUpdatableExtensions(
     extensionsState: Map<string, ExtensionUpdateStatus>,
     callback: (extensionName: string, state: ExtensionUpdateState) => void,
-    enableExtensionReloading?: boolean,
+    enableExtensionReloading: boolean = true,
   ): Promise<ExtensionUpdateInfo[]> {
     const extensions = this.getLoadedExtensions();
     return (
