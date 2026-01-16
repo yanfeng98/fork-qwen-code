@@ -4,23 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  * Tool call component factory - routes to specialized components by kind
+ * All UI components are now imported from @qwen-code/webui
  */
 
 import type React from 'react';
 import {
   shouldShowToolCall,
-  // Pure UI ToolCall components from webui
+  // All ToolCall components from webui
   GenericToolCall,
   ThinkToolCall,
   EditToolCall,
   WriteToolCall,
   SearchToolCall,
   UpdatedPlanToolCall,
+  ShellToolCall,
+  ReadToolCall,
 } from '@qwen-code/webui';
 import type { BaseToolCallProps } from '@qwen-code/webui';
-// VSCode-specific components (have platform dependencies)
-import { ReadToolCall } from './Read/ReadToolCall.js';
-import { ShellToolCall } from './Shell/ShellToolCall.js';
 
 /**
  * Factory function that returns the appropriate tool call component based on kind
@@ -33,6 +33,9 @@ export const getToolCallComponent = (
   // Route to specialized components
   switch (normalizedKind) {
     case 'read':
+    case 'read_many_files':
+    case 'list_directory':
+    case 'ls':
       return ReadToolCall;
 
     case 'write':

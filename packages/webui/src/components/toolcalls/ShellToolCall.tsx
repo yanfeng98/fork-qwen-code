@@ -3,26 +3,30 @@
  * Copyright 2025 Qwen Team
  * SPDX-License-Identifier: Apache-2.0
  *
- * Shared Shell tool call component for Execute/Bash/Command
+ * Shell tool call component for Execute/Bash/Command
+ * Pure UI component - platform interactions via usePlatform hook
  */
 
 import type React from 'react';
 import {
-  ToolCallContainer as SharedToolCallContainer,
+  ToolCallContainer,
   CopyButton,
   safeTitle,
   groupContent,
-  usePlatform,
-} from '@qwen-code/webui';
+} from './shared/index.js';
+import { usePlatform } from '../../context/PlatformContext.js';
 import type {
   BaseToolCallProps,
   ToolCallContainerProps,
-} from '@qwen-code/webui';
+} from './shared/index.js';
 
 import './ShellToolCall.css';
 
 type ShellVariant = 'execute' | 'bash';
 
+/**
+ * Custom container for Execute variant with different styling
+ */
 const ExecuteToolCallContainer: React.FC<ToolCallContainerProps> = ({
   label,
   status = 'success',
@@ -50,6 +54,9 @@ const ExecuteToolCallContainer: React.FC<ToolCallContainerProps> = ({
   </div>
 );
 
+/**
+ * Get command text from tool call data
+ */
 const getCommandText = (
   variant: ShellVariant,
   title: unknown,
@@ -65,6 +72,9 @@ const getCommandText = (
   return safeTitle(title);
 };
 
+/**
+ * Get input command from raw input
+ */
 const getInputCommand = (
   commandText: string,
   rawInput?: string | object,
@@ -80,8 +90,7 @@ const getInputCommand = (
 };
 
 /**
- * Shared component for Execute/Bash tool calls
- * Shows: Shell bullet + description + IN/OUT card
+ * Shell tool call implementation
  */
 const ShellToolCallImpl: React.FC<
   BaseToolCallProps & { variant: ShellVariant }
@@ -90,11 +99,15 @@ const ShellToolCallImpl: React.FC<
   const classPrefix = variant;
   const platform = usePlatform();
 
+  /**
+   * Open content in a temporary file (if platform supports it)
+   */
   const openTempFile = (content: string, fileName: string) => {
     if (platform.openTempFile) {
       platform.openTempFile(content, fileName);
       return;
     }
+    // Fallback: post message for platforms that handle it differently
     platform.postMessage({
       type: 'createAndOpenTempFile',
       data: {
@@ -103,11 +116,12 @@ const ShellToolCallImpl: React.FC<
       },
     });
   };
+
   const commandText = getCommandText(variant, title, rawInput);
   const inputCommand = getInputCommand(commandText, rawInput);
 
   const Container =
-    variant === 'execute' ? ExecuteToolCallContainer : SharedToolCallContainer;
+    variant === 'execute' ? ExecuteToolCallContainer : ToolCallContainer;
 
   // Group content by type
   const { textOutputs, errors } = groupContent(content);
@@ -245,6 +259,10 @@ const ShellToolCallImpl: React.FC<
   );
 };
 
+/**
+ * ShellToolCall - displays bash/execute command tool calls
+ * Shows command input and output with IN/OUT cards
+ */
 export const ShellToolCall: React.FC<BaseToolCallProps> = (props) => {
   const normalizedKind = props.toolCall.kind.toLowerCase();
   const variant: ShellVariant =

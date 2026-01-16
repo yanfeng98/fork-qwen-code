@@ -16,10 +16,6 @@ import type {
 import { getApprovalModeInfoFromString } from '../../../types/acpTypes.js';
 import type { ApprovalModeValue } from '../../../types/approvalModeValueTypes.js';
 
-// Re-export base types for convenience
-export type { EditModeInfo, EditModeIconType } from '@qwen-code/webui';
-export { getEditModeIcon } from '@qwen-code/webui';
-
 /**
  * Extended props that accept ApprovalModeValue
  */

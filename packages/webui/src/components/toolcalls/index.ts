@@ -14,5 +14,7 @@ export { EditToolCall } from './EditToolCall.js';
 export { WriteToolCall } from './WriteToolCall.js';
 export { SearchToolCall } from './SearchToolCall.js';
 export { UpdatedPlanToolCall } from './UpdatedPlanToolCall.js';
+export { ShellToolCall } from './ShellToolCall.js';
+export { ReadToolCall } from './ReadToolCall.js';
 export { CheckboxDisplay } from './CheckboxDisplay.js';
 export type { CheckboxDisplayProps } from './CheckboxDisplay.js';

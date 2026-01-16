@@ -3,23 +3,27 @@
  * Copyright 2025 Qwen Team
  * SPDX-License-Identifier: Apache-2.0
  *
- * Read tool call component - specialized for file reading operations
+ * Read tool call component - displays file reading operations
+ * Pure UI component - platform interactions via usePlatform hook
  */
 
 import type React from 'react';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { FileLink } from '../layout/FileLink.js';
 import {
-  FileLink,
   groupContent,
   mapToolStatusToContainerStatus,
-  usePlatform,
-} from '@qwen-code/webui';
+} from './shared/index.js';
+import { usePlatform } from '../../context/PlatformContext.js';
 import type {
   BaseToolCallProps,
   ToolCallContainerProps,
-} from '@qwen-code/webui';
+} from './shared/index.js';
 
-export const ToolCallContainer: React.FC<ToolCallContainerProps> = ({
+/**
+ * Simple container for Read tool calls
+ */
+const ReadToolCallContainer: React.FC<ToolCallContainerProps> = ({
   label,
   status = 'success',
   children,
@@ -49,15 +53,17 @@ export const ToolCallContainer: React.FC<ToolCallContainerProps> = ({
 );
 
 /**
- * Specialized component for Read tool calls
- * Optimized for displaying file reading operations
+ * ReadToolCall - displays file reading operations
  * Shows: Read filename (no content preview)
  */
 export const ReadToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
   const { kind, content, locations, toolCallId } = toolCall;
   const platform = usePlatform();
+  const openedDiffsRef = useRef<Map<string, string>>(new Map());
 
-  // Map tool call kind to appropriate display name
+  /**
+   * Map tool call kind to appropriate display name
+   */
   const getDisplayLabel = (): string => {
     const normalizedKind = kind.toLowerCase();
     if (normalizedKind === 'read_many_files') {
@@ -67,15 +73,17 @@ export const ReadToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
     } else if (normalizedKind === 'skill') {
       return 'Skill';
     } else {
-      return 'ReadFile'; // default for read_file tools
+      return 'ReadFile';
     }
   };
 
   // Group content by type; memoize to avoid new array identities on every render
   const { errors, diffs } = useMemo(() => groupContent(content), [content]);
 
-  // Post a message to the extension host to open a VS Code diff tab
-  const handleOpenDiffInternal = useCallback(
+  /**
+   * Open diff view (if platform supports it)
+   */
+  const handleOpenDiff = useCallback(
     (
       path: string | undefined,
       oldText: string | null | undefined,
@@ -88,6 +96,7 @@ export const ReadToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
         platform.openDiff(path, oldText, newText);
         return;
       }
+      // Fallback: post message for platforms that handle it differently
       platform.postMessage({
         type: 'openDiff',
         data: {
@@ -100,40 +109,43 @@ export const ReadToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
     [platform],
   );
 
-  // Auto-open diff when a read call returns diff content.
-  // Only trigger once per toolCallId so we don't spam as in-progress updates stream in.
+  // Auto-open diff when a read call returns diff content (once per diff signature)
   useEffect(() => {
-    if (diffs.length > 0) {
-      const firstDiff = diffs[0];
-      const path = firstDiff.path || (locations && locations[0]?.path) || '';
-
-      if (
-        path &&
-        firstDiff.oldText !== undefined &&
-        firstDiff.newText !== undefined
-      ) {
-        const timer = setTimeout(() => {
-          handleOpenDiffInternal(path, firstDiff.oldText, firstDiff.newText);
-        }, 100);
-        return () => timer && clearTimeout(timer);
-      }
+    if (diffs.length === 0) {
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toolCallId]);
 
-  // Compute container status based on toolCall.status (pending/in_progress -> loading)
-  const containerStatus:
-    | 'success'
-    | 'error'
-    | 'warning'
-    | 'loading'
-    | 'default' = mapToolStatusToContainerStatus(toolCall.status);
+    const firstDiff = diffs[0];
+    const path = firstDiff.path || locations?.[0]?.path || '';
+    if (!path) {
+      return;
+    }
+
+    if (firstDiff.oldText === undefined || firstDiff.newText === undefined) {
+      return;
+    }
+
+    const signature = `${path}:${firstDiff.oldText ?? ''}:${firstDiff.newText ?? ''}`;
+    const lastSignature = openedDiffsRef.current.get(toolCallId);
+    if (lastSignature === signature) {
+      return;
+    }
+
+    openedDiffsRef.current.set(toolCallId, signature);
+    const timer = setTimeout(() => {
+      handleOpenDiff(path, firstDiff.oldText, firstDiff.newText);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [diffs, handleOpenDiff, locations, toolCallId]);
+
+  // Compute container status based on toolCall.status
+  const containerStatus = mapToolStatusToContainerStatus(toolCall.status);
 
   // Error case: show error
   if (errors.length > 0) {
     const path = locations?.[0]?.path || '';
     return (
-      <ToolCallContainer
+      <ReadToolCallContainer
         label={getDisplayLabel()}
         className="read-tool-call-error"
         status="error"
@@ -149,15 +161,15 @@ export const ReadToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
         }
       >
         {errors.join('\n')}
-      </ToolCallContainer>
+      </ReadToolCallContainer>
     );
   }
 
-  // Success case with diff: keep UI compact; VS Code diff is auto-opened above
+  // Success case with diff
   if (diffs.length > 0) {
     const path = diffs[0]?.path || locations?.[0]?.path || '';
     return (
-      <ToolCallContainer
+      <ReadToolCallContainer
         label={getDisplayLabel()}
         className="read-tool-call-success"
         status={containerStatus}
@@ -173,15 +185,15 @@ export const ReadToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
         }
       >
         {null}
-      </ToolCallContainer>
+      </ReadToolCallContainer>
     );
   }
 
-  // Success case: show which file was read with filename in label
+  // Success case: show which file was read
   if (locations && locations.length > 0) {
     const path = locations[0].path;
     return (
-      <ToolCallContainer
+      <ReadToolCallContainer
         label={getDisplayLabel()}
         className="read-tool-call-success"
         status={containerStatus}
@@ -197,7 +209,7 @@ export const ReadToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
         }
       >
         {null}
-      </ToolCallContainer>
+      </ReadToolCallContainer>
     );
   }
 

@@ -1,0 +1,148 @@
+/**
+ * @license
+ * Copyright 2025 Qwen Team
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Common component styles for webui
+ */
+
+/* ===========================
+   Animations
+   =========================== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@keyframes typingPulse {
+  0%,
+  60%,
+  100% {
+    transform: scale(0.7);
+    opacity: 0.6;
+  }
+  30% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ===========================
+   Code Block Styles
+   =========================== */
+.code-block {
+  font-family: var(--app-font-mono);
+  font-size: var(--app-monospace-font-size, 13px);
+  background: var(--app-primary-background);
+  border: 1px solid var(--app-input-border);
+  border-radius: var(--app-radius-sm, 4px);
+  padding: var(--app-spacing-medium, 8px);
+  overflow-x: auto;
+  margin: 4px 0 0 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* ===========================
+   Diff Display Styles
+   =========================== */
+.diff-display-container {
+  margin: 8px 0;
+  border: 1px solid var(--app-input-border);
+  border-radius: var(--app-radius-md, 6px);
+  overflow: hidden;
+}
+
+.diff-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--app-input-secondary-background, var(--app-background-secondary));
+  border-bottom: 1px solid var(--app-input-border);
+}
+
+.diff-file-path {
+  font-family: var(--app-font-mono);
+  font-size: 13px;
+  color: var(--app-primary-foreground);
+}
+
+.open-diff-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px solid var(--app-input-border);
+  border-radius: var(--app-radius-sm, 4px);
+  color: var(--app-primary-foreground);
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.15s;
+}
+
+.open-diff-button:hover {
+  background: var(--app-ghost-button-hover-background);
+}
+
+.open-diff-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.diff-section {
+  margin: 0;
+}
+
+.diff-label {
+  padding: 8px 12px;
+  background: var(--app-primary-background);
+  border-bottom: 1px solid var(--app-input-border);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--app-secondary-foreground);
+  text-transform: uppercase;
+}
+
+.diff-section .code-block {
+  border: none;
+  border-radius: 0;
+  margin: 0;
+  max-height: none;
+  overflow-y: visible;
+}
+
+.diff-section .code-content {
+  display: block;
+}
+
+/* ===========================
+   Tool Call Card Styles
+   =========================== */
+.toolcall-card {
+  padding-left: 30px;
+}
+
+/* Icon SVG styles */
+.icon-svg {
+  display: block;
+}

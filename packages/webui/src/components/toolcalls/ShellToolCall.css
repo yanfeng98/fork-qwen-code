@@ -43,7 +43,7 @@
   text-align: left;
   opacity: 50%;
   padding: 4px 8px 4px 4px;
-  font-family: var(--app-monospace-font-family);
+  font-family: var(--app-font-mono);
   font-size: 0.85em;
 }
 
@@ -68,14 +68,14 @@
 .bash-toolcall-pre {
   margin-block: 0;
   overflow: hidden;
-  font-family: var(--app-monospace-font-family);
+  font-family: var(--app-font-mono);
   font-size: 0.85em;
 }
 
 .bash-toolcall-code {
   margin: 0;
   padding: 0;
-  font-family: var(--app-monospace-font-family);
+  font-family: var(--app-font-mono);
   font-size: 0.85em;
 }
 
@@ -135,7 +135,7 @@
   text-align: left;
   opacity: 50%;
   padding: 4px 8px 4px 4px;
-  font-family: var(--app-monospace-font-family);
+  font-family: var(--app-font-mono);
   font-size: 0.85em;
 }
 
@@ -160,14 +160,14 @@
 .execute-toolcall-pre {
   margin-block: 0;
   overflow: hidden;
-  font-family: var(--app-monospace-font-family);
+  font-family: var(--app-font-mono);
   font-size: 0.85em;
 }
 
 .execute-toolcall-code {
   margin: 0;
   padding: 0;
-  font-family: var(--app-monospace-font-family);
+  font-family: var(--app-font-mono);
   font-size: 0.85em;
 }
 
@@ -188,4 +188,3 @@
   position: relative;
   grid-template-columns: max-content 1fr max-content;
 }
-

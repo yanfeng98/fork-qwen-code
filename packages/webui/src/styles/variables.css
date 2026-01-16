@@ -24,6 +24,7 @@
   --app-background: #1e1e1e;
   --app-primary-background: #1e1e1e;
   --app-background-secondary: #252526;
+  --app-secondary-background: #252526;
   --app-background-tertiary: #2d2d2d;
 
   /* ===========================
@@ -52,7 +53,24 @@
      Typography
      =========================== */
   --app-font-sans: system-ui, -apple-system, sans-serif;
-  --app-font-mono: ui-monospace, 'SF Mono', monospace;
+  --app-font-mono: var(
+    --app-monospace-font-family,
+    ui-monospace,
+    'SF Mono',
+    monospace
+  );
+  --app-monospace-font-size: 13px;
+
+  /* ===========================
+     Link Styles
+     =========================== */
+  --app-link-foreground: #007acc;
+  --app-link-active-foreground: #005a9e;
+
+  /* ===========================
+     Brand Colors
+     =========================== */
+  --app-qwen-ivory: #f5f5dc;
 
   /* ===========================
      Border Radius
@@ -77,13 +95,18 @@
      Input Styles
      =========================== */
   --app-input-background: #3c3c3c;
+  --app-input-secondary-background: #2d2d2d;
   --app-input-border: #3f3f46;
+  --app-input-foreground: #e4e4e7;
   --app-input-placeholder-foreground: #71717a;
 
   /* ===========================
      Button Styles
      =========================== */
   --app-ghost-button-hover-background: rgba(90, 93, 94, 0.31);
+  --app-button-background: #3c3c3c;
+  --app-button-foreground: #ffffff;
+  --app-transparent-inner-border: rgba(255, 255, 255, 0.1);
 
   /* ===========================
      Header Styles

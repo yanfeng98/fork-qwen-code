@@ -6,6 +6,10 @@
 
 // eslint-disable-next-line import/no-internal-modules
 import './styles/variables.css';
+// eslint-disable-next-line import/no-internal-modules
+import './styles/timeline.css';
+// eslint-disable-next-line import/no-internal-modules
+import './styles/components.css';
 
 // Shared UI Components Export
 // Export all shared components from this package
@@ -49,6 +53,8 @@ export type {
   EditModeInfo,
   EditModeIconType,
 } from './components/layout/InputForm';
+export { Onboarding } from './components/layout/Onboarding';
+export type { OnboardingProps } from './components/layout/Onboarding';
 
 // Message components
 export { default as Message } from './components/messages/Message';
@@ -112,6 +118,8 @@ export {
   WriteToolCall,
   SearchToolCall,
   UpdatedPlanToolCall,
+  ShellToolCall,
+  ReadToolCall,
   CheckboxDisplay,
 } from './components/toolcalls';
 export type {
