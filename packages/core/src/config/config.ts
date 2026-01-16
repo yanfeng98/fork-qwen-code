@@ -458,7 +458,6 @@ export class Config {
   private gitService: GitService | undefined = undefined;
   private sessionService: SessionService | undefined = undefined;
   private chatRecordingService: ChatRecordingService | undefined = undefined;
-  private extensionContextFilePaths: string[] = [];
   private readonly checkpointing: boolean;
   private readonly proxy: string | undefined;
   private readonly cwd: string;
@@ -697,12 +696,6 @@ export class Config {
     }
 
     await this.extensionManager.refreshCache();
-    const activeExtensions = await this.extensionManager
-      .getLoadedExtensions()
-      .filter((e) => e.isActive);
-    this.extensionContextFilePaths = activeExtensions.flatMap(
-      (e) => e.contextFiles,
-    );
 
     await this.refreshHierarchicalMemory();
 
@@ -1287,8 +1280,11 @@ export class Config {
   }
 
   getExtensionContextFilePaths(): string[] {
+    const extensionContextFilePaths = this.getActiveExtensions().flatMap(
+      (e) => e.contextFiles,
+    );
     return [
-      ...this.extensionContextFilePaths,
+      ...extensionContextFilePaths,
       ...(this.outputLanguageFilePath ? [this.outputLanguageFilePath] : []),
     ];
   }

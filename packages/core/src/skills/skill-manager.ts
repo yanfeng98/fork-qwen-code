@@ -136,8 +136,14 @@ export class SkillManager {
       return projectSkill;
     }
 
-    // Try user level
-    return this.findSkillByNameAtLevel(name, 'user');
+    // Try user level first
+    const userSkill = await this.findSkillByNameAtLevel(name, 'user');
+    if (userSkill) {
+      return userSkill;
+    }
+
+    // Try extension level
+    return this.findSkillByNameAtLevel(name, 'extension');
   }
 
   /**
@@ -374,7 +380,7 @@ export class SkillManager {
     }
 
     if (level === 'extension') {
-      const extensions = this.config.getExtensions();
+      const extensions = this.config.getActiveExtensions();
       const skills: SkillConfig[] = [];
       for (const extension of extensions) {
         extension.skills?.forEach((skill) => {

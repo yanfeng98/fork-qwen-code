@@ -143,9 +143,6 @@ export enum ExtensionUpdateState {
   UNKNOWN = 'unknown',
 }
 
-/** Extension storage level - user level or project/workspace level */
-export type ExtensionLevel = 'user' | 'project';
-
 export interface ExtensionManagerOptions {
   /** Working directory for project-level extensions */
   workspaceDir?: string;
@@ -275,8 +272,7 @@ async function convertGeminiOrClaudeExtension(
  * Reference: SkillManager pattern for level-based management
  */
 export class ExtensionManager {
-  // Level-based cache (reference: SkillManager)
-  private extensionCache: Map<ExtensionLevel, Extension[]> | null = null;
+  private extensionCache: Map<string, Extension> | null = null;
 
   // Enablement configuration (directly implemented)
   private readonly configDir: string;
@@ -386,7 +382,9 @@ export class ExtensionManager {
     ) {
       throw new Error('System and SystemDefaults scopes are not supported.');
     }
-    const extension = await this.loadExtensionByName(name, currentDir);
+    const extension = this.getLoadedExtensions().find(
+      (ext) => ext.name === name,
+    );
     if (!extension) {
       throw new Error(`Extension with name ${name} does not exist.`);
     }
@@ -395,6 +393,7 @@ export class ExtensionManager {
     this.enableByPath(name, true, scopePath);
     const config = getTelemetryConfig(currentDir, this.telemetrySettings);
     logExtensionEnable(config, new ExtensionEnableEvent(name, scope));
+    extension.isActive = true;
     await this.refreshTools(extension);
   }
 
@@ -414,7 +413,9 @@ export class ExtensionManager {
     ) {
       throw new Error('System and SystemDefaults scopes are not supported.');
     }
-    const extension = await this.loadExtensionByName(name, currentDir);
+    const extension = this.getLoadedExtensions().find(
+      (ext) => ext.name === name,
+    );
     if (!extension) {
       throw new Error(`Extension with name ${name} does not exist.`);
     }
@@ -422,6 +423,7 @@ export class ExtensionManager {
       scope === SettingScope.Workspace ? currentDir : os.homedir();
     this.disableByPath(name, true, scopePath);
     logExtensionDisable(config, new ExtensionDisableEvent(name, scope));
+    extension.isActive = false;
     await this.refreshTools(extension);
   }
 
@@ -499,46 +501,18 @@ export class ExtensionManager {
    * Refreshes the extension cache from disk.
    */
   async refreshCache(): Promise<void> {
-    this.extensionCache = new Map<ExtensionLevel, Extension[]>();
-    this.extensionCache.set('user', await this.loadExtensionsAtLevel('user'));
-    this.extensionCache.set(
-      'project',
-      await this.loadExtensionsAtLevel('project'),
-    );
+    this.extensionCache = new Map<string, Extension>();
+    const extensions = await this.loadExtensionsFromDir(os.homedir());
+    extensions.forEach((extension) => {
+      this.extensionCache!.set(extension.name, extension);
+    });
   }
 
   getLoadedExtensions(): Extension[] {
     if (!this.extensionCache) {
       return [];
     }
-    return [
-      ...(this.extensionCache?.get('user') ?? []),
-      ...(this.extensionCache?.get('project') ?? []),
-    ];
-  }
-
-  /**
-   * Lists extensions at a specific level.
-   */
-  listExtensionsAtLevel(level: ExtensionLevel): Extension[] {
-    if (!this.extensionCache) {
-      return [];
-    }
-    return this.extensionCache?.get(level) ?? [];
-  }
-
-  private async loadExtensionsAtLevel(
-    level: ExtensionLevel,
-  ): Promise<Extension[]> {
-    if (level === 'user') {
-      return await this.loadExtensionsFromDir(os.homedir());
-    } else {
-      // project level
-      if (path.resolve(this.workspaceDir) === path.resolve(os.homedir())) {
-        return [];
-      }
-      return await this.loadExtensionsFromDir(this.workspaceDir);
-    }
+    return [...this.extensionCache!.values()];
   }
 
   // ==========================================================================
@@ -632,6 +606,7 @@ export class ExtensionManager {
         isActive: this.isEnabled(config.name, this.workspaceDir),
         config,
         settings: config.settings,
+        excludeTools: config.excludeTools,
         contextFiles: [],
       };
 
@@ -934,6 +909,10 @@ export class ExtensionManager {
           throw new Error(`Extension not found`);
         }
 
+        if (this.extensionCache) {
+          this.extensionCache.set(extension.name, extension);
+        }
+
         if (isUpdate) {
           logExtensionUpdateEvent(
             telemetryConfig,
@@ -1052,9 +1031,14 @@ export class ExtensionManager {
       force: true,
     });
 
+    if (this.extensionCache) {
+      this.extensionCache.delete(extension.name);
+    }
+
     if (isUpdate) return;
 
     this.removeEnablementConfig(extension.name);
+    this.refreshTools(extension);
 
     logExtensionUninstall(
       telemetryConfig,

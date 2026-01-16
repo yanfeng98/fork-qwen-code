@@ -776,7 +776,7 @@ export class SubagentManager {
     }
 
     if (level === 'extension') {
-      const extensions = this.config.getExtensions();
+      const extensions = this.config.getActiveExtensions();
       return extensions.flatMap((extension) => extension.agents || []);
     }
 
