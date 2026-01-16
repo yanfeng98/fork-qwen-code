@@ -66,6 +66,25 @@ module.exports = {
         'app-lg': 'var(--app-spacing-lg, 1.5rem)',
         'app-xl': 'var(--app-spacing-xl, 2rem)',
       },
+      keyframes: {
+        'completion-menu-enter': {
+          '0%': { opacity: '0', transform: 'translateY(4px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'pulse-slow': {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.5' },
+        },
+        'slide-up': {
+          '0%': { transform: 'translateY(100%)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+      },
+      animation: {
+        'completion-menu-enter': 'completion-menu-enter 150ms ease-out both',
+        'pulse-slow': 'pulse-slow 1.5s ease-in-out infinite',
+        'slide-up': 'slide-up 200ms ease-out both',
+      },
     },
   },
 };

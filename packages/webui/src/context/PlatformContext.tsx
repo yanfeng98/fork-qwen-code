@@ -29,6 +29,16 @@ export interface PlatformContextValue {
   /** Open a file in the platform's editor (optional) */
   openFile?: (path: string) => void;
 
+  /** Open a diff view for a file (optional) */
+  openDiff?: (
+    path: string,
+    oldText: string | null | undefined,
+    newText: string | undefined,
+  ) => void;
+
+  /** Open a temporary file with given content (optional) */
+  openTempFile?: (content: string, fileName?: string) => void;
+
   /** Trigger file attachment dialog (optional) */
   attachFile?: () => void;
 
@@ -44,6 +54,8 @@ export interface PlatformContextValue {
   /** Platform-specific feature flags */
   features?: {
     canOpenFile?: boolean;
+    canOpenDiff?: boolean;
+    canOpenTempFile?: boolean;
     canAttachFile?: boolean;
     canLogin?: boolean;
     canCopy?: boolean;

@@ -12,13 +12,12 @@ import {
   FileLink,
   groupContent,
   mapToolStatusToContainerStatus,
+  usePlatform,
 } from '@qwen-code/webui';
 import type {
   BaseToolCallProps,
   ToolCallContainerProps,
 } from '@qwen-code/webui';
-import { useVSCode } from '../../../../hooks/useVSCode.js';
-import { handleOpenDiff } from '../../../../utils/diffUtils.js';
 
 export const ToolCallContainer: React.FC<ToolCallContainerProps> = ({
   label,
@@ -56,7 +55,7 @@ export const ToolCallContainer: React.FC<ToolCallContainerProps> = ({
  */
 export const ReadToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
   const { kind, content, locations, toolCallId } = toolCall;
-  const vscode = useVSCode();
+  const platform = usePlatform();
 
   // Map tool call kind to appropriate display name
   const getDisplayLabel = (): string => {
@@ -82,9 +81,23 @@ export const ReadToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
       oldText: string | null | undefined,
       newText: string | undefined,
     ) => {
-      handleOpenDiff(vscode, path, oldText, newText);
+      if (!path) {
+        return;
+      }
+      if (platform.openDiff) {
+        platform.openDiff(path, oldText, newText);
+        return;
+      }
+      platform.postMessage({
+        type: 'openDiff',
+        data: {
+          path,
+          oldText: oldText ?? '',
+          newText: newText ?? '',
+        },
+      });
     },
-    [vscode],
+    [platform],
   );
 
   // Auto-open diff when a read call returns diff content.

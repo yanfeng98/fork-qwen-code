@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// eslint-disable-next-line import/no-internal-modules
+import './styles/variables.css';
+
 // Shared UI Components Export
 // Export all shared components from this package
 
@@ -78,6 +81,11 @@ export type { TooltipProps } from './components/ui/Tooltip';
 
 // Permission components
 export { default as PermissionDrawer } from './components/PermissionDrawer';
+export type {
+  PermissionDrawerProps,
+  PermissionOption,
+  PermissionToolCall,
+} from './components/PermissionDrawer';
 
 // ToolCall shared components
 export {

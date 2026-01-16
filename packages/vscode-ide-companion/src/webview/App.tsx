@@ -19,13 +19,9 @@ import { useMessageHandling } from './hooks/message/useMessageHandling.js';
 import { useToolCalls } from './hooks/useToolCalls.js';
 import { useWebViewMessages } from './hooks/useWebViewMessages.js';
 import { useMessageSubmit } from './hooks/useMessageSubmit.js';
-import type {
-  PermissionOption,
-  ToolCall as PermissionToolCall,
-} from './components/PermissionDrawer/PermissionRequest.js';
+import type { PermissionOption, PermissionToolCall } from '@qwen-code/webui';
 import type { TextMessage } from './hooks/message/useMessageHandling.js';
 import type { ToolCallData } from './components/messages/toolcalls/ToolCall.js';
-import { PermissionDrawer } from './components/PermissionDrawer/PermissionDrawer.js';
 import { ToolCall } from './components/messages/toolcalls/ToolCall.js';
 import { hasToolCallOutput } from './utils/utils.js';
 import { Onboarding } from './components/layout/Onboarding.js';
@@ -39,6 +35,7 @@ import {
   InterruptedMessage,
   FileIcon,
   UserIcon,
+  PermissionDrawer,
   // Layout components imported directly from webui
   EmptyState,
   ChatHeader,

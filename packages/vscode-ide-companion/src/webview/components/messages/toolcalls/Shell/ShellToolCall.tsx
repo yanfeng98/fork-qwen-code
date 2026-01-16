@@ -12,13 +12,12 @@ import {
   CopyButton,
   safeTitle,
   groupContent,
+  usePlatform,
 } from '@qwen-code/webui';
 import type {
   BaseToolCallProps,
   ToolCallContainerProps,
 } from '@qwen-code/webui';
-import { useVSCode } from '../../../../hooks/useVSCode.js';
-import { createAndOpenTempFile } from '../../../../utils/diffUtils.js';
 
 import './ShellToolCall.css';
 
@@ -89,9 +88,23 @@ const ShellToolCallImpl: React.FC<
 > = ({ toolCall, variant }) => {
   const { title, content, rawInput, toolCallId } = toolCall;
   const classPrefix = variant;
+  const platform = usePlatform();
+
+  const openTempFile = (content: string, fileName: string) => {
+    if (platform.openTempFile) {
+      platform.openTempFile(content, fileName);
+      return;
+    }
+    platform.postMessage({
+      type: 'createAndOpenTempFile',
+      data: {
+        content,
+        fileName,
+      },
+    });
+  };
   const commandText = getCommandText(variant, title, rawInput);
   const inputCommand = getInputCommand(commandText, rawInput);
-  const vscode = useVSCode();
 
   const Container =
     variant === 'execute' ? ExecuteToolCallContainer : SharedToolCallContainer;
@@ -101,22 +114,14 @@ const ShellToolCallImpl: React.FC<
 
   // Handle click on IN section
   const handleInClick = () => {
-    createAndOpenTempFile(
-      vscode,
-      inputCommand,
-      `${classPrefix}-input-${toolCallId}`,
-    );
+    openTempFile(inputCommand, `${classPrefix}-input-${toolCallId}`);
   };
 
   // Handle click on OUT section
   const handleOutClick = () => {
     if (textOutputs.length > 0) {
       const output = textOutputs.join('\n');
-      createAndOpenTempFile(
-        vscode,
-        output,
-        `${classPrefix}-output-${toolCallId}`,
-      );
+      openTempFile(output, `${classPrefix}-output-${toolCallId}`);
     }
   };
 

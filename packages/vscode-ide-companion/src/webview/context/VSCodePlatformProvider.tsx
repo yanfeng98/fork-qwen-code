@@ -56,6 +56,39 @@ export const VSCodePlatformProvider: React.FC<VSCodePlatformProviderProps> = ({
     [vscode],
   );
 
+  // Open diff handler
+  const openDiff = useCallback(
+    (
+      path: string,
+      oldText: string | null | undefined,
+      newText: string | undefined,
+    ) => {
+      vscode.postMessage({
+        type: 'openDiff',
+        data: {
+          path,
+          oldText: oldText ?? '',
+          newText: newText ?? '',
+        },
+      });
+    },
+    [vscode],
+  );
+
+  // Open temp file handler
+  const openTempFile = useCallback(
+    (content: string, fileName: string = 'temp') => {
+      vscode.postMessage({
+        type: 'createAndOpenTempFile',
+        data: {
+          content,
+          fileName,
+        },
+      });
+    },
+    [vscode],
+  );
+
   // Attach file handler
   const attachFile = useCallback(() => {
     vscode.postMessage({
@@ -82,7 +115,10 @@ export const VSCodePlatformProvider: React.FC<VSCodePlatformProviderProps> = ({
   }, []);
 
   // Get resource URL handler (for icons and other assets)
-  const getResourceUrl = useCallback((resourceName: string) => generateIconUrl(resourceName) || undefined, []);
+  const getResourceUrl = useCallback(
+    (resourceName: string) => generateIconUrl(resourceName) || undefined,
+    [],
+  );
 
   // Subscribe to messages
   const onMessage = useCallback((handler: (message: unknown) => void) => {
@@ -99,12 +135,16 @@ export const VSCodePlatformProvider: React.FC<VSCodePlatformProviderProps> = ({
       postMessage: vscode.postMessage,
       onMessage,
       openFile,
+      openDiff,
+      openTempFile,
       attachFile,
       login,
       copyToClipboard,
       getResourceUrl,
       features: {
         canOpenFile: true,
+        canOpenDiff: true,
+        canOpenTempFile: true,
         canAttachFile: true,
         canLogin: true,
         canCopy: true,
@@ -114,6 +154,8 @@ export const VSCodePlatformProvider: React.FC<VSCodePlatformProviderProps> = ({
       vscode.postMessage,
       onMessage,
       openFile,
+      openDiff,
+      openTempFile,
       attachFile,
       login,
       copyToClipboard,
