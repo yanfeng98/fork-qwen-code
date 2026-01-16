@@ -17,6 +17,10 @@ export const ContextUsageDisplay = ({
   model: string;
   terminalWidth: number;
 }) => {
+  if (promptTokenCount === 0) {
+    return null;
+  }
+
   const percentage = promptTokenCount / tokenLimit(model);
   const percentageUsed = (percentage * 100).toFixed(1);
 

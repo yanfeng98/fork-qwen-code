@@ -75,6 +75,40 @@ export const Footer: React.FC = () => {
     <Text color={theme.text.secondary}>{t('? for shortcuts')}</Text>
   );
 
+  const rightItems: Array<{ key: string; node: React.ReactNode }> = [];
+  if (sandboxInfo) {
+    rightItems.push({
+      key: 'sandbox',
+      node: <Text color={theme.status.success}>🔒 {sandboxInfo}</Text>,
+    });
+  }
+  if (debugMode) {
+    rightItems.push({
+      key: 'debug',
+      node: <Text color={theme.status.warning}>Debug Mode</Text>,
+    });
+  }
+  if (promptTokenCount > 0) {
+    rightItems.push({
+      key: 'context',
+      node: (
+        <Text color={theme.text.accent}>
+          <ContextUsageDisplay
+            promptTokenCount={promptTokenCount}
+            model={model}
+            terminalWidth={terminalWidth}
+          />
+        </Text>
+      ),
+    });
+  }
+  if (showErrorIndicator) {
+    rightItems.push({
+      key: 'errors',
+      node: <ConsoleSummaryDisplay errorCount={errorCount} />,
+    });
+  }
+
   return (
     <Box
       justifyContent="space-between"
@@ -94,35 +128,12 @@ export const Footer: React.FC = () => {
 
       {/* Right Section: Sandbox Info, Debug Mode, Context Usage, and Console Summary */}
       <Box alignItems="center" justifyContent="flex-end" marginRight={2}>
-        {sandboxInfo && (
-          <Box alignItems="center">
-            <Text color={theme.status.success}>🔒 {sandboxInfo}</Text>
-            <Text color={theme.text.secondary}> | </Text>
+        {rightItems.map(({ key, node }, index) => (
+          <Box key={key} alignItems="center">
+            {index > 0 && <Text color={theme.text.secondary}> | </Text>}
+            {node}
           </Box>
-        )}
-        {debugMode && (
-          <Box alignItems="center">
-            <Text color={theme.status.warning}>Debug Mode</Text>
-            <Text color={theme.text.secondary}> | </Text>
-          </Box>
-        )}
-        <Box alignItems="center">
-          <Text color={theme.text.accent}>
-            <ContextUsageDisplay
-              promptTokenCount={promptTokenCount}
-              model={model}
-              terminalWidth={terminalWidth}
-            />
-          </Text>
-        </Box>
-        {showErrorIndicator && (
-          <Box alignItems="center" paddingLeft={2}>
-            <Box>
-              <Text color={theme.ui.symbol}>| </Text>
-              <ConsoleSummaryDisplay errorCount={errorCount} />
-            </Box>
-          </Box>
-        )}
+        ))}
       </Box>
     </Box>
   );
