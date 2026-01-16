@@ -639,7 +639,7 @@ describe('shortenPath', () => {
   });
 
   it('shortens long paths by showing start and end with ellipsis in between', () => {
-    const longPath = `/home${sep}user${sep}projects${sep}qwen-code${sep}packages${sep}core${sep}src${sep}file.ts`;
+    const longPath = `${sep}home${sep}user${sep}projects${sep}qwen-code${sep}packages${sep}core${sep}src${sep}file.ts`;
     const result = shortenPath(longPath, 40);
 
     // Should include root + first segment and ellipsis
@@ -651,7 +651,7 @@ describe('shortenPath', () => {
   });
 
   it('includes as many end segments as possible', () => {
-    const testPath = `/home${sep}user${sep}workspace${sep}projects${sep}subdir${sep}file.txt`;
+    const testPath = `${sep}home${sep}user${sep}workspace${sep}projects${sep}subdir${sep}file.txt`;
     const result = shortenPath(testPath, 35);
 
     // Should have: /home/.../subdir/file.txt (fitting as many end segments as possible)
@@ -661,7 +661,7 @@ describe('shortenPath', () => {
   });
 
   it('shows all segments when they all fit after including ellipsis space', () => {
-    const testPath = `/a${sep}b${sep}c${sep}d.txt`;
+    const testPath = `${sep}a${sep}b${sep}c${sep}d.txt`;
     // This path is short, should not need ellipsis
     const result = shortenPath(testPath, 50);
     expect(result).toBe(testPath);
@@ -689,7 +689,7 @@ describe('shortenPath', () => {
   });
 
   it('handles paths with two segments', () => {
-    const testPath = `/home${sep}file.txt`;
+    const testPath = `${sep}home${sep}file.txt`;
     const result = shortenPath(testPath, 10);
 
     expect(result).toContain('...');
@@ -709,7 +709,7 @@ describe('shortenPath', () => {
   });
 
   it('creates ellipsis only when segments are actually omitted', () => {
-    const shortPath = `/a${sep}b${sep}c.txt`;
+    const shortPath = `${sep}a${sep}b${sep}c.txt`;
     const result1 = shortenPath(shortPath, 100);
     expect(result1).not.toContain('...');
 
@@ -732,7 +732,7 @@ describe('shortenPath', () => {
   });
 
   it('correctly calculates length including ellipsis', () => {
-    const testPath = `/home${sep}user${sep}workspace${sep}project${sep}src${sep}components${sep}app.tsx`;
+    const testPath = `${sep}home${sep}user${sep}workspace${sep}project${sep}src${sep}components${sep}app.tsx`;
     const maxLen = 40;
     const result = shortenPath(testPath, maxLen);
 
@@ -746,7 +746,7 @@ describe('shortenPath', () => {
   });
 
   it('maintains path separator consistency', () => {
-    const testPath = `/a${sep}b${sep}c${sep}d${sep}e${sep}f.txt`;
+    const testPath = `${sep}a${sep}b${sep}c${sep}d${sep}e${sep}f.txt`;
     const result = shortenPath(testPath, 20);
 
     // All separators should be consistent
@@ -759,7 +759,7 @@ describe('shortenPath', () => {
   });
 
   it('example from documentation: /path/to/a/very/long/file.txt', () => {
-    const testPath = `/path${sep}to${sep}a${sep}very${sep}long${sep}directory${sep}file.txt`;
+    const testPath = `${sep}path${sep}to${sep}a${sep}very${sep}long${sep}directory${sep}file.txt`;
     const result = shortenPath(testPath, 35);
 
     // Should show start and end with ellipsis
