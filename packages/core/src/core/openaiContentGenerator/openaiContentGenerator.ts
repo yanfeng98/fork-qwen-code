@@ -12,7 +12,7 @@ import type {
 import type { PipelineConfig } from './pipeline.js';
 import { ContentGenerationPipeline } from './pipeline.js';
 import { EnhancedErrorHandler } from './errorHandler.js';
-import { getDefaultTokenizer } from '../../utils/request-tokenizer/index.js';
+import { RequestTokenEstimator } from '../../utils/request-tokenizer/index.js';
 import type { ContentGeneratorConfig } from '../contentGenerator.js';
 
 export class OpenAIContentGenerator implements ContentGenerator {
@@ -68,11 +68,9 @@ export class OpenAIContentGenerator implements ContentGenerator {
     request: CountTokensParameters,
   ): Promise<CountTokensResponse> {
     try {
-      // Use the new high-performance request tokenizer
-      const tokenizer = getDefaultTokenizer();
-      const result = await tokenizer.calculateTokens(request, {
-        textEncoding: 'cl100k_base', // Use GPT-4 encoding for consistency
-      });
+      // Use the request token estimator (character-based).
+      const estimator = new RequestTokenEstimator();
+      const result = await estimator.calculateTokens(request);
 
       return {
         totalTokens: result.totalTokens,
