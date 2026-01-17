@@ -70,6 +70,13 @@ export class AgentSideConnection implements Client {
           const validatedParams = schema.setModeRequestSchema.parse(params);
           return agent.setMode(validatedParams);
         }
+        case schema.AGENT_METHODS.session_set_model: {
+          if (!agent.setModel) {
+            throw RequestError.methodNotFound();
+          }
+          const validatedParams = schema.setModelRequestSchema.parse(params);
+          return agent.setModel(validatedParams);
+        }
         default:
           throw RequestError.methodNotFound(method);
       }
@@ -408,4 +415,5 @@ export interface Agent {
   prompt(params: schema.PromptRequest): Promise<schema.PromptResponse>;
   cancel(params: schema.CancelNotification): Promise<void>;
   setMode?(params: schema.SetModeRequest): Promise<schema.SetModeResponse>;
+  setModel?(params: schema.SetModelRequest): Promise<schema.SetModelResponse>;
 }

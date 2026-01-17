@@ -305,9 +305,21 @@ class GeminiAgent {
   async setMode(params: acp.SetModeRequest): Promise<acp.SetModeResponse> {
     const session = this.sessions.get(params.sessionId);
     if (!session) {
-      throw new Error(`Session not found: ${params.sessionId}`);
+      throw acp.RequestError.invalidParams(
+        `Session not found for id: ${params.sessionId}`,
+      );
     }
     return session.setMode(params);
+  }
+
+  async setModel(params: acp.SetModelRequest): Promise<acp.SetModelResponse> {
+    const session = this.sessions.get(params.sessionId);
+    if (!session) {
+      throw acp.RequestError.invalidParams(
+        `Session not found for id: ${params.sessionId}`,
+      );
+    }
+    return session.setModel(params);
   }
 
   private async ensureAuthenticated(config: Config): Promise<void> {
