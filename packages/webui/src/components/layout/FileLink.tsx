@@ -8,7 +8,7 @@
  * Supports clicking to open files and jump to specified line and column numbers
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 import { usePlatform } from '../../context/PlatformContext.js';
 
 /**
@@ -77,7 +77,7 @@ function buildFullPath(
  * <FileLink path="/src/components/Button.tsx" line={10} column={5} showFullPath={true} />
  * ```
  */
-export const FileLink: React.FC<FileLinkProps> = ({
+export const FileLink: FC<FileLinkProps> = ({
   path,
   line,
   column,

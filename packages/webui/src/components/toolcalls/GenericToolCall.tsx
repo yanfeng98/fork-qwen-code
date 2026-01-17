@@ -6,7 +6,7 @@
  * Generic tool call component - handles all tool call types as fallback
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 import {
   ToolCallContainer,
   ToolCallCard,
@@ -22,7 +22,7 @@ import type { BaseToolCallProps } from './shared/index.js';
  * Used as fallback for unknown tool call kinds
  * Minimal display: show description and outcome
  */
-export const GenericToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
+export const GenericToolCall: FC<BaseToolCallProps> = ({ toolCall }) => {
   const { kind, title, content, locations, toolCallId } = toolCall;
   const operationText = safeTitle(title);
 

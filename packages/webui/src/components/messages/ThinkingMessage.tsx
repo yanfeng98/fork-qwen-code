@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 import { MessageContent } from './MessageContent.js';
 
 export interface ThinkingMessageProps {
@@ -13,7 +13,7 @@ export interface ThinkingMessageProps {
   onFileClick?: (path: string) => void;
 }
 
-export const ThinkingMessage: React.FC<ThinkingMessageProps> = ({
+export const ThinkingMessage: FC<ThinkingMessageProps> = ({
   content,
   timestamp: _timestamp,
   onFileClick,

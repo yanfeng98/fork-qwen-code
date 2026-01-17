@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 
 interface WaitingMessageProps {
@@ -24,9 +24,7 @@ const DEFAULT_LOADING_PHRASES = [
   'Almost there...',
 ];
 
-export const WaitingMessage: React.FC<WaitingMessageProps> = ({
-  loadingMessage,
-}) => {
+export const WaitingMessage: FC<WaitingMessageProps> = ({ loadingMessage }) => {
   // Build a phrase list that starts with the provided message (if any), then witty fallbacks
   const phrases = useMemo(() => {
     const set = new Set<string>();

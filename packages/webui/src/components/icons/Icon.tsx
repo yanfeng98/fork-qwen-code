@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 
 interface IconProps {
   name: string;
@@ -13,7 +13,7 @@ interface IconProps {
   className?: string;
 }
 
-const Icon: React.FC<IconProps> = ({
+const Icon: FC<IconProps> = ({
   name,
   size = 24,
   color = 'currentColor',

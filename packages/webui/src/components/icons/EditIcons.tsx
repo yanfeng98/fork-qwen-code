@@ -6,14 +6,14 @@
  * Edit mode related icons
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 import type { IconProps } from './types.js';
 
 /**
  * Edit pencil icon (16x16)
  * Used for "Ask before edits" mode
  */
-export const EditPencilIcon: React.FC<IconProps> = ({
+export const EditPencilIcon: FC<IconProps> = ({
   size = 16,
   className,
   ...props
@@ -40,7 +40,7 @@ export const EditPencilIcon: React.FC<IconProps> = ({
  * Auto/fast-forward icon (16x16)
  * Used for "Edit automatically" mode
  */
-export const AutoEditIcon: React.FC<IconProps> = ({
+export const AutoEditIcon: FC<IconProps> = ({
   size = 16,
   className,
   ...props
@@ -63,7 +63,7 @@ export const AutoEditIcon: React.FC<IconProps> = ({
  * Plan mode/bars icon (16x16)
  * Used for "Plan mode"
  */
-export const PlanModeIcon: React.FC<IconProps> = ({
+export const PlanModeIcon: FC<IconProps> = ({
   size = 16,
   className,
   ...props
@@ -86,7 +86,7 @@ export const PlanModeIcon: React.FC<IconProps> = ({
  * Code brackets icon (20x20)
  * Used for active file indicator
  */
-export const CodeBracketsIcon: React.FC<IconProps> = ({
+export const CodeBracketsIcon: FC<IconProps> = ({
   size = 20,
   className,
   ...props
@@ -113,7 +113,7 @@ export const CodeBracketsIcon: React.FC<IconProps> = ({
  * Hide context (eye slash) icon (20x20)
  * Used to indicate the active selection will NOT be auto-loaded into context
  */
-export const HideContextIcon: React.FC<IconProps> = ({
+export const HideContextIcon: FC<IconProps> = ({
   size = 20,
   className,
   ...props
@@ -141,7 +141,7 @@ export const HideContextIcon: React.FC<IconProps> = ({
  * Slash command icon (20x20)
  * Used for command menu button
  */
-export const SlashCommandIcon: React.FC<IconProps> = ({
+export const SlashCommandIcon: FC<IconProps> = ({
   size = 20,
   className,
   ...props
@@ -168,11 +168,7 @@ export const SlashCommandIcon: React.FC<IconProps> = ({
  * Link/attachment icon (20x20)
  * Used for attach context button
  */
-export const LinkIcon: React.FC<IconProps> = ({
-  size = 20,
-  className,
-  ...props
-}) => (
+export const LinkIcon: FC<IconProps> = ({ size = 20, className, ...props }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 20 20"
@@ -195,7 +191,7 @@ export const LinkIcon: React.FC<IconProps> = ({
  * Open diff icon (16x16)
  * Used for opening diff in VS Code
  */
-export const OpenDiffIcon: React.FC<IconProps> = ({
+export const OpenDiffIcon: FC<IconProps> = ({
   size = 16,
   className,
   ...props
@@ -218,11 +214,7 @@ export const OpenDiffIcon: React.FC<IconProps> = ({
  * Undo edit icon (16x16)
  * Used for undoing edits in diff views
  */
-export const UndoIcon: React.FC<IconProps> = ({
-  size = 16,
-  className,
-  ...props
-}) => (
+export const UndoIcon: FC<IconProps> = ({ size = 16, className, ...props }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 16 16"
@@ -247,11 +239,7 @@ export const UndoIcon: React.FC<IconProps> = ({
  * Redo edit icon (16x16)
  * Used for redoing edits in diff views
  */
-export const RedoIcon: React.FC<IconProps> = ({
-  size = 16,
-  className,
-  ...props
-}) => (
+export const RedoIcon: FC<IconProps> = ({ size = 16, className, ...props }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 16 16"
@@ -276,7 +264,7 @@ export const RedoIcon: React.FC<IconProps> = ({
  * Replace all icon (16x16)
  * Used for replacing all occurrences in search/replace
  */
-export const ReplaceAllIcon: React.FC<IconProps> = ({
+export const ReplaceAllIcon: FC<IconProps> = ({
   size = 16,
   className,
   ...props
@@ -305,11 +293,7 @@ export const ReplaceAllIcon: React.FC<IconProps> = ({
  * Copy icon (16x16)
  * Used for copying content
  */
-export const CopyIcon: React.FC<IconProps> = ({
-  size = 16,
-  className,
-  ...props
-}) => (
+export const CopyIcon: FC<IconProps> = ({ size = 16, className, ...props }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 16 16"
@@ -342,7 +326,7 @@ export const CopyIcon: React.FC<IconProps> = ({
  * Paste icon (16x16)
  * Used for pasting content
  */
-export const PasteIcon: React.FC<IconProps> = ({
+export const PasteIcon: FC<IconProps> = ({
   size = 16,
   className,
   ...props
@@ -371,7 +355,7 @@ export const PasteIcon: React.FC<IconProps> = ({
  * Select all icon (16x16)
  * Used for selecting all content
  */
-export const SelectAllIcon: React.FC<IconProps> = ({
+export const SelectAllIcon: FC<IconProps> = ({
   size = 16,
   className,
   ...props

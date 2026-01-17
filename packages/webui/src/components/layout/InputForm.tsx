@@ -7,7 +7,7 @@
  * Platform-agnostic version with configurable edit modes
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 import type { ReactNode } from 'react';
 import {
   EditPencilIcon,
@@ -144,7 +144,7 @@ export interface InputFormProps {
  * />
  * ```
  */
-export const InputForm: React.FC<InputFormProps> = ({
+export const InputForm: FC<InputFormProps> = ({
   inputText,
   inputFieldRef,
   isStreaming,

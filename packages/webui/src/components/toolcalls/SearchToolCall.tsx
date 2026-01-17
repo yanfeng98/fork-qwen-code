@@ -6,7 +6,7 @@
  * Search tool call component - specialized for search operations
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 import {
   safeTitle,
   groupContent,
@@ -18,7 +18,7 @@ import { FileLink } from '../layout/FileLink.js';
 /**
  * Inline container for compact search results display
  */
-const InlineContainer: React.FC<{
+const InlineContainer: FC<{
   status: 'success' | 'error' | 'warning' | 'loading' | 'default';
   labelSuffix?: string;
   children?: React.ReactNode;
@@ -68,7 +68,7 @@ const InlineContainer: React.FC<{
 /**
  * Card layout for multi-result or error display
  */
-const SearchCard: React.FC<{
+const SearchCard: FC<{
   status: 'success' | 'error' | 'warning' | 'loading' | 'default';
   children: React.ReactNode;
   isFirst?: boolean;
@@ -109,7 +109,7 @@ const SearchCard: React.FC<{
 /**
  * Row component for search card layout
  */
-const SearchRow: React.FC<{ label: string; children: React.ReactNode }> = ({
+const SearchRow: FC<{ label: string; children: React.ReactNode }> = ({
   label,
   children,
 }) => (
@@ -126,7 +126,7 @@ const SearchRow: React.FC<{ label: string; children: React.ReactNode }> = ({
 /**
  * Local locations list component
  */
-const LocationsListLocal: React.FC<{
+const LocationsListLocal: FC<{
   locations: Array<{ path: string; line?: number | null }>;
 }> = ({ locations }) => (
   <div className="flex flex-col gap-1 max-w-full">
@@ -156,7 +156,7 @@ const getDisplayLabel = (kind: string): string => {
  * Specialized component for Search tool calls
  * Optimized for displaying search operations and results
  */
-export const SearchToolCall: React.FC<BaseToolCallProps> = ({
+export const SearchToolCall: FC<BaseToolCallProps> = ({
   toolCall,
   isFirst,
   isLast,

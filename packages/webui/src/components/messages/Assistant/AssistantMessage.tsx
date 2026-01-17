@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 import { MessageContent } from '../MessageContent.js';
 import './AssistantMessage.css';
 
@@ -28,7 +28,7 @@ export interface AssistantMessageProps {
  * AssistantMessage component - renders AI responses with styling
  * Supports different states: default, success, error, warning, loading
  */
-export const AssistantMessage: React.FC<AssistantMessageProps> = ({
+export const AssistantMessage: FC<AssistantMessageProps> = ({
   content,
   timestamp: _timestamp,
   onFileClick,

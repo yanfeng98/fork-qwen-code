@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type React from 'react';
 import { createContext, useContext } from 'react';
+import type { ReactNode } from 'react';
 
 /**
  * Platform types supported by the webui library
@@ -88,7 +88,7 @@ export function usePlatform(): PlatformContextValue {
  * Provider component props
  */
 export interface PlatformProviderProps {
-  children: React.ReactNode;
+  children: ReactNode;
   value: PlatformContextValue;
 }
 

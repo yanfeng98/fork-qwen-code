@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 
-const Header: React.FC = () => <header>Header Component Placeholder</header>;
+const Header: FC = () => <header>Header Component Placeholder</header>;
 
 export default Header;

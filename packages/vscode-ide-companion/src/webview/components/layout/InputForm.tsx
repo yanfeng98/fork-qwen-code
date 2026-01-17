@@ -7,7 +7,7 @@
  * This allows local ApprovalModeValue to work with webui's EditModeInfo
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 import { InputForm as BaseInputForm, getEditModeIcon } from '@qwen-code/webui';
 import type {
   InputFormProps as BaseInputFormProps,
@@ -44,7 +44,7 @@ const getEditModeInfo = (editMode: ApprovalModeValue): EditModeInfo => {
  * This is an adapter that accepts the local ApprovalModeValue type
  * and converts it to webui's EditModeInfo format.
  */
-export const InputForm: React.FC<InputFormProps> = ({ editMode, ...rest }) => {
+export const InputForm: FC<InputFormProps> = ({ editMode, ...rest }) => {
   const editModeInfo = getEditModeInfo(editMode);
 
   return <BaseInputForm editModeInfo={editModeInfo} {...rest} />;

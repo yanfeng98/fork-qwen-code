@@ -7,7 +7,7 @@
  * Displays sessions grouped by date with search and infinite scroll
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 import { Fragment } from 'react';
 import {
   getTimeAgo,
@@ -64,7 +64,7 @@ export interface SessionSelectorProps {
  * />
  * ```
  */
-export const SessionSelector: React.FC<SessionSelectorProps> = ({
+export const SessionSelector: FC<SessionSelectorProps> = ({
   visible,
   sessions,
   currentSessionId,

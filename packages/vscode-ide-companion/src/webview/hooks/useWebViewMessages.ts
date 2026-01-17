@@ -886,6 +886,8 @@ export const useWebViewMessages = ({
 
   useEffect(() => {
     window.addEventListener('message', handleMessage);
+    // Notify extension that the webview is ready to receive initialization state.
+    vscode.postMessage({ type: 'webviewReady', data: {} });
     return () => window.removeEventListener('message', handleMessage);
-  }, [handleMessage]);
+  }, [handleMessage, vscode]);
 };

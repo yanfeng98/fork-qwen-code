@@ -7,7 +7,7 @@
  * Pure UI component - platform interactions via usePlatform hook
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { FileLink } from '../layout/FileLink.js';
 import {
@@ -23,7 +23,7 @@ import type {
 /**
  * Simple container for Read tool calls
  */
-const ReadToolCallContainer: React.FC<ToolCallContainerProps> = ({
+const ReadToolCallContainer: FC<ToolCallContainerProps> = ({
   label,
   status = 'success',
   children,
@@ -56,7 +56,7 @@ const ReadToolCallContainer: React.FC<ToolCallContainerProps> = ({
  * ReadToolCall - displays file reading operations
  * Shows: Read filename (no content preview)
  */
-export const ReadToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
+export const ReadToolCall: FC<BaseToolCallProps> = ({ toolCall }) => {
   const { kind, content, locations, toolCallId } = toolCall;
   const platform = usePlatform();
   const openedDiffsRef = useRef<Map<string, string>>(new Map());

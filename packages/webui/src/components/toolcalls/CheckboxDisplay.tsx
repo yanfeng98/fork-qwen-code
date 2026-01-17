@@ -6,7 +6,7 @@
  * Display-only checkbox component for plan entries
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 
 export interface CheckboxDisplayProps {
   checked?: boolean;
@@ -23,7 +23,7 @@ export interface CheckboxDisplayProps {
  * - Supports indeterminate (middle) state using a data- attribute.
  * - Intended for read-only display (disabled by default).
  */
-export const CheckboxDisplay: React.FC<CheckboxDisplayProps> = ({
+export const CheckboxDisplay: FC<CheckboxDisplayProps> = ({
   checked = false,
   indeterminate = false,
   disabled = true,

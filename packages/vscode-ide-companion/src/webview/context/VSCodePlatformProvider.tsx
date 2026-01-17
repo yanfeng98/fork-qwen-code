@@ -7,8 +7,8 @@
  * This allows webui components to work with VSCode's messaging system
  */
 
-import type React from 'react';
 import { useMemo, useCallback, useEffect, useRef } from 'react';
+import type { FC, ReactNode } from 'react';
 import { PlatformProvider } from '@qwen-code/webui';
 import type { PlatformContextValue } from '@qwen-code/webui';
 import { useVSCode } from '../hooks/useVSCode.js';
@@ -18,7 +18,7 @@ import { generateIconUrl } from '../utils/resourceUrl.js';
  * Props for VSCodePlatformProvider
  */
 interface VSCodePlatformProviderProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 /**
@@ -27,7 +27,7 @@ interface VSCodePlatformProviderProps {
  * This component bridges the VSCode API with the platform-agnostic webui components.
  * It wraps children with PlatformProvider and provides VSCode-specific implementations.
  */
-export const VSCodePlatformProvider: React.FC<VSCodePlatformProviderProps> = ({
+export const VSCodePlatformProvider: FC<VSCodePlatformProviderProps> = ({
   children,
 }) => {
   const vscode = useVSCode();

@@ -5,7 +5,7 @@
  */
 
 import type { Meta, StoryObj, StoryFn, Decorator } from '@storybook/react-vite';
-import type React from 'react';
+import type { FC } from 'react';
 import { useRef } from 'react';
 import { InputForm, getEditModeIcon } from './InputForm.js';
 import type { InputFormProps } from './InputForm.js';
@@ -15,7 +15,7 @@ type InputFormStoryProps = Omit<InputFormProps, 'inputFieldRef'>;
 /**
  * Wrapper component to provide inputFieldRef
  */
-const InputFormWrapper: React.FC<InputFormStoryProps> = (props) => {
+const InputFormWrapper: FC<InputFormStoryProps> = (props) => {
   const inputFieldRef = useRef<HTMLDivElement>(null);
   return <InputForm {...props} inputFieldRef={inputFieldRef} />;
 };

@@ -6,18 +6,14 @@
  * Stop icon for canceling operations
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 import type { IconProps } from './types.js';
 
 /**
  * Stop/square icon (16x16)
  * Used for stop/cancel operations
  */
-export const StopIcon: React.FC<IconProps> = ({
-  size = 16,
-  className,
-  ...props
-}) => (
+export const StopIcon: FC<IconProps> = ({ size = 16, className, ...props }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 16 16"

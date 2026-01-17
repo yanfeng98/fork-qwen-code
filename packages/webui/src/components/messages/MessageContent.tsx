@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 import { memo } from 'react';
 import { MarkdownRenderer } from './MarkdownRenderer/MarkdownRenderer.js';
 
@@ -14,7 +14,7 @@ export interface MessageContentProps {
   enableFileLinks?: boolean;
 }
 
-const MessageContentBase: React.FC<MessageContentProps> = ({
+const MessageContentBase: FC<MessageContentProps> = ({
   content,
   onFileClick,
   enableFileLinks,

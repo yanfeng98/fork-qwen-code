@@ -6,7 +6,7 @@
  * Shared copy utilities for toolcall components
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 import { useState, useCallback } from 'react';
 import { usePlatform } from '../../../context/PlatformContext.js';
 
@@ -46,7 +46,7 @@ interface CopyButtonProps {
  * Uses PlatformContext for platform-specific clipboard access with fallback
  * Note: Parent element should have 'group' class for hover effect
  */
-export const CopyButton: React.FC<CopyButtonProps> = ({ text }) => {
+export const CopyButton: FC<CopyButtonProps> = ({ text }) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const platform = usePlatform();
 

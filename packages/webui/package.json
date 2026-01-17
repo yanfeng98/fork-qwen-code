@@ -18,7 +18,8 @@
       "require": "./dist/components/icons/index.cjs"
     },
     "./tailwind.preset": "./tailwind.preset.cjs",
-    "./styles.css": "./dist/styles.css"
+    "./styles.css": "./dist/styles.css",
+    "./webview.css": "./dist/webview.css"
   },
   "files": [
     "dist",

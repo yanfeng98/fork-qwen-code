@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type React from 'react';
+import type { ReactNode } from 'react';
 import { forwardRef } from 'react';
 
 /**
@@ -28,9 +28,9 @@ export interface InputProps
   /** Helper text below input */
   helperText?: string;
   /** Left icon/element */
-  leftElement?: React.ReactNode;
+  leftElement?: ReactNode;
   /** Right icon/element */
-  rightElement?: React.ReactNode;
+  rightElement?: ReactNode;
   /** Full width input */
   fullWidth?: boolean;
 }

@@ -6,7 +6,7 @@
  * Special UI icons
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 import type { IconProps } from './types.js';
 
 interface ThinkingIconProps extends IconProps {
@@ -16,7 +16,7 @@ interface ThinkingIconProps extends IconProps {
   enabled?: boolean;
 }
 
-export const ThinkingIcon: React.FC<ThinkingIconProps> = ({
+export const ThinkingIcon: FC<ThinkingIconProps> = ({
   size = 16,
   className,
   enabled = false,
@@ -49,7 +49,7 @@ export const ThinkingIcon: React.FC<ThinkingIconProps> = ({
   </svg>
 );
 
-export const TerminalIcon: React.FC<IconProps> = ({
+export const TerminalIcon: FC<IconProps> = ({
   size = 20,
   className,
   ...props

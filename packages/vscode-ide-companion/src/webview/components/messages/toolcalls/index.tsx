@@ -7,7 +7,7 @@
  * All UI components are now imported from @qwen-code/webui
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 import {
   shouldShowToolCall,
   // All ToolCall components from webui
@@ -25,9 +25,7 @@ import type { BaseToolCallProps } from '@qwen-code/webui';
 /**
  * Factory function that returns the appropriate tool call component based on kind
  */
-export const getToolCallComponent = (
-  kind: string,
-): React.FC<BaseToolCallProps> => {
+export const getToolCallComponent = (kind: string): FC<BaseToolCallProps> => {
   const normalizedKind = kind.toLowerCase();
 
   // Route to specialized components

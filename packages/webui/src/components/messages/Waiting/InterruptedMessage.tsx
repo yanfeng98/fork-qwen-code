@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 
 interface InterruptedMessageProps {
   text?: string;
 }
 
 // A lightweight status line similar to WaitingMessage but without the left status icon.
-export const InterruptedMessage: React.FC<InterruptedMessageProps> = ({
+export const InterruptedMessage: FC<InterruptedMessageProps> = ({
   text = 'Interrupted',
 }) => (
   <div className="flex gap-0 items-start text-left py-2 flex-col opacity-85">

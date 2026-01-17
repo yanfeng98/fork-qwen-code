@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 
 /**
  * Tooltip component props
@@ -22,7 +22,7 @@ export interface TooltipProps {
  * Tooltip component using CSS group-hover for display
  * Supports CSS variables for theming
  */
-export const Tooltip: React.FC<TooltipProps> = ({
+export const Tooltip: FC<TooltipProps> = ({
   children,
   content,
   position = 'top',

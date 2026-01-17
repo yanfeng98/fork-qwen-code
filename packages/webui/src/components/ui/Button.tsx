@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type React from 'react';
+import type { ReactNode } from 'react';
 import { forwardRef } from 'react';
 
 /**
@@ -28,7 +28,7 @@ export type ButtonSize = 'sm' | 'md' | 'lg';
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /** Button content */
-  children: React.ReactNode;
+  children: ReactNode;
   /** Visual style variant */
   variant?: ButtonVariant;
   /** Button size */
@@ -36,9 +36,9 @@ export interface ButtonProps
   /** Loading state - shows spinner and disables button */
   loading?: boolean;
   /** Icon to display before children */
-  leftIcon?: React.ReactNode;
+  leftIcon?: ReactNode;
   /** Icon to display after children */
-  rightIcon?: React.ReactNode;
+  rightIcon?: ReactNode;
   /** Full width button */
   fullWidth?: boolean;
 }

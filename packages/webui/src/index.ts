@@ -205,3 +205,6 @@ export type { CompletionItem, CompletionItemType } from './types/completion';
 // Utils
 export { groupSessionsByDate, getTimeAgo } from './utils/sessionGrouping';
 export type { SessionGroup } from './utils/sessionGrouping';
+
+// VSCode Webview utilities
+export { default as WebviewContainer } from './components/WebviewContainer';

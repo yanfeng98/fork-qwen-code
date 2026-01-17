@@ -7,7 +7,7 @@
  * Displays token usage information with tooltip
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 import { Tooltip } from '../ui/Tooltip.js';
 
 /**
@@ -61,7 +61,7 @@ const formatNumber = (value: number): string => {
  * />
  * ```
  */
-export const ContextIndicator: React.FC<ContextIndicatorProps> = ({
+export const ContextIndicator: FC<ContextIndicatorProps> = ({
   contextUsage,
 }) => {
   if (!contextUsage) {

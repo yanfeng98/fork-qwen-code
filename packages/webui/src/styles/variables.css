@@ -78,8 +78,8 @@
   --app-radius-sm: 0.25rem;
   --app-radius-md: 0.375rem;
   --app-radius-lg: 0.5rem;
-  --corner-radius-small: 6px;
-  --corner-radius-medium: 8px;
+  --qwen-corner-radius-small: 6px;
+  --qwen-corner-radius-medium: 8px;
 
   /* ===========================
      Spacing

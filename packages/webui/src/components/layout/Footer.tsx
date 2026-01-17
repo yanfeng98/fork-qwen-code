@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 
-const Footer: React.FC = () => <footer>Footer Component Placeholder</footer>;
+const Footer: FC = () => <footer>Footer Component Placeholder</footer>;
 
 export default Footer;

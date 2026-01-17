@@ -7,7 +7,7 @@
  * Pure UI component - platform interactions via usePlatform hook
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 import {
   ToolCallContainer,
   CopyButton,
@@ -27,7 +27,7 @@ type ShellVariant = 'execute' | 'bash';
 /**
  * Custom container for Execute variant with different styling
  */
-const ExecuteToolCallContainer: React.FC<ToolCallContainerProps> = ({
+const ExecuteToolCallContainer: FC<ToolCallContainerProps> = ({
   label,
   status = 'success',
   children,
@@ -92,9 +92,10 @@ const getInputCommand = (
 /**
  * Shell tool call implementation
  */
-const ShellToolCallImpl: React.FC<
-  BaseToolCallProps & { variant: ShellVariant }
-> = ({ toolCall, variant }) => {
+const ShellToolCallImpl: FC<BaseToolCallProps & { variant: ShellVariant }> = ({
+  toolCall,
+  variant,
+}) => {
   const { title, content, rawInput, toolCallId } = toolCall;
   const classPrefix = variant;
   const platform = usePlatform();
@@ -263,7 +264,7 @@ const ShellToolCallImpl: React.FC<
  * ShellToolCall - displays bash/execute command tool calls
  * Shows command input and output with IN/OUT cards
  */
-export const ShellToolCall: React.FC<BaseToolCallProps> = (props) => {
+export const ShellToolCall: FC<BaseToolCallProps> = (props) => {
   const normalizedKind = props.toolCall.kind.toLowerCase();
   const variant: ShellVariant =
     normalizedKind === 'execute' ? 'execute' : 'bash';

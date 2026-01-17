@@ -6,7 +6,7 @@
  * UpdatedPlan tool call component - specialized for plan update operations
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 import { groupContent, safeTitle } from './shared/index.js';
 import type {
   BaseToolCallProps,
@@ -20,7 +20,7 @@ import { CheckboxDisplay } from './CheckboxDisplay.js';
 /**
  * Custom container for UpdatedPlanToolCall with specific styling
  */
-const PlanToolCallContainer: React.FC<ToolCallContainerProps> = ({
+const PlanToolCallContainer: FC<ToolCallContainerProps> = ({
   label,
   status = 'success',
   children,
@@ -113,9 +113,7 @@ const parsePlanEntries = (textOutputs: string[]): PlanEntry[] => {
  * Specialized component for UpdatedPlan tool calls
  * Optimized for displaying plan update operations
  */
-export const UpdatedPlanToolCall: React.FC<BaseToolCallProps> = ({
-  toolCall,
-}) => {
+export const UpdatedPlanToolCall: FC<BaseToolCallProps> = ({ toolCall }) => {
   const { content, status } = toolCall;
   const { errors, textOutputs } = groupContent(content);
 

@@ -7,7 +7,7 @@
  * Platform-specific logic (icon URL) passed via props
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 
 export interface OnboardingProps {
   /** URL of the application icon */
@@ -26,7 +26,7 @@ export interface OnboardingProps {
  * Onboarding - Welcome screen for new users
  * Pure presentational component
  */
-export const Onboarding: React.FC<OnboardingProps> = ({
+export const Onboarding: FC<OnboardingProps> = ({
   iconUrl,
   onGetStarted,
   appName = 'Qwen Code',

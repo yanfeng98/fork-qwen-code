@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 
 interface SendIconProps {
   size?: number;
@@ -12,7 +12,7 @@ interface SendIconProps {
   className?: string;
 }
 
-const SendIcon: React.FC<SendIconProps> = ({
+const SendIcon: FC<SendIconProps> = ({
   size = 24,
   color = 'currentColor',
   className = '',

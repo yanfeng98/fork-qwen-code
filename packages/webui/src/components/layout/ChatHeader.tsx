@@ -7,7 +7,7 @@
  * Displays current session title with navigation controls
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 import { ChevronDownIcon } from '../icons/NavigationIcons.js';
 import { PlusIcon } from '../icons/NavigationIcons.js';
 
@@ -40,7 +40,7 @@ export interface ChatHeaderProps {
  * />
  * ```
  */
-export const ChatHeader: React.FC<ChatHeaderProps> = ({
+export const ChatHeader: FC<ChatHeaderProps> = ({
   currentSessionTitle,
   onLoadSessions,
   onNewSession,

@@ -6,7 +6,7 @@
  * MarkdownRenderer component - renders markdown content with syntax highlighting and clickable file paths
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 import { useMemo, useCallback } from 'react';
 import MarkdownIt from 'markdown-it';
 import type { Options as MarkdownItOptions } from 'markdown-it';
@@ -59,7 +59,7 @@ const createMarkdownInstance = (): MarkdownIt =>
 /**
  * MarkdownRenderer component - renders markdown content with enhanced features
  */
-export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
+export const MarkdownRenderer: FC<MarkdownRendererProps> = ({
   content,
   onFileClick,
   enableFileLinks = true,

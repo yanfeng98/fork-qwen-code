@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
+import type { FC, RefObject } from 'react';
 
 export interface PermissionOption {
   name: string;
@@ -41,7 +41,7 @@ export interface PermissionDrawerProps {
   onClose?: () => void;
 }
 
-const PermissionDrawer: React.FC<PermissionDrawerProps> = ({
+const PermissionDrawer: FC<PermissionDrawerProps> = ({
   isOpen,
   options,
   toolCall,
@@ -290,10 +290,10 @@ interface CustomMessageInputRowProps {
   setCustomMessage: (val: string) => void;
   onFocusRow: () => void;
   onSubmitReject: () => void;
-  inputRef: React.RefObject<HTMLInputElement | null>;
+  inputRef: RefObject<HTMLInputElement | null>;
 }
 
-const CustomMessageInputRow: React.FC<CustomMessageInputRowProps> = ({
+const CustomMessageInputRow: FC<CustomMessageInputRowProps> = ({
   isFocused,
   customMessage,
   setCustomMessage,
@@ -309,7 +309,7 @@ const CustomMessageInputRow: React.FC<CustomMessageInputRowProps> = ({
     onClick={() => inputRef.current?.focus()}
   >
     <input
-      ref={inputRef as React.LegacyRef<HTMLInputElement> | undefined}
+      ref={inputRef as unknown as RefObject<HTMLInputElement>}
       type="text"
       placeholder="Tell Qwen what to do instead"
       spellCheck={false}

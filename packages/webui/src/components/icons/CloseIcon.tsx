@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 
 interface CloseIconProps {
   size?: number;
@@ -12,7 +12,7 @@ interface CloseIconProps {
   className?: string;
 }
 
-const CloseIcon: React.FC<CloseIconProps> = ({
+const CloseIcon: FC<CloseIconProps> = ({
   size = 24,
   color = 'currentColor',
   className = '',

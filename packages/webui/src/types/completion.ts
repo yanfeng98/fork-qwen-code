@@ -6,7 +6,7 @@
  * Completion item types for autocomplete menus
  */
 
-import type React from 'react';
+import type { ReactNode } from 'react';
 
 /**
  * Completion item type categories
@@ -30,7 +30,7 @@ export interface CompletionItem {
   /** Optional description shown below label */
   description?: string;
   /** Optional icon to display */
-  icon?: React.ReactNode;
+  icon?: ReactNode;
   /** Type of completion item */
   type: CompletionItemType;
   /** Value inserted into the input when selected (e.g., filename or command) */

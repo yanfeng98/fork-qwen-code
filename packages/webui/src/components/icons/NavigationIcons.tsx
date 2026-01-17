@@ -6,14 +6,14 @@
  * Navigation and action icons
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 import type { IconProps } from './types.js';
 
 /**
  * Chevron down icon (20x20)
  * Used for dropdown arrows
  */
-export const ChevronDownIcon: React.FC<IconProps> = ({
+export const ChevronDownIcon: FC<IconProps> = ({
   size = 20,
   className,
   ...props
@@ -40,11 +40,7 @@ export const ChevronDownIcon: React.FC<IconProps> = ({
  * Plus icon (20x20)
  * Used for new session button
  */
-export const PlusIcon: React.FC<IconProps> = ({
-  size = 20,
-  className,
-  ...props
-}) => (
+export const PlusIcon: FC<IconProps> = ({ size = 20, className, ...props }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 20 20"
@@ -63,7 +59,7 @@ export const PlusIcon: React.FC<IconProps> = ({
  * Small plus icon (16x16)
  * Used for default attachment type
  */
-export const PlusSmallIcon: React.FC<IconProps> = ({
+export const PlusSmallIcon: FC<IconProps> = ({
   size = 16,
   className,
   ...props
@@ -86,7 +82,7 @@ export const PlusSmallIcon: React.FC<IconProps> = ({
  * Arrow up icon (20x20)
  * Used for send message button
  */
-export const ArrowUpIcon: React.FC<IconProps> = ({
+export const ArrowUpIcon: FC<IconProps> = ({
   size = 20,
   className,
   ...props
@@ -113,7 +109,7 @@ export const ArrowUpIcon: React.FC<IconProps> = ({
  * Close X icon (14x14)
  * Used for close buttons in banners and dialogs
  */
-export const CloseIcon: React.FC<IconProps> = ({
+export const CloseIcon: FC<IconProps> = ({
   size = 14,
   className,
   ...props
@@ -137,7 +133,7 @@ export const CloseIcon: React.FC<IconProps> = ({
   </svg>
 );
 
-export const CloseSmallIcon: React.FC<IconProps> = ({
+export const CloseSmallIcon: FC<IconProps> = ({
   size = 16,
   className,
   ...props
@@ -160,7 +156,7 @@ export const CloseSmallIcon: React.FC<IconProps> = ({
  * Search/magnifying glass icon (20x20)
  * Used for search input
  */
-export const SearchIcon: React.FC<IconProps> = ({
+export const SearchIcon: FC<IconProps> = ({
   size = 20,
   className,
   ...props
@@ -187,7 +183,7 @@ export const SearchIcon: React.FC<IconProps> = ({
  * Refresh/reload icon (16x16)
  * Used for refresh session list
  */
-export const RefreshIcon: React.FC<IconProps> = ({
+export const RefreshIcon: FC<IconProps> = ({
   size = 16,
   className,
   ...props

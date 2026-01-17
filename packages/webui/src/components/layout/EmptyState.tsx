@@ -7,7 +7,7 @@
  * Shows logo and welcome message based on authentication state
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 import { usePlatform } from '../../context/PlatformContext.js';
 
 /**
@@ -41,7 +41,7 @@ export interface EmptyStateProps {
  * />
  * ```
  */
-export const EmptyState: React.FC<EmptyStateProps> = ({
+export const EmptyState: FC<EmptyStateProps> = ({
   isAuthenticated = false,
   loadingMessage,
   logoUrl,

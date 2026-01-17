@@ -6,7 +6,7 @@
  * Write tool call component - specialized for file writing operations
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 import {
   ToolCallContainer,
   groupContent,
@@ -19,7 +19,7 @@ import { FileLink } from '../layout/FileLink.js';
  * Specialized component for Write tool calls
  * Shows: Write filename + error message + content preview
  */
-export const WriteToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
+export const WriteToolCall: FC<BaseToolCallProps> = ({ toolCall }) => {
   const { content, locations, rawInput, toolCallId } = toolCall;
 
   // Group content by type

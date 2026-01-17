@@ -6,14 +6,14 @@
  * Status and state related icons
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 import type { IconProps } from './types.js';
 
 /**
  * Plan completed icon (14x14)
  * Used for completed plan items
  */
-export const PlanCompletedIcon: React.FC<IconProps> = ({
+export const PlanCompletedIcon: FC<IconProps> = ({
   size = 14,
   className,
   ...props
@@ -43,7 +43,7 @@ export const PlanCompletedIcon: React.FC<IconProps> = ({
  * Plan in progress icon (14x14)
  * Used for in-progress plan items
  */
-export const PlanInProgressIcon: React.FC<IconProps> = ({
+export const PlanInProgressIcon: FC<IconProps> = ({
   size = 14,
   className,
   ...props
@@ -73,7 +73,7 @@ export const PlanInProgressIcon: React.FC<IconProps> = ({
  * Plan pending icon (14x14)
  * Used for pending plan items
  */
-export const PlanPendingIcon: React.FC<IconProps> = ({
+export const PlanPendingIcon: FC<IconProps> = ({
   size = 14,
   className,
   ...props
@@ -103,7 +103,7 @@ export const PlanPendingIcon: React.FC<IconProps> = ({
  * Warning triangle icon (20x20)
  * Used for warning messages
  */
-export const WarningTriangleIcon: React.FC<IconProps> = ({
+export const WarningTriangleIcon: FC<IconProps> = ({
   size = 20,
   className,
   ...props
@@ -130,11 +130,7 @@ export const WarningTriangleIcon: React.FC<IconProps> = ({
  * User profile icon (16x16)
  * Used for login command
  */
-export const UserIcon: React.FC<IconProps> = ({
-  size = 16,
-  className,
-  ...props
-}) => (
+export const UserIcon: FC<IconProps> = ({ size = 16, className, ...props }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 16 16"
@@ -149,7 +145,7 @@ export const UserIcon: React.FC<IconProps> = ({
   </svg>
 );
 
-export const SymbolIcon: React.FC<IconProps> = ({
+export const SymbolIcon: FC<IconProps> = ({
   size = 16,
   className,
   ...props
@@ -168,7 +164,7 @@ export const SymbolIcon: React.FC<IconProps> = ({
   </svg>
 );
 
-export const SelectionIcon: React.FC<IconProps> = ({
+export const SelectionIcon: FC<IconProps> = ({
   size = 16,
   className,
   ...props

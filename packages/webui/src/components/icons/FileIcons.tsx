@@ -6,18 +6,14 @@
  * File and document related icons
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 import type { IconProps } from './types.js';
 
 /**
  * File document icon (16x16)
  * Used for file completion menu
  */
-export const FileIcon: React.FC<IconProps> = ({
-  size = 16,
-  className,
-  ...props
-}) => (
+export const FileIcon: FC<IconProps> = ({ size = 16, className, ...props }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 16 16"
@@ -32,7 +28,7 @@ export const FileIcon: React.FC<IconProps> = ({
   </svg>
 );
 
-export const FileListIcon: React.FC<IconProps> = ({
+export const FileListIcon: FC<IconProps> = ({
   size = 16,
   className,
   ...props
@@ -55,7 +51,7 @@ export const FileListIcon: React.FC<IconProps> = ({
  * Save document icon (16x16)
  * Used for save session button
  */
-export const SaveDocumentIcon: React.FC<IconProps> = ({
+export const SaveDocumentIcon: FC<IconProps> = ({
   size = 16,
   className,
   ...props
@@ -83,7 +79,7 @@ export const SaveDocumentIcon: React.FC<IconProps> = ({
  * Folder icon (16x16)
  * Useful for directory entries in completion lists
  */
-export const FolderIcon: React.FC<IconProps> = ({
+export const FolderIcon: FC<IconProps> = ({
   size = 16,
   className,
   ...props

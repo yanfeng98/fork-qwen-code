@@ -7,7 +7,7 @@
  * Platform-agnostic version using webui components
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 import { FileLink } from '../../layout/FileLink.js';
 import './LayoutComponents.css';
 
@@ -33,7 +33,7 @@ export interface ToolCallContainerProps {
  * ToolCallContainer - Main container for tool call displays
  * Features timeline connector line and status bullet
  */
-export const ToolCallContainer: React.FC<ToolCallContainerProps> = ({
+export const ToolCallContainer: FC<ToolCallContainerProps> = ({
   label,
   status = 'success',
   children,
@@ -73,7 +73,7 @@ interface ToolCallCardProps {
 /**
  * ToolCallCard - Legacy card wrapper for complex layouts like diffs
  */
-export const ToolCallCard: React.FC<ToolCallCardProps> = ({
+export const ToolCallCard: FC<ToolCallCardProps> = ({
   icon: _icon,
   children,
 }) => (
@@ -93,10 +93,7 @@ interface ToolCallRowProps {
 /**
  * ToolCallRow - A single row in the tool call grid (legacy - for complex layouts)
  */
-export const ToolCallRow: React.FC<ToolCallRowProps> = ({
-  label,
-  children,
-}) => (
+export const ToolCallRow: FC<ToolCallRowProps> = ({ label, children }) => (
   <div className="grid grid-cols-[80px_1fr] gap-medium min-w-0">
     <div className="text-xs text-[var(--app-secondary-foreground)] font-medium pt-[2px]">
       {label}
@@ -138,10 +135,7 @@ const getStatusColorClass = (
 /**
  * StatusIndicator - Status indicator with colored dot
  */
-export const StatusIndicator: React.FC<StatusIndicatorProps> = ({
-  status,
-  text,
-}) => (
+export const StatusIndicator: FC<StatusIndicatorProps> = ({ status, text }) => (
   <div className="inline-block font-medium relative" title={status}>
     <span
       className={`inline-block w-1.5 h-1.5 rounded-full mr-1.5 align-middle ${getStatusColorClass(status)}`}
@@ -160,7 +154,7 @@ interface CodeBlockProps {
 /**
  * CodeBlock - Code block for displaying formatted code or output
  */
-export const CodeBlock: React.FC<CodeBlockProps> = ({ children }) => (
+export const CodeBlock: FC<CodeBlockProps> = ({ children }) => (
   <pre className="font-mono text-[var(--app-monospace-font-size)] bg-[var(--app-primary-background)] border border-[var(--app-input-border)] rounded-small p-medium overflow-x-auto mt-1 whitespace-pre-wrap break-words max-h-[300px] overflow-y-auto">
     {children}
   </pre>
@@ -179,7 +173,7 @@ interface LocationsListProps {
 /**
  * LocationsList - List of file locations with clickable links
  */
-export const LocationsList: React.FC<LocationsListProps> = ({ locations }) => (
+export const LocationsList: FC<LocationsListProps> = ({ locations }) => (
   <div className="toolcall-locations-list flex flex-col gap-1 max-w-full">
     {locations.map((loc, idx) => (
       <FileLink key={idx} path={loc.path} line={loc.line} showFullPath={true} />

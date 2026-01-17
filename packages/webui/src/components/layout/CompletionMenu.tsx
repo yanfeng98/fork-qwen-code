@@ -7,7 +7,7 @@
  * Supports keyboard navigation and mouse interaction
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import type { CompletionItem } from '../../types/completion.js';
 
@@ -49,7 +49,7 @@ export interface CompletionMenuProps {
  * />
  * ```
  */
-export const CompletionMenu: React.FC<CompletionMenuProps> = ({
+export const CompletionMenu: FC<CompletionMenuProps> = ({
   items,
   onSelect,
   onClose,

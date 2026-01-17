@@ -6,9 +6,9 @@
  * Common icon props interface
  */
 
-import type React from 'react';
+import type { SVGProps } from 'react';
 
-export interface IconProps extends React.SVGProps<SVGSVGElement> {
+export interface IconProps extends SVGProps<SVGSVGElement> {
   /**
    * Icon size (width and height)
    * @default 16

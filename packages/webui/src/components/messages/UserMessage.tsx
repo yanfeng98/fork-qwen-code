@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 import { MessageContent } from './MessageContent.js';
 
 export interface FileContext {
@@ -21,7 +21,7 @@ export interface UserMessageProps {
   fileContext?: FileContext;
 }
 
-export const UserMessage: React.FC<UserMessageProps> = ({
+export const UserMessage: FC<UserMessageProps> = ({
   content,
   timestamp: _timestamp,
   onFileClick,

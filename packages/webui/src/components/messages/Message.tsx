@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 
 interface MessageProps {
   id: string;
@@ -14,7 +14,7 @@ interface MessageProps {
   className?: string;
 }
 
-const Message: React.FC<MessageProps> = ({
+const Message: FC<MessageProps> = ({
   content,
   sender,
   timestamp,

@@ -6,7 +6,7 @@
  * Think tool call component - specialized for thinking/reasoning operations
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 import {
   ToolCallContainer,
   ToolCallCard,
@@ -20,7 +20,7 @@ import type { BaseToolCallProps } from './shared/index.js';
  * Optimized for displaying AI reasoning and thought processes
  * Minimal display: just show the thoughts (no context)
  */
-export const ThinkToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
+export const ThinkToolCall: FC<BaseToolCallProps> = ({ toolCall }) => {
   const { content } = toolCall;
 
   // Group content by type

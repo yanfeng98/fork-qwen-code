@@ -4,10 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type React from 'react';
+import type { FC } from 'react';
 
-const MessageList: React.FC = () => (
-  <div>MessageList Component Placeholder</div>
-);
+const MessageList: FC = () => <div>MessageList Component Placeholder</div>;
 
 export default MessageList;
