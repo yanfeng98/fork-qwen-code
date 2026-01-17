@@ -57,25 +57,9 @@ const ReadToolCallContainer: FC<ToolCallContainerProps> = ({
  * Shows: Read filename (no content preview)
  */
 export const ReadToolCall: FC<BaseToolCallProps> = ({ toolCall }) => {
-  const { kind, content, locations, toolCallId } = toolCall;
+  const { content, locations, toolCallId } = toolCall;
   const platform = usePlatform();
   const openedDiffsRef = useRef<Map<string, string>>(new Map());
-
-  /**
-   * Map tool call kind to appropriate display name
-   */
-  const getDisplayLabel = (): string => {
-    const normalizedKind = kind.toLowerCase();
-    if (normalizedKind === 'read_many_files') {
-      return 'ReadManyFiles';
-    } else if (normalizedKind === 'list_directory' || normalizedKind === 'ls') {
-      return 'ListFiles';
-    } else if (normalizedKind === 'skill') {
-      return 'Skill';
-    } else {
-      return 'ReadFile';
-    }
-  };
 
   // Group content by type; memoize to avoid new array identities on every render
   const { errors, diffs } = useMemo(() => groupContent(content), [content]);
@@ -146,7 +130,7 @@ export const ReadToolCall: FC<BaseToolCallProps> = ({ toolCall }) => {
     const path = locations?.[0]?.path || '';
     return (
       <ReadToolCallContainer
-        label={getDisplayLabel()}
+        label="Read"
         className="read-tool-call-error"
         status="error"
         toolCallId={toolCallId}
@@ -170,7 +154,7 @@ export const ReadToolCall: FC<BaseToolCallProps> = ({ toolCall }) => {
     const path = diffs[0]?.path || locations?.[0]?.path || '';
     return (
       <ReadToolCallContainer
-        label={getDisplayLabel()}
+        label="Read"
         className="read-tool-call-success"
         status={containerStatus}
         toolCallId={toolCallId}
@@ -194,7 +178,7 @@ export const ReadToolCall: FC<BaseToolCallProps> = ({ toolCall }) => {
     const path = locations[0].path;
     return (
       <ReadToolCallContainer
-        label={getDisplayLabel()}
+        label="Read"
         className="read-tool-call-success"
         status={containerStatus}
         toolCallId={toolCallId}

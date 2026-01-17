@@ -31,9 +31,6 @@ export const getToolCallComponent = (kind: string): FC<BaseToolCallProps> => {
   // Route to specialized components
   switch (normalizedKind) {
     case 'read':
-    case 'read_many_files':
-    case 'list_directory':
-    case 'ls':
       return ReadToolCall;
 
     case 'write':

@@ -123,6 +123,7 @@ const ShellToolCallImpl: FC<BaseToolCallProps & { variant: ShellVariant }> = ({
 
   const Container =
     variant === 'execute' ? ExecuteToolCallContainer : ToolCallContainer;
+  const label = variant === 'execute' ? 'Execute' : 'Bash';
 
   // Group content by type
   const { textOutputs, errors } = groupContent(content);
@@ -156,7 +157,7 @@ const ShellToolCallImpl: FC<BaseToolCallProps & { variant: ShellVariant }> = ({
   // Error case
   if (errors.length > 0) {
     return (
-      <Container label="Shell" status={containerStatus} toolCallId={toolCallId}>
+      <Container label={label} status={containerStatus} toolCallId={toolCallId}>
         {/* Branch connector summary */}
         <div className="inline-flex text-[var(--app-secondary-foreground)] text-[0.85em] opacity-70 mt-[2px] mb-[2px] flex-row items-start w-full gap-1">
           <span className="flex-shrink-0 relative top-[-0.1em]">⎿</span>
@@ -202,7 +203,7 @@ const ShellToolCallImpl: FC<BaseToolCallProps & { variant: ShellVariant }> = ({
       output.length > 500 ? output.substring(0, 500) + '...' : output;
 
     return (
-      <Container label="Shell" status={containerStatus} toolCallId={toolCallId}>
+      <Container label={label} status={containerStatus} toolCallId={toolCallId}>
         {/* Branch connector summary */}
         <div className="inline-flex text-[var(--app-secondary-foreground)] text-[0.85em] opacity-70 mt-[2px] mb-[2px] flex-row items-start w-full gap-1">
           <span className="flex-shrink-0 relative top-[-0.1em]">⎿</span>
@@ -247,7 +248,7 @@ const ShellToolCallImpl: FC<BaseToolCallProps & { variant: ShellVariant }> = ({
 
   // Success without output: show command with branch connector
   return (
-    <Container label="Shell" status={containerStatus} toolCallId={toolCallId}>
+    <Container label={label} status={containerStatus} toolCallId={toolCallId}>
       <div
         className="inline-flex text-[var(--app-secondary-foreground)] text-[0.85em] opacity-70 mt-[2px] mb-[2px] flex-row items-start w-full gap-1"
         onClick={handleInClick}

@@ -60,6 +60,7 @@
     monospace
   );
   --app-monospace-font-size: 13px;
+  --font-size-xs: 11px;
 
   /* ===========================
      Link Styles
@@ -80,6 +81,9 @@
   --app-radius-lg: 0.5rem;
   --qwen-corner-radius-small: 6px;
   --qwen-corner-radius-medium: 8px;
+  --corner-radius-small: var(--app-radius-sm, 4px);
+  --corner-radius-medium: var(--app-radius-md, 6px);
+  --border-radius-medium: var(--corner-radius-medium, 6px);
 
   /* ===========================
      Spacing
@@ -90,6 +94,8 @@
   --app-spacing-medium: 8px;
   --app-spacing-lg: 1.5rem;
   --app-spacing-xl: 2rem;
+  --spacing-medium: var(--app-spacing-medium, 8px);
+  --spacing-large: 12px;
 
   /* ===========================
      Input Styles
@@ -106,6 +112,7 @@
   --app-ghost-button-hover-background: rgba(90, 93, 94, 0.31);
   --app-button-background: #3c3c3c;
   --app-button-foreground: #ffffff;
+  --app-button-hover-background: var(--app-primary-hover);
   --app-transparent-inner-border: rgba(255, 255, 255, 0.1);
 
   /* ===========================
@@ -146,6 +153,14 @@
   --app-warning-background: rgba(255, 204, 0, 0.1);
   --app-warning-border: #ffcc00;
   --app-warning-foreground: #ffcc00;
+
+  /* ===========================
+     VSCode Compatibility
+     =========================== */
+  --vscode-chat-font-size: 13px;
+  --vscode-chat-font-family: var(--app-font-sans);
+  --vscode-focusBorder: var(--app-border-focus);
+  --vscode-symbolIcon-fileForeground: var(--app-secondary-foreground);
 }
 
 /* Light theme override (can be toggled via class or media query) */
