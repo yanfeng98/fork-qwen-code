@@ -437,6 +437,12 @@ describe('Gemini Client (client.ts)', () => {
       ] as Content[],
       originalTokenCount = 1000,
       summaryText = 'This is a summary.',
+      // Token counts returned in usageMetadata to simulate what the API would return
+      // Default values ensure successful compression:
+      // newTokenCount = originalTokenCount - (compressionInputTokenCount - 1000) + compressionOutputTokenCount
+      // = 1000 - (1600 - 1000) + 50 = 1000 - 600 + 50 = 450 (< 1000, success)
+      compressionInputTokenCount = 1600,
+      compressionOutputTokenCount = 50,
     } = {}) {
       const mockOriginalChat: Partial<GeminiChat> = {
         getHistory: vi.fn((_curated?: boolean) => chatHistory),
@@ -458,6 +464,12 @@ describe('Gemini Client (client.ts)', () => {
             },
           },
         ],
+        usageMetadata: {
+          promptTokenCount: compressionInputTokenCount,
+          candidatesTokenCount: compressionOutputTokenCount,
+          totalTokenCount:
+            compressionInputTokenCount + compressionOutputTokenCount,
+        },
       } as unknown as GenerateContentResponse);
 
       // Calculate what the new history will be
@@ -497,11 +509,13 @@ describe('Gemini Client (client.ts)', () => {
         .fn()
         .mockResolvedValue(mockNewChat as GeminiChat);
 
-      const totalChars = newCompressedHistory.reduce(
-        (total, content) => total + JSON.stringify(content).length,
+      // New token count formula: originalTokenCount - (compressionInputTokenCount - 1000) + compressionOutputTokenCount
+      const estimatedNewTokenCount = Math.max(
         0,
+        originalTokenCount -
+          (compressionInputTokenCount - 1000) +
+          compressionOutputTokenCount,
       );
-      const estimatedNewTokenCount = Math.floor(totalChars / 4);
 
       return {
         client,
@@ -513,21 +527,28 @@ describe('Gemini Client (client.ts)', () => {
 
     describe('when compression inflates the token count', () => {
       it('allows compression to be forced/manual after a failure', async () => {
-        // Call 1 (Fails): Setup with a long summary to inflate tokens
+        // Call 1 (Fails): Setup with token counts that will inflate
+        // newTokenCount = originalTokenCount - (compressionInputTokenCount - 1000) + compressionOutputTokenCount
+        // = 100 - (1010 - 1000) + 200 = 100 - 10 + 200 = 290 > 100 (inflation)
         const longSummary = 'long summary '.repeat(100);
         const { client, estimatedNewTokenCount: inflatedTokenCount } = setup({
           originalTokenCount: 100,
           summaryText: longSummary,
+          compressionInputTokenCount: 1010,
+          compressionOutputTokenCount: 200,
         });
         expect(inflatedTokenCount).toBeGreaterThan(100); // Ensure setup is correct
 
         await client.tryCompressChat('prompt-id-4', false); // Fails
 
-        // Call 2 (Forced): Re-setup with a short summary
+        // Call 2 (Forced): Re-setup with token counts that will compress
+        // newTokenCount = 100 - (1100 - 1000) + 50 = 100 - 100 + 50 = 50 <= 100 (compression)
         const shortSummary = 'short';
         const { estimatedNewTokenCount: compressedTokenCount } = setup({
           originalTokenCount: 100,
           summaryText: shortSummary,
+          compressionInputTokenCount: 1100,
+          compressionOutputTokenCount: 50,
         });
         expect(compressedTokenCount).toBeLessThanOrEqual(100); // Ensure setup is correct
 
@@ -540,10 +561,13 @@ describe('Gemini Client (client.ts)', () => {
       });
 
       it('yields the result even if the compression inflated the tokens', async () => {
+        // newTokenCount = 100 - (1010 - 1000) + 200 = 100 - 10 + 200 = 290 > 100 (inflation)
         const longSummary = 'long summary '.repeat(100);
         const { client, estimatedNewTokenCount } = setup({
           originalTokenCount: 100,
           summaryText: longSummary,
+          compressionInputTokenCount: 1010,
+          compressionOutputTokenCount: 200,
         });
         expect(estimatedNewTokenCount).toBeGreaterThan(100); // Ensure setup is correct
 
@@ -562,10 +586,13 @@ describe('Gemini Client (client.ts)', () => {
       });
 
       it('does not manipulate the source chat', async () => {
+        // newTokenCount = 100 - (1010 - 1000) + 200 = 100 - 10 + 200 = 290 > 100 (inflation)
         const longSummary = 'long summary '.repeat(100);
         const { client, mockOriginalChat, estimatedNewTokenCount } = setup({
           originalTokenCount: 100,
           summaryText: longSummary,
+          compressionInputTokenCount: 1010,
+          compressionOutputTokenCount: 200,
         });
         expect(estimatedNewTokenCount).toBeGreaterThan(100); // Ensure setup is correct
 
@@ -576,10 +603,13 @@ describe('Gemini Client (client.ts)', () => {
       });
 
       it('will not attempt to compress context after a failure', async () => {
+        // newTokenCount = 100 - (1010 - 1000) + 200 = 100 - 10 + 200 = 290 > 100 (inflation)
         const longSummary = 'long summary '.repeat(100);
         const { client, estimatedNewTokenCount } = setup({
           originalTokenCount: 100,
           summaryText: longSummary,
+          compressionInputTokenCount: 1010,
+          compressionOutputTokenCount: 200,
         });
         expect(estimatedNewTokenCount).toBeGreaterThan(100); // Ensure setup is correct
 
@@ -650,6 +680,7 @@ describe('Gemini Client (client.ts)', () => {
       );
 
       // Mock the summary response from the chat
+      // newTokenCount = 501 - (1400 - 1000) + 50 = 501 - 400 + 50 = 151 <= 501 (success)
       const summaryText = 'This is a summary.';
       mockGenerateContentFn.mockResolvedValue({
         candidates: [
@@ -660,6 +691,11 @@ describe('Gemini Client (client.ts)', () => {
             },
           },
         ],
+        usageMetadata: {
+          promptTokenCount: 1400,
+          candidatesTokenCount: 50,
+          totalTokenCount: 1450,
+        },
       } as unknown as GenerateContentResponse);
 
       // Mock startChat to complete the compression flow
@@ -739,6 +775,7 @@ describe('Gemini Client (client.ts)', () => {
         .mockResolvedValue(mockNewChat as GeminiChat);
 
       // Mock the summary response from the chat
+      // newTokenCount = 501 - (1400 - 1000) + 50 = 501 - 400 + 50 = 151 <= 501 (success)
       mockGenerateContentFn.mockResolvedValue({
         candidates: [
           {
@@ -748,6 +785,11 @@ describe('Gemini Client (client.ts)', () => {
             },
           },
         ],
+        usageMetadata: {
+          promptTokenCount: 1400,
+          candidatesTokenCount: 50,
+          totalTokenCount: 1450,
+        },
       } as unknown as GenerateContentResponse);
 
       const initialChat = client.getChat();
@@ -822,6 +864,7 @@ describe('Gemini Client (client.ts)', () => {
         .mockResolvedValue(mockNewChat as GeminiChat);
 
       // Mock the summary response from the chat
+      // newTokenCount = 700 - (1500 - 1000) + 50 = 700 - 500 + 50 = 250 <= 700 (success)
       mockGenerateContentFn.mockResolvedValue({
         candidates: [
           {
@@ -831,6 +874,11 @@ describe('Gemini Client (client.ts)', () => {
             },
           },
         ],
+        usageMetadata: {
+          promptTokenCount: 1500,
+          candidatesTokenCount: 50,
+          totalTokenCount: 1550,
+        },
       } as unknown as GenerateContentResponse);
 
       const initialChat = client.getChat();
@@ -893,6 +941,7 @@ describe('Gemini Client (client.ts)', () => {
         .mockResolvedValue(mockNewChat as GeminiChat);
 
       // Mock the summary response from the chat
+      // newTokenCount = 100 - (1060 - 1000) + 20 = 100 - 60 + 20 = 60 <= 100 (success)
       mockGenerateContentFn.mockResolvedValue({
         candidates: [
           {
@@ -902,6 +951,11 @@ describe('Gemini Client (client.ts)', () => {
             },
           },
         ],
+        usageMetadata: {
+          promptTokenCount: 1060,
+          candidatesTokenCount: 20,
+          totalTokenCount: 1080,
+        },
       } as unknown as GenerateContentResponse);
 
       const initialChat = client.getChat();
