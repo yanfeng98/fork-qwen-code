@@ -89,8 +89,10 @@ export const Header: React.FC<HeaderProps> = ({
     availableTerminalWidth >= logoWidth + logoGap + minInfoPanelWidth;
 
   // Calculate available width for info panel (use all remaining space)
+  // Cap at 60 when in two-column layout (with logo)
+  const maxInfoPanelWidth = 60;
   const availableInfoPanelWidth = showLogo
-    ? availableTerminalWidth - logoWidth - logoGap
+    ? Math.min(availableTerminalWidth - logoWidth - logoGap, maxInfoPanelWidth)
     : availableTerminalWidth;
 
   // Calculate max path length (subtract padding/borders from available space)
@@ -146,13 +148,14 @@ export const Header: React.FC<HeaderProps> = ({
         </>
       )}
 
-      {/* Right side: Info panel (flexible width) */}
+      {/* Right side: Info panel (flexible width, max 60 in two-column layout) */}
       <Box
         flexDirection="column"
         borderStyle="round"
         borderColor={theme.border.default}
         paddingX={infoPanelPaddingX}
-        flexGrow={1}
+        flexGrow={showLogo ? 0 : 1}
+        width={showLogo ? availableInfoPanelWidth : undefined}
       >
         {/* Title line: >_ Qwen Code (v{version}) */}
         <Text>
