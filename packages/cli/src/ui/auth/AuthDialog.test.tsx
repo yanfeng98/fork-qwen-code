@@ -438,9 +438,10 @@ describe('AuthDialog', () => {
     await wait();
 
     // Should show error message instead of calling handleAuthSelect
-    expect(lastFrame()).toContain(
-      'You must select an auth method to proceed. Press Ctrl+C again to exit.',
-    );
+    await vi.waitFor(() => {
+      expect(lastFrame()).toContain('You must select an auth method');
+    });
+    expect(lastFrame()).toContain('Press Ctrl+C again to exit');
     expect(handleAuthSelect).not.toHaveBeenCalled();
     unmount();
   });
