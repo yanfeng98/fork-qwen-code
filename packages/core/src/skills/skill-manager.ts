@@ -307,9 +307,11 @@ export class SkillManager {
     level: SkillLevel,
   ): SkillConfig {
     try {
+      const normalizedContent = normalizeSkillFileContent(content);
+
       // Split frontmatter and content
-      const frontmatterRegex = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/;
-      const match = content.match(frontmatterRegex);
+      const frontmatterRegex = /^---\n([\s\S]*?)\n---(?:\n|$)([\s\S]*)$/;
+      const match = normalizedContent.match(frontmatterRegex);
 
       if (!match) {
         throw new Error('Invalid format: missing YAML frontmatter');
@@ -555,4 +557,14 @@ export class SkillManager {
       );
     }
   }
+}
+
+function normalizeSkillFileContent(content: string): string {
+  // Strip UTF-8 BOM to ensure frontmatter starts at the first character.
+  let normalized = content.replace(/^\uFEFF/, '');
+
+  // Normalize line endings so skills authored on Windows (CRLF) parse correctly.
+  normalized = normalized.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+  return normalized;
 }
