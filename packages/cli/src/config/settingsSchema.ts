@@ -1083,6 +1083,17 @@ const SETTINGS_SCHEMA = {
           'Optional blocklist of LSP server names that should not start.',
         showInDialog: false,
       },
+      languageServers: {
+        type: 'object',
+        label: 'LSP Language Servers',
+        category: 'LSP',
+        requiresRestart: true,
+        default: {} as Record<string, unknown>,
+        description:
+          'Inline LSP server configuration (same format as .lsp.json).',
+        showInDialog: false,
+        mergeStrategy: MergeStrategy.SHALLOW_MERGE,
+      },
     },
   },
   useSmartEdit: {

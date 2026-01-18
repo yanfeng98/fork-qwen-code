@@ -28,6 +28,8 @@ export const ToolNames = {
   LSP_WORKSPACE_SYMBOL: 'lsp_workspace_symbol',
   LSP_GO_TO_DEFINITION: 'lsp_go_to_definition',
   LSP_FIND_REFERENCES: 'lsp_find_references',
+  /** Unified LSP tool supporting all LSP operations. */
+  LSP: 'lsp',
 } as const;
 
 /**
@@ -54,6 +56,8 @@ export const ToolDisplayNames = {
   LSP_WORKSPACE_SYMBOL: 'LspWorkspaceSymbol',
   LSP_GO_TO_DEFINITION: 'LspGoToDefinition',
   LSP_FIND_REFERENCES: 'LspFindReferences',
+  /** Unified LSP tool display name. */
+  LSP: 'Lsp',
 } as const;
 
 // Migration from old tool names to new tool names

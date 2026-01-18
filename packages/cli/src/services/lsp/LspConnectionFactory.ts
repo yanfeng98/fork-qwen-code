@@ -228,6 +228,12 @@ interface LspConnection {
   socket?: net.Socket;
 }
 
+interface SocketConnectionOptions {
+  host?: string;
+  port?: number;
+  path?: string;
+}
+
 interface JsonRpcMessage {
   jsonrpc: string;
   id?: number | string;
@@ -249,6 +255,7 @@ export class LspConnectionFactory {
     command: string,
     args: string[],
     options?: cp.SpawnOptions,
+    timeoutMs = 10000,
   ): Promise<LspConnection> {
     return new Promise((resolve, reject) => {
       const spawnOptions: cp.SpawnOptions = {
@@ -262,7 +269,7 @@ export class LspConnectionFactory {
         if (!processInstance.killed) {
           processInstance.kill();
         }
-      }, 10000);
+      }, timeoutMs);
 
       processInstance.once('error', (error) => {
         clearTimeout(timeoutId);
@@ -300,14 +307,37 @@ export class LspConnectionFactory {
   static async createTcpConnection(
     host: string,
     port: number,
+    timeoutMs = 10000,
+  ): Promise<LspConnection> {
+    return LspConnectionFactory.createSocketConnection(
+      { host, port },
+      timeoutMs,
+    );
+  }
+
+  /**
+   * 创建基于 socket 的 LSP 连接（支持 TCP 或 unix socket）
+   */
+  static async createSocketConnection(
+    options: SocketConnectionOptions,
+    timeoutMs = 10000,
   ): Promise<LspConnection> {
     return new Promise((resolve, reject) => {
-      const socket = net.createConnection({ host, port });
+      const socketOptions = options.path
+        ? { path: options.path }
+        : { host: options.host ?? '127.0.0.1', port: options.port };
+
+      if (!('path' in socketOptions) && !socketOptions.port) {
+        reject(new Error('Socket transport requires port or path'));
+        return;
+      }
+
+      const socket = net.createConnection(socketOptions);
 
       const timeoutId = setTimeout(() => {
         reject(new Error('LSP server connection timeout'));
         socket.destroy();
-      }, 10000);
+      }, timeoutMs);
 
       const onError = (error: Error) => {
         clearTimeout(timeoutId);

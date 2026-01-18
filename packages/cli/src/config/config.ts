@@ -193,6 +193,67 @@ class NativeLspClient implements LspClient {
       limit,
     );
   }
+
+  /**
+   * Get hover information (documentation, type info) for a symbol.
+   */
+  hover(
+    location: Parameters<NativeLspService['hover']>[0],
+    serverName?: string,
+  ) {
+    return this.service.hover(location, serverName);
+  }
+
+  /**
+   * Get all symbols in a document.
+   */
+  documentSymbols(uri: string, serverName?: string, limit?: number) {
+    return this.service.documentSymbols(uri, serverName, limit);
+  }
+
+  /**
+   * Find implementations of an interface or abstract method.
+   */
+  implementations(
+    location: Parameters<NativeLspService['implementations']>[0],
+    serverName?: string,
+    limit?: number,
+  ) {
+    return this.service.implementations(location, serverName, limit);
+  }
+
+  /**
+   * Prepare call hierarchy item at a position (functions/methods).
+   */
+  prepareCallHierarchy(
+    location: Parameters<NativeLspService['prepareCallHierarchy']>[0],
+    serverName?: string,
+    limit?: number,
+  ) {
+    return this.service.prepareCallHierarchy(location, serverName, limit);
+  }
+
+  /**
+   * Find all functions/methods that call the given function.
+   */
+  incomingCalls(
+    item: Parameters<NativeLspService['incomingCalls']>[0],
+    serverName?: string,
+    limit?: number,
+  ) {
+    return this.service.incomingCalls(item, serverName, limit);
+  }
+
+  /**
+   * Find all functions/methods called by the given function.
+   */
+  outgoingCalls(
+    item: Parameters<NativeLspService['outgoingCalls']>[0],
+    serverName?: string,
+    limit?: number,
+  ) {
+    return this.service.outgoingCalls(item, serverName, limit);
+  }
 }
 
 function normalizeOutputFormat(
@@ -812,6 +873,7 @@ export async function loadCliConfig(
   const lspEnabled = settings.lsp?.enabled ?? false;
   const lspAllowed = settings.lsp?.allowed ?? settings.mcp?.allowed;
   const lspExcluded = settings.lsp?.excluded ?? settings.mcp?.excluded;
+  const lspLanguageServers = settings.lsp?.languageServers;
   let lspClient: LspClient | undefined;
   const question = argv.promptInteractive || argv.prompt || '';
   const inputFormat: InputFormat =
@@ -1149,6 +1211,7 @@ export async function loadCliConfig(
           allowedServers: lspAllowed,
           excludedServers: lspExcluded,
           requireTrustedWorkspace: folderTrust,
+          inlineServerConfigs: lspLanguageServers,
         },
       );
 

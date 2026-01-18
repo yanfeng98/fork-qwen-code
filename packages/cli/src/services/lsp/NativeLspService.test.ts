@@ -1,5 +1,11 @@
 import { NativeLspService } from './NativeLspService.js';
 import { EventEmitter } from 'events';
+import type {
+  Config as CoreConfig,
+  WorkspaceContext,
+  FileDiscoveryService,
+  IdeContextStore,
+} from '@qwen-code/qwen-code-core';
 
 // 模拟依赖项
 class MockConfig {

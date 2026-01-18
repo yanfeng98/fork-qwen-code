@@ -64,6 +64,7 @@ import { WriteFileTool } from '../tools/write-file.js';
 import { LspWorkspaceSymbolTool } from '../tools/lsp-workspace-symbol.js';
 import { LspGoToDefinitionTool } from '../tools/lsp-go-to-definition.js';
 import { LspFindReferencesTool } from '../tools/lsp-find-references.js';
+import { LspTool } from '../tools/lsp.js';
 import type { LspClient } from '../lsp/types.js';
 
 // Other modules
@@ -1583,6 +1584,9 @@ export class Config {
       registerCoreTool(WebSearchTool, this);
     }
     if (this.isLspEnabled() && this.getLspClient()) {
+      // Register the unified LSP tool (recommended)
+      registerCoreTool(LspTool, this);
+      // Keep legacy tools for backward compatibility
       registerCoreTool(LspGoToDefinitionTool, this);
       registerCoreTool(LspFindReferencesTool, this);
       registerCoreTool(LspWorkspaceSymbolTool, this);

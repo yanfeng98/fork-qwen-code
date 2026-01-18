@@ -24,6 +24,7 @@ LSP 功能通过设置系统配置，包含以下选项：
 - `lsp.excluded`: 排除的 LSP 服务器名称黑名单
 
 在 settings.json 中的示例配置：
+
 ```json
 {
   "lsp": {
@@ -34,20 +35,26 @@ LSP 功能通过设置系统配置，包含以下选项：
 }
 ```
 
+也可以在 `settings.json` 中配置 `lsp.languageServers`，格式与 `.lsp.json` 一致。
+
 ## 3. NativeLspService 调试功能
 
 `NativeLspService` 类包含几个调试功能：
 
 ### 3.1 控制台日志
+
 服务向控制台输出状态消息：
+
 - `LSP 服务器 ${name} 启动成功` - 服务器成功启动
 - `LSP 服务器 ${name} 启动失败` - 服务器启动失败
 - `工作区不受信任，跳过 LSP 服务器发现` - 工作区不受信任，跳过发现
 
 ### 3.2 错误处理
+
 服务具有全面的错误处理和详细的错误消息
 
 ### 3.3 状态跟踪
+
 您可以通过 `getStatus()` 方法检查所有 LSP 服务器的状态
 
 ## 4. 调试命令
@@ -62,7 +69,30 @@ qwen --debug --prompt "调试 LSP 功能"
 
 ## 5. 手动 LSP 服务器配置
 
-您还可以在项目根目录使用 `.lsp.json` 文件手动配置 LSP 服务器：
+您还可以在项目根目录使用 `.lsp.json` 文件手动配置 LSP 服务器。
+推荐使用新格式（以服务器名称为键），旧格式仍然兼容但会提示迁移：
+
+```json
+{
+  "languageServers": {
+    "pylsp": {
+      "command": "pylsp",
+      "args": [],
+      "languages": ["python"],
+      "transport": "stdio",
+      "settings": {},
+      "workspaceFolder": null,
+      "startupTimeout": 10000,
+      "shutdownTimeout": 3000,
+      "restartOnCrash": true,
+      "maxRestarts": 3,
+      "trustRequired": true
+    }
+  }
+}
+```
+
+旧格式示例：
 
 ```json
 {
@@ -78,15 +108,18 @@ qwen --debug --prompt "调试 LSP 功能"
 ## 6. LSP 问题排查
 
 ### 6.1 检查 LSP 服务器是否已安装
+
 - 对于 TypeScript/JavaScript: `typescript-language-server`
-- 对于 Python: `pylsp` 
+- 对于 Python: `pylsp`
 - 对于 Go: `gopls`
 
 ### 6.2 验证工作区信任
+
 - LSP 服务器可能需要受信任的工作区才能启动
 - 检查 `security.folderTrust.enabled` 设置
 
 ### 6.3 查看日志
+
 - 查找以 `LSP 服务器` 开头的控制台消息
 - 检查命令存在性和路径安全性问题
 

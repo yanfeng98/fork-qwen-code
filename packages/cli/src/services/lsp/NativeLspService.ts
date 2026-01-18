@@ -3,8 +3,13 @@ import type {
   WorkspaceContext,
   FileDiscoveryService,
   IdeContextStore,
-  LspLocation,
+  LspCallHierarchyIncomingCall,
+  LspCallHierarchyItem,
+  LspCallHierarchyOutgoingCall,
   LspDefinition,
+  LspHoverResult,
+  LspLocation,
+  LspRange,
   LspReference,
   LspSymbolInformation,
 } from '@qwen-code/qwen-code-core';
@@ -21,16 +26,31 @@ interface LspInitializationOptions {
   [key: string]: unknown;
 }
 
+interface LspSocketOptions {
+  host?: string;
+  port?: number;
+  path?: string;
+}
+
 // 定义 LSP 服务器配置类型
 interface LspServerConfig {
   name: string;
   languages: string[];
-  command: string;
-  args: string[];
-  transport: 'stdio' | 'tcp';
+  command?: string;
+  args?: string[];
+  transport: 'stdio' | 'tcp' | 'socket';
+  env?: Record<string, string>;
   initializationOptions?: LspInitializationOptions;
+  settings?: Record<string, unknown>;
+  extensionToLanguage?: Record<string, string>;
   rootUri: string;
+  workspaceFolder?: string;
+  startupTimeout?: number;
+  shutdownTimeout?: number;
+  restartOnCrash?: boolean;
+  maxRestarts?: number;
   trustRequired?: boolean;
+  socket?: LspSocketOptions;
 }
 
 // 定义 LSP 连接接口
@@ -56,13 +76,52 @@ interface LspServerHandle {
   process?: ChildProcess;
   error?: Error;
   warmedUp?: boolean;
+  stopRequested?: boolean;
+  restartAttempts?: number;
 }
+
+/**
+ * Symbol kind labels for converting numeric LSP SymbolKind to readable strings.
+ * Based on the LSP specification: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#symbolKind
+ */
+const SYMBOL_KIND_LABELS: Record<number, string> = {
+  1: 'File',
+  2: 'Module',
+  3: 'Namespace',
+  4: 'Package',
+  5: 'Class',
+  6: 'Method',
+  7: 'Property',
+  8: 'Field',
+  9: 'Constructor',
+  10: 'Enum',
+  11: 'Interface',
+  12: 'Function',
+  13: 'Variable',
+  14: 'Constant',
+  15: 'String',
+  16: 'Number',
+  17: 'Boolean',
+  18: 'Array',
+  19: 'Object',
+  20: 'Key',
+  21: 'Null',
+  22: 'EnumMember',
+  23: 'Struct',
+  24: 'Event',
+  25: 'Operator',
+  26: 'TypeParameter',
+};
+
+const DEFAULT_LSP_STARTUP_TIMEOUT_MS = 10000;
+const DEFAULT_LSP_MAX_RESTARTS = 3;
 
 interface NativeLspServiceOptions {
   allowedServers?: string[];
   excludedServers?: string[];
   requireTrustedWorkspace?: boolean;
   workspaceRoot?: string;
+  inlineServerConfigs?: Record<string, unknown>;
 }
 
 export class NativeLspService {
@@ -74,6 +133,8 @@ export class NativeLspService {
   private excludedServers?: string[];
   private requireTrustedWorkspace: boolean;
   private workspaceRoot: string;
+  private inlineServerConfigs?: Record<string, unknown>;
+  private warnedLegacyConfig = false;
 
   constructor(
     config: CoreConfig,
@@ -92,6 +153,7 @@ export class NativeLspService {
     this.workspaceRoot =
       options.workspaceRoot ??
       (config as { getProjectRoot: () => string }).getProjectRoot();
+    this.inlineServerConfigs = options.inlineServerConfigs;
   }
 
   /**
@@ -108,10 +170,13 @@ export class NativeLspService {
     }
 
     // 检测工作区中的语言
-    const detectedLanguages = await this.detectLanguages();
+    const userConfigs = await this.loadUserConfigs();
+    const extensionOverrides =
+      this.collectExtensionToLanguageOverrides(userConfigs);
+    const detectedLanguages = await this.detectLanguages(extensionOverrides);
 
     // 合并配置：内置预设 + 用户 .lsp.json + 可选 cclsp 兼容转换
-    const serverConfigs = await this.mergeConfigs(detectedLanguages);
+    const serverConfigs = this.mergeConfigs(detectedLanguages, userConfigs);
 
     // 创建服务器句柄
     for (const config of serverConfigs) {
@@ -310,10 +375,337 @@ export class NativeLspService {
   }
 
   /**
+   * 获取悬停信息
+   */
+  async hover(
+    location: LspLocation,
+    serverName?: string,
+  ): Promise<LspHoverResult | null> {
+    const handles = Array.from(this.serverHandles.entries()).filter(
+      ([name, handle]) =>
+        handle.status === 'READY' &&
+        handle.connection &&
+        (!serverName || name === serverName),
+    );
+
+    for (const [name, handle] of handles) {
+      if (!handle.connection) {
+        continue;
+      }
+      try {
+        await this.warmupTypescriptServer(handle);
+        const response = await handle.connection.request('textDocument/hover', {
+          textDocument: { uri: location.uri },
+          position: location.range.start,
+        });
+        const normalized = this.normalizeHoverResult(response, name);
+        if (normalized) {
+          return normalized;
+        }
+      } catch (error) {
+        console.warn(`LSP textDocument/hover failed for ${name}:`, error);
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * 获取文档符号
+   */
+  async documentSymbols(
+    uri: string,
+    serverName?: string,
+    limit = 200,
+  ): Promise<LspSymbolInformation[]> {
+    const handles = Array.from(this.serverHandles.entries()).filter(
+      ([name, handle]) =>
+        handle.status === 'READY' &&
+        handle.connection &&
+        (!serverName || name === serverName),
+    );
+
+    for (const [name, handle] of handles) {
+      if (!handle.connection) {
+        continue;
+      }
+      try {
+        await this.warmupTypescriptServer(handle);
+        const response = await handle.connection.request(
+          'textDocument/documentSymbol',
+          {
+            textDocument: { uri },
+          },
+        );
+        if (!Array.isArray(response)) {
+          continue;
+        }
+        const symbols: LspSymbolInformation[] = [];
+        for (const item of response) {
+          if (!item || typeof item !== 'object') {
+            continue;
+          }
+          const itemObj = item as Record<string, unknown>;
+          if (this.isDocumentSymbol(itemObj)) {
+            this.collectDocumentSymbol(itemObj, uri, name, symbols, limit);
+          } else {
+            const normalized = this.normalizeSymbolResult(itemObj, name);
+            if (normalized) {
+              symbols.push(normalized);
+            }
+          }
+          if (symbols.length >= limit) {
+            return symbols.slice(0, limit);
+          }
+        }
+        if (symbols.length > 0) {
+          return symbols.slice(0, limit);
+        }
+      } catch (error) {
+        console.warn(
+          `LSP textDocument/documentSymbol failed for ${name}:`,
+          error,
+        );
+      }
+    }
+
+    return [];
+  }
+
+  /**
+   * 查找实现
+   */
+  async implementations(
+    location: LspLocation,
+    serverName?: string,
+    limit = 50,
+  ): Promise<LspDefinition[]> {
+    const handles = Array.from(this.serverHandles.entries()).filter(
+      ([name, handle]) =>
+        handle.status === 'READY' &&
+        handle.connection &&
+        (!serverName || name === serverName),
+    );
+
+    for (const [name, handle] of handles) {
+      if (!handle.connection) {
+        continue;
+      }
+      try {
+        await this.warmupTypescriptServer(handle);
+        const response = await handle.connection.request(
+          'textDocument/implementation',
+          {
+            textDocument: { uri: location.uri },
+            position: location.range.start,
+          },
+        );
+        const candidates = Array.isArray(response)
+          ? response
+          : response
+            ? [response]
+            : [];
+        const implementations: LspDefinition[] = [];
+        for (const item of candidates) {
+          const normalized = this.normalizeLocationResult(item, name);
+          if (normalized) {
+            implementations.push(normalized);
+            if (implementations.length >= limit) {
+              return implementations.slice(0, limit);
+            }
+          }
+        }
+        if (implementations.length > 0) {
+          return implementations.slice(0, limit);
+        }
+      } catch (error) {
+        console.warn(
+          `LSP textDocument/implementation failed for ${name}:`,
+          error,
+        );
+      }
+    }
+
+    return [];
+  }
+
+  /**
+   * 准备调用层级
+   */
+  async prepareCallHierarchy(
+    location: LspLocation,
+    serverName?: string,
+    limit = 50,
+  ): Promise<LspCallHierarchyItem[]> {
+    const handles = Array.from(this.serverHandles.entries()).filter(
+      ([name, handle]) =>
+        handle.status === 'READY' &&
+        handle.connection &&
+        (!serverName || name === serverName),
+    );
+
+    for (const [name, handle] of handles) {
+      if (!handle.connection) {
+        continue;
+      }
+      try {
+        await this.warmupTypescriptServer(handle);
+        const response = await handle.connection.request(
+          'textDocument/prepareCallHierarchy',
+          {
+            textDocument: { uri: location.uri },
+            position: location.range.start,
+          },
+        );
+        const candidates = Array.isArray(response)
+          ? response
+          : response
+            ? [response]
+            : [];
+        const items: LspCallHierarchyItem[] = [];
+        for (const item of candidates) {
+          const normalized = this.normalizeCallHierarchyItem(item, name);
+          if (normalized) {
+            items.push(normalized);
+            if (items.length >= limit) {
+              return items.slice(0, limit);
+            }
+          }
+        }
+        if (items.length > 0) {
+          return items.slice(0, limit);
+        }
+      } catch (error) {
+        console.warn(
+          `LSP textDocument/prepareCallHierarchy failed for ${name}:`,
+          error,
+        );
+      }
+    }
+
+    return [];
+  }
+
+  /**
+   * 查找调用当前函数的调用者
+   */
+  async incomingCalls(
+    item: LspCallHierarchyItem,
+    serverName?: string,
+    limit = 50,
+  ): Promise<LspCallHierarchyIncomingCall[]> {
+    const targetServer = serverName ?? item.serverName;
+    const handles = Array.from(this.serverHandles.entries()).filter(
+      ([name, handle]) =>
+        handle.status === 'READY' &&
+        handle.connection &&
+        (!targetServer || name === targetServer),
+    );
+
+    for (const [name, handle] of handles) {
+      if (!handle.connection) {
+        continue;
+      }
+      try {
+        await this.warmupTypescriptServer(handle);
+        const response = await handle.connection.request(
+          'callHierarchy/incomingCalls',
+          {
+            item: this.toCallHierarchyItemParams(item),
+          },
+        );
+        if (!Array.isArray(response)) {
+          continue;
+        }
+        const calls: LspCallHierarchyIncomingCall[] = [];
+        for (const call of response) {
+          const normalized = this.normalizeIncomingCall(call, name);
+          if (normalized) {
+            calls.push(normalized);
+            if (calls.length >= limit) {
+              return calls.slice(0, limit);
+            }
+          }
+        }
+        if (calls.length > 0) {
+          return calls.slice(0, limit);
+        }
+      } catch (error) {
+        console.warn(
+          `LSP callHierarchy/incomingCalls failed for ${name}:`,
+          error,
+        );
+      }
+    }
+
+    return [];
+  }
+
+  /**
+   * 查找当前函数调用的目标
+   */
+  async outgoingCalls(
+    item: LspCallHierarchyItem,
+    serverName?: string,
+    limit = 50,
+  ): Promise<LspCallHierarchyOutgoingCall[]> {
+    const targetServer = serverName ?? item.serverName;
+    const handles = Array.from(this.serverHandles.entries()).filter(
+      ([name, handle]) =>
+        handle.status === 'READY' &&
+        handle.connection &&
+        (!targetServer || name === targetServer),
+    );
+
+    for (const [name, handle] of handles) {
+      if (!handle.connection) {
+        continue;
+      }
+      try {
+        await this.warmupTypescriptServer(handle);
+        const response = await handle.connection.request(
+          'callHierarchy/outgoingCalls',
+          {
+            item: this.toCallHierarchyItemParams(item),
+          },
+        );
+        if (!Array.isArray(response)) {
+          continue;
+        }
+        const calls: LspCallHierarchyOutgoingCall[] = [];
+        for (const call of response) {
+          const normalized = this.normalizeOutgoingCall(call, name);
+          if (normalized) {
+            calls.push(normalized);
+            if (calls.length >= limit) {
+              return calls.slice(0, limit);
+            }
+          }
+        }
+        if (calls.length > 0) {
+          return calls.slice(0, limit);
+        }
+      } catch (error) {
+        console.warn(
+          `LSP callHierarchy/outgoingCalls failed for ${name}:`,
+          error,
+        );
+      }
+    }
+
+    return [];
+  }
+
+  /**
    * 检测工作区中的编程语言
    */
-  private async detectLanguages(): Promise<string[]> {
-    const patterns = ['**/*.{js,ts,jsx,tsx,py,go,rs,java,cpp,php,rb,cs}'];
+  private async detectLanguages(
+    extensionOverrides: Record<string, string> = {},
+  ): Promise<string[]> {
+    const extensionMap = this.getExtensionToLanguageMap(extensionOverrides);
+    const extensions = Object.keys(extensionMap);
+    const patterns =
+      extensions.length > 0 ? [`**/*.{${extensions.join(',')}}`] : ['**/*'];
     const excludePatterns = [
       '**/node_modules/**',
       '**/.git/**',
@@ -351,7 +743,7 @@ export class NativeLspService {
     for (const file of Array.from(files)) {
       const ext = path.extname(file).slice(1).toLowerCase();
       if (ext) {
-        const lang = this.mapExtensionToLanguage(ext);
+        const lang = this.mapExtensionToLanguage(ext, extensionMap);
         if (lang) {
           languageCounts.set(lang, (languageCounts.get(lang) || 0) + 1);
         }
@@ -413,8 +805,17 @@ export class NativeLspService {
   /**
    * 将文件扩展名映射到编程语言
    */
-  private mapExtensionToLanguage(ext: string): string | null {
-    const extToLang: { [key: string]: string } = {
+  private mapExtensionToLanguage(
+    ext: string,
+    extensionMap: Record<string, string>,
+  ): string | null {
+    return extensionMap[ext] || null;
+  }
+
+  private getExtensionToLanguageMap(
+    extensionOverrides: Record<string, string> = {},
+  ): Record<string, string> {
+    const extToLang: Record<string, string> = {
       js: 'javascript',
       ts: 'typescript',
       jsx: 'javascriptreact',
@@ -437,7 +838,37 @@ export class NativeLspService {
       yml: 'yaml',
     };
 
-    return extToLang[ext] || null;
+    for (const [key, value] of Object.entries(extensionOverrides)) {
+      const normalized = key.startsWith('.') ? key.slice(1) : key;
+      if (!normalized) {
+        continue;
+      }
+      extToLang[normalized.toLowerCase()] = value;
+    }
+
+    return extToLang;
+  }
+
+  private collectExtensionToLanguageOverrides(
+    configs: LspServerConfig[],
+  ): Record<string, string> {
+    const overrides: Record<string, string> = {};
+    for (const config of configs) {
+      if (!config.extensionToLanguage) {
+        continue;
+      }
+      for (const [key, value] of Object.entries(config.extensionToLanguage)) {
+        if (typeof value !== 'string') {
+          continue;
+        }
+        const normalized = key.startsWith('.') ? key.slice(1) : key;
+        if (!normalized) {
+          continue;
+        }
+        overrides[normalized.toLowerCase()] = value;
+      }
+    }
+    return overrides;
   }
 
   /**
@@ -536,7 +967,7 @@ export class NativeLspService {
 
     return {
       name: (itemObj['name'] ?? itemObj['label'] ?? 'symbol') as string,
-      kind: itemObj['kind'] ? String(itemObj['kind']) : undefined,
+      kind: this.normalizeSymbolKind(itemObj['kind']),
       containerName: (itemObj['containerName'] ?? itemObj['container']) as
         | string
         | undefined,
@@ -557,17 +988,330 @@ export class NativeLspService {
     };
   }
 
+  private normalizeRange(range: unknown): LspRange | null {
+    if (!range || typeof range !== 'object') {
+      return null;
+    }
+
+    const rangeObj = range as Record<string, unknown>;
+    const start = rangeObj['start'];
+    const end = rangeObj['end'];
+
+    if (
+      !start ||
+      typeof start !== 'object' ||
+      !end ||
+      typeof end !== 'object'
+    ) {
+      return null;
+    }
+
+    const startObj = start as Record<string, unknown>;
+    const endObj = end as Record<string, unknown>;
+
+    return {
+      start: {
+        line: Number(startObj['line'] ?? 0),
+        character: Number(startObj['character'] ?? 0),
+      },
+      end: {
+        line: Number(endObj['line'] ?? 0),
+        character: Number(endObj['character'] ?? 0),
+      },
+    };
+  }
+
+  private normalizeRanges(ranges: unknown): LspRange[] {
+    if (!Array.isArray(ranges)) {
+      return [];
+    }
+
+    const results: LspRange[] = [];
+    for (const range of ranges) {
+      const normalized = this.normalizeRange(range);
+      if (normalized) {
+        results.push(normalized);
+      }
+    }
+
+    return results;
+  }
+
+  private normalizeSymbolKind(kind: unknown): string | undefined {
+    if (typeof kind === 'number') {
+      return SYMBOL_KIND_LABELS[kind] ?? String(kind);
+    }
+    if (typeof kind === 'string') {
+      const trimmed = kind.trim();
+      if (trimmed === '') {
+        return undefined;
+      }
+      const numeric = Number(trimmed);
+      if (Number.isFinite(numeric) && SYMBOL_KIND_LABELS[numeric]) {
+        return SYMBOL_KIND_LABELS[numeric];
+      }
+      return trimmed;
+    }
+    return undefined;
+  }
+
+  private normalizeHoverContents(contents: unknown): string {
+    if (!contents) {
+      return '';
+    }
+    if (typeof contents === 'string') {
+      return contents;
+    }
+    if (Array.isArray(contents)) {
+      const parts = contents
+        .map((item) => this.normalizeHoverContents(item))
+        .map((item) => item.trim())
+        .filter((item) => item.length > 0);
+      return parts.join('\n');
+    }
+    if (typeof contents === 'object') {
+      const contentsObj = contents as Record<string, unknown>;
+      const value = contentsObj['value'];
+      if (typeof value === 'string') {
+        const language = contentsObj['language'];
+        if (typeof language === 'string' && language.trim() !== '') {
+          return `\`\`\`${language}\n${value}\n\`\`\``;
+        }
+        return value;
+      }
+    }
+    return '';
+  }
+
+  private normalizeHoverResult(
+    response: unknown,
+    serverName: string,
+  ): LspHoverResult | null {
+    if (!response) {
+      return null;
+    }
+    if (typeof response !== 'object') {
+      const contents = this.normalizeHoverContents(response);
+      if (!contents.trim()) {
+        return null;
+      }
+      return {
+        contents,
+        serverName,
+      };
+    }
+
+    const responseObj = response as Record<string, unknown>;
+    const contents = this.normalizeHoverContents(responseObj['contents']);
+    if (!contents.trim()) {
+      return null;
+    }
+
+    const range = this.normalizeRange(responseObj['range']);
+    return {
+      contents,
+      range: range ?? undefined,
+      serverName,
+    };
+  }
+
+  private normalizeCallHierarchyItem(
+    item: unknown,
+    serverName: string,
+  ): LspCallHierarchyItem | null {
+    if (!item || typeof item !== 'object') {
+      return null;
+    }
+
+    const itemObj = item as Record<string, unknown>;
+    const nameValue = itemObj['name'] ?? itemObj['label'] ?? 'symbol';
+    const name =
+      typeof nameValue === 'string' ? nameValue : String(nameValue ?? '');
+    const uri = itemObj['uri'];
+
+    if (!name || typeof uri !== 'string') {
+      return null;
+    }
+
+    const range = this.normalizeRange(itemObj['range']);
+    const selectionRange =
+      this.normalizeRange(itemObj['selectionRange']) ?? range;
+
+    if (!range || !selectionRange) {
+      return null;
+    }
+
+    const serverOverride =
+      typeof itemObj['serverName'] === 'string'
+        ? (itemObj['serverName'] as string)
+        : undefined;
+
+    // Preserve raw numeric kind for server communication
+    // Priority: rawKind field > numeric kind > parsed numeric string
+    let rawKind: number | undefined;
+    if (typeof itemObj['rawKind'] === 'number') {
+      rawKind = itemObj['rawKind'];
+    } else if (typeof itemObj['kind'] === 'number') {
+      rawKind = itemObj['kind'];
+    } else if (typeof itemObj['kind'] === 'string') {
+      const parsed = Number(itemObj['kind']);
+      if (Number.isFinite(parsed)) {
+        rawKind = parsed;
+      }
+    }
+
+    return {
+      name,
+      kind: this.normalizeSymbolKind(itemObj['kind']),
+      rawKind,
+      detail:
+        typeof itemObj['detail'] === 'string'
+          ? (itemObj['detail'] as string)
+          : undefined,
+      uri,
+      range,
+      selectionRange,
+      data: itemObj['data'],
+      serverName: serverOverride ?? serverName,
+    };
+  }
+
+  private normalizeIncomingCall(
+    item: unknown,
+    serverName: string,
+  ): LspCallHierarchyIncomingCall | null {
+    if (!item || typeof item !== 'object') {
+      return null;
+    }
+    const itemObj = item as Record<string, unknown>;
+    const from = this.normalizeCallHierarchyItem(itemObj['from'], serverName);
+    if (!from) {
+      return null;
+    }
+    return {
+      from,
+      fromRanges: this.normalizeRanges(itemObj['fromRanges']),
+    };
+  }
+
+  private normalizeOutgoingCall(
+    item: unknown,
+    serverName: string,
+  ): LspCallHierarchyOutgoingCall | null {
+    if (!item || typeof item !== 'object') {
+      return null;
+    }
+    const itemObj = item as Record<string, unknown>;
+    const to = this.normalizeCallHierarchyItem(itemObj['to'], serverName);
+    if (!to) {
+      return null;
+    }
+    return {
+      to,
+      fromRanges: this.normalizeRanges(itemObj['fromRanges']),
+    };
+  }
+
+  private toCallHierarchyItemParams(
+    item: LspCallHierarchyItem,
+  ): Record<string, unknown> {
+    // Use rawKind (numeric) for server communication, fallback to parsing kind string
+    let numericKind: number | undefined = item.rawKind;
+    if (numericKind === undefined && item.kind !== undefined) {
+      const parsed = Number(item.kind);
+      if (Number.isFinite(parsed)) {
+        numericKind = parsed;
+      }
+    }
+
+    return {
+      name: item.name,
+      kind: numericKind,
+      detail: item.detail,
+      uri: item.uri,
+      range: item.range,
+      selectionRange: item.selectionRange,
+      data: item.data,
+    };
+  }
+
+  private isDocumentSymbol(item: Record<string, unknown>): boolean {
+    const range = item['range'];
+    const selectionRange = item['selectionRange'];
+    return (
+      typeof range === 'object' &&
+      range !== null &&
+      typeof selectionRange === 'object' &&
+      selectionRange !== null
+    );
+  }
+
+  private collectDocumentSymbol(
+    item: Record<string, unknown>,
+    uri: string,
+    serverName: string,
+    results: LspSymbolInformation[],
+    limit: number,
+    containerName?: string,
+  ): void {
+    if (results.length >= limit) {
+      return;
+    }
+
+    const nameValue = item['name'] ?? item['label'] ?? 'symbol';
+    const name = typeof nameValue === 'string' ? nameValue : String(nameValue);
+    const selectionRange =
+      this.normalizeRange(item['selectionRange']) ??
+      this.normalizeRange(item['range']);
+
+    if (!selectionRange) {
+      return;
+    }
+
+    results.push({
+      name,
+      kind: this.normalizeSymbolKind(item['kind']),
+      containerName,
+      location: {
+        uri,
+        range: selectionRange,
+      },
+      serverName,
+    });
+
+    if (results.length >= limit) {
+      return;
+    }
+
+    const children = item['children'];
+    if (Array.isArray(children)) {
+      for (const child of children) {
+        if (results.length >= limit) {
+          break;
+        }
+        if (child && typeof child === 'object') {
+          this.collectDocumentSymbol(
+            child as Record<string, unknown>,
+            uri,
+            serverName,
+            results,
+            limit,
+            name,
+          );
+        }
+      }
+    }
+  }
+
   /**
    * 合并配置：内置预设 + 用户配置 + 兼容层
    */
-  private async mergeConfigs(
+  private mergeConfigs(
     detectedLanguages: string[],
-  ): Promise<LspServerConfig[]> {
+    userConfigs: LspServerConfig[],
+  ): LspServerConfig[] {
     // 内置预设配置
     const presets = this.getBuiltInPresets(detectedLanguages);
-
-    // 用户 .lsp.json 配置（如果存在）
-    const userConfigs = await this.loadUserConfigs();
 
     // 合并配置，用户配置优先级更高
     const mergedConfigs = [...presets];
@@ -614,6 +1358,7 @@ export class NativeLspService {
         transport: 'stdio',
         initializationOptions: {},
         rootUri,
+        workspaceFolder: this.workspaceRoot,
         trustRequired: true,
       });
     }
@@ -627,6 +1372,7 @@ export class NativeLspService {
         transport: 'stdio',
         initializationOptions: {},
         rootUri,
+        workspaceFolder: this.workspaceRoot,
         trustRequired: true,
       });
     }
@@ -640,6 +1386,7 @@ export class NativeLspService {
         transport: 'stdio',
         initializationOptions: {},
         rootUri,
+        workspaceFolder: this.workspaceRoot,
         trustRequired: true,
       });
     }
@@ -654,61 +1401,329 @@ export class NativeLspService {
    */
   private async loadUserConfigs(): Promise<LspServerConfig[]> {
     const configs: LspServerConfig[] = [];
+    const sources: Array<{ origin: string; data: unknown }> = [];
 
-    try {
-      const lspConfigPath = path.join(this.workspaceRoot, '.lsp.json');
-      if (fs.existsSync(lspConfigPath)) {
+    if (this.inlineServerConfigs) {
+      sources.push({
+        origin: 'settings.lsp.languageServers',
+        data: this.inlineServerConfigs,
+      });
+    }
+
+    const lspConfigPath = path.join(this.workspaceRoot, '.lsp.json');
+    if (fs.existsSync(lspConfigPath)) {
+      try {
         const configContent = fs.readFileSync(lspConfigPath, 'utf-8');
-        const userConfig = JSON.parse(configContent);
-
-        // 验证并转换用户配置为内部格式
-        if (userConfig && typeof userConfig === 'object') {
-          for (const [langId, serverSpec] of Object.entries(
-            userConfig,
-          ) as Array<[string, Record<string, unknown>]>) {
-            // 转换为文件 URI 格式
-            const rootUri = pathToFileURL(this.workspaceRoot).toString();
-
-            // 驗證 command 不為 undefined
-            if (!(serverSpec as Record<string, unknown>)['command']) {
-              console.warn(`LSP 配置錯誤: ${langId} 缺少 command 屬性`);
-              continue;
-            }
-
-            const serverConfig: LspServerConfig = {
-              name: (serverSpec as Record<string, unknown>)[
-                'command'
-              ] as string,
-              languages: [langId],
-              command: (serverSpec as Record<string, unknown>)[
-                'command'
-              ] as string,
-              args:
-                ((serverSpec as Record<string, unknown>)['args'] as string[]) ||
-                [],
-              transport:
-                ((serverSpec as Record<string, unknown>)['transport'] as
-                  | 'stdio'
-                  | 'tcp') || 'stdio',
-              initializationOptions: (serverSpec as Record<string, unknown>)[
-                'initializationOptions'
-              ] as LspInitializationOptions,
-              rootUri,
-              trustRequired:
-                ((serverSpec as Record<string, unknown>)[
-                  'trustRequired'
-                ] as boolean) ?? true,
-            };
-
-            configs.push(serverConfig);
-          }
-        }
+        sources.push({
+          origin: lspConfigPath,
+          data: JSON.parse(configContent),
+        });
+      } catch (e) {
+        console.warn('加载用户 .lsp.json 配置失败:', e);
       }
-    } catch (e) {
-      console.warn('加载用户 .lsp.json 配置失败:', e);
+    }
+
+    for (const source of sources) {
+      const parsed = this.parseConfigSource(source.data, source.origin);
+      if (parsed.usedLegacyFormat && parsed.configs.length > 0) {
+        this.warnLegacyConfig(source.origin);
+      }
+      configs.push(...parsed.configs);
     }
 
     return configs;
+  }
+
+  private parseConfigSource(
+    source: unknown,
+    origin: string,
+  ): { configs: LspServerConfig[]; usedLegacyFormat: boolean } {
+    if (!this.isRecord(source)) {
+      return { configs: [], usedLegacyFormat: false };
+    }
+
+    const configs: LspServerConfig[] = [];
+    let serverMap: Record<string, unknown> = source;
+    let usedLegacyFormat = false;
+
+    if (this.isRecord(source['languageServers'])) {
+      serverMap = source['languageServers'] as Record<string, unknown>;
+    } else if (this.isNewFormatServerMap(source)) {
+      serverMap = source;
+    } else {
+      usedLegacyFormat = true;
+    }
+
+    for (const [key, spec] of Object.entries(serverMap)) {
+      if (!this.isRecord(spec)) {
+        continue;
+      }
+
+      const languagesValue = spec['languages'];
+      const languages = usedLegacyFormat
+        ? [key]
+        : (this.normalizeStringArray(languagesValue) ??
+          (typeof languagesValue === 'string' ? [languagesValue] : []));
+
+      const name = usedLegacyFormat
+        ? typeof spec['command'] === 'string'
+          ? (spec['command'] as string)
+          : key
+        : key;
+
+      const config = this.buildServerConfig(name, languages, spec, origin);
+      if (config) {
+        configs.push(config);
+      }
+    }
+
+    return { configs, usedLegacyFormat };
+  }
+
+  private buildServerConfig(
+    name: string,
+    languages: string[],
+    spec: Record<string, unknown>,
+    origin: string,
+  ): LspServerConfig | null {
+    const transport = this.normalizeTransport(spec['transport']);
+    const command =
+      typeof spec['command'] === 'string'
+        ? (spec['command'] as string)
+        : undefined;
+    const args = this.normalizeStringArray(spec['args']) ?? [];
+    const env = this.normalizeEnv(spec['env']);
+    const initializationOptions = this.isRecord(spec['initializationOptions'])
+      ? (spec['initializationOptions'] as LspInitializationOptions)
+      : undefined;
+    const settings = this.isRecord(spec['settings'])
+      ? (spec['settings'] as Record<string, unknown>)
+      : undefined;
+    const extensionToLanguage = this.normalizeExtensionToLanguage(
+      spec['extensionToLanguage'],
+    );
+    const workspaceFolder = this.resolveWorkspaceFolder(
+      spec['workspaceFolder'],
+    );
+    const rootUri = pathToFileURL(workspaceFolder).toString();
+    const startupTimeout = this.normalizeTimeout(spec['startupTimeout']);
+    const shutdownTimeout = this.normalizeTimeout(spec['shutdownTimeout']);
+    const restartOnCrash =
+      typeof spec['restartOnCrash'] === 'boolean'
+        ? (spec['restartOnCrash'] as boolean)
+        : undefined;
+    const maxRestarts = this.normalizeMaxRestarts(spec['maxRestarts']);
+    const trustRequired =
+      typeof spec['trustRequired'] === 'boolean'
+        ? (spec['trustRequired'] as boolean)
+        : true;
+    const socket = this.normalizeSocketOptions(spec);
+
+    if (transport === 'stdio' && !command) {
+      console.warn(`LSP config error in ${origin}: ${name} missing command`);
+      return null;
+    }
+
+    if (transport !== 'stdio' && !socket) {
+      console.warn(
+        `LSP config error in ${origin}: ${name} missing socket info`,
+      );
+      return null;
+    }
+
+    return {
+      name,
+      languages,
+      command,
+      args,
+      transport,
+      env,
+      initializationOptions,
+      settings,
+      extensionToLanguage,
+      rootUri,
+      workspaceFolder,
+      startupTimeout,
+      shutdownTimeout,
+      restartOnCrash,
+      maxRestarts,
+      trustRequired,
+      socket,
+    };
+  }
+
+  private isNewFormatServerMap(value: Record<string, unknown>): boolean {
+    return Object.values(value).some(
+      (entry) => this.isRecord(entry) && this.isNewFormatServerSpec(entry),
+    );
+  }
+
+  private isNewFormatServerSpec(value: Record<string, unknown>): boolean {
+    return (
+      Array.isArray(value['languages']) ||
+      this.isRecord(value['extensionToLanguage']) ||
+      this.isRecord(value['settings']) ||
+      value['workspaceFolder'] !== undefined ||
+      value['startupTimeout'] !== undefined ||
+      value['shutdownTimeout'] !== undefined ||
+      value['restartOnCrash'] !== undefined ||
+      value['maxRestarts'] !== undefined ||
+      this.isRecord(value['env']) ||
+      value['socket'] !== undefined
+    );
+  }
+
+  private warnLegacyConfig(origin: string): void {
+    if (this.warnedLegacyConfig) {
+      return;
+    }
+    console.warn(
+      `Legacy LSP config detected in ${origin}. Please migrate to the languageServers format.`,
+    );
+    this.warnedLegacyConfig = true;
+  }
+
+  private isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+  }
+
+  private normalizeStringArray(value: unknown): string[] | undefined {
+    if (!Array.isArray(value)) {
+      return undefined;
+    }
+    return value.filter((item): item is string => typeof item === 'string');
+  }
+
+  private normalizeEnv(value: unknown): Record<string, string> | undefined {
+    if (!this.isRecord(value)) {
+      return undefined;
+    }
+    const env: Record<string, string> = {};
+    for (const [key, val] of Object.entries(value)) {
+      if (
+        typeof val === 'string' ||
+        typeof val === 'number' ||
+        typeof val === 'boolean'
+      ) {
+        env[key] = String(val);
+      }
+    }
+    return Object.keys(env).length > 0 ? env : undefined;
+  }
+
+  private normalizeExtensionToLanguage(
+    value: unknown,
+  ): Record<string, string> | undefined {
+    if (!this.isRecord(value)) {
+      return undefined;
+    }
+    const mapping: Record<string, string> = {};
+    for (const [key, lang] of Object.entries(value)) {
+      if (typeof lang !== 'string') {
+        continue;
+      }
+      const normalized = key.startsWith('.') ? key.slice(1) : key;
+      if (!normalized) {
+        continue;
+      }
+      mapping[normalized.toLowerCase()] = lang;
+    }
+    return Object.keys(mapping).length > 0 ? mapping : undefined;
+  }
+
+  private normalizeTransport(value: unknown): 'stdio' | 'tcp' | 'socket' {
+    if (typeof value !== 'string') {
+      return 'stdio';
+    }
+    const normalized = value.toLowerCase();
+    if (normalized === 'tcp' || normalized === 'socket') {
+      return normalized;
+    }
+    return 'stdio';
+  }
+
+  private normalizeTimeout(value: unknown): number | undefined {
+    if (typeof value !== 'number') {
+      return undefined;
+    }
+    if (!Number.isFinite(value) || value <= 0) {
+      return undefined;
+    }
+    return value;
+  }
+
+  private normalizeMaxRestarts(value: unknown): number | undefined {
+    if (typeof value !== 'number') {
+      return undefined;
+    }
+    if (!Number.isFinite(value) || value < 0) {
+      return undefined;
+    }
+    return value;
+  }
+
+  private normalizeSocketOptions(
+    value: Record<string, unknown>,
+  ): LspSocketOptions | undefined {
+    const socketValue = value['socket'];
+    if (typeof socketValue === 'string') {
+      return { path: socketValue };
+    }
+
+    const source = this.isRecord(socketValue) ? socketValue : value;
+    const host =
+      typeof source['host'] === 'string'
+        ? (source['host'] as string)
+        : undefined;
+    const pathValue =
+      typeof source['path'] === 'string'
+        ? (source['path'] as string)
+        : typeof source['socketPath'] === 'string'
+          ? (source['socketPath'] as string)
+          : undefined;
+    const portValue = source['port'];
+    const port =
+      typeof portValue === 'number'
+        ? portValue
+        : typeof portValue === 'string'
+          ? Number(portValue)
+          : undefined;
+
+    const socket: LspSocketOptions = {};
+    if (host) {
+      socket.host = host;
+    }
+    if (Number.isFinite(port) && (port as number) > 0) {
+      socket.port = port as number;
+    }
+    if (pathValue) {
+      socket.path = pathValue;
+    }
+
+    if (!socket.path && !socket.port) {
+      return undefined;
+    }
+    return socket;
+  }
+
+  private resolveWorkspaceFolder(value: unknown): string {
+    if (typeof value !== 'string' || value.trim() === '') {
+      return this.workspaceRoot;
+    }
+
+    const resolved = path.isAbsolute(value)
+      ? path.resolve(value)
+      : path.resolve(this.workspaceRoot, value);
+    const root = path.resolve(this.workspaceRoot);
+
+    if (resolved === root || resolved.startsWith(root + path.sep)) {
+      return resolved;
+    }
+
+    console.warn(
+      `LSP workspaceFolder must be within ${this.workspaceRoot}; using workspace root instead.`,
+    );
+    return this.workspaceRoot;
   }
 
   /**
@@ -718,13 +1733,22 @@ export class NativeLspService {
     name: string,
     handle: LspServerHandle,
   ): Promise<void> {
-    if (this.excludedServers?.includes(name)) {
+    if (handle.status === 'IN_PROGRESS') {
+      return;
+    }
+    handle.stopRequested = false;
+
+    if (this.isServerInList(this.excludedServers, handle.config)) {
       console.log(`LSP 服务器 ${name} 在排除列表中，跳过启动`);
       handle.status = 'FAILED';
       return;
     }
 
-    if (this.allowedServers && !this.allowedServers.includes(name)) {
+    if (
+      this.allowedServers &&
+      this.allowedServers.length > 0 &&
+      !this.isServerInList(this.allowedServers, handle.config)
+    ) {
       console.log(`LSP 服务器 ${name} 不在允许列表中，跳过启动`);
       handle.status = 'FAILED';
       return;
@@ -753,22 +1777,37 @@ export class NativeLspService {
     }
 
     // 检查命令是否存在
-    if (!(await this.commandExists(handle.config.command))) {
-      console.warn(`LSP 服务器 ${name} 的命令不存在: ${handle.config.command}`);
-      handle.status = 'FAILED';
-      return;
-    }
+    if (handle.config.command) {
+      const commandCwd = handle.config.workspaceFolder ?? this.workspaceRoot;
+      if (
+        !(await this.commandExists(
+          handle.config.command,
+          handle.config.env,
+          commandCwd,
+        ))
+      ) {
+        console.warn(
+          `LSP 服务器 ${name} 的命令不存在: ${handle.config.command}`,
+        );
+        handle.status = 'FAILED';
+        return;
+      }
 
-    // 检查路径安全性
-    if (!this.isPathSafe(handle.config.command, this.workspaceRoot)) {
-      console.warn(
-        `LSP 服务器 ${name} 的命令路径不安全: ${handle.config.command}`,
-      );
-      handle.status = 'FAILED';
-      return;
+      // 检查路径安全性
+      if (
+        !this.isPathSafe(handle.config.command, this.workspaceRoot, commandCwd)
+      ) {
+        console.warn(
+          `LSP 服务器 ${name} 的命令路径不安全: ${handle.config.command}`,
+        );
+        handle.status = 'FAILED';
+        return;
+      }
     }
 
     try {
+      handle.error = undefined;
+      handle.warmedUp = false;
       handle.status = 'IN_PROGRESS';
 
       // 创建 LSP 连接
@@ -780,6 +1819,7 @@ export class NativeLspService {
       await this.initializeLspServer(connection, handle.config);
 
       handle.status = 'READY';
+      this.attachRestartHandler(name, handle);
       console.log(`LSP 服务器 ${name} 启动成功`);
     } catch (error) {
       handle.status = 'FAILED';
@@ -795,19 +1835,146 @@ export class NativeLspService {
     name: string,
     handle: LspServerHandle,
   ): Promise<void> {
+    handle.stopRequested = true;
+
     if (handle.connection) {
       try {
-        await handle.connection.shutdown();
-        handle.connection.end();
+        await this.shutdownConnection(handle);
       } catch (error) {
         console.error(`关闭 LSP 服务器 ${name} 时出错:`, error);
       }
-    } else if (handle.process && !handle.process.killed) {
+    } else if (handle.process && handle.process.exitCode === null) {
       handle.process.kill();
     }
     handle.connection = undefined;
     handle.process = undefined;
     handle.status = 'NOT_STARTED';
+    handle.warmedUp = false;
+    handle.restartAttempts = 0;
+  }
+
+  private isServerInList(
+    list: string[] | undefined,
+    config: LspServerConfig,
+  ): boolean {
+    if (!list || list.length === 0) {
+      return false;
+    }
+    if (list.includes(config.name)) {
+      return true;
+    }
+    if (config.command && list.includes(config.command)) {
+      return true;
+    }
+    return false;
+  }
+
+  private async shutdownConnection(handle: LspServerHandle): Promise<void> {
+    if (!handle.connection) {
+      return;
+    }
+    try {
+      const shutdownPromise = handle.connection.shutdown();
+      if (typeof handle.config.shutdownTimeout === 'number') {
+        await Promise.race([
+          shutdownPromise,
+          new Promise<void>((resolve) =>
+            setTimeout(resolve, handle.config.shutdownTimeout),
+          ),
+        ]);
+      } else {
+        await shutdownPromise;
+      }
+    } finally {
+      handle.connection.end();
+    }
+  }
+
+  private attachRestartHandler(name: string, handle: LspServerHandle): void {
+    if (!handle.process) {
+      return;
+    }
+    handle.process.once('exit', (code) => {
+      if (handle.stopRequested) {
+        return;
+      }
+      if (!handle.config.restartOnCrash) {
+        handle.status = 'FAILED';
+        return;
+      }
+      const maxRestarts = handle.config.maxRestarts ?? DEFAULT_LSP_MAX_RESTARTS;
+      if (maxRestarts <= 0) {
+        handle.status = 'FAILED';
+        return;
+      }
+      const attempts = handle.restartAttempts ?? 0;
+      if (attempts >= maxRestarts) {
+        console.warn(
+          `LSP 服务器 ${name} 达到最大重启次数 (${maxRestarts})，停止重启`,
+        );
+        handle.status = 'FAILED';
+        return;
+      }
+      handle.restartAttempts = attempts + 1;
+      console.warn(
+        `LSP 服务器 ${name} 退出 (code ${code ?? 'unknown'})，正在重启 (${handle.restartAttempts}/${maxRestarts})`,
+      );
+      this.resetHandle(handle);
+      void this.startServer(name, handle);
+    });
+  }
+
+  private resetHandle(handle: LspServerHandle): void {
+    if (handle.connection) {
+      handle.connection.end();
+    }
+    if (handle.process && handle.process.exitCode === null) {
+      handle.process.kill();
+    }
+    handle.connection = undefined;
+    handle.process = undefined;
+    handle.status = 'NOT_STARTED';
+    handle.error = undefined;
+    handle.warmedUp = false;
+    handle.stopRequested = false;
+  }
+
+  private buildProcessEnv(
+    env: Record<string, string> | undefined,
+  ): NodeJS.ProcessEnv | undefined {
+    if (!env || Object.keys(env).length === 0) {
+      return undefined;
+    }
+    return { ...process.env, ...env };
+  }
+
+  private async connectSocketWithRetry(
+    socket: LspSocketOptions,
+    timeoutMs: number,
+  ): Promise<
+    Awaited<ReturnType<typeof LspConnectionFactory.createSocketConnection>>
+  > {
+    const deadline = Date.now() + timeoutMs;
+    let attempt = 0;
+    while (true) {
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) {
+        throw new Error('LSP server connection timeout');
+      }
+      try {
+        return await LspConnectionFactory.createSocketConnection(
+          socket,
+          remaining,
+        );
+      } catch (error) {
+        attempt += 1;
+        if (Date.now() >= deadline) {
+          throw error;
+        }
+        const delay = Math.min(250 * attempt, 1000);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
   }
 
   /**
@@ -815,17 +1982,27 @@ export class NativeLspService {
    */
   private async createLspConnection(config: LspServerConfig): Promise<{
     connection: LspConnectionInterface;
-    process: ChildProcess;
+    process?: ChildProcess;
     shutdown: () => Promise<void>;
     exit: () => void;
     initialize: (params: unknown) => Promise<unknown>;
   }> {
+    const workspaceFolder = config.workspaceFolder ?? this.workspaceRoot;
+    const startupTimeout =
+      config.startupTimeout ?? DEFAULT_LSP_STARTUP_TIMEOUT_MS;
+    const env = this.buildProcessEnv(config.env);
+
     if (config.transport === 'stdio') {
+      if (!config.command) {
+        throw new Error('LSP stdio transport requires a command');
+      }
+
       // 修复：使用 cwd 作为 cwd 而不是 rootUri
       const lspConnection = await LspConnectionFactory.createStdioConnection(
         config.command,
-        config.args,
-        { cwd: this.workspaceRoot },
+        config.args ?? [],
+        { cwd: workspaceFolder, env },
+        startupTimeout,
       );
 
       return {
@@ -843,9 +2020,50 @@ export class NativeLspService {
         initialize: async (params: unknown) =>
           lspConnection.connection.initialize(params),
       };
-    } else if (config.transport === 'tcp') {
-      // 如果需要 TCP 支持，可以扩展此部分
-      throw new Error('TCP transport not yet implemented');
+    } else if (config.transport === 'tcp' || config.transport === 'socket') {
+      if (!config.socket) {
+        throw new Error('LSP socket transport requires host/port or path');
+      }
+
+      let process: ChildProcess | undefined;
+      if (config.command) {
+        process = spawn(config.command, config.args ?? [], {
+          cwd: workspaceFolder,
+          env,
+          stdio: 'ignore',
+        });
+        await new Promise<void>((resolve, reject) => {
+          process?.once('spawn', () => resolve());
+          process?.once('error', (error) => {
+            reject(new Error(`Failed to spawn LSP server: ${error.message}`));
+          });
+        });
+      }
+
+      try {
+        const lspConnection = await this.connectSocketWithRetry(
+          config.socket,
+          startupTimeout,
+        );
+
+        return {
+          connection: lspConnection.connection as LspConnectionInterface,
+          process,
+          shutdown: async () => {
+            await lspConnection.connection.shutdown();
+          },
+          exit: () => {
+            lspConnection.connection.end();
+          },
+          initialize: async (params: unknown) =>
+            lspConnection.connection.initialize(params),
+        };
+      } catch (error) {
+        if (process && process.exitCode === null) {
+          process.kill();
+        }
+        throw error;
+      }
     } else {
       throw new Error(`Unsupported transport: ${config.transport}`);
     }
@@ -858,15 +2076,16 @@ export class NativeLspService {
     connection: Awaited<ReturnType<NativeLspService['createLspConnection']>>,
     config: LspServerConfig,
   ): Promise<void> {
+    const workspaceFolderPath = config.workspaceFolder ?? this.workspaceRoot;
     const workspaceFolder = {
-      name: path.basename(this.workspaceRoot) || this.workspaceRoot,
+      name: path.basename(workspaceFolderPath) || workspaceFolderPath,
       uri: config.rootUri,
     };
 
     const initializeParams = {
       processId: process.pid,
       rootUri: config.rootUri,
-      rootPath: this.workspaceRoot,
+      rootPath: workspaceFolderPath,
       workspaceFolders: [workspaceFolder],
       capabilities: {
         textDocument: {
@@ -904,8 +2123,21 @@ export class NativeLspService {
       },
     });
 
+    if (config.settings && Object.keys(config.settings).length > 0) {
+      connection.connection.send({
+        jsonrpc: '2.0',
+        method: 'workspace/didChangeConfiguration',
+        params: {
+          settings: config.settings,
+        },
+      });
+    }
+
     // Warm up TypeScript server by opening a workspace file so it can create a project.
-    if (config.name.includes('typescript')) {
+    if (
+      config.name.includes('typescript') ||
+      (config.command?.includes('typescript') ?? false)
+    ) {
       try {
         const tsFile = this.findFirstTypescriptFile();
         if (tsFile) {
@@ -936,13 +2168,18 @@ export class NativeLspService {
   /**
    * 检查命令是否存在
    */
-  private async commandExists(command: string): Promise<boolean> {
+  private async commandExists(
+    command: string,
+    env?: Record<string, string>,
+    cwd?: string,
+  ): Promise<boolean> {
     // 实现命令存在性检查
     return new Promise((resolve) => {
       let settled = false;
       const child = spawn(command, ['--version'], {
         stdio: ['ignore', 'ignore', 'ignore'],
-        cwd: this.workspaceRoot,
+        cwd: cwd ?? this.workspaceRoot,
+        env: this.buildProcessEnv(env),
       });
 
       child.on('error', () => {
@@ -971,23 +2208,19 @@ export class NativeLspService {
   /**
    * 检查路径安全性
    */
-  private isPathSafe(command: string, workspacePath: string): boolean {
+  private isPathSafe(
+    command: string,
+    workspacePath: string,
+    cwd?: string,
+  ): boolean {
     // 检查命令是否在工作区路径内，或者是否在系统 PATH 中
     // 允许全局安装的命令（如在 PATH 中的命令）
     // 只阻止显式指定工作区外绝对路径的情况
-    if (path.isAbsolute(command)) {
-      // 如果是绝对路径，检查是否在工作区路径内
-      const resolvedPath = path.resolve(command);
-      const resolvedWorkspacePath = path.resolve(workspacePath);
-      return (
-        resolvedPath.startsWith(resolvedWorkspacePath + path.sep) ||
-        resolvedPath === resolvedWorkspacePath
-      );
-    }
-    // 相对路径和命令名（在 PATH 中查找）认为是安全的
-    // 但需要确保相对路径不指向工作区外
-    const resolvedPath = path.resolve(workspacePath, command);
     const resolvedWorkspacePath = path.resolve(workspacePath);
+    const basePath = cwd ? path.resolve(cwd) : resolvedWorkspacePath;
+    const resolvedPath = path.isAbsolute(command)
+      ? path.resolve(command)
+      : path.resolve(basePath, command);
     return (
       resolvedPath.startsWith(resolvedWorkspacePath + path.sep) ||
       resolvedPath === resolvedWorkspacePath
@@ -1008,7 +2241,7 @@ export class NativeLspService {
 
     if (this.requireTrustedWorkspace || serverConfig.trustRequired) {
       console.log(
-        `工作区未受信任，跳过 LSP 服务器 ${serverName} (${serverConfig.command})`,
+        `工作区未受信任，跳过 LSP 服务器 ${serverName} (${serverConfig.command ?? serverConfig.transport})`,
       );
       return false;
     }
@@ -1056,7 +2289,10 @@ export class NativeLspService {
   }
 
   private isTypescriptServer(handle: LspServerHandle): boolean {
-    return handle.config.name.includes('typescript');
+    return (
+      handle.config.name.includes('typescript') ||
+      (handle.config.command?.includes('typescript') ?? false)
+    );
   }
 
   private isNoProjectErrorResponse(response: unknown): boolean {
