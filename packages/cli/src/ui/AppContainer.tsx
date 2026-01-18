@@ -1388,6 +1388,8 @@ export const AppContainer = (props: AppContainerProps) => {
 
   const uiActions: UIActions = useMemo(
     () => ({
+      openThemeDialog,
+      openEditorDialog,
       handleThemeSelect,
       handleThemeHighlight,
       handleApprovalModeSelect,
@@ -1425,6 +1427,8 @@ export const AppContainer = (props: AppContainerProps) => {
       handleResume,
     }),
     [
+      openThemeDialog,
+      openEditorDialog,
       handleThemeSelect,
       handleThemeHighlight,
       handleApprovalModeSelect,

@@ -97,8 +97,8 @@ export default {
   Preview: 'Vorschau',
   '(Use Enter to select, Tab to configure scope)':
     '(Enter zum Auswählen, Tab zum Konfigurieren des Bereichs)',
-  '(Use Enter to apply scope, Tab to select theme)':
-    '(Enter zum Anwenden des Bereichs, Tab zum Auswählen des Designs)',
+  '(Use Enter to apply scope, Tab to go back)':
+    '(Enter zum Anwenden des Bereichs, Tab zum Zurückgehen)',
   'Theme configuration unavailable due to NO_COLOR env variable.':
     'Design-Konfiguration aufgrund der NO_COLOR-Umgebungsvariable nicht verfügbar.',
   'Theme "{{themeName}}" not found.': 'Design "{{themeName}}" nicht gefunden.',
@@ -260,8 +260,6 @@ export default {
   'View and edit Qwen Code settings':
     'Qwen Code Einstellungen anzeigen und bearbeiten',
   Settings: 'Einstellungen',
-  '(Use Enter to select{{tabText}})': '(Enter zum Auswählen{{tabText}})',
-  ', Tab to change focus': ', Tab zum Fokuswechsel',
   'To see changes, Qwen Code must be restarted. Press r to exit and apply changes now.':
     'Um Änderungen zu sehen, muss Qwen Code neu gestartet werden. Drücken Sie r, um jetzt zu beenden und Änderungen anzuwenden.',
   'The command "/{{command}}" is not supported in non-interactive mode.':
@@ -271,6 +269,12 @@ export default {
   // ============================================================================
   'Vim Mode': 'Vim-Modus',
   'Disable Auto Update': 'Automatische Updates deaktivieren',
+  'Add AI Co-Author to Commits': 'KI als Co-Autor zu Commits hinzufügen',
+  'Terminal Bell Notification': 'Terminal-Signalton',
+  'Enable Usage Statistics': 'Nutzungsstatistiken aktivieren',
+  Theme: 'Farbschema',
+  'Preferred Editor': 'Bevorzugter Editor',
+  'Auto-connect to IDE': 'Automatische Verbindung zur IDE',
   'Enable Prompt Completion': 'Eingabevervollständigung aktivieren',
   'Debug Keystroke Logging': 'Debug-Protokollierung von Tastatureingaben',
   Language: 'Sprache',
@@ -278,10 +282,10 @@ export default {
   'Hide Window Title': 'Fenstertitel ausblenden',
   'Show Status in Title': 'Status im Titel anzeigen',
   'Hide Tips': 'Tipps ausblenden',
-  'Show Line Numbers': 'Zeilennummern anzeigen',
+  'Show Line Numbers in Code': 'Zeilennummern im Code anzeigen',
   'Show Citations': 'Quellenangaben anzeigen',
   'Custom Witty Phrases': 'Benutzerdefinierte Witzige Sprüche',
-  'Enable Welcome Back': 'Willkommen-zurück aktivieren',
+  'Show Welcome Back Dialog': 'Willkommen-zurück-Dialog anzeigen',
   'Disable Loading Phrases': 'Ladesprüche deaktivieren',
   'Screen Reader Mode': 'Bildschirmleser-Modus',
   'IDE Mode': 'IDE-Modus',
@@ -301,7 +305,7 @@ export default {
   'Respect .qwenignore': '.qwenignore beachten',
   'Enable Recursive File Search': 'Rekursive Dateisuche aktivieren',
   'Disable Fuzzy Search': 'Unscharfe Suche deaktivieren',
-  'Enable Interactive Shell': 'Interaktive Shell aktivieren',
+  'Interactive Shell (PTY)': 'Interaktive Shell (PTY)',
   'Show Color': 'Farbe anzeigen',
   'Auto Accept': 'Automatisch akzeptieren',
   'Use Ripgrep': 'Ripgrep verwenden',
@@ -337,6 +341,11 @@ export default {
   'Show all directories in the workspace':
     'Alle Verzeichnisse im Arbeitsbereich anzeigen',
   'set external editor preference': 'Externen Editor festlegen',
+  'Select Editor': 'Editor auswählen',
+  'Editor Preference': 'Editor-Einstellung',
+  'These editors are currently supported. Please note that some editors cannot be used in sandbox mode.':
+    'Diese Editoren werden derzeit unterstützt. Bitte beachten Sie, dass einige Editoren nicht im Sandbox-Modus verwendet werden können.',
+  'Your preferred editor is:': 'Ihr bevorzugter Editor ist:',
   'Manage extensions': 'Erweiterungen verwalten',
   'List active extensions': 'Aktive Erweiterungen auflisten',
   'Update extensions. Usage: update <extension-names>|--all':
@@ -427,7 +436,7 @@ export default {
   // ============================================================================
   // Commands - Approval Mode
   // ============================================================================
-  'Approval Mode': 'Genehmigungsmodus',
+  'Tool Approval Mode': 'Werkzeug-Genehmigungsmodus',
   'Current approval mode: {{mode}}': 'Aktueller Genehmigungsmodus: {{mode}}',
   'Available approval modes:': 'Verfügbare Genehmigungsmodi:',
   'Approval mode changed to: {{mode}}':
@@ -469,8 +478,6 @@ export default {
   'Automatically approve all tools': 'Alle Werkzeuge automatisch genehmigen',
   'Workspace approval mode exists and takes priority. User-level change will have no effect.':
     'Arbeitsbereich-Genehmigungsmodus existiert und hat Vorrang. Benutzerebene-Änderung hat keine Wirkung.',
-  '(Use Enter to select, Tab to change focus)':
-    '(Enter zum Auswählen, Tab zum Fokuswechsel)',
   'Apply To': 'Anwenden auf',
   'User Settings': 'Benutzereinstellungen',
   'Workspace Settings': 'Arbeitsbereich-Einstellungen',

@@ -28,12 +28,12 @@ import { LoadedSettings, SettingScope } from '../../config/settings.js';
 import { VimModeProvider } from '../contexts/VimModeContext.js';
 import { KeypressProvider } from '../contexts/KeypressContext.js';
 import { act } from 'react';
-import { saveModifiedSettings, TEST_ONLY } from '../../utils/settingsUtils.js';
 import {
-  getSettingsSchema,
-  type SettingDefinition,
-  type SettingsSchemaType,
-} from '../../config/settingsSchema.js';
+  getDialogSettingKeys,
+  getSettingDefinition,
+  saveModifiedSettings,
+  TEST_ONLY,
+} from '../../utils/settingsUtils.js';
 
 // Mock the VimModeContext
 const mockToggleVimEnabled = vi.fn();
@@ -210,8 +210,9 @@ describe('SettingsDialog', () => {
 
       const output = lastFrame();
       expect(output).toContain('Settings');
-      expect(output).toContain('Apply To');
-      expect(output).toContain('Use Enter to select, Tab to change focus');
+      // Scope selector is now in a separate view (Tab to switch)
+      expect(output).not.toContain('Apply To');
+      expect(output).toContain('(Use Enter to select, Tab to configure scope)');
     });
 
     it('should accept availableTerminalHeight prop without errors', () => {
@@ -231,7 +232,7 @@ describe('SettingsDialog', () => {
       const output = lastFrame();
       // Should still render properly with the height prop
       expect(output).toContain('Settings');
-      expect(output).toContain('Use Enter to select');
+      expect(output).toContain('Enter to select');
     });
 
     it('should show settings list with default values', () => {
@@ -281,7 +282,7 @@ describe('SettingsDialog', () => {
         stdin.write(TerminalKeys.DOWN_ARROW as string); // Down arrow
       });
 
-      expect(lastFrame()).toContain('● Disable Auto Update');
+      expect(lastFrame()).toContain('● Language');
 
       // The active index should have changed (tested indirectly through behavior)
       unmount();
@@ -342,7 +343,14 @@ describe('SettingsDialog', () => {
 
       await wait();
 
-      expect(lastFrame()).toContain('● Vision Model Preview');
+      const lastKey = getDialogSettingKeys().at(-1);
+      expect(lastKey).toBeDefined();
+
+      const lastLabel = lastKey
+        ? (getSettingDefinition(lastKey)?.label ?? lastKey)
+        : '';
+
+      expect(lastFrame()).toContain(`● ${lastLabel}`);
 
       unmount();
     });
@@ -362,17 +370,21 @@ describe('SettingsDialog', () => {
 
       const { stdin, unmount, lastFrame } = render(component);
 
-      // Wait for initial render and verify we're on Vim Mode (first setting)
+      // Wait for initial render and verify we're on Tool Approval Mode (first setting)
       await waitFor(() => {
-        expect(lastFrame()).toContain('● Vim Mode');
+        expect(lastFrame()).toContain('● Tool Approval Mode');
       });
 
-      // Navigate to Disable Auto Update setting and verify we're there
+      // Navigate to Vim Mode setting (third setting - a boolean) and verify we're there
       act(() => {
-        stdin.write(TerminalKeys.DOWN_ARROW as string);
+        stdin.write(TerminalKeys.DOWN_ARROW as string); // -> Language
+      });
+      await wait();
+      act(() => {
+        stdin.write(TerminalKeys.DOWN_ARROW as string); // -> Vim Mode
       });
       await waitFor(() => {
-        expect(lastFrame()).toContain('● Disable Auto Update');
+        expect(lastFrame()).toContain('● Vim Mode');
       });
 
       // Toggle the setting
@@ -392,10 +404,10 @@ describe('SettingsDialog', () => {
       });
 
       expect(vi.mocked(saveModifiedSettings)).toHaveBeenCalledWith(
-        new Set<string>(['general.disableAutoUpdate']),
+        new Set<string>(['general.vimMode']),
         {
           general: {
-            disableAutoUpdate: true,
+            vimMode: true,
           },
         },
         expect.any(LoadedSettings),
@@ -406,51 +418,10 @@ describe('SettingsDialog', () => {
     });
 
     describe('enum values', () => {
-      enum StringEnum {
-        FOO = 'foo',
-        BAR = 'bar',
-        BAZ = 'baz',
-      }
-
-      const SETTING: SettingDefinition = {
-        type: 'enum',
-        label: 'Theme',
-        options: [
-          {
-            label: 'Foo',
-            value: StringEnum.FOO,
-          },
-          {
-            label: 'Bar',
-            value: StringEnum.BAR,
-          },
-          {
-            label: 'Baz',
-            value: StringEnum.BAZ,
-          },
-        ],
-        category: 'UI',
-        requiresRestart: false,
-        default: StringEnum.BAR,
-        description: 'The color theme for the UI.',
-        showInDialog: true,
-      };
-
-      const FAKE_SCHEMA: SettingsSchemaType = {
-        ui: {
-          showInDialog: false,
-          properties: {
-            theme: {
-              ...SETTING,
-            },
-          },
-        },
-      } as unknown as SettingsSchemaType;
-
       it('toggles enum values with the enter key', async () => {
         vi.mocked(saveModifiedSettings).mockClear();
 
-        vi.mocked(getSettingsSchema).mockReturnValue(FAKE_SCHEMA);
+        // Use real schema - first setting "Tool Approval Mode" is an enum
         const settings = createMockSettings();
         const onSelect = vi.fn();
         const component = (
@@ -459,24 +430,30 @@ describe('SettingsDialog', () => {
           </KeypressProvider>
         );
 
-        const { stdin, unmount } = render(component);
+        const { stdin, unmount, lastFrame } = render(component);
 
-        // Press Enter to toggle current setting
-        stdin.write(TerminalKeys.DOWN_ARROW as string);
-        await wait();
-        stdin.write(TerminalKeys.ENTER as string);
+        // Verify we're on Tool Approval Mode (first setting, an enum)
+        await waitFor(() => {
+          expect(lastFrame()).toContain('● Tool Approval Mode');
+        });
+
+        // Press Enter to cycle the enum value
+        act(() => {
+          stdin.write(TerminalKeys.ENTER as string);
+        });
         await wait();
         await waitFor(() => {
           expect(vi.mocked(saveModifiedSettings)).toHaveBeenCalled();
         });
 
+        // Tool Approval Mode cycles through enum values
         expect(vi.mocked(saveModifiedSettings)).toHaveBeenCalledWith(
-          new Set<string>(['ui.theme']),
-          {
-            ui: {
-              theme: StringEnum.BAZ,
-            },
-          },
+          new Set<string>(['tools.approvalMode']),
+          expect.objectContaining({
+            tools: expect.objectContaining({
+              approvalMode: expect.any(String),
+            }),
+          }),
           expect.any(LoadedSettings),
           SettingScope.User,
         );
@@ -486,10 +463,10 @@ describe('SettingsDialog', () => {
 
       it('loops back when reaching the end of an enum', async () => {
         vi.mocked(saveModifiedSettings).mockClear();
-        vi.mocked(getSettingsSchema).mockReturnValue(FAKE_SCHEMA);
+        // Use Tool Approval Mode set to YOLO (last value) to test looping back to first
         const settings = createMockSettings({
-          ui: {
-            theme: StringEnum.BAZ,
+          tools: {
+            approvalMode: 'yolo', // Last enum value
           },
         });
         const onSelect = vi.fn();
@@ -499,24 +476,30 @@ describe('SettingsDialog', () => {
           </KeypressProvider>
         );
 
-        const { stdin, unmount } = render(component);
+        const { stdin, unmount, lastFrame } = render(component);
 
-        // Press Enter to toggle current setting
-        stdin.write(TerminalKeys.DOWN_ARROW as string);
-        await wait();
-        stdin.write(TerminalKeys.ENTER as string);
+        // Verify we're on Tool Approval Mode (first setting)
+        await waitFor(() => {
+          expect(lastFrame()).toContain('● Tool Approval Mode');
+        });
+
+        // Press Enter to cycle - should loop back to first value (Plan)
+        act(() => {
+          stdin.write(TerminalKeys.ENTER as string);
+        });
         await wait();
         await waitFor(() => {
           expect(vi.mocked(saveModifiedSettings)).toHaveBeenCalled();
         });
 
+        // Should loop back to first enum value (Plan)
         expect(vi.mocked(saveModifiedSettings)).toHaveBeenCalledWith(
-          new Set<string>(['ui.theme']),
-          {
-            ui: {
-              theme: StringEnum.FOO,
-            },
-          },
+          new Set<string>(['tools.approvalMode']),
+          expect.objectContaining({
+            tools: expect.objectContaining({
+              approvalMode: 'plan', // First enum value after YOLO
+            }),
+          }),
           expect.any(LoadedSettings),
           SettingScope.User,
         );
@@ -599,12 +582,12 @@ describe('SettingsDialog', () => {
         expect(lastFrame()).toContain('Vim Mode');
       });
 
-      // The UI should show the settings section is active and scope section is inactive
-      expect(lastFrame()).toContain('● Vim Mode'); // Settings section active
-      expect(lastFrame()).toContain('  Apply To'); // Scope section inactive
+      // The UI should show settings mode is active (scope is in separate view)
+      expect(lastFrame()).toContain('● Tool Approval Mode'); // Settings section active
+      expect(lastFrame()).not.toContain('Apply To'); // Scope is in a separate view
 
-      // This test validates the initial state - scope selection behavior
-      // is complex due to keypress handling, so we focus on state validation
+      // This test validates the initial state - scope selection is now
+      // accessed via Tab key, not shown alongside settings
 
       unmount();
     });
@@ -668,12 +651,12 @@ describe('SettingsDialog', () => {
 
       // Wait for initial render
       await waitFor(() => {
-        expect(lastFrame()).toContain('Hide Window Title');
+        expect(lastFrame()).toContain('Vim Mode');
       });
 
-      // Verify the dialog is rendered properly
+      // Verify the dialog is rendered properly (scope is in separate view)
       expect(lastFrame()).toContain('Settings');
-      expect(lastFrame()).toContain('Apply To');
+      expect(lastFrame()).not.toContain('Apply To'); // Scope is in a separate view
 
       // This test validates rendering - escape key behavior depends on complex
       // keypress handling that's difficult to test reliably in this environment
@@ -1021,12 +1004,12 @@ describe('SettingsDialog', () => {
         expect(lastFrame()).toContain('Vim Mode');
       });
 
-      // Verify initial state: settings section active, scope section inactive
-      expect(lastFrame()).toContain('● Vim Mode'); // Settings section active
-      expect(lastFrame()).toContain('  Apply To'); // Scope section inactive
+      // Verify initial state: settings mode active (scope is in separate view)
+      expect(lastFrame()).toContain('● Tool Approval Mode'); // Settings mode active
+      expect(lastFrame()).not.toContain('Apply To'); // Scope is in a separate view
 
       // This test validates the rendered UI structure for tab navigation
-      // Actual tab behavior testing is complex due to keypress handling
+      // Tab now switches between settings view and scope view
 
       unmount();
     });
@@ -1083,17 +1066,16 @@ describe('SettingsDialog', () => {
         expect(lastFrame()).toContain('Vim Mode');
       });
 
-      // Verify the complete UI is rendered with all necessary sections
+      // Verify the complete UI is rendered (scope is in separate view)
       expect(lastFrame()).toContain('Settings'); // Title
-      expect(lastFrame()).toContain('● Vim Mode'); // Active setting
-      expect(lastFrame()).toContain('Apply To'); // Scope section
-      expect(lastFrame()).toContain('User Settings'); // Scope options (no numbers when settings focused)
+      expect(lastFrame()).toContain('● Tool Approval Mode'); // Active setting
+      expect(lastFrame()).not.toContain('Apply To'); // Scope is in a separate view (Tab to access)
       expect(lastFrame()).toContain(
-        '(Use Enter to select, Tab to change focus)',
+        '(Use Enter to select, Tab to configure scope)',
       ); // Help text
 
       // This test validates the complete UI structure is available for user workflow
-      // Individual interactions are tested in focused unit tests
+      // Scope selection is now accessed via Tab key (view switching like ThemeDialog)
 
       unmount();
     });

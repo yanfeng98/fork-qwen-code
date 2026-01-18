@@ -121,8 +121,8 @@ export default {
   Preview: 'Предпросмотр',
   '(Use Enter to select, Tab to configure scope)':
     '(Enter для выбора, Tab для настройки области)',
-  '(Use Enter to apply scope, Tab to select theme)':
-    '(Enter для применения области, Tab для выбора темы)',
+  '(Use Enter to apply scope, Tab to go back)':
+    '(Enter для применения области, Tab для возврата)',
   'Theme configuration unavailable due to NO_COLOR env variable.':
     'Настройка темы недоступна из-за переменной окружения NO_COLOR.',
   'Theme "{{themeName}}" not found.': 'Тема "{{themeName}}" не найдена.',
@@ -281,8 +281,6 @@ export default {
   // ============================================================================
   'View and edit Qwen Code settings': 'Просмотр и изменение настроек Qwen Code',
   Settings: 'Настройки',
-  '(Use Enter to select{{tabText}})': '(Enter для выбора{{tabText}})',
-  ', Tab to change focus': ', Tab для смены фокуса',
   'To see changes, Qwen Code must be restarted. Press r to exit and apply changes now.':
     'Для применения изменений необходимо перезапустить Qwen Code. Нажмите r для выхода и применения изменений.',
   'The command "/{{command}}" is not supported in non-interactive mode.':
@@ -292,6 +290,12 @@ export default {
   // ============================================================================
   'Vim Mode': 'Режим Vim',
   'Disable Auto Update': 'Отключить автообновление',
+  'Add AI Co-Author to Commits': 'Добавлять ИИ как соавтора в коммиты',
+  'Terminal Bell Notification': 'Звуковое уведомление терминала',
+  'Enable Usage Statistics': 'Включить сбор статистики использования',
+  Theme: 'Тема',
+  'Preferred Editor': 'Предпочтительный редактор',
+  'Auto-connect to IDE': 'Автоподключение к IDE',
   'Enable Prompt Completion': 'Включить автодополнение промптов',
   'Debug Keystroke Logging': 'Логирование нажатий клавиш для отладки',
   Language: 'Язык',
@@ -299,10 +303,10 @@ export default {
   'Hide Window Title': 'Скрыть заголовок окна',
   'Show Status in Title': 'Показывать статус в заголовке',
   'Hide Tips': 'Скрыть подсказки',
-  'Show Line Numbers': 'Показывать номера строк',
+  'Show Line Numbers in Code': 'Показывать номера строк в коде',
   'Show Citations': 'Показывать цитаты',
   'Custom Witty Phrases': 'Пользовательские остроумные фразы',
-  'Enable Welcome Back': 'Включить приветствие при возврате',
+  'Show Welcome Back Dialog': 'Показывать диалог приветствия',
   'Disable Loading Phrases': 'Отключить фразы при загрузке',
   'Screen Reader Mode': 'Режим программы чтения с экрана',
   'IDE Mode': 'Режим IDE',
@@ -322,7 +326,7 @@ export default {
   'Respect .qwenignore': 'Учитывать .qwenignore',
   'Enable Recursive File Search': 'Включить рекурсивный поиск файлов',
   'Disable Fuzzy Search': 'Отключить нечеткий поиск',
-  'Enable Interactive Shell': 'Включить интерактивный терминал',
+  'Interactive Shell (PTY)': 'Интерактивный терминал (PTY)',
   'Show Color': 'Показывать цвета',
   'Auto Accept': 'Автоподтверждение',
   'Use Ripgrep': 'Использовать Ripgrep',
@@ -359,6 +363,11 @@ export default {
     'Показать все директории в рабочем пространстве',
   'set external editor preference':
     'Установка предпочитаемого внешнего редактора',
+  'Select Editor': 'Выбрать редактор',
+  'Editor Preference': 'Настройка редактора',
+  'These editors are currently supported. Please note that some editors cannot be used in sandbox mode.':
+    'В настоящее время поддерживаются следующие редакторы. Обратите внимание, что некоторые редакторы нельзя использовать в режиме песочницы.',
+  'Your preferred editor is:': 'Ваш предпочитаемый редактор:',
   'Manage extensions': 'Управление расширениями',
   'List active extensions': 'Показать активные расширения',
   'Update extensions. Usage: update <extension-names>|--all':
@@ -448,7 +457,7 @@ export default {
   // ============================================================================
   // Команды - Режим подтверждения
   // ============================================================================
-  'Approval Mode': 'Режим подтверждения',
+  'Tool Approval Mode': 'Режим подтверждения инструментов',
   'Current approval mode: {{mode}}': 'Текущий режим подтверждения: {{mode}}',
   'Available approval modes:': 'Доступные режимы подтверждения:',
   'Approval mode changed to: {{mode}}':
@@ -490,8 +499,6 @@ export default {
     'Автоматически подтверждать все инструменты',
   'Workspace approval mode exists and takes priority. User-level change will have no effect.':
     'Режим подтверждения рабочего пространства существует и имеет приоритет. Изменение на уровне пользователя не будет иметь эффекта.',
-  '(Use Enter to select, Tab to change focus)':
-    '(Enter для выбора, Tab для смены фокуса)',
   'Apply To': 'Применить к',
   'User Settings': 'Настройки пользователя',
   'Workspace Settings': 'Настройки рабочего пространства',

@@ -117,8 +117,8 @@ export default {
   Preview: '预览',
   '(Use Enter to select, Tab to configure scope)':
     '（使用 Enter 选择，Tab 配置作用域）',
-  '(Use Enter to apply scope, Tab to select theme)':
-    '（使用 Enter 应用作用域，Tab 选择主题）',
+  '(Use Enter to apply scope, Tab to go back)':
+    '（使用 Enter 应用作用域，Tab 返回）',
   'Theme configuration unavailable due to NO_COLOR env variable.':
     '由于 NO_COLOR 环境变量，主题配置不可用。',
   'Theme "{{themeName}}" not found.': '未找到主题 "{{themeName}}"。',
@@ -268,8 +268,6 @@ export default {
   // ============================================================================
   'View and edit Qwen Code settings': '查看和编辑 Qwen Code 设置',
   Settings: '设置',
-  '(Use Enter to select{{tabText}})': '（使用 Enter 选择{{tabText}}）',
-  ', Tab to change focus': '，Tab 切换焦点',
   'To see changes, Qwen Code must be restarted. Press r to exit and apply changes now.':
     '要查看更改，必须重启 Qwen Code。按 r 退出并立即应用更改。',
   'The command "/{{command}}" is not supported in non-interactive mode.':
@@ -279,6 +277,12 @@ export default {
   // ============================================================================
   'Vim Mode': 'Vim 模式',
   'Disable Auto Update': '禁用自动更新',
+  'Add AI Co-Author to Commits': '在提交中添加 AI 协作者',
+  'Terminal Bell Notification': '终端响铃通知',
+  'Enable Usage Statistics': '启用使用统计',
+  Theme: '主题',
+  'Preferred Editor': '首选编辑器',
+  'Auto-connect to IDE': '自动连接到 IDE',
   'Enable Prompt Completion': '启用提示补全',
   'Debug Keystroke Logging': '调试按键记录',
   Language: '语言',
@@ -286,10 +290,10 @@ export default {
   'Hide Window Title': '隐藏窗口标题',
   'Show Status in Title': '在标题中显示状态',
   'Hide Tips': '隐藏提示',
-  'Show Line Numbers': '显示行号',
+  'Show Line Numbers in Code': '在代码中显示行号',
   'Show Citations': '显示引用',
   'Custom Witty Phrases': '自定义诙谐短语',
-  'Enable Welcome Back': '启用欢迎回来',
+  'Show Welcome Back Dialog': '显示欢迎回来对话框',
   'Disable Loading Phrases': '禁用加载短语',
   'Screen Reader Mode': '屏幕阅读器模式',
   'IDE Mode': 'IDE 模式',
@@ -308,7 +312,7 @@ export default {
   'Respect .qwenignore': '遵守 .qwenignore',
   'Enable Recursive File Search': '启用递归文件搜索',
   'Disable Fuzzy Search': '禁用模糊搜索',
-  'Enable Interactive Shell': '启用交互式 Shell',
+  'Interactive Shell (PTY)': '交互式 Shell (PTY)',
   'Show Color': '显示颜色',
   'Auto Accept': '自动接受',
   'Use Ripgrep': '使用 Ripgrep',
@@ -340,6 +344,11 @@ export default {
     '将目录添加到工作区。使用逗号分隔多个路径',
   'Show all directories in the workspace': '显示工作区中的所有目录',
   'set external editor preference': '设置外部编辑器首选项',
+  'Select Editor': '选择编辑器',
+  'Editor Preference': '编辑器首选项',
+  'These editors are currently supported. Please note that some editors cannot be used in sandbox mode.':
+    '当前支持以下编辑器。请注意，某些编辑器无法在沙箱模式下使用。',
+  'Your preferred editor is:': '您的首选编辑器是：',
   'Manage extensions': '管理扩展',
   'List active extensions': '列出活动扩展',
   'Update extensions. Usage: update <extension-names>|--all':
@@ -423,7 +432,7 @@ export default {
   // ============================================================================
   // Commands - Approval Mode
   // ============================================================================
-  'Approval Mode': '审批模式',
+  'Tool Approval Mode': '工具审批模式',
   'Current approval mode: {{mode}}': '当前审批模式：{{mode}}',
   'Available approval modes:': '可用的审批模式：',
   'Approval mode changed to: {{mode}}': '审批模式已更改为：{{mode}}',
@@ -457,8 +466,6 @@ export default {
   'Automatically approve all tools': '自动批准所有工具',
   'Workspace approval mode exists and takes priority. User-level change will have no effect.':
     '工作区审批模式已存在并具有优先级。用户级别的更改将无效。',
-  '(Use Enter to select, Tab to change focus)':
-    '（使用 Enter 选择，Tab 切换焦点）',
   'Apply To': '应用于',
   'User Settings': '用户设置',
   'Workspace Settings': '工作区设置',

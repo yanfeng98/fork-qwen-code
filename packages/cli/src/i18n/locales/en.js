@@ -118,8 +118,8 @@ export default {
   Preview: 'Preview',
   '(Use Enter to select, Tab to configure scope)':
     '(Use Enter to select, Tab to configure scope)',
-  '(Use Enter to apply scope, Tab to select theme)':
-    '(Use Enter to apply scope, Tab to select theme)',
+  '(Use Enter to apply scope, Tab to go back)':
+    '(Use Enter to apply scope, Tab to go back)',
   'Theme configuration unavailable due to NO_COLOR env variable.':
     'Theme configuration unavailable due to NO_COLOR env variable.',
   'Theme "{{themeName}}" not found.': 'Theme "{{themeName}}" not found.',
@@ -277,8 +277,6 @@ export default {
   // ============================================================================
   'View and edit Qwen Code settings': 'View and edit Qwen Code settings',
   Settings: 'Settings',
-  '(Use Enter to select{{tabText}})': '(Use Enter to select{{tabText}})',
-  ', Tab to change focus': ', Tab to change focus',
   'To see changes, Qwen Code must be restarted. Press r to exit and apply changes now.':
     'To see changes, Qwen Code must be restarted. Press r to exit and apply changes now.',
   'The command "/{{command}}" is not supported in non-interactive mode.':
@@ -288,6 +286,12 @@ export default {
   // ============================================================================
   'Vim Mode': 'Vim Mode',
   'Disable Auto Update': 'Disable Auto Update',
+  'Add AI Co-Author to Commits': 'Add AI Co-Author to Commits',
+  'Terminal Bell Notification': 'Terminal Bell Notification',
+  'Enable Usage Statistics': 'Enable Usage Statistics',
+  Theme: 'Theme',
+  'Preferred Editor': 'Preferred Editor',
+  'Auto-connect to IDE': 'Auto-connect to IDE',
   'Enable Prompt Completion': 'Enable Prompt Completion',
   'Debug Keystroke Logging': 'Debug Keystroke Logging',
   Language: 'Language',
@@ -295,10 +299,10 @@ export default {
   'Hide Window Title': 'Hide Window Title',
   'Show Status in Title': 'Show Status in Title',
   'Hide Tips': 'Hide Tips',
-  'Show Line Numbers': 'Show Line Numbers',
+  'Show Line Numbers in Code': 'Show Line Numbers in Code',
   'Show Citations': 'Show Citations',
   'Custom Witty Phrases': 'Custom Witty Phrases',
-  'Enable Welcome Back': 'Enable Welcome Back',
+  'Show Welcome Back Dialog': 'Show Welcome Back Dialog',
   'Disable Loading Phrases': 'Disable Loading Phrases',
   'Screen Reader Mode': 'Screen Reader Mode',
   'IDE Mode': 'IDE Mode',
@@ -318,7 +322,7 @@ export default {
   'Respect .qwenignore': 'Respect .qwenignore',
   'Enable Recursive File Search': 'Enable Recursive File Search',
   'Disable Fuzzy Search': 'Disable Fuzzy Search',
-  'Enable Interactive Shell': 'Enable Interactive Shell',
+  'Interactive Shell (PTY)': 'Interactive Shell (PTY)',
   'Show Color': 'Show Color',
   'Auto Accept': 'Auto Accept',
   'Use Ripgrep': 'Use Ripgrep',
@@ -353,6 +357,11 @@ export default {
   'Show all directories in the workspace':
     'Show all directories in the workspace',
   'set external editor preference': 'set external editor preference',
+  'Select Editor': 'Select Editor',
+  'Editor Preference': 'Editor Preference',
+  'These editors are currently supported. Please note that some editors cannot be used in sandbox mode.':
+    'These editors are currently supported. Please note that some editors cannot be used in sandbox mode.',
+  'Your preferred editor is:': 'Your preferred editor is:',
   'Manage extensions': 'Manage extensions',
   'List active extensions': 'List active extensions',
   'Update extensions. Usage: update <extension-names>|--all':
@@ -440,7 +449,7 @@ export default {
   // ============================================================================
   // Commands - Approval Mode
   // ============================================================================
-  'Approval Mode': 'Approval Mode',
+  'Tool Approval Mode': 'Tool Approval Mode',
   'Current approval mode: {{mode}}': 'Current approval mode: {{mode}}',
   'Available approval modes:': 'Available approval modes:',
   'Approval mode changed to: {{mode}}': 'Approval mode changed to: {{mode}}',
@@ -479,8 +488,6 @@ export default {
   'Automatically approve all tools': 'Automatically approve all tools',
   'Workspace approval mode exists and takes priority. User-level change will have no effect.':
     'Workspace approval mode exists and takes priority. User-level change will have no effect.',
-  '(Use Enter to select, Tab to change focus)':
-    '(Use Enter to select, Tab to change focus)',
   'Apply To': 'Apply To',
   'User Settings': 'User Settings',
   'Workspace Settings': 'Workspace Settings',
