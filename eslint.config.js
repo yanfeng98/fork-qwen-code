@@ -1,6 +1,3 @@
-// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
-import storybook from "eslint-plugin-storybook";
-
 /**
  * @license
  * Copyright 2025 Google LLC
@@ -15,22 +12,26 @@ import prettierConfig from 'eslint-config-prettier';
 import importPlugin from 'eslint-plugin-import';
 import vitest from '@vitest/eslint-plugin';
 import globals from 'globals';
+// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
+import storybook from "eslint-plugin-storybook";
 
-export default tseslint.config({
-  // Global ignores
-  ignores: [
-    'node_modules/*',
-    'packages/**/dist/**',
-    'bundle/**',
-    'package/bundle/**',
-    '.integration-tests/**',
-    'packages/**/.integration-test/**',
-    'dist/**',
-    'docs-site/.next/**',
-    'docs-site/out/**',
-  ],
-}, eslint.configs.recommended, ...tseslint.configs.recommended, reactHooks.configs['recommended-latest'], reactPlugin.configs.flat.recommended, // Add this if you are using React 17+
-reactPlugin.configs.flat['jsx-runtime'], {
+export default tseslint.config(
+  {
+    // Global ignores
+    ignores: [
+      'node_modules/*',
+      'packages/**/dist/**',
+      'bundle/**',
+      'package/bundle/**',
+      '.integration-tests/**',
+      'packages/**/.integration-test/**',
+      'dist/**',
+      'docs-site/.next/**',
+      'docs-site/out/**',
+    ],
+  },
+  eslint.configs.recommended, ...tseslint.configs.recommended, reactHooks.configs['recommended-latest'], reactPlugin.configs.flat.recommended, // Add this if you are using React 17+
+  reactPlugin.configs.flat['jsx-runtime'], {
   // Settings for eslint-plugin-react
   settings: {
     react: {
@@ -54,105 +55,106 @@ reactPlugin.configs.flat['jsx-runtime'], {
     'import/no-default-export': 'warn',
     'import/no-unresolved': 'off', // Disable for now, can be noisy with monorepos/paths
   },
-}, {
-  // General overrides and rules for the project (TS/TSX files)
-  files: ['packages/*/src/**/*.{ts,tsx}'], // Target only TS/TSX in the cli package
-  plugins: {
-    import: importPlugin,
-  },
-  settings: {
-    'import/resolver': {
-      node: true,
+},
+  {
+    // General overrides and rules for the project (TS/TSX files)
+    files: ['packages/*/src/**/*.{ts,tsx}'], // Target only TS/TSX in the cli package
+    plugins: {
+      import: importPlugin,
     },
-  },
-  languageOptions: {
-    globals: {
-      ...globals.node,
-      ...globals.es2021,
+    settings: {
+      'import/resolver': {
+        node: true,
+      },
     },
-  },
-  rules: {
-    // We use TypeScript for React components; prop-types are unnecessary
-    'react/prop-types': 'off',
-    // General Best Practice Rules (subset adapted for flat config)
-    '@typescript-eslint/array-type': ['error', { default: 'array-simple' }],
-    'arrow-body-style': ['error', 'as-needed'],
-    curly: ['error', 'multi-line'],
-    eqeqeq: ['error', 'always', { null: 'ignore' }],
-    '@typescript-eslint/consistent-type-assertions': [
-      'error',
-      { assertionStyle: 'as' },
-    ],
-    '@typescript-eslint/explicit-member-accessibility': [
-      'error',
-      { accessibility: 'no-public' },
-    ],
-    '@typescript-eslint/no-explicit-any': 'error',
-    '@typescript-eslint/no-inferrable-types': [
-      'error',
-      { ignoreParameters: true, ignoreProperties: true },
-    ],
-    '@typescript-eslint/consistent-type-imports': [
-      'error',
-      { disallowTypeAnnotations: false },
-    ],
-    '@typescript-eslint/no-namespace': ['error', { allowDeclarations: true }],
-    '@typescript-eslint/no-unused-vars': [
-      'error',
-      {
-        argsIgnorePattern: '^_',
-        varsIgnorePattern: '^_',
-        caughtErrorsIgnorePattern: '^_',
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.es2021,
       },
-    ],
-    'import/no-internal-modules': [
-      'error',
-      {
-        allow: [
-          'react-dom/test-utils',
-          'react-dom/client',
-          'memfs/lib/volume.js',
-          'yargs/**',
-          'msw/node',
-          '**/generated/**',
-          './styles/tailwind.css',
-          './styles/App.css',
-          './styles/style.css'
-        ],
-      },
-    ],
-    'import/no-relative-packages': 'error',
-    'no-cond-assign': 'error',
-    'no-debugger': 'error',
-    'no-duplicate-case': 'error',
-    'no-restricted-syntax': [
-      'error',
-      {
-        selector: 'CallExpression[callee.name="require"]',
-        message: 'Avoid using require(). Use ES6 imports instead.',
-      },
-      {
-        selector: 'ThrowStatement > Literal:not([value=/^\\w+Error:/])',
-        message:
-          'Do not throw string literals or non-Error objects. Throw new Error("...") instead.',
-      },
-    ],
-    'no-unsafe-finally': 'error',
-    'no-unused-expressions': 'off', // Disable base rule
-    '@typescript-eslint/no-unused-expressions': [
-      // Enable TS version
-      'error',
-      { allowShortCircuit: true, allowTernary: true },
-    ],
-    'no-var': 'error',
-    'object-shorthand': 'error',
-    'one-var': ['error', 'never'],
-    'prefer-arrow-callback': 'error',
-    'prefer-const': ['error', { destructuring: 'all' }],
-    radix: 'error',
-    'default-case': 'error',
-  },
-}, {
+    },
+    rules: {
+      // We use TypeScript for React components; prop-types are unnecessary
+      'react/prop-types': 'off',
+      // General Best Practice Rules (subset adapted for flat config)
+      '@typescript-eslint/array-type': ['error', { default: 'array-simple' }],
+      'arrow-body-style': ['error', 'as-needed'],
+      curly: ['error', 'multi-line'],
+      eqeqeq: ['error', 'always', { null: 'ignore' }],
+      '@typescript-eslint/consistent-type-assertions': [
+        'error',
+        { assertionStyle: 'as' },
+      ],
+      '@typescript-eslint/explicit-member-accessibility': [
+        'error',
+        { accessibility: 'no-public' },
+      ],
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-inferrable-types': [
+        'error',
+        { ignoreParameters: true, ignoreProperties: true },
+      ],
+      '@typescript-eslint/consistent-type-imports': [
+        'error',
+        { disallowTypeAnnotations: false },
+      ],
+      '@typescript-eslint/no-namespace': ['error', { allowDeclarations: true }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
+      'import/no-internal-modules': [
+        'error',
+        {
+          allow: [
+            'react-dom/test-utils',
+            'react-dom/client',
+            'memfs/lib/volume.js',
+            'yargs/**',
+            'msw/node',
+            '**/generated/**',
+            './styles/tailwind.css',
+            './styles/App.css',
+            './styles/style.css'
+          ],
+        },
+      ],
+      'import/no-relative-packages': 'error',
+      'no-cond-assign': 'error',
+      'no-debugger': 'error',
+      'no-duplicate-case': 'error',
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'CallExpression[callee.name="require"]',
+          message: 'Avoid using require(). Use ES6 imports instead.',
+        },
+        {
+          selector: 'ThrowStatement > Literal:not([value=/^\\w+Error:/])',
+          message:
+            'Do not throw string literals or non-Error objects. Throw new Error("...") instead.',
+        },
+      ],
+      'no-unsafe-finally': 'error',
+      'no-unused-expressions': 'off', // Disable base rule
+      '@typescript-eslint/no-unused-expressions': [
+        // Enable TS version
+        'error',
+        { allowShortCircuit: true, allowTernary: true },
+      ],
+      'no-var': 'error',
+      'object-shorthand': 'error',
+      'one-var': ['error', 'never'],
+      'prefer-arrow-callback': 'error',
+      'prefer-const': ['error', { destructuring: 'all' }],
+      radix: 'error',
+      'default-case': 'error',
+    },
+  }, {
   files: ['packages/*/src/**/*.test.{ts,tsx}', 'packages/**/test/**/*.test.{ts,tsx}'],
   plugins: {
     vitest,
@@ -171,26 +173,26 @@ reactPlugin.configs.flat['jsx-runtime'], {
     ],
   },
 }, // extra settings for scripts that we run directly with node
-{
-  files: ['./scripts/**/*.js', 'esbuild.config.js', 'packages/*/scripts/**/*.js'],
-  languageOptions: {
-    globals: {
-      ...globals.node,
-      process: 'readonly',
-      console: 'readonly',
-    },
-  },
-  rules: {
-    '@typescript-eslint/no-unused-vars': [
-      'error',
-      {
-        argsIgnorePattern: '^_',
-        varsIgnorePattern: '^_',
-        caughtErrorsIgnorePattern: '^_',
+  {
+    files: ['./scripts/**/*.js', 'esbuild.config.js', 'packages/*/scripts/**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        process: 'readonly',
+        console: 'readonly',
       },
-    ],
-  },
-}, {
+    },
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
+    },
+  }, {
   files: ['packages/vscode-ide-companion/esbuild.js'],
   languageOptions: {
     globals: {
@@ -204,72 +206,74 @@ reactPlugin.configs.flat['jsx-runtime'], {
     '@typescript-eslint/no-require-imports': 'off',
   },
 }, // extra settings for scripts that we run directly with node
-{
-  files: ['packages/vscode-ide-companion/scripts/**/*.js'],
-  languageOptions: {
-    globals: {
-      ...globals.node,
-      process: 'readonly',
-      console: 'readonly',
-    },
-  },
-  rules: {
-    'no-restricted-syntax': 'off',
-    '@typescript-eslint/no-require-imports': 'off',
-  },
-}, // extra settings for core package scripts
-{
-  files: ['packages/core/scripts/**/*.js'],
-  languageOptions: {
-    globals: {
-      ...globals.node,
-      process: 'readonly',
-      console: 'readonly',
-    },
-  },
-  rules: {
-    'no-restricted-syntax': 'off',
-    '@typescript-eslint/no-require-imports': 'off',
-  },
-}, // Prettier config must be last
-prettierConfig, // extra settings for scripts that we run directly with node
-{
-  files: ['./integration-tests/**/*.{js,ts,tsx}'],
-  languageOptions: {
-    globals: {
-      ...globals.node,
-      process: 'readonly',
-      console: 'readonly',
-    },
-  },
-  rules: {
-    '@typescript-eslint/no-unused-vars': [
-      'error',
-      {
-        argsIgnorePattern: '^_',
-        varsIgnorePattern: '^_',
-        caughtErrorsIgnorePattern: '^_',
-      },
-    ],
-  },
-}, // Settings for docs-site directory
-{
-  files: ['docs-site/**/*.{js,jsx}'],
-  languageOptions: {
-    globals: {
-      ...globals.browser,
-      ...globals.node,
-    },
-    parserOptions: {
-      ecmaFeatures: {
-        jsx: true,
+  {
+    files: ['packages/vscode-ide-companion/scripts/**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        process: 'readonly',
+        console: 'readonly',
       },
     },
+    rules: {
+      'no-restricted-syntax': 'off',
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  }, // extra settings for core package scripts
+  {
+    files: ['packages/core/scripts/**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        process: 'readonly',
+        console: 'readonly',
+      },
+    },
+    rules: {
+      'no-restricted-syntax': 'off',
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  }, // Prettier config must be last
+  prettierConfig, // extra settings for scripts that we run directly with node
+  {
+    files: ['./integration-tests/**/*.{js,ts,tsx}'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        process: 'readonly',
+        console: 'readonly',
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
+    },
+  }, // Settings for docs-site directory
+  {
+    files: ['docs-site/**/*.{js,jsx}'],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
+    },
+    rules: {
+      // Allow relaxed rules for documentation site
+      '@typescript-eslint/no-unused-vars': 'off',
+      'react/prop-types': 'off',
+      'react/react-in-jsx-scope': 'off',
+    },
   },
-  rules: {
-    // Allow relaxed rules for documentation site
-    '@typescript-eslint/no-unused-vars': 'off',
-    'react/prop-types': 'off',
-    'react/react-in-jsx-scope': 'off',
-  },
-}, storybook.configs["flat/recommended"]);
+  storybook.configs["flat/recommended"]
+);
