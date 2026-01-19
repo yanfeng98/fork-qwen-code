@@ -383,6 +383,28 @@ export default {
     'Erweiterung "{{name}}" für Bereich "{{scope}}" deaktiviert',
   'Extension "{{name}}" enabled for scope "{{scope}}"':
     'Erweiterung "{{name}}" für Bereich "{{scope}}" aktiviert',
+  'Do you want to continue? [Y/n]: ': 'Möchten Sie fortfahren? [Y/n]: ',
+  'Do you want to continue?': 'Möchten Sie fortfahren?',
+  'Installing extension "{{name}}".':
+    'Erweiterung "{{name}}" wird installiert.',
+  '**Extensions may introduce unexpected behavior. Ensure you have investigated the extension source and trust the author.**':
+    '**Erweiterungen können unerwartetes Verhalten verursachen. Stellen Sie sicher, dass Sie die Erweiterungsquelle untersucht haben und dem Autor vertrauen.**',
+  'This extension will run the following MCP servers:':
+    'Diese Erweiterung wird folgende MCP-Server ausführen:',
+  local: 'lokal',
+  remote: 'remote',
+  'This extension will add the following commands: {{commands}}.':
+    'Diese Erweiterung wird folgende Befehle hinzufügen: {{commands}}.',
+  'This extension will append info to your QWEN.md context using {{fileName}}':
+    'Diese Erweiterung wird Informationen zu Ihrem QWEN.md-Kontext mit {{fileName}} hinzufügen',
+  'This extension will exclude the following core tools: {{tools}}':
+    'Diese Erweiterung wird folgende Kernwerkzeuge ausschließen: {{tools}}',
+  'This extension will install the following skills:':
+    'Diese Erweiterung wird folgende Fähigkeiten installieren:',
+  'This extension will install the following subagents:':
+    'Diese Erweiterung wird folgende Unteragenten installieren:',
+  'Installation cancelled for "{{name}}".':
+    'Installation von "{{name}}" abgebrochen.',
   'manage IDE integration': 'IDE-Integration verwalten',
   'check status of IDE integration': 'Status der IDE-Integration prüfen',
   'install required IDE companion for {{ideName}}':

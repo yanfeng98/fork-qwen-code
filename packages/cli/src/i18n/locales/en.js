@@ -378,6 +378,27 @@ export default {
     'Extension "{{name}}" disabled for scope "{{scope}}"',
   'Extension "{{name}}" enabled for scope "{{scope}}"':
     'Extension "{{name}}" enabled for scope "{{scope}}"',
+  'Do you want to continue? [Y/n]: ': 'Do you want to continue? [Y/n]: ',
+  'Do you want to continue?': 'Do you want to continue?',
+  'Installing extension "{{name}}".': 'Installing extension "{{name}}".',
+  '**Extensions may introduce unexpected behavior. Ensure you have investigated the extension source and trust the author.**':
+    '**Extensions may introduce unexpected behavior. Ensure you have investigated the extension source and trust the author.**',
+  'This extension will run the following MCP servers:':
+    'This extension will run the following MCP servers:',
+  local: 'local',
+  remote: 'remote',
+  'This extension will add the following commands: {{commands}}.':
+    'This extension will add the following commands: {{commands}}.',
+  'This extension will append info to your QWEN.md context using {{fileName}}':
+    'This extension will append info to your QWEN.md context using {{fileName}}',
+  'This extension will exclude the following core tools: {{tools}}':
+    'This extension will exclude the following core tools: {{tools}}',
+  'This extension will install the following skills:':
+    'This extension will install the following skills:',
+  'This extension will install the following subagents:':
+    'This extension will install the following subagents:',
+  'Installation cancelled for "{{name}}".':
+    'Installation cancelled for "{{name}}".',
   'manage IDE integration': 'manage IDE integration',
   'check status of IDE integration': 'check status of IDE integration',
   'install required IDE companion for {{ideName}}':

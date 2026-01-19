@@ -383,6 +383,26 @@ export default {
     'Расширение "{{name}}" отключено для области "{{scope}}"',
   'Extension "{{name}}" enabled for scope "{{scope}}"':
     'Расширение "{{name}}" включено для области "{{scope}}"',
+  'Do you want to continue? [Y/n]: ': 'Хотите продолжить? [Y/n]: ',
+  'Do you want to continue?': 'Хотите продолжить?',
+  'Installing extension "{{name}}".': 'Установка расширения "{{name}}".',
+  '**Extensions may introduce unexpected behavior. Ensure you have investigated the extension source and trust the author.**':
+    '**Расширения могут вызывать неожиданное поведение. Убедитесь, что вы изучили источник расширения и доверяете автору.**',
+  'This extension will run the following MCP servers:':
+    'Это расширение запустит следующие MCP-серверы:',
+  local: 'локальный',
+  remote: 'удалённый',
+  'This extension will add the following commands: {{commands}}.':
+    'Это расширение добавит следующие команды: {{commands}}.',
+  'This extension will append info to your QWEN.md context using {{fileName}}':
+    'Это расширение добавит информацию в ваш контекст QWEN.md с помощью {{fileName}}',
+  'This extension will exclude the following core tools: {{tools}}':
+    'Это расширение исключит следующие основные инструменты: {{tools}}',
+  'This extension will install the following skills:':
+    'Это расширение установит следующие навыки:',
+  'This extension will install the following subagents:':
+    'Это расширение установит следующие подагенты:',
+  'Installation cancelled for "{{name}}".': 'Установка "{{name}}" отменена.',
   'manage IDE integration': 'Управление интеграцией с IDE',
   'check status of IDE integration': 'Проверить статус интеграции с IDE',
   'install required IDE companion for {{ideName}}':

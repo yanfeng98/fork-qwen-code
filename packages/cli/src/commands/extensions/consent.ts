@@ -6,6 +6,7 @@ import type {
 } from '@qwen-code/qwen-code-core';
 import type { ConfirmationRequest } from '../../ui/types.js';
 import chalk from 'chalk';
+import { t } from '../../i18n/index.js';
 
 /**
  * Requests consent from the user to perform an action, by reading a Y/n
@@ -21,7 +22,7 @@ export async function requestConsentNonInteractive(
 ): Promise<boolean> {
   console.info(consentDescription);
   const result = await promptForConsentNonInteractive(
-    'Do you want to continue? [Y/n]: ',
+    t('Do you want to continue? [Y/n]: '),
   );
   return result;
 }
@@ -40,7 +41,7 @@ export async function requestConsentInteractive(
   addExtensionUpdateConfirmationRequest: (value: ConfirmationRequest) => void,
 ): Promise<boolean> {
   return promptForConsentInteractive(
-    consentDescription + '\n\nDo you want to continue?',
+    consentDescription + '\n\n' + t('Do you want to continue?'),
     addExtensionUpdateConfirmationRequest,
   );
 }
@@ -105,44 +106,60 @@ export function extensionConsentString(
 ): string {
   const output: string[] = [];
   const mcpServerEntries = Object.entries(extensionConfig.mcpServers || {});
-  output.push(`Installing extension "${extensionConfig.name}".`);
   output.push(
-    '**Extensions may introduce unexpected behavior. Ensure you have investigated the extension source and trust the author.**',
+    t('Installing extension "{{name}}".', { name: extensionConfig.name }),
+  );
+  output.push(
+    t(
+      '**Extensions may introduce unexpected behavior. Ensure you have investigated the extension source and trust the author.**',
+    ),
   );
 
   if (mcpServerEntries.length) {
-    output.push('This extension will run the following MCP servers:');
+    output.push(t('This extension will run the following MCP servers:'));
     for (const [key, mcpServer] of mcpServerEntries) {
       const isLocal = !!mcpServer.command;
       const source =
         mcpServer.httpUrl ??
         `${mcpServer.command || ''}${mcpServer.args ? ' ' + mcpServer.args.join(' ') : ''}`;
-      output.push(`  * ${key} (${isLocal ? 'local' : 'remote'}): ${source}`);
+      output.push(
+        `  * ${key} (${isLocal ? t('local') : t('remote')}): ${source}`,
+      );
     }
   }
   if (commands && commands.length > 0) {
     output.push(
-      `This extension will add the following commands: ${commands.join(', ')}.`,
+      t('This extension will add the following commands: {{commands}}.', {
+        commands: commands.join(', '),
+      }),
     );
   }
   if (extensionConfig.contextFileName) {
+    const fileName = Array.isArray(extensionConfig.contextFileName)
+      ? extensionConfig.contextFileName.join(', ')
+      : extensionConfig.contextFileName;
     output.push(
-      `This extension will append info to your QWEN.md context using ${extensionConfig.contextFileName}`,
+      t(
+        'This extension will append info to your QWEN.md context using {{fileName}}',
+        { fileName },
+      ),
     );
   }
   if (extensionConfig.excludeTools) {
     output.push(
-      `This extension will exclude the following core tools: ${extensionConfig.excludeTools}`,
+      t('This extension will exclude the following core tools: {{tools}}', {
+        tools: extensionConfig.excludeTools.join(', '),
+      }),
     );
   }
   if (skills.length > 0) {
-    output.push('This extension will install the following skills:');
+    output.push(t('This extension will install the following skills:'));
     for (const skill of skills) {
       output.push(`  * ${chalk.bold(skill.name)}: ${skill.description}`);
     }
   }
   if (subagents.length > 0) {
-    output.push('This extension will install the following subagents:');
+    output.push(t('This extension will install the following subagents:'));
     for (const subagent of subagents) {
       output.push(`  * ${chalk.bold(subagent.name)}: ${subagent.description}`);
     }
@@ -192,6 +209,10 @@ export const requestConsentOrFail = async (
     }
   }
   if (!(await requestConsent(extensionConsent))) {
-    throw new Error(`Installation cancelled for "${extensionConfig.name}".`);
+    throw new Error(
+      t('Installation cancelled for "{{name}}".', {
+        name: extensionConfig.name,
+      }),
+    );
   }
 };

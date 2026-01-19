@@ -363,6 +363,25 @@ export default {
     '扩展 "{{name}}" 已在作用域 "{{scope}}" 中禁用',
   'Extension "{{name}}" enabled for scope "{{scope}}"':
     '扩展 "{{name}}" 已在作用域 "{{scope}}" 中启用',
+  'Do you want to continue? [Y/n]: ': '是否继续？[Y/n]：',
+  'Do you want to continue?': '是否继续？',
+  'Installing extension "{{name}}".': '正在安装扩展 "{{name}}"。',
+  '**Extensions may introduce unexpected behavior. Ensure you have investigated the extension source and trust the author.**':
+    '**扩展可能会引入意外行为。请确保您已调查过扩展源并信任作者。**',
+  'This extension will run the following MCP servers:':
+    '此扩展将运行以下 MCP 服务器：',
+  local: '本地',
+  remote: '远程',
+  'This extension will add the following commands: {{commands}}.':
+    '此扩展将添加以下命令：{{commands}}。',
+  'This extension will append info to your QWEN.md context using {{fileName}}':
+    '此扩展将使用 {{fileName}} 向您的 QWEN.md 上下文追加信息',
+  'This extension will exclude the following core tools: {{tools}}':
+    '此扩展将排除以下核心工具：{{tools}}',
+  'This extension will install the following skills:': '此扩展将安装以下技能：',
+  'This extension will install the following subagents:':
+    '此扩展将安装以下子代理：',
+  'Installation cancelled for "{{name}}".': '已取消安装 "{{name}}"。',
   'manage IDE integration': '管理 IDE 集成',
   'check status of IDE integration': '检查 IDE 集成状态',
   'install required IDE companion for {{ideName}}':
