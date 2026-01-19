@@ -265,12 +265,6 @@ async function convertGeminiOrClaudeExtension(
 // ExtensionManager Class
 // ============================================================================
 
-/**
- * ExtensionManager manages extensions at different levels (user/project)
- * and directly implements enablement functionality.
- *
- * Reference: SkillManager pattern for level-based management
- */
 export class ExtensionManager {
   private extensionCache: Map<string, Extension> | null = null;
 
@@ -492,10 +486,6 @@ export class ExtensionManager {
     fs.mkdirSync(this.configDir, { recursive: true });
     fs.writeFileSync(this.configFilePath, JSON.stringify(config, null, 2));
   }
-
-  // ==========================================================================
-  // Cache management (reference: SkillManager)
-  // ==========================================================================
 
   /**
    * Refreshes the extension cache from disk.
@@ -1234,7 +1224,7 @@ export class ExtensionManager {
     // FIXME: restart all mcp servers, can be optimized by only restarting changed ones and move to 'refreshTools'
     this.config.getToolRegistry().restartMcpServers();
     // refresh skills
-    this.config.getSkillManager().refreshCache();
+    this.config.getSkillManager()?.refreshCache();
     // refresh subagents
     this.config.getSubagentManager().refreshCache();
     // refresh context files
