@@ -36,6 +36,8 @@ import {
 import * as path from 'node:path';
 import { SCREEN_READER_USER_PREFIX } from '../textConstants.js';
 import { useShellFocusState } from '../contexts/ShellFocusContext.js';
+import { useUIState } from '../contexts/UIStateContext.js';
+import { FEEDBACK_DIALOG_KEYS } from '../FeedbackDialog.js';
 export interface InputPromptProps {
   buffer: TextBuffer;
   onSubmit: (value: string) => void;
@@ -100,6 +102,7 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
   isEmbeddedShellFocused,
 }) => {
   const isShellFocused = useShellFocusState();
+  const uiState = useUIState();
   const [justNavigatedHistory, setJustNavigatedHistory] = useState(false);
   const [escPressCount, setEscPressCount] = useState(0);
   const [showEscapePrompt, setShowEscapePrompt] = useState(false);
@@ -325,6 +328,14 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
       }
 
       if (vimHandleInput && vimHandleInput(key)) {
+        return;
+      }
+
+      // Intercept feedback dialog option keys (1, 2) when dialog is open
+      if (
+        uiState.isFeedbackDialogOpen &&
+        (FEEDBACK_DIALOG_KEYS as readonly string[]).includes(key.name)
+      ) {
         return;
       }
 
@@ -672,6 +683,7 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
       recentPasteTime,
       commandSearchActive,
       commandSearchCompletion,
+      uiState,
     ],
   );
 

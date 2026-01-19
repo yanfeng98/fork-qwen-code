@@ -33,6 +33,9 @@ vi.mock('../hooks/useCommandCompletion.js');
 vi.mock('../hooks/useInputHistory.js');
 vi.mock('../hooks/useReverseSearchCompletion.js');
 vi.mock('../utils/clipboardUtils.js');
+vi.mock('../contexts/UIStateContext.js', () => ({
+  useUIState: vi.fn(() => ({ isFeedbackDialogOpen: false })),
+}));
 
 const mockSlashCommands: SlashCommand[] = [
   {

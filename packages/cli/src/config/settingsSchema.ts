@@ -434,6 +434,16 @@ const SETTINGS_SCHEMA = {
           'Show welcome back dialog when returning to a project with conversation history.',
         showInDialog: true,
       },
+      enableUserFeedback: {
+        type: 'boolean',
+        label: 'Enable User Feedback',
+        category: 'UI',
+        requiresRestart: false,
+        default: true,
+        description:
+          'Show optional feedback dialog after conversations to help improve Qwen performance.',
+        showInDialog: true,
+      },
       accessibility: {
         type: 'object',
         label: 'Accessibility',
@@ -463,6 +473,15 @@ const SETTINGS_SCHEMA = {
             showInDialog: true,
           },
         },
+      },
+      feedbackLastShownTimestamp: {
+        type: 'number',
+        label: 'Feedback Last Shown Timestamp',
+        category: 'UI',
+        requiresRestart: false,
+        default: 0,
+        description: 'The last time the feedback dialog was shown.',
+        showInDialog: false,
       },
     },
   },
