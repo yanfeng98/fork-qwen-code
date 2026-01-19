@@ -913,7 +913,7 @@ export function logUserFeedback(
 
   const logger = logs.getLogger(SERVICE_NAME);
   const logRecord: LogRecord = {
-    body: `User feedback: Rating ${event.rating} for session ${event.session_id}. Turn count: ${event.turn_count}. Duration: ${event.session_duration_ms}ms.`,
+    body: `User feedback: Rating ${event.rating} for session ${event.session_id}.`,
     attributes,
   };
   logger.emit(logRecord);

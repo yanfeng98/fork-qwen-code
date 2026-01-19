@@ -1,17 +1,20 @@
 import { useState, useCallback, useEffect } from 'react';
-import * as fs from 'node:fs/promises';
-import * as path from 'node:path';
+import * as fs from 'node:fs';
 import {
   type Config,
   logUserFeedback,
   UserFeedbackEvent,
   type UserFeedbackRating,
-  Storage,
   isNodeError,
 } from '@qwen-code/qwen-code-core';
 import { StreamingState, MessageType, type HistoryItem } from '../types.js';
-import type { LoadedSettings } from '../../config/settings.js';
+import {
+  SettingScope,
+  type LoadedSettings,
+  USER_SETTINGS_PATH,
+} from '../../config/settings.js';
 import type { SessionStatsState } from '../contexts/SessionContext.js';
+import stripJsonComments from 'strip-json-comments';
 
 const FEEDBACK_SHOW_PROBABILITY = 0.25; // 25% probability of showing feedback dialog
 const MIN_TOOL_CALLS = 10; // Minimum tool calls to show feedback dialog
@@ -19,101 +22,60 @@ const MIN_USER_MESSAGES = 5; // Minimum user messages to show feedback dialog
 
 // Fatigue mechanism constants
 const FEEDBACK_COOLDOWN_HOURS = 24; // Hours to wait before showing feedback dialog again
-const FEEDBACK_HISTORY_FILENAME = 'feedback-history.json';
 
 /**
- * Check if there's an AI response after the last user message in the conversation history
+ * Check if the last message in the conversation history is an AI response
  */
-const hasAIResponseAfterLastUserMessage = (history: HistoryItem[]): boolean => {
-  // Find the last user message
-  let lastUserMessageIndex = -1;
-  for (let i = history.length - 1; i >= 0; i--) {
-    if (history[i].type === MessageType.USER) {
-      lastUserMessageIndex = i;
-      break;
-    }
-  }
-
-  // Check if there's any AI response (GEMINI message) after the last user message
-  if (lastUserMessageIndex !== -1) {
-    for (let i = lastUserMessageIndex + 1; i < history.length; i++) {
-      if (history[i].type === MessageType.GEMINI) {
-        return true;
-      }
-    }
-  }
-
-  return false;
-};
+const lastMessageIsAIResponse = (history: HistoryItem[]): boolean =>
+  history.length > 0 && history[history.length - 1].type === MessageType.GEMINI;
 
 /**
- * Count the number of user messages in the conversation history
+ * Read lastShownTimestamp directly from the user settings file
  */
-const countUserMessages = (history: HistoryItem[]): number =>
-  history.filter((item) => item.type === MessageType.USER).length;
-
-/**
- * Interface for feedback history storage
- */
-interface FeedbackHistory {
-  lastShownTimestamp: number;
-}
-
-/**
- * Get the feedback history file path using global Storage
- */
-function getFeedbackHistoryPath(): string {
-  const globalQwenDir = Storage.getGlobalQwenDir();
-  return path.join(globalQwenDir, FEEDBACK_HISTORY_FILENAME);
-}
-
-/**
- * Get the last feedback dialog show time from file storage
- */
-const getFeedbackHistory = async (): Promise<FeedbackHistory | null> => {
+const getLastShownTimestampFromFile = (): number => {
   try {
-    const filePath = getFeedbackHistoryPath();
-    const content = await fs.readFile(filePath, 'utf-8');
-    return JSON.parse(content) as FeedbackHistory;
-  } catch (error) {
-    if (isNodeError(error) && error.code === 'ENOENT') {
-      // File doesn't exist yet, which is normal for first time
-      return null;
+    if (fs.existsSync(USER_SETTINGS_PATH)) {
+      const content = fs.readFileSync(USER_SETTINGS_PATH, 'utf-8');
+      const settings = JSON.parse(stripJsonComments(content));
+      return settings?.ui?.lastShownTimestamp ?? 0;
     }
-    console.warn('Failed to read feedback history from file:', error);
-    return null;
-  }
-};
-
-/**
- * Save feedback history to file storage
- */
-const saveFeedbackHistory = async (history: FeedbackHistory): Promise<void> => {
-  try {
-    const filePath = getFeedbackHistoryPath();
-
-    // Ensure the directory exists
-    await fs.mkdir(path.dirname(filePath), { recursive: true });
-
-    // Write the history file
-    await fs.writeFile(filePath, JSON.stringify(history, null, 2), 'utf-8');
   } catch (error) {
-    console.warn('Failed to save feedback history to file:', error);
+    if (isNodeError(error) && error.code !== 'ENOENT') {
+      console.warn(
+        'Failed to read lastShownTimestamp from settings file:',
+        error,
+      );
+    }
   }
+  return 0;
 };
 
 /**
  * Check if we should show the feedback dialog based on fatigue mechanism
  */
-const shouldShowFeedbackBasedOnFatigue = async (): Promise<boolean> => {
-  const history = await getFeedbackHistory();
-  if (!history) return true; // No history, allow showing
+const shouldShowFeedbackBasedOnFatigue = (): boolean => {
+  const lastShownTimestamp = getLastShownTimestampFromFile();
 
   const now = Date.now();
-  const timeSinceLastShown = now - history.lastShownTimestamp;
+  const timeSinceLastShown = now - lastShownTimestamp;
   const cooldownMs = FEEDBACK_COOLDOWN_HOURS * 60 * 60 * 1000;
 
   return timeSinceLastShown >= cooldownMs;
+};
+
+/**
+ * Check if the session meets the minimum requirements for showing feedback
+ * Either tool calls > 10 OR user messages > 5
+ */
+const meetsMinimumSessionRequirements = (
+  sessionStats: SessionStatsState,
+): boolean => {
+  const toolCallsCount = sessionStats.metrics.tools.totalCalls;
+  const userMessagesCount = sessionStats.promptCount;
+
+  return (
+    toolCallsCount > MIN_TOOL_CALLS || userMessagesCount > MIN_USER_MESSAGES
+  );
 };
 
 export interface UseFeedbackDialogProps {
@@ -122,7 +84,6 @@ export interface UseFeedbackDialogProps {
   streamingState: StreamingState;
   history: HistoryItem[];
   sessionStats: SessionStatsState;
-  dialogsVisible: boolean;
 }
 
 export const useFeedbackDialog = ({
@@ -131,7 +92,6 @@ export const useFeedbackDialog = ({
   streamingState,
   history,
   sessionStats,
-  dialogsVisible,
 }: UseFeedbackDialogProps) => {
   // Feedback dialog state
   const [isFeedbackDialogOpen, setIsFeedbackDialogOpen] = useState(false);
@@ -140,10 +100,8 @@ export const useFeedbackDialog = ({
     setIsFeedbackDialogOpen(true);
 
     // Record the timestamp when feedback dialog is shown (fire and forget)
-    saveFeedbackHistory({
-      lastShownTimestamp: Date.now(),
-    });
-  }, []);
+    settings.setValue(SettingScope.User, 'ui.lastShownTimestamp', Date.now());
+  }, [settings]);
 
   const closeFeedbackDialog = useCallback(
     () => setIsFeedbackDialogOpen(false),
@@ -152,25 +110,10 @@ export const useFeedbackDialog = ({
 
   const submitFeedback = useCallback(
     (rating: number) => {
-      // Calculate session duration and turn count
-      const sessionDurationMs =
-        Date.now() - sessionStats.sessionStartTime.getTime();
-      let lastUserMessageIndex = -1;
-      for (let i = history.length - 1; i >= 0; i--) {
-        if (history[i].type === MessageType.USER) {
-          lastUserMessageIndex = i;
-          break;
-        }
-      }
-      const turnCount =
-        lastUserMessageIndex === -1 ? 0 : history.length - lastUserMessageIndex;
-
       // Create and log the feedback event
       const feedbackEvent = new UserFeedbackEvent(
         sessionStats.sessionId,
         rating as UserFeedbackRating,
-        sessionDurationMs,
-        turnCount,
         config.getModel(),
         config.getApprovalMode(),
       );
@@ -178,58 +121,37 @@ export const useFeedbackDialog = ({
       logUserFeedback(config, feedbackEvent);
       closeFeedbackDialog();
     },
-    [config, sessionStats, history, closeFeedbackDialog],
+    [config, sessionStats, closeFeedbackDialog],
   );
 
   useEffect(() => {
-    const checkAndShowFeedback = async () => {
+    const checkAndShowFeedback = () => {
       if (streamingState === StreamingState.Idle && history.length > 0) {
-        const hasAIResponseAfterLastUser =
-          hasAIResponseAfterLastUserMessage(history);
-
-        // Get tool calls count and user messages count
-        const toolCallsCount = sessionStats.metrics.tools.totalCalls;
-        const userMessagesCount = countUserMessages(history);
-
-        // Check if the session meets the minimum requirements:
-        // Either tool calls > 10 OR user messages > 5
-        const meetsMinimumRequirements =
-          toolCallsCount > MIN_TOOL_CALLS ||
-          userMessagesCount > MIN_USER_MESSAGES;
-
-        // Check fatigue mechanism (async)
-        let passedFatigueCheck = false;
-        try {
-          passedFatigueCheck = await shouldShowFeedbackBasedOnFatigue();
-        } catch (error) {
-          console.warn('Failed to check feedback fatigue:', error);
-        }
-
         // Show feedback dialog if:
         // 1. Qwen logger is enabled (required for feedback submission)
         // 2. User feedback is enabled in settings
-        // 3. There's an AI response after the last user message (real AI conversation)
-        // 4. No other dialogs are currently visible
-        // 5. Random chance (25% probability)
-        // 6. Meets minimum requirements (tool calls > 10 OR user messages > 5)
-        // 7. Fatigue mechanism allows showing (not shown recently across sessions)
+        // 3. The last message is an AI response
+        // 4. Random chance (25% probability)
+        // 5. Meets minimum requirements (tool calls > 10 OR user messages > 5)
+        // 6. Fatigue mechanism allows showing (not shown recently across sessions)
         if (
-          config.getUsageStatisticsEnabled() &&
-          settings.merged.ui?.enableUserFeedback !== false &&
-          hasAIResponseAfterLastUser &&
-          !dialogsVisible &&
-          Math.random() < FEEDBACK_SHOW_PROBABILITY &&
-          meetsMinimumRequirements &&
-          passedFatigueCheck
+          !config.getUsageStatisticsEnabled() ||
+          settings.merged.ui?.enableUserFeedback === false ||
+          !lastMessageIsAIResponse(history) ||
+          Math.random() > FEEDBACK_SHOW_PROBABILITY ||
+          !meetsMinimumSessionRequirements(sessionStats)
         ) {
+          return;
+        }
+
+        // Check fatigue mechanism (synchronous)
+        if (shouldShowFeedbackBasedOnFatigue()) {
           openFeedbackDialog();
         }
       }
     };
 
-    checkAndShowFeedback().catch((error) => {
-      console.warn('Error in feedback check:', error);
-    });
+    checkAndShowFeedback();
   }, [
     streamingState,
     history,
@@ -238,7 +160,6 @@ export const useFeedbackDialog = ({
     openFeedbackDialog,
     settings.merged.ui?.enableUserFeedback,
     config,
-    dialogsVisible,
   ]);
 
   return {

@@ -282,6 +282,7 @@ export default {
   Bad: '不满意',
   Good: '满意',
   'Not Sure Yet': '暂不评价',
+  'Any other key': '任意其他键',
   'Disable Loading Phrases': '禁用加载短语',
   'Screen Reader Mode': '屏幕阅读器模式',
   'IDE Mode': 'IDE 模式',

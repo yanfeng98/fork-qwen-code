@@ -1208,7 +1208,6 @@ export const AppContainer = (props: AppContainerProps) => {
     streamingState,
     history: historyManager.history,
     sessionStats,
-    dialogsVisible,
   });
 
   const pendingHistoryItems = useMemo(

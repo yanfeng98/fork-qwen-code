@@ -848,8 +848,6 @@ export class QwenLogger {
       properties: {
         session_id: event.session_id,
         rating: event.rating,
-        session_duration_ms: event.session_duration_ms,
-        turn_count: event.turn_count,
         model: event.model,
         approval_mode: event.approval_mode,
         prompt_id: event.prompt_id || '',

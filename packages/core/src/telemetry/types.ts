@@ -768,8 +768,6 @@ export class UserFeedbackEvent implements BaseTelemetryEvent {
   'event.timestamp': string;
   session_id: string;
   rating: UserFeedbackRating;
-  session_duration_ms: number;
-  turn_count: number;
   model: string;
   approval_mode: string;
   prompt_id?: string;
@@ -777,8 +775,6 @@ export class UserFeedbackEvent implements BaseTelemetryEvent {
   constructor(
     session_id: string,
     rating: UserFeedbackRating,
-    session_duration_ms: number,
-    turn_count: number,
     model: string,
     approval_mode: string,
     prompt_id?: string,
@@ -787,8 +783,6 @@ export class UserFeedbackEvent implements BaseTelemetryEvent {
     this['event.timestamp'] = new Date().toISOString();
     this.session_id = session_id;
     this.rating = rating;
-    this.session_duration_ms = session_duration_ms;
-    this.turn_count = turn_count;
     this.model = model;
     this.approval_mode = approval_mode;
     this.prompt_id = prompt_id;

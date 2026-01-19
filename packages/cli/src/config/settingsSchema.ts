@@ -474,6 +474,15 @@ const SETTINGS_SCHEMA = {
           },
         },
       },
+      lastShownTimestamp: {
+        type: 'number',
+        label: 'Feedback Last Shown Timestamp',
+        category: 'UI',
+        requiresRestart: false,
+        default: 0,
+        description: 'The last time the feedback dialog was shown.',
+        showInDialog: false,
+      },
     },
   },
 

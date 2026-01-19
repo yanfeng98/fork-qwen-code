@@ -295,6 +295,7 @@ export default {
   Bad: 'Schlecht',
   Good: 'Gut',
   'Not Sure Yet': 'Noch nicht sicher',
+  'Any other key': 'Beliebige andere Taste',
   'Disable Loading Phrases': 'Ladesprüche deaktivieren',
   'Screen Reader Mode': 'Bildschirmleser-Modus',
   'IDE Mode': 'IDE-Modus',

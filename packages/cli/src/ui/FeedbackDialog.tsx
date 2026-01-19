@@ -14,10 +14,10 @@ const FEEDBACK_OPTIONS = {
 const FEEDBACK_OPTION_KEYS = {
   [FEEDBACK_OPTIONS.GOOD]: '1',
   [FEEDBACK_OPTIONS.BAD]: '2',
-  [FEEDBACK_OPTIONS.NOT_SURE]: '3',
+  [FEEDBACK_OPTIONS.NOT_SURE]: 'any',
 } as const;
 
-export const FEEDBACK_DIALOG_KEYS = ['1', '2', '3'] as const;
+export const FEEDBACK_DIALOG_KEYS = ['1', '2'] as const;
 
 export const FeedbackDialog: React.FC = () => {
   const uiState = useUIState();
@@ -29,7 +29,7 @@ export const FeedbackDialog: React.FC = () => {
         uiActions.submitFeedback(FEEDBACK_OPTIONS.GOOD);
       } else if (key.name === FEEDBACK_OPTION_KEYS[FEEDBACK_OPTIONS.BAD]) {
         uiActions.submitFeedback(FEEDBACK_OPTIONS.BAD);
-      } else if (key.name === FEEDBACK_OPTION_KEYS[FEEDBACK_OPTIONS.NOT_SURE]) {
+      } else {
         uiActions.submitFeedback(FEEDBACK_OPTIONS.NOT_SURE);
       }
 
@@ -53,9 +53,7 @@ export const FeedbackDialog: React.FC = () => {
         <Text color="cyan">{FEEDBACK_OPTION_KEYS[FEEDBACK_OPTIONS.BAD]}: </Text>
         <Text>{t('Bad')}</Text>
         <Text> </Text>
-        <Text color="cyan">
-          {FEEDBACK_OPTION_KEYS[FEEDBACK_OPTIONS.NOT_SURE]}:{' '}
-        </Text>
+        <Text color="cyan">{t('Any other key')}: </Text>
         <Text>{t('Not Sure Yet')}</Text>
       </Box>
     </Box>

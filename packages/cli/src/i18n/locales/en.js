@@ -292,6 +292,7 @@ export default {
   Bad: 'Bad',
   Good: 'Good',
   'Not Sure Yet': 'Not Sure Yet',
+  'Any other key': 'Any other key',
   'Disable Loading Phrases': 'Disable Loading Phrases',
   'Screen Reader Mode': 'Screen Reader Mode',
   'IDE Mode': 'IDE Mode',
