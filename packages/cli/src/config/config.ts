@@ -21,7 +21,6 @@ import {
   isToolEnabled,
   SessionService,
   type ResumedSessionData,
-  type FileFilteringOptions,
   type ToolName,
   EditTool,
   ShellTool,
@@ -329,7 +328,14 @@ export async function parseArguments(settings: Settings): Promise<CliArgs> {
         .option('experimental-skills', {
           type: 'boolean',
           description: 'Enable experimental Skills feature',
-          default: settings.tools?.experimental?.skills ?? false,
+          default: (() => {
+            const legacySkills = (
+              settings as Settings & {
+                tools?: { experimental?: { skills?: boolean } };
+              }
+            ).tools?.experimental?.skills;
+            return settings.experimental?.skills ?? legacySkills ?? false;
+          })(),
         })
         .option('channel', {
           type: 'string',
@@ -635,8 +641,6 @@ export async function loadHierarchicalGeminiMemory(
   extensionContextFilePaths: string[] = [],
   folderTrust: boolean,
   memoryImportFormat: 'flat' | 'tree' = 'tree',
-  fileFilteringOptions?: FileFilteringOptions,
-  maxDirs: number = 200,
 ): Promise<{ memoryContent: string; fileCount: number }> {
   // FIX: Use real, canonical paths for a reliable comparison to handle symlinks.
   const realCwd = fs.realpathSync(path.resolve(currentWorkingDirectory));
@@ -662,8 +666,6 @@ export async function loadHierarchicalGeminiMemory(
     extensionContextFilePaths,
     folderTrust,
     memoryImportFormat,
-    fileFilteringOptions,
-    maxDirs,
   );
 }
 

@@ -104,7 +104,6 @@ const MIGRATION_MAP: Record<string, string> = {
   mcpServers: 'mcpServers',
   mcpServerCommand: 'mcp.serverCommand',
   memoryImportFormat: 'context.importFormat',
-  memoryDiscoveryMaxDirs: 'context.discoveryMaxDirs',
   model: 'model.name',
   preferredEditor: 'general.preferredEditor',
   sandbox: 'tools.sandbox',
@@ -899,6 +898,31 @@ export function loadSettings(
     isTrusted,
     migratedInMemorScopes,
   );
+}
+
+export function migrateDeprecatedSettings(
+  loadedSettings: LoadedSettings,
+): void {
+  const processScope = (scope: SettingScope) => {
+    const settings = loadedSettings.forScope(scope).settings;
+    const legacySkills = (
+      settings as Settings & {
+        tools?: { experimental?: { skills?: boolean } };
+      }
+    ).tools?.experimental?.skills;
+    if (
+      legacySkills !== undefined &&
+      settings.experimental?.skills === undefined
+    ) {
+      console.log(
+        `Migrating deprecated tools.experimental.skills setting from ${scope} settings...`,
+      );
+      loadedSettings.setValue(scope, 'experimental.skills', legacySkills);
+    }
+  };
+
+  processScope(SettingScope.User);
+  processScope(SettingScope.Workspace);
 }
 
 export function saveSettings(settingsFile: SettingsFile): void {
