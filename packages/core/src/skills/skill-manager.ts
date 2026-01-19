@@ -235,6 +235,7 @@ export class SkillManager {
     }
 
     this.watchStarted = true;
+    await this.ensureUserSkillsDir();
     await this.refreshCache();
     this.updateWatchersFromCache();
   }
@@ -306,9 +307,11 @@ export class SkillManager {
     level: SkillLevel,
   ): SkillConfig {
     try {
+      const normalizedContent = normalizeSkillFileContent(content);
+
       // Split frontmatter and content
-      const frontmatterRegex = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/;
-      const match = content.match(frontmatterRegex);
+      const frontmatterRegex = /^---\n([\s\S]*?)\n---(?:\n|$)([\s\S]*)$/;
+      const match = normalizedContent.match(frontmatterRegex);
 
       if (!match) {
         throw new Error('Invalid format: missing YAML frontmatter');
@@ -486,29 +489,14 @@ export class SkillManager {
   }
 
   private updateWatchersFromCache(): void {
-    const desiredPaths = new Set<string>();
-
-    for (const level of ['project', 'user'] as const) {
-      const baseDir = this.getSkillsBaseDir(level);
-      const parentDir = path.dirname(baseDir);
-      if (fsSync.existsSync(parentDir)) {
-        desiredPaths.add(parentDir);
-      }
-      if (fsSync.existsSync(baseDir)) {
-        desiredPaths.add(baseDir);
-      }
-
-      const levelSkills = this.skillsCache?.get(level) || [];
-      for (const skill of levelSkills) {
-        const skillDir = path.dirname(skill.filePath);
-        if (fsSync.existsSync(skillDir)) {
-          desiredPaths.add(skillDir);
-        }
-      }
-    }
+    const watchTargets = new Set<string>(
+      (['project', 'user'] as const)
+        .map((level) => this.getSkillsBaseDir(level))
+        .filter((baseDir) => fsSync.existsSync(baseDir)),
+    );
 
     for (const existingPath of this.watchers.keys()) {
-      if (!desiredPaths.has(existingPath)) {
+      if (!watchTargets.has(existingPath)) {
         void this.watchers
           .get(existingPath)
           ?.close()
@@ -522,7 +510,7 @@ export class SkillManager {
       }
     }
 
-    for (const watchPath of desiredPaths) {
+    for (const watchPath of watchTargets) {
       if (this.watchers.has(watchPath)) {
         continue;
       }
@@ -557,4 +545,26 @@ export class SkillManager {
       void this.refreshCache().then(() => this.updateWatchersFromCache());
     }, 150);
   }
+
+  private async ensureUserSkillsDir(): Promise<void> {
+    const baseDir = this.getSkillsBaseDir('user');
+    try {
+      await fs.mkdir(baseDir, { recursive: true });
+    } catch (error) {
+      console.warn(
+        `Failed to create user skills directory at ${baseDir}:`,
+        error,
+      );
+    }
+  }
+}
+
+function normalizeSkillFileContent(content: string): string {
+  // Strip UTF-8 BOM to ensure frontmatter starts at the first character.
+  let normalized = content.replace(/^\uFEFF/, '');
+
+  // Normalize line endings so skills authored on Windows (CRLF) parse correctly.
+  normalized = normalized.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+  return normalized;
 }

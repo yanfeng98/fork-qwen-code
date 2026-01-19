@@ -403,7 +403,7 @@ export class Config {
   private toolRegistry!: ToolRegistry;
   private promptRegistry!: PromptRegistry;
   private subagentManager!: SubagentManager;
-  private skillManager!: SkillManager;
+  private skillManager: SkillManager | null = null;
   private fileSystemService: FileSystemService;
   private contentGeneratorConfig!: ContentGeneratorConfig;
   private contentGeneratorConfigSources: ContentGeneratorConfigSources = {};
@@ -669,8 +669,10 @@ export class Config {
     }
     this.promptRegistry = new PromptRegistry();
     this.subagentManager = new SubagentManager(this);
-    this.skillManager = new SkillManager(this);
-    await this.skillManager.startWatching();
+    if (this.getExperimentalSkills()) {
+      this.skillManager = new SkillManager(this);
+      await this.skillManager.startWatching();
+    }
 
     // Load session subagents if they were provided before initialization
     if (this.sessionSubagents.length > 0) {
@@ -1432,7 +1434,7 @@ export class Config {
     return this.subagentManager;
   }
 
-  getSkillManager(): SkillManager {
+  getSkillManager(): SkillManager | null {
     return this.skillManager;
   }
 
