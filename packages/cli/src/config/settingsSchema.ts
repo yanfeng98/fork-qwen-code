@@ -972,27 +972,6 @@ const SETTINGS_SCHEMA = {
         description: 'The number of lines to keep when truncating tool output.',
         showInDialog: true,
       },
-      experimental: {
-        type: 'object',
-        label: 'Experimental',
-        category: 'Tools',
-        requiresRestart: true,
-        default: {},
-        description: 'Experimental tool features.',
-        showInDialog: false,
-        properties: {
-          skills: {
-            type: 'boolean',
-            label: 'Skills',
-            category: 'Tools',
-            requiresRestart: true,
-            default: false,
-            description:
-              'Enable experimental Agent Skills feature. When enabled, Qwen Code can use Skills from .qwen/skills/ and ~/.qwen/skills/.',
-            showInDialog: true,
-          },
-        },
-      },
     },
   },
 
@@ -1219,6 +1198,16 @@ const SETTINGS_SCHEMA = {
     description: 'Setting to enable experimental features',
     showInDialog: false,
     properties: {
+      skills: {
+        type: 'boolean',
+        label: 'Skills',
+        category: 'Experimental',
+        requiresRestart: true,
+        default: false,
+        description:
+          'Enable experimental Agent Skills feature. When enabled, Qwen Code can use Skills from .qwen/skills/ and ~/.qwen/skills/.',
+        showInDialog: true,
+      },
       extensionManagement: {
         type: 'boolean',
         label: 'Extension Management',

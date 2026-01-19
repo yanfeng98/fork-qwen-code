@@ -332,7 +332,14 @@ export async function parseArguments(settings: Settings): Promise<CliArgs> {
         .option('experimental-skills', {
           type: 'boolean',
           description: 'Enable experimental Skills feature',
-          default: settings.tools?.experimental?.skills ?? false,
+          default: (() => {
+            const legacySkills = (
+              settings as Settings & {
+                tools?: { experimental?: { skills?: boolean } };
+              }
+            ).tools?.experimental?.skills;
+            return settings.experimental?.skills ?? legacySkills ?? false;
+          })(),
         })
         .option('channel', {
           type: 'string',

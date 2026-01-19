@@ -921,6 +921,21 @@ export function migrateDeprecatedSettings(
 
       loadedSettings.setValue(scope, 'extensions', newExtensionsValue);
     }
+
+    const legacySkills = (
+      settings as Settings & {
+        tools?: { experimental?: { skills?: boolean } };
+      }
+    ).tools?.experimental?.skills;
+    if (
+      legacySkills !== undefined &&
+      settings.experimental?.skills === undefined
+    ) {
+      console.log(
+        `Migrating deprecated tools.experimental.skills setting from ${scope} settings...`,
+      );
+      loadedSettings.setValue(scope, 'experimental.skills', legacySkills);
+    }
   };
 
   processScope(SettingScope.User);
