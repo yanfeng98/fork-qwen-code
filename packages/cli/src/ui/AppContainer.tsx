@@ -575,7 +575,6 @@ export const AppContainer = (props: AppContainerProps) => {
         config.getExtensionContextFilePaths(),
         config.isTrustedFolder(),
         settings.merged.context?.importFormat || 'tree', // Use setting or default to 'tree'
-        config.getFileFilteringOptions(),
       );
 
       config.setUserMemory(memoryContent);
