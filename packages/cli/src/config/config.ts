@@ -9,7 +9,6 @@ import {
   AuthType,
   Config,
   DEFAULT_QWEN_EMBEDDING_MODEL,
-  DEFAULT_MEMORY_FILE_FILTERING_OPTIONS,
   FileDiscoveryService,
   getCurrentGeminiMdFilename,
   loadServerHierarchicalMemory,
@@ -22,7 +21,6 @@ import {
   isToolEnabled,
   SessionService,
   type ResumedSessionData,
-  type FileFilteringOptions,
   type MCPServerConfig,
   type ToolName,
   EditTool,
@@ -328,7 +326,14 @@ export async function parseArguments(settings: Settings): Promise<CliArgs> {
         .option('experimental-skills', {
           type: 'boolean',
           description: 'Enable experimental Skills feature',
-          default: settings.tools?.experimental?.skills ?? false,
+          default: (() => {
+            const legacySkills = (
+              settings as Settings & {
+                tools?: { experimental?: { skills?: boolean } };
+              }
+            ).tools?.experimental?.skills;
+            return settings.experimental?.skills ?? legacySkills ?? false;
+          })(),
         })
         .option('channel', {
           type: 'string',
@@ -633,7 +638,6 @@ export async function loadHierarchicalGeminiMemory(
   extensionContextFilePaths: string[] = [],
   folderTrust: boolean,
   memoryImportFormat: 'flat' | 'tree' = 'tree',
-  fileFilteringOptions?: FileFilteringOptions,
 ): Promise<{ memoryContent: string; fileCount: number }> {
   // FIX: Use real, canonical paths for a reliable comparison to handle symlinks.
   const realCwd = fs.realpathSync(path.resolve(currentWorkingDirectory));
@@ -659,8 +663,6 @@ export async function loadHierarchicalGeminiMemory(
     extensionContextFilePaths,
     folderTrust,
     memoryImportFormat,
-    fileFilteringOptions,
-    settings.context?.discoveryMaxDirs,
   );
 }
 
@@ -730,11 +732,6 @@ export async function loadCliConfig(
 
   const fileService = new FileDiscoveryService(cwd);
 
-  const fileFiltering = {
-    ...DEFAULT_MEMORY_FILE_FILTERING_OPTIONS,
-    ...settings.context?.fileFiltering,
-  };
-
   const includeDirectories = (settings.context?.includeDirectories || [])
     .map(resolvePath)
     .concat((argv.includeDirectories || []).map(resolvePath));
@@ -751,7 +748,6 @@ export async function loadCliConfig(
     extensionContextFilePaths,
     trustedFolder,
     memoryImportFormat,
-    fileFiltering,
   );
 
   let mcpServers = mergeMcpServers(settings, activeExtensions);

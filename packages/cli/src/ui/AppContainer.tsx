@@ -45,6 +45,7 @@ import process from 'node:process';
 import { useHistory } from './hooks/useHistoryManager.js';
 import { useMemoryMonitor } from './hooks/useMemoryMonitor.js';
 import { useThemeCommand } from './hooks/useThemeCommand.js';
+import { useFeedbackDialog } from './hooks/useFeedbackDialog.js';
 import { useAuthCommand } from './auth/useAuth.js';
 import { useEditorSettings } from './hooks/useEditorSettings.js';
 import { useSettingsCommand } from './hooks/useSettingsCommand.js';
@@ -576,7 +577,6 @@ export const AppContainer = (props: AppContainerProps) => {
         config.getExtensionContextFilePaths(),
         config.isTrustedFolder(),
         settings.merged.context?.importFormat || 'tree', // Use setting or default to 'tree'
-        config.getFileFilteringOptions(),
       );
 
       config.setUserMemory(memoryContent);
@@ -1197,6 +1197,19 @@ export const AppContainer = (props: AppContainerProps) => {
     isApprovalModeDialogOpen ||
     isResumeDialogOpen;
 
+  const {
+    isFeedbackDialogOpen,
+    openFeedbackDialog,
+    closeFeedbackDialog,
+    submitFeedback,
+  } = useFeedbackDialog({
+    config,
+    settings,
+    streamingState,
+    history: historyManager.history,
+    sessionStats,
+  });
+
   const pendingHistoryItems = useMemo(
     () => [...pendingSlashCommandHistoryItems, ...pendingGeminiHistoryItems],
     [pendingSlashCommandHistoryItems, pendingGeminiHistoryItems],
@@ -1293,6 +1306,8 @@ export const AppContainer = (props: AppContainerProps) => {
       // Subagent dialogs
       isSubagentCreateDialogOpen,
       isAgentsManagerDialogOpen,
+      // Feedback dialog
+      isFeedbackDialogOpen,
     }),
     [
       isThemeDialogOpen,
@@ -1383,6 +1398,8 @@ export const AppContainer = (props: AppContainerProps) => {
       // Subagent dialogs
       isSubagentCreateDialogOpen,
       isAgentsManagerDialogOpen,
+      // Feedback dialog
+      isFeedbackDialogOpen,
     ],
   );
 
@@ -1425,6 +1442,10 @@ export const AppContainer = (props: AppContainerProps) => {
       openResumeDialog,
       closeResumeDialog,
       handleResume,
+      // Feedback dialog
+      openFeedbackDialog,
+      closeFeedbackDialog,
+      submitFeedback,
     }),
     [
       openThemeDialog,
@@ -1462,6 +1483,10 @@ export const AppContainer = (props: AppContainerProps) => {
       openResumeDialog,
       closeResumeDialog,
       handleResume,
+      // Feedback dialog
+      openFeedbackDialog,
+      closeFeedbackDialog,
+      submitFeedback,
     ],
   );
 

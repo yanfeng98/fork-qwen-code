@@ -313,6 +313,13 @@ export default {
   'Show Citations': 'Показывать цитаты',
   'Custom Witty Phrases': 'Пользовательские остроумные фразы',
   'Show Welcome Back Dialog': 'Показывать диалог приветствия',
+  'Enable User Feedback': 'Включить отзывы пользователей',
+  'How is Qwen doing this session? (optional)':
+    'Как дела у Qwen в этой сессии? (необязательно)',
+  Bad: 'Плохо',
+  Good: 'Хорошо',
+  'Not Sure Yet': 'Пока не уверен',
+  'Any other key': 'Любая другая клавиша',
   'Disable Loading Phrases': 'Отключить фразы при загрузке',
   'Screen Reader Mode': 'Режим программы чтения с экрана',
   'IDE Mode': 'Режим IDE',

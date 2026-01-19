@@ -20,6 +20,7 @@ import { useVimMode } from '../contexts/VimModeContext.js';
 import { useConfig } from '../contexts/ConfigContext.js';
 import { StreamingState } from '../types.js';
 import { ConfigInitDisplay } from '../components/ConfigInitDisplay.js';
+import { FeedbackDialog } from '../FeedbackDialog.js';
 import { t } from '../../i18n/index.js';
 
 export const Composer = () => {
@@ -88,6 +89,8 @@ export const Composer = () => {
           </Box>
         </OverflowProvider>
       )}
+
+      {uiState.isFeedbackDialogOpen && <FeedbackDialog />}
 
       {uiState.isInputActive && (
         <InputPrompt

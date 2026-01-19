@@ -1132,11 +1132,6 @@ describe('Hierarchical Memory Loading (config.ts) - Placeholder Suite', () => {
       ],
       true,
       'tree',
-      {
-        respectGitIgnore: false,
-        respectQwenIgnore: true,
-      },
-      undefined, // maxDirs
     );
   });
 

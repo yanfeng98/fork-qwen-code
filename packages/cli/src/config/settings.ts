@@ -99,7 +99,6 @@ const MIGRATION_MAP: Record<string, string> = {
   mcpServers: 'mcpServers',
   mcpServerCommand: 'mcp.serverCommand',
   memoryImportFormat: 'context.importFormat',
-  memoryDiscoveryMaxDirs: 'context.discoveryMaxDirs',
   model: 'model.name',
   preferredEditor: 'general.preferredEditor',
   sandbox: 'tools.sandbox',
@@ -914,6 +913,21 @@ export function migrateDeprecatedSettings(
       newExtensionsValue.disabled = undefined;
 
       loadedSettings.setValue(scope, 'extensions', newExtensionsValue);
+    }
+
+    const legacySkills = (
+      settings as Settings & {
+        tools?: { experimental?: { skills?: boolean } };
+      }
+    ).tools?.experimental?.skills;
+    if (
+      legacySkills !== undefined &&
+      settings.experimental?.skills === undefined
+    ) {
+      console.log(
+        `Migrating deprecated tools.experimental.skills setting from ${scope} settings...`,
+      );
+      loadedSettings.setValue(scope, 'experimental.skills', legacySkills);
     }
   };
 

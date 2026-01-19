@@ -1311,9 +1311,7 @@ describe('SettingsDialog', () => {
           truncateToolOutputThreshold: 50000,
           truncateToolOutputLines: 1000,
         },
-        context: {
-          discoveryMaxDirs: 500,
-        },
+        context: {},
         model: {
           maxSessionTurns: 100,
           skipNextSpeakerCheck: false,
@@ -1443,7 +1441,6 @@ describe('SettingsDialog', () => {
             disableFuzzySearch: true,
           },
           loadMemoryFromIncludeDirectories: true,
-          discoveryMaxDirs: 100,
         },
       });
       const onSelect = vi.fn();

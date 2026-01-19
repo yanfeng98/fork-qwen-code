@@ -358,6 +358,16 @@ const SETTINGS_SCHEMA = {
           'Show welcome back dialog when returning to a project with conversation history.',
         showInDialog: true,
       },
+      enableUserFeedback: {
+        type: 'boolean',
+        label: 'Enable User Feedback',
+        category: 'UI',
+        requiresRestart: false,
+        default: true,
+        description:
+          'Show optional feedback dialog after conversations to help improve Qwen performance.',
+        showInDialog: true,
+      },
       accessibility: {
         type: 'object',
         label: 'Accessibility',
@@ -387,6 +397,15 @@ const SETTINGS_SCHEMA = {
             showInDialog: false,
           },
         },
+      },
+      feedbackLastShownTimestamp: {
+        type: 'number',
+        label: 'Feedback Last Shown Timestamp',
+        category: 'UI',
+        requiresRestart: false,
+        default: 0,
+        description: 'The last time the feedback dialog was shown.',
+        showInDialog: false,
       },
     },
   },
@@ -646,15 +665,6 @@ const SETTINGS_SCHEMA = {
         description: 'The format to use when importing memory.',
         showInDialog: false,
       },
-      discoveryMaxDirs: {
-        type: 'number',
-        label: 'Memory Discovery Max Dirs',
-        category: 'Context',
-        requiresRestart: false,
-        default: 200,
-        description: 'Maximum number of directories to search for memory.',
-        showInDialog: false,
-      },
       includeDirectories: {
         type: 'array',
         label: 'Include Directories',
@@ -905,27 +915,6 @@ const SETTINGS_SCHEMA = {
         description: 'The number of lines to keep when truncating tool output.',
         showInDialog: false,
       },
-      experimental: {
-        type: 'object',
-        label: 'Experimental',
-        category: 'Tools',
-        requiresRestart: true,
-        default: {},
-        description: 'Experimental tool features.',
-        showInDialog: false,
-        properties: {
-          skills: {
-            type: 'boolean',
-            label: 'Skills',
-            category: 'Tools',
-            requiresRestart: true,
-            default: false,
-            description:
-              'Enable experimental Agent Skills feature. When enabled, Qwen Code can use Skills from .qwen/skills/ and ~/.qwen/skills/.',
-            showInDialog: true,
-          },
-        },
-      },
     },
   },
 
@@ -1152,6 +1141,16 @@ const SETTINGS_SCHEMA = {
     description: 'Setting to enable experimental features',
     showInDialog: false,
     properties: {
+      skills: {
+        type: 'boolean',
+        label: 'Skills',
+        category: 'Experimental',
+        requiresRestart: true,
+        default: false,
+        description:
+          'Enable experimental Agent Skills feature. When enabled, Qwen Code can use Skills from .qwen/skills/ and ~/.qwen/skills/.',
+        showInDialog: true,
+      },
       extensionManagement: {
         type: 'boolean',
         label: 'Extension Management',
