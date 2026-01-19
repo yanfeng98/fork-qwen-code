@@ -155,6 +155,7 @@ export default {
   'Project Level ({{path}})': 'Уровень проекта ({{path}})',
   'User Level ({{path}})': 'Уровень пользователя ({{path}})',
   'Built-in Agents': 'Встроенные агенты',
+  'Extension Agents': 'Агенты расширений',
   'Using: {{count}} agents': 'Используется: {{count}} агент(ов)',
   'View Agent': 'Просмотреть агента',
   'Edit Agent': 'Редактировать агента',
@@ -349,6 +350,39 @@ export default {
   'List active extensions': 'Показать активные расширения',
   'Update extensions. Usage: update <extension-names>|--all':
     'Обновить расширения. Использование: update <extension-names>|--all',
+  'Disable an extension': 'Отключить расширение',
+  'Enable an extension': 'Включить расширение',
+  'Install an extension from a git repo or local path':
+    'Установить расширение из Git-репозитория или локального пути',
+  'Uninstall an extension': 'Удалить расширение',
+  'No extensions installed.': 'Расширения не установлены.',
+  'Usage: /extensions update <extension-names>|--all':
+    'Использование: /extensions update <имена-расширений>|--all',
+  'Extension "{{name}}" not found.': 'Расширение "{{name}}" не найдено.',
+  'No extensions to update.': 'Нет расширений для обновления.',
+  'Usage: /extensions install <source>':
+    'Использование: /extensions install <источник>',
+  'Installing extension from "{{source}}"...':
+    'Установка расширения из "{{source}}"...',
+  'Extension "{{name}}" installed successfully.':
+    'Расширение "{{name}}" успешно установлено.',
+  'Failed to install extension from "{{source}}": {{error}}':
+    'Не удалось установить расширение из "{{source}}": {{error}}',
+  'Usage: /extensions uninstall <extension-name>':
+    'Использование: /extensions uninstall <имя-расширения>',
+  'Uninstalling extension "{{name}}"...': 'Удаление расширения "{{name}}"...',
+  'Extension "{{name}}" uninstalled successfully.':
+    'Расширение "{{name}}" успешно удалено.',
+  'Failed to uninstall extension "{{name}}": {{error}}':
+    'Не удалось удалить расширение "{{name}}": {{error}}',
+  'Usage: /extensions {{command}} <extension> [--scope=<user|workspace>]':
+    'Использование: /extensions {{command}} <расширение> [--scope=<user|workspace>]',
+  'Unsupported scope "{{scope}}", should be one of "user" or "workspace"':
+    'Неподдерживаемая область "{{scope}}", должна быть "user" или "workspace"',
+  'Extension "{{name}}" disabled for scope "{{scope}}"':
+    'Расширение "{{name}}" отключено для области "{{scope}}"',
+  'Extension "{{name}}" enabled for scope "{{scope}}"':
+    'Расширение "{{name}}" включено для области "{{scope}}"',
   'manage IDE integration': 'Управление интеграцией с IDE',
   'check status of IDE integration': 'Проверить статус интеграции с IDE',
   'install required IDE companion for {{ideName}}':
@@ -974,6 +1008,19 @@ export default {
     'В этой сессии не было вызовов инструментов.',
   'Session start time is unavailable, cannot calculate stats.':
     'Время начала сессии недоступно, невозможно рассчитать статистику.',
+
+  // ============================================================================
+  // Command Format Migration
+  // ============================================================================
+  'Command Format Migration': 'Миграция формата команд',
+  'Found {{count}} TOML command file:': 'Найден {{count}} файл команд TOML:',
+  'Found {{count}} TOML command files:':
+    'Найдено {{count}} файлов команд TOML:',
+  '... and {{count}} more': '... и ещё {{count}}',
+  'The TOML format is deprecated. Would you like to migrate them to Markdown format?':
+    'Формат TOML устарел. Хотите перенести их в формат Markdown?',
+  '(Backups will be created and original files will be preserved)':
+    '(Будут созданы резервные копии, исходные файлы будут сохранены)',
 
   // ============================================================================
   // Loading Phrases

@@ -9,6 +9,7 @@ import type { RadioSelectItem } from './components/shared/RadioButtonSelect.js';
 import { RadioButtonSelect } from './components/shared/RadioButtonSelect.js';
 import { useKeypress } from './hooks/useKeypress.js';
 import { theme } from './semantic-colors.js';
+import { t } from '../i18n/index.js';
 
 export type CommandMigrationNudgeResult = {
   userSelection: 'yes' | 'no';
@@ -36,14 +37,14 @@ export function CommandFormatMigrationNudge({
 
   const OPTIONS: Array<RadioSelectItem<CommandMigrationNudgeResult>> = [
     {
-      label: 'Yes',
+      label: t('Yes'),
       value: {
         userSelection: 'yes',
       },
       key: 'Yes',
     },
     {
-      label: 'No (esc)',
+      label: t('No (esc)'),
       value: {
         userSelection: 'no',
       },
@@ -55,7 +56,7 @@ export function CommandFormatMigrationNudge({
   const fileList =
     count <= 3
       ? tomlFiles.map((f) => `  • ${f}`).join('\n')
-      : `  • ${tomlFiles.slice(0, 2).join('\n  • ')}\n  • ... and ${count - 2} more`;
+      : `  • ${tomlFiles.slice(0, 2).join('\n  • ')}\n  • ${t('... and {{count}} more', { count: String(count - 2) })}`;
 
   return (
     <Box
@@ -69,19 +70,22 @@ export function CommandFormatMigrationNudge({
       <Box marginBottom={1} flexDirection="column">
         <Text>
           <Text color={theme.status.warning}>{'⚠️  '}</Text>
-          <Text bold>Command Format Migration</Text>
+          <Text bold>{t('Command Format Migration')}</Text>
         </Text>
         <Text color={theme.text.secondary}>
-          {`Found ${count} TOML command file${count > 1 ? 's' : ''}:`}
+          {count > 1
+            ? t('Found {{count}} TOML command files:', { count: String(count) })
+            : t('Found {{count}} TOML command file:', { count: String(count) })}
         </Text>
         <Text color={theme.text.secondary}>{fileList}</Text>
         <Text>{''}</Text>
         <Text color={theme.text.secondary}>
-          The TOML format is deprecated. Would you like to migrate them to
-          Markdown format?
+          {t(
+            'The TOML format is deprecated. Would you like to migrate them to Markdown format?',
+          )}
         </Text>
         <Text color={theme.text.secondary}>
-          (Backups will be created and original files will be preserved)
+          {t('(Backups will be created and original files will be preserved)')}
         </Text>
       </Box>
       <RadioButtonSelect items={OPTIONS} onSelect={onComplete} />

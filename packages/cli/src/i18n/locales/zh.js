@@ -149,6 +149,7 @@ export default {
   'Project Level ({{path}})': '项目级 ({{path}})',
   'User Level ({{path}})': '用户级 ({{path}})',
   'Built-in Agents': '内置代理',
+  'Extension Agents': '扩展代理',
   'Using: {{count}} agents': '使用中: {{count}} 个代理',
   'View Agent': '查看代理',
   'Edit Agent': '编辑代理',
@@ -331,6 +332,37 @@ export default {
   'List active extensions': '列出活动扩展',
   'Update extensions. Usage: update <extension-names>|--all':
     '更新扩展。用法：update <extension-names>|--all',
+  'Disable an extension': '禁用扩展',
+  'Enable an extension': '启用扩展',
+  'Install an extension from a git repo or local path':
+    '从 Git 仓库或本地路径安装扩展',
+  'Uninstall an extension': '卸载扩展',
+  'No extensions installed.': '未安装扩展。',
+  'Usage: /extensions update <extension-names>|--all':
+    '用法：/extensions update <扩展名>|--all',
+  'Extension "{{name}}" not found.': '未找到扩展 "{{name}}"。',
+  'No extensions to update.': '没有可更新的扩展。',
+  'Usage: /extensions install <source>': '用法：/extensions install <来源>',
+  'Installing extension from "{{source}}"...':
+    '正在从 "{{source}}" 安装扩展...',
+  'Extension "{{name}}" installed successfully.': '扩展 "{{name}}" 安装成功。',
+  'Failed to install extension from "{{source}}": {{error}}':
+    '从 "{{source}}" 安装扩展失败：{{error}}',
+  'Usage: /extensions uninstall <extension-name>':
+    '用法：/extensions uninstall <扩展名>',
+  'Uninstalling extension "{{name}}"...': '正在卸载扩展 "{{name}}"...',
+  'Extension "{{name}}" uninstalled successfully.':
+    '扩展 "{{name}}" 卸载成功。',
+  'Failed to uninstall extension "{{name}}": {{error}}':
+    '卸载扩展 "{{name}}" 失败：{{error}}',
+  'Usage: /extensions {{command}} <extension> [--scope=<user|workspace>]':
+    '用法：/extensions {{command}} <扩展> [--scope=<user|workspace>]',
+  'Unsupported scope "{{scope}}", should be one of "user" or "workspace"':
+    '不支持的作用域 "{{scope}}"，应为 "user" 或 "workspace"',
+  'Extension "{{name}}" disabled for scope "{{scope}}"':
+    '扩展 "{{name}}" 已在作用域 "{{scope}}" 中禁用',
+  'Extension "{{name}}" enabled for scope "{{scope}}"':
+    '扩展 "{{name}}" 已在作用域 "{{scope}}" 中启用',
   'manage IDE integration': '管理 IDE 集成',
   'check status of IDE integration': '检查 IDE 集成状态',
   'install required IDE companion for {{ideName}}':
@@ -910,6 +942,18 @@ export default {
     '本次会话中未进行任何工具调用',
   'Session start time is unavailable, cannot calculate stats.':
     '会话开始时间不可用，无法计算统计信息',
+
+  // ============================================================================
+  // Command Format Migration
+  // ============================================================================
+  'Command Format Migration': '命令格式迁移',
+  'Found {{count}} TOML command file:': '发现 {{count}} 个 TOML 命令文件：',
+  'Found {{count}} TOML command files:': '发现 {{count}} 个 TOML 命令文件：',
+  '... and {{count}} more': '... 以及其他 {{count}} 个',
+  'The TOML format is deprecated. Would you like to migrate them to Markdown format?':
+    'TOML 格式已弃用。是否将它们迁移到 Markdown 格式？',
+  '(Backups will be created and original files will be preserved)':
+    '（将创建备份，原始文件将保留）',
 
   // ============================================================================
   // Loading Phrases

@@ -152,6 +152,7 @@ export default {
   'Project Level ({{path}})': 'Project Level ({{path}})',
   'User Level ({{path}})': 'User Level ({{path}})',
   'Built-in Agents': 'Built-in Agents',
+  'Extension Agents': 'Extension Agents',
   'Using: {{count}} agents': 'Using: {{count}} agents',
   'View Agent': 'View Agent',
   'Edit Agent': 'Edit Agent',
@@ -344,6 +345,39 @@ export default {
   'List active extensions': 'List active extensions',
   'Update extensions. Usage: update <extension-names>|--all':
     'Update extensions. Usage: update <extension-names>|--all',
+  'Disable an extension': 'Disable an extension',
+  'Enable an extension': 'Enable an extension',
+  'Install an extension from a git repo or local path':
+    'Install an extension from a git repo or local path',
+  'Uninstall an extension': 'Uninstall an extension',
+  'No extensions installed.': 'No extensions installed.',
+  'Usage: /extensions update <extension-names>|--all':
+    'Usage: /extensions update <extension-names>|--all',
+  'Extension "{{name}}" not found.': 'Extension "{{name}}" not found.',
+  'No extensions to update.': 'No extensions to update.',
+  'Usage: /extensions install <source>': 'Usage: /extensions install <source>',
+  'Installing extension from "{{source}}"...':
+    'Installing extension from "{{source}}"...',
+  'Extension "{{name}}" installed successfully.':
+    'Extension "{{name}}" installed successfully.',
+  'Failed to install extension from "{{source}}": {{error}}':
+    'Failed to install extension from "{{source}}": {{error}}',
+  'Usage: /extensions uninstall <extension-name>':
+    'Usage: /extensions uninstall <extension-name>',
+  'Uninstalling extension "{{name}}"...':
+    'Uninstalling extension "{{name}}"...',
+  'Extension "{{name}}" uninstalled successfully.':
+    'Extension "{{name}}" uninstalled successfully.',
+  'Failed to uninstall extension "{{name}}": {{error}}':
+    'Failed to uninstall extension "{{name}}": {{error}}',
+  'Usage: /extensions {{command}} <extension> [--scope=<user|workspace>]':
+    'Usage: /extensions {{command}} <extension> [--scope=<user|workspace>]',
+  'Unsupported scope "{{scope}}", should be one of "user" or "workspace"':
+    'Unsupported scope "{{scope}}", should be one of "user" or "workspace"',
+  'Extension "{{name}}" disabled for scope "{{scope}}"':
+    'Extension "{{name}}" disabled for scope "{{scope}}"',
+  'Extension "{{name}}" enabled for scope "{{scope}}"':
+    'Extension "{{name}}" enabled for scope "{{scope}}"',
   'manage IDE integration': 'manage IDE integration',
   'check status of IDE integration': 'check status of IDE integration',
   'install required IDE companion for {{ideName}}':
@@ -957,6 +991,18 @@ export default {
     'No tool calls have been made in this session.',
   'Session start time is unavailable, cannot calculate stats.':
     'Session start time is unavailable, cannot calculate stats.',
+
+  // ============================================================================
+  // Command Format Migration
+  // ============================================================================
+  'Command Format Migration': 'Command Format Migration',
+  'Found {{count}} TOML command file:': 'Found {{count}} TOML command file:',
+  'Found {{count}} TOML command files:': 'Found {{count}} TOML command files:',
+  '... and {{count}} more': '... and {{count}} more',
+  'The TOML format is deprecated. Would you like to migrate them to Markdown format?':
+    'The TOML format is deprecated. Would you like to migrate them to Markdown format?',
+  '(Backups will be created and original files will be preserved)':
+    '(Backups will be created and original files will be preserved)',
 
   // ============================================================================
   // Loading Phrases

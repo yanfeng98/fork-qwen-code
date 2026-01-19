@@ -28,7 +28,7 @@ function showMessageIfNoExtensions(
     context.ui.addItem(
       {
         type: MessageType.INFO,
-        text: 'No extensions installed. Run `/extensions explore` to check out the gallery.',
+        text: t('No extensions installed.'),
       },
       Date.now(),
     );
@@ -63,7 +63,7 @@ async function updateAction(context: CommandContext, args: string) {
     context.ui.addItem(
       {
         type: MessageType.ERROR,
-        text: 'Usage: /extensions update <extension-names>|--all',
+        text: t('Usage: /extensions update <extension-names>|--all'),
       },
       Date.now(),
     );
@@ -113,7 +113,7 @@ async function updateAction(context: CommandContext, args: string) {
           context.ui.addItem(
             {
               type: MessageType.ERROR,
-              text: `Extension ${name} not found.`,
+              text: t('Extension "{{name}}" not found.', { name }),
             },
             Date.now(),
           );
@@ -137,7 +137,7 @@ async function updateAction(context: CommandContext, args: string) {
       context.ui.addItem(
         {
           type: MessageType.INFO,
-          text: 'No extensions to update.',
+          text: t('No extensions to update.'),
         },
         Date.now(),
       );
@@ -177,7 +177,7 @@ async function installAction(context: CommandContext, args: string) {
     context.ui.addItem(
       {
         type: MessageType.ERROR,
-        text: `Usage: /extensions install <source>`,
+        text: t('Usage: /extensions install <source>'),
       },
       Date.now(),
     );
@@ -189,7 +189,7 @@ async function installAction(context: CommandContext, args: string) {
     context.ui.addItem(
       {
         type: MessageType.INFO,
-        text: `Installing extension from "${source}"...`,
+        text: t('Installing extension from "{{source}}"...', { source }),
       },
       Date.now(),
     );
@@ -197,7 +197,9 @@ async function installAction(context: CommandContext, args: string) {
     context.ui.addItem(
       {
         type: MessageType.INFO,
-        text: `Extension "${extension.name}" installed successfully.`,
+        text: t('Extension "{{name}}" installed successfully.', {
+          name: extension.name,
+        }),
       },
       Date.now(),
     );
@@ -207,9 +209,10 @@ async function installAction(context: CommandContext, args: string) {
     context.ui.addItem(
       {
         type: MessageType.ERROR,
-        text: `Failed to install extension from "${source}": ${getErrorMessage(
-          error,
-        )}`,
+        text: t('Failed to install extension from "{{source}}": {{error}}', {
+          source,
+          error: getErrorMessage(error),
+        }),
       },
       Date.now(),
     );
@@ -231,7 +234,7 @@ async function uninstallAction(context: CommandContext, args: string) {
     context.ui.addItem(
       {
         type: MessageType.ERROR,
-        text: `Usage: /extensions uninstall <extension-name>`,
+        text: t('Usage: /extensions uninstall <extension-name>'),
       },
       Date.now(),
     );
@@ -241,7 +244,7 @@ async function uninstallAction(context: CommandContext, args: string) {
   context.ui.addItem(
     {
       type: MessageType.INFO,
-      text: `Uninstalling extension "${name}"...`,
+      text: t('Uninstalling extension "{{name}}"...', { name }),
     },
     Date.now(),
   );
@@ -251,7 +254,7 @@ async function uninstallAction(context: CommandContext, args: string) {
     context.ui.addItem(
       {
         type: MessageType.INFO,
-        text: `Extension "${name}" uninstalled successfully.`,
+        text: t('Extension "{{name}}" uninstalled successfully.', { name }),
       },
       Date.now(),
     );
@@ -260,9 +263,10 @@ async function uninstallAction(context: CommandContext, args: string) {
     context.ui.addItem(
       {
         type: MessageType.ERROR,
-        text: `Failed to uninstall extension "${name}": ${getErrorMessage(
-          error,
-        )}`,
+        text: t('Failed to uninstall extension "{{name}}": {{error}}', {
+          name,
+          error: getErrorMessage(error),
+        }),
       },
       Date.now(),
     );
@@ -296,7 +300,12 @@ function getEnableDisableContext(
     context.ui.addItem(
       {
         type: MessageType.ERROR,
-        text: `Usage: /extensions ${context.invocation?.name} <extension> [--scope=<user|workspace>]`,
+        text: t(
+          'Usage: /extensions {{command}} <extension> [--scope=<user|workspace>]',
+          {
+            command: context.invocation?.name ?? '',
+          },
+        ),
       },
       Date.now(),
     );
@@ -319,7 +328,12 @@ function getEnableDisableContext(
       context.ui.addItem(
         {
           type: MessageType.ERROR,
-          text: `Unsupported scope ${parts[2]}, should be one of "user" or "workspace"`,
+          text: t(
+            'Unsupported scope "{{scope}}", should be one of "user" or "workspace"',
+            {
+              scope: parts[2],
+            },
+          ),
         },
         Date.now(),
       );
@@ -356,7 +370,10 @@ async function disableAction(context: CommandContext, args: string) {
     context.ui.addItem(
       {
         type: MessageType.INFO,
-        text: `Extension "${name}" disabled for the scope "${scope}"`,
+        text: t('Extension "{{name}}" disabled for scope "{{scope}}"', {
+          name,
+          scope,
+        }),
       },
       Date.now(),
     );
@@ -374,7 +391,10 @@ async function enableAction(context: CommandContext, args: string) {
     context.ui.addItem(
       {
         type: MessageType.INFO,
-        text: `Extension "${name}" enabled for the scope "${scope}"`,
+        text: t('Extension "{{name}}" enabled for scope "{{scope}}"', {
+          name,
+          scope,
+        }),
       },
       Date.now(),
     );
@@ -441,7 +461,9 @@ const updateExtensionsCommand: SlashCommand = {
 
 const disableCommand: SlashCommand = {
   name: 'disable',
-  description: 'Disable an extension',
+  get description() {
+    return t('Disable an extension');
+  },
   kind: CommandKind.BUILT_IN,
   action: disableAction,
   completion: completeExtensionsAndScopes,
@@ -449,7 +471,9 @@ const disableCommand: SlashCommand = {
 
 const enableCommand: SlashCommand = {
   name: 'enable',
-  description: 'Enable an extension',
+  get description() {
+    return t('Enable an extension');
+  },
   kind: CommandKind.BUILT_IN,
   action: enableAction,
   completion: completeExtensionsAndScopes,
@@ -457,14 +481,18 @@ const enableCommand: SlashCommand = {
 
 const installCommand: SlashCommand = {
   name: 'install',
-  description: 'Install an extension from a git repo or local path',
+  get description() {
+    return t('Install an extension from a git repo or local path');
+  },
   kind: CommandKind.BUILT_IN,
   action: installAction,
 };
 
 const uninstallCommand: SlashCommand = {
   name: 'uninstall',
-  description: 'Uninstall an extension',
+  get description() {
+    return t('Uninstall an extension');
+  },
   kind: CommandKind.BUILT_IN,
   action: uninstallAction,
   completion: completeExtensions,

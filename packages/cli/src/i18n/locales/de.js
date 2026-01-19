@@ -151,6 +151,7 @@ export default {
   'Project Level ({{path}})': 'Projektebene ({{path}})',
   'User Level ({{path}})': 'Benutzerebene ({{path}})',
   'Built-in Agents': 'Integrierte Agenten',
+  'Extension Agents': 'Erweiterungs-Agenten',
   'Using: {{count}} agents': 'Verwendet: {{count}} Agenten',
   'View Agent': 'Agent anzeigen',
   'Edit Agent': 'Agent bearbeiten',
@@ -348,6 +349,40 @@ export default {
   'List active extensions': 'Aktive Erweiterungen auflisten',
   'Update extensions. Usage: update <extension-names>|--all':
     'Erweiterungen aktualisieren. Verwendung: update <Erweiterungsnamen>|--all',
+  'Disable an extension': 'Erweiterung deaktivieren',
+  'Enable an extension': 'Erweiterung aktivieren',
+  'Install an extension from a git repo or local path':
+    'Erweiterung aus Git-Repository oder lokalem Pfad installieren',
+  'Uninstall an extension': 'Erweiterung deinstallieren',
+  'No extensions installed.': 'Keine Erweiterungen installiert.',
+  'Usage: /extensions update <extension-names>|--all':
+    'Verwendung: /extensions update <Erweiterungsnamen>|--all',
+  'Extension "{{name}}" not found.': 'Erweiterung "{{name}}" nicht gefunden.',
+  'No extensions to update.': 'Keine Erweiterungen zum Aktualisieren.',
+  'Usage: /extensions install <source>':
+    'Verwendung: /extensions install <Quelle>',
+  'Installing extension from "{{source}}"...':
+    'Installiere Erweiterung von "{{source}}"...',
+  'Extension "{{name}}" installed successfully.':
+    'Erweiterung "{{name}}" erfolgreich installiert.',
+  'Failed to install extension from "{{source}}": {{error}}':
+    'Fehler beim Installieren der Erweiterung von "{{source}}": {{error}}',
+  'Usage: /extensions uninstall <extension-name>':
+    'Verwendung: /extensions uninstall <Erweiterungsname>',
+  'Uninstalling extension "{{name}}"...':
+    'Deinstalliere Erweiterung "{{name}}"...',
+  'Extension "{{name}}" uninstalled successfully.':
+    'Erweiterung "{{name}}" erfolgreich deinstalliert.',
+  'Failed to uninstall extension "{{name}}": {{error}}':
+    'Fehler beim Deinstallieren der Erweiterung "{{name}}": {{error}}',
+  'Usage: /extensions {{command}} <extension> [--scope=<user|workspace>]':
+    'Verwendung: /extensions {{command}} <Erweiterung> [--scope=<user|workspace>]',
+  'Unsupported scope "{{scope}}", should be one of "user" or "workspace"':
+    'Nicht unterstützter Bereich "{{scope}}", sollte "user" oder "workspace" sein',
+  'Extension "{{name}}" disabled for scope "{{scope}}"':
+    'Erweiterung "{{name}}" für Bereich "{{scope}}" deaktiviert',
+  'Extension "{{name}}" enabled for scope "{{scope}}"':
+    'Erweiterung "{{name}}" für Bereich "{{scope}}" aktiviert',
   'manage IDE integration': 'IDE-Integration verwalten',
   'check status of IDE integration': 'Status der IDE-Integration prüfen',
   'install required IDE companion for {{ideName}}':
@@ -984,6 +1019,19 @@ export default {
     'In dieser Sitzung wurden keine Werkzeugaufrufe gemacht.',
   'Session start time is unavailable, cannot calculate stats.':
     'Sitzungsstartzeit nicht verfügbar, Statistiken können nicht berechnet werden.',
+
+  // ============================================================================
+  // Command Format Migration
+  // ============================================================================
+  'Command Format Migration': 'Befehlsformat-Migration',
+  'Found {{count}} TOML command file:': '{{count}} TOML-Befehlsdatei gefunden:',
+  'Found {{count}} TOML command files:':
+    '{{count}} TOML-Befehlsdateien gefunden:',
+  '... and {{count}} more': '... und {{count}} weitere',
+  'The TOML format is deprecated. Would you like to migrate them to Markdown format?':
+    'Das TOML-Format ist veraltet. Möchten Sie sie ins Markdown-Format migrieren?',
+  '(Backups will be created and original files will be preserved)':
+    '(Backups werden erstellt und Originaldateien werden beibehalten)',
 
   // ============================================================================
   // Loading Phrases
