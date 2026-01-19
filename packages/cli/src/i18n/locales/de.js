@@ -60,10 +60,15 @@ export default {
   'show version info': 'Versionsinformationen anzeigen',
   'submit a bug report': 'Fehlerbericht einreichen',
   'About Qwen Code': 'Über Qwen Code',
+  Status: 'Status',
 
   // ============================================================================
   // System Information Fields
   // ============================================================================
+  'Qwen Code': 'Qwen Code',
+  Runtime: 'Laufzeit',
+  OS: 'Betriebssystem',
+  Auth: 'Authentifizierung',
   'CLI Version': 'CLI-Version',
   'Git Commit': 'Git-Commit',
   Model: 'Modell',
@@ -76,6 +81,7 @@ export default {
   'Session ID': 'Sitzungs-ID',
   'Auth Method': 'Authentifizierungsmethode',
   'Base URL': 'Basis-URL',
+  Proxy: 'Proxy',
   'Memory Usage': 'Speichernutzung',
   'IDE Client': 'IDE-Client',
 

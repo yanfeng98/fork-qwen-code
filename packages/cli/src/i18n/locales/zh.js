@@ -78,10 +78,15 @@ export default {
   'show version info': '显示版本信息',
   'submit a bug report': '提交错误报告',
   'About Qwen Code': '关于 Qwen Code',
+  Status: '状态',
 
   // ============================================================================
   // System Information Fields
   // ============================================================================
+  'Qwen Code': 'Qwen Code',
+  Runtime: '运行环境',
+  OS: '操作系统',
+  Auth: '认证',
   'CLI Version': 'CLI 版本',
   'Git Commit': 'Git 提交',
   Model: '模型',
@@ -94,6 +99,7 @@ export default {
   'Session ID': '会话 ID',
   'Auth Method': '认证方式',
   'Base URL': '基础 URL',
+  Proxy: '代理',
   'Memory Usage': '内存使用',
   'IDE Client': 'IDE 客户端',
 

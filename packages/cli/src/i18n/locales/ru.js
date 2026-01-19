@@ -67,6 +67,7 @@ export default {
   'show version info': 'Просмотр информации о версии',
   'submit a bug report': 'Отправка отчёта об ошибке',
   'About Qwen Code': 'Об Qwen Code',
+  Status: 'Статус',
 
   // Keyboard shortcuts panel descriptions
   'for shell mode': 'режим оболочки',
@@ -84,6 +85,10 @@ export default {
   // ============================================================================
   // Поля системной информации
   // ============================================================================
+  'Qwen Code': 'Qwen Code',
+  Runtime: 'Среда выполнения',
+  OS: 'ОС',
+  Auth: 'Аутентификация',
   'CLI Version': 'Версия CLI',
   'Git Commit': 'Git-коммит',
   Model: 'Модель',
@@ -96,6 +101,7 @@ export default {
   'Session ID': 'ID сессии',
   'Auth Method': 'Метод авторизации',
   'Base URL': 'Базовый URL',
+  Proxy: 'Прокси',
   'Memory Usage': 'Использование памяти',
   'IDE Client': 'Клиент IDE',
 
