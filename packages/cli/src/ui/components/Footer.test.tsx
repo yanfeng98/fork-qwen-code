@@ -43,6 +43,7 @@ const createMockConfig = (overrides = {}) => ({
   getModel: vi.fn(() => defaultProps.model),
   getTargetDir: vi.fn(() => defaultProps.targetDir),
   getDebugMode: vi.fn(() => false),
+  getContentGeneratorConfig: vi.fn(() => ({})),
   ...overrides,
 });
 
