@@ -120,6 +120,7 @@ Settings are organized into categories. All settings should be placed within the
     "generationConfig": {
       "timeout": 60000,
       "disableCacheControl": false,
+      "contextWindowSize": 128000,
       "customHeaders": {
         "X-Request-ID": "req-123",
         "X-User-ID": "user-456"
@@ -133,6 +134,46 @@ Settings are organized into categories. All settings should be placed within the
   }
 }
 ```
+
+**contextWindowSize:**
+
+The `contextWindowSize` field allows you to manually override the automatic context window size detection. This is useful when you want to:
+
+- **Optimize performance**: Limit context size to improve response speed
+- **Control costs**: Reduce token usage to lower API call costs
+- **Handle specific requirements**: Set a custom limit when automatic detection doesn't match your needs
+- **Testing scenarios**: Use smaller context windows in test environments
+
+**Values:**
+
+- `-1` (default): Use automatic detection based on the model's capabilities
+- Positive number: Manually specify the context window size in tokens (e.g., `128000` for 128k tokens)
+
+**Example with contextWindowSize:**
+
+```json
+{
+  "model": {
+    "generationConfig": {
+      "contextWindowSize": 128000 // Override to 128k tokens
+    }
+  }
+}
+```
+
+Or use `-1` for automatic detection:
+
+```json
+{
+  "model": {
+    "generationConfig": {
+      "contextWindowSize": -1 // Auto-detect based on model (default)
+    }
+  }
+}
+```
+
+**Priority:** User-configured `contextWindowSize` > Automatic detection > Default value
 
 The `customHeaders` field allows you to add custom HTTP headers to all API requests. This is useful for request tracing, monitoring, API gateway routing, or when different models require different headers. If `customHeaders` is defined in `modelProviders[].generationConfig.customHeaders`, it will be used directly; otherwise, headers from `model.generationConfig.customHeaders` will be used. No merging occurs between the two levels.
 
