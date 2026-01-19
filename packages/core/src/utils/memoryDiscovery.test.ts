@@ -209,7 +209,7 @@ describe('loadServerHierarchicalMemory', () => {
     });
   });
 
-  it('should load context files by downward traversal with custom filename', async () => {
+  it('should load context files from CWD with custom filename (not subdirectories)', async () => {
     const customFilename = 'LOCAL_CONTEXT.md';
     setGeminiMdFilename(customFilename);
 
@@ -228,7 +228,7 @@ describe('loadServerHierarchicalMemory', () => {
       DEFAULT_FOLDER_TRUST,
     );
 
-    // Current implementation only does upward traversal, not downward
+    // Only upward traversal is performed, subdirectory files are not loaded
     expect(result).toEqual({
       memoryContent: `--- Context from: ${customFilename} ---\nCWD custom memory\n--- End of Context from: ${customFilename} ---`,
       fileCount: 1,
@@ -260,7 +260,7 @@ describe('loadServerHierarchicalMemory', () => {
     });
   });
 
-  it('should load ORIGINAL_GEMINI_MD_FILENAME files by downward traversal from CWD', async () => {
+  it('should only load context files from CWD, not subdirectories', async () => {
     await createTestFile(
       path.join(cwd, 'subdir', DEFAULT_CONTEXT_FILENAME),
       'Subdir memory',
@@ -279,14 +279,14 @@ describe('loadServerHierarchicalMemory', () => {
       DEFAULT_FOLDER_TRUST,
     );
 
-    // Current implementation only does upward traversal, not downward
+    // Subdirectory files are not loaded, only CWD and upward
     expect(result).toEqual({
       memoryContent: `--- Context from: ${DEFAULT_CONTEXT_FILENAME} ---\nCWD memory\n--- End of Context from: ${DEFAULT_CONTEXT_FILENAME} ---`,
       fileCount: 1,
     });
   });
 
-  it('should load and correctly order global, upward, and downward ORIGINAL_GEMINI_MD_FILENAME files', async () => {
+  it('should load and correctly order global and upward context files', async () => {
     const defaultContextFile = await createTestFile(
       path.join(homedir, QWEN_DIR, DEFAULT_CONTEXT_FILENAME),
       'default context content',
@@ -317,64 +317,10 @@ describe('loadServerHierarchicalMemory', () => {
       DEFAULT_FOLDER_TRUST,
     );
 
-    // Current implementation only does upward traversal, not downward, so subdir file is not loaded
+    // Subdirectory files are not loaded, only global and upward from CWD
     expect(result).toEqual({
       memoryContent: `--- Context from: ${path.relative(cwd, defaultContextFile)} ---\ndefault context content\n--- End of Context from: ${path.relative(cwd, defaultContextFile)} ---\n\n--- Context from: ${path.relative(cwd, rootGeminiFile)} ---\nProject parent memory\n--- End of Context from: ${path.relative(cwd, rootGeminiFile)} ---\n\n--- Context from: ${path.relative(cwd, projectRootGeminiFile)} ---\nProject root memory\n--- End of Context from: ${path.relative(cwd, projectRootGeminiFile)} ---\n\n--- Context from: ${path.relative(cwd, cwdGeminiFile)} ---\nCWD memory\n--- End of Context from: ${path.relative(cwd, cwdGeminiFile)} ---`,
       fileCount: 4,
-    });
-  });
-
-  it('should ignore specified directories during downward scan', async () => {
-    await createEmptyDir(path.join(projectRoot, '.git'));
-    await createTestFile(path.join(projectRoot, '.gitignore'), 'node_modules');
-
-    await createTestFile(
-      path.join(cwd, 'node_modules', DEFAULT_CONTEXT_FILENAME),
-      'Ignored memory',
-    );
-    await createTestFile(
-      path.join(cwd, 'my_code', DEFAULT_CONTEXT_FILENAME),
-      'My code memory',
-    );
-
-    const result = await loadServerHierarchicalMemory(
-      cwd,
-      [],
-      false,
-      new FileDiscoveryService(projectRoot),
-      [],
-      DEFAULT_FOLDER_TRUST,
-      'tree',
-    );
-
-    // Note: Downward traversal is currently disabled, so no subdirectory files are loaded
-    expect(result).toEqual({
-      memoryContent: '',
-      fileCount: 0,
-    });
-  });
-
-  it('should respect the maxDirs parameter during downward scan', async () => {
-    // Create directories in parallel for better performance
-    const dirPromises = Array.from({ length: 2 }, (_, i) =>
-      createEmptyDir(path.join(cwd, `deep_dir_${i}`)),
-    );
-    await Promise.all(dirPromises);
-
-    // Note: Downward traversal is currently disabled, so maxDirs parameter has no effect
-    const result = await loadServerHierarchicalMemory(
-      cwd,
-      [],
-      false,
-      new FileDiscoveryService(projectRoot),
-      [],
-      DEFAULT_FOLDER_TRUST,
-      'tree',
-    );
-
-    expect(result).toEqual({
-      memoryContent: '',
-      fileCount: 0,
     });
   });
 

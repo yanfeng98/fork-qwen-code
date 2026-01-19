@@ -176,7 +176,7 @@ async function getGeminiMdFilePathsInternalForEachDir(
         // Not found, which is okay
       }
     } else if (dir && folderTrust) {
-      // FIX: Only perform the workspace search (upward and downward scans)
+      // FIX: Only perform the workspace search (upward scan from CWD to project root)
       // if a valid currentWorkingDirectory is provided and it's not the home directory.
       const resolvedCwd = path.resolve(dir);
       if (debugMode)
