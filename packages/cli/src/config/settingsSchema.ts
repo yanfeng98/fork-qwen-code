@@ -690,6 +690,18 @@ const SETTINGS_SCHEMA = {
               { value: 'openapi_30', label: 'OpenAPI 3.0 Strict' },
             ],
           },
+          contextWindowSize: {
+            type: 'number',
+            label: 'Context Window Size',
+            category: 'Generation Configuration',
+            requiresRestart: false,
+            default: -1,
+            description:
+              'Override the automatic context window size detection. Set to -1 to use automatic detection based on the model. Set to a positive number to use a custom context window size.',
+            parentKey: 'generationConfig',
+            childKey: 'contextWindowSize',
+            showInDialog: true,
+          },
         },
       },
     },
