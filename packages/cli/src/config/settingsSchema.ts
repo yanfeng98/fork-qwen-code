@@ -722,15 +722,6 @@ const SETTINGS_SCHEMA = {
         description: 'The format to use when importing memory.',
         showInDialog: false,
       },
-      discoveryMaxDirs: {
-        type: 'number',
-        label: 'Memory Discovery Max Dirs',
-        category: 'Context',
-        requiresRestart: false,
-        default: 200,
-        description: 'Maximum number of directories to search for memory.',
-        showInDialog: true,
-      },
       includeDirectories: {
         type: 'array',
         label: 'Include Directories',

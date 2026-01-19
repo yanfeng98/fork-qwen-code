@@ -106,7 +106,6 @@ const MIGRATION_MAP: Record<string, string> = {
   mcpServers: 'mcpServers',
   mcpServerCommand: 'mcp.serverCommand',
   memoryImportFormat: 'context.importFormat',
-  memoryDiscoveryMaxDirs: 'context.discoveryMaxDirs',
   model: 'model.name',
   preferredEditor: 'general.preferredEditor',
   sandbox: 'tools.sandbox',
