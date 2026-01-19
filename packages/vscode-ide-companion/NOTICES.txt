@@ -1,6 +1,12 @@
 This file contains third-party software notices and license terms.
 
 ============================================================
+@qwen-code/webui@undefined
+(No repository found)
+
+License text not found.
+
+============================================================
 semver@7.7.2
 (git+https://github.com/npm/node-semver.git)
 

@@ -79,6 +79,18 @@ export type {
   AssistantMessageStatus,
 } from './components/messages/Assistant/AssistantMessage';
 
+// ChatViewer - standalone chat display component
+export {
+  ChatViewer,
+  default as ChatViewerDefault,
+} from './components/ChatViewer';
+export type {
+  ChatViewerProps,
+  ChatViewerHandle,
+  ChatMessageData,
+  MessagePart,
+} from './components/ChatViewer';
+
 // UI Elements
 export { default as Button } from './components/ui/Button';
 export { default as Input } from './components/ui/Input';
