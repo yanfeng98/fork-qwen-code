@@ -100,7 +100,7 @@ describe('extensionsCommand', () => {
       expect(mockContext.ui.addItem).toHaveBeenCalledWith(
         {
           type: MessageType.INFO,
-          text: 'No extensions installed. Run `/extensions explore` to check out the gallery.',
+          text: 'No extensions installed.',
         },
         expect.any(Number),
       );
@@ -241,7 +241,7 @@ describe('extensionsCommand', () => {
       expect(mockContext.ui.addItem).toHaveBeenCalledWith(
         {
           type: MessageType.ERROR,
-          text: 'Extension ext-one not found.',
+          text: 'Extension "ext-one" not found.',
         },
         expect.any(Number),
       );
@@ -645,7 +645,7 @@ describe('extensionsCommand', () => {
       expect(mockContext.ui.addItem).toHaveBeenCalledWith(
         {
           type: MessageType.INFO,
-          text: 'Extension "test-extension" disabled for the scope "User"',
+          text: 'Extension "test-extension" disabled for scope "User"',
         },
         expect.any(Number),
       );
@@ -663,7 +663,7 @@ describe('extensionsCommand', () => {
       expect(mockContext.ui.addItem).toHaveBeenCalledWith(
         {
           type: MessageType.INFO,
-          text: 'Extension "test-extension" disabled for the scope "Workspace"',
+          text: 'Extension "test-extension" disabled for scope "Workspace"',
         },
         expect.any(Number),
       );
@@ -675,7 +675,7 @@ describe('extensionsCommand', () => {
       expect(mockContext.ui.addItem).toHaveBeenCalledWith(
         {
           type: MessageType.ERROR,
-          text: 'Unsupported scope invalid, should be one of "user" or "workspace"',
+          text: 'Unsupported scope "invalid", should be one of "user" or "workspace"',
         },
         expect.any(Number),
       );
@@ -741,7 +741,7 @@ describe('extensionsCommand', () => {
       expect(mockContext.ui.addItem).toHaveBeenCalledWith(
         {
           type: MessageType.INFO,
-          text: 'Extension "test-extension" enabled for the scope "User"',
+          text: 'Extension "test-extension" enabled for scope "User"',
         },
         expect.any(Number),
       );
@@ -759,7 +759,7 @@ describe('extensionsCommand', () => {
       expect(mockContext.ui.addItem).toHaveBeenCalledWith(
         {
           type: MessageType.INFO,
-          text: 'Extension "test-extension" enabled for the scope "Workspace"',
+          text: 'Extension "test-extension" enabled for scope "Workspace"',
         },
         expect.any(Number),
       );
@@ -771,7 +771,7 @@ describe('extensionsCommand', () => {
       expect(mockContext.ui.addItem).toHaveBeenCalledWith(
         {
           type: MessageType.ERROR,
-          text: 'Unsupported scope invalid, should be one of "user" or "workspace"',
+          text: 'Unsupported scope "invalid", should be one of "user" or "workspace"',
         },
         expect.any(Number),
       );

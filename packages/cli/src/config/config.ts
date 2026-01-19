@@ -862,14 +862,19 @@ export async function loadCliConfig(
     argv.excludeTools,
   );
 
-  const allowedMcpServers = argv.allowedMcpServerNames
-    ? new Set(argv.allowedMcpServerNames.filter(Boolean))
-    : settings.mcp?.allowed
+  let allowedMcpServers: Set<string> | undefined;
+  let excludedMcpServers: Set<string> | undefined;
+  if (argv.allowedMcpServerNames) {
+    allowedMcpServers = new Set(argv.allowedMcpServerNames.filter(Boolean));
+    excludedMcpServers = undefined;
+  } else {
+    allowedMcpServers = settings.mcp?.allowed
       ? new Set(settings.mcp.allowed.filter(Boolean))
       : undefined;
-  const excludedMcpServers = settings.mcp?.excluded
-    ? new Set(settings.mcp.excluded.filter(Boolean))
-    : undefined;
+    excludedMcpServers = settings.mcp?.excluded
+      ? new Set(settings.mcp.excluded.filter(Boolean))
+      : undefined;
+  }
 
   const selectedAuthType =
     (argv.authType as AuthType | undefined) ||
