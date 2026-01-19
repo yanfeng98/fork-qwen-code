@@ -11,8 +11,6 @@ import { homedir } from 'node:os';
 import { getAllGeminiMdFilenames } from '../tools/memoryTool.js';
 import type { FileDiscoveryService } from '../services/fileDiscoveryService.js';
 import { processImports } from './memoryImportProcessor.js';
-import type { FileFilteringOptions } from '../config/constants.js';
-import { DEFAULT_MEMORY_FILE_FILTERING_OPTIONS } from '../config/constants.js';
 import { QWEN_DIR } from './paths.js';
 
 // Simple console logger, similar to the one previously in CLI's config.ts
@@ -85,8 +83,6 @@ async function getGeminiMdFilePathsInternal(
   fileService: FileDiscoveryService,
   extensionContextFilePaths: string[] = [],
   folderTrust: boolean,
-  fileFilteringOptions: FileFilteringOptions,
-  maxDirs: number,
 ): Promise<string[]> {
   const dirs = new Set<string>([
     ...includeDirectoriesToReadGemini,
@@ -108,8 +104,6 @@ async function getGeminiMdFilePathsInternal(
         fileService,
         extensionContextFilePaths,
         folderTrust,
-        fileFilteringOptions,
-        maxDirs,
       ),
     );
 
@@ -138,8 +132,6 @@ async function getGeminiMdFilePathsInternalForEachDir(
   fileService: FileDiscoveryService,
   extensionContextFilePaths: string[] = [],
   folderTrust: boolean,
-  _fileFilteringOptions: FileFilteringOptions,
-  _maxDirs: number,
 ): Promise<string[]> {
   const allPaths = new Set<string>();
   const geminiMdFilenames = getAllGeminiMdFilenames();
@@ -346,8 +338,6 @@ export async function loadServerHierarchicalMemory(
   extensionContextFilePaths: string[] = [],
   folderTrust: boolean,
   importFormat: 'flat' | 'tree' = 'tree',
-  fileFilteringOptions?: FileFilteringOptions,
-  maxDirs: number = 200,
 ): Promise<LoadServerHierarchicalMemoryResponse> {
   if (debugMode)
     logger.debug(
@@ -365,8 +355,6 @@ export async function loadServerHierarchicalMemory(
     fileService,
     extensionContextFilePaths,
     folderTrust,
-    fileFilteringOptions || DEFAULT_MEMORY_FILE_FILTERING_OPTIONS,
-    maxDirs,
   );
   if (filePaths.length === 0) {
     if (debugMode) logger.debug('No QWEN.md files found in hierarchy.');

@@ -345,11 +345,6 @@ describe('loadServerHierarchicalMemory', () => {
       [],
       DEFAULT_FOLDER_TRUST,
       'tree',
-      {
-        respectGitIgnore: true,
-        respectQwenIgnore: true,
-      },
-      200, // maxDirs parameter
     );
 
     // Note: Downward traversal is currently disabled, so no subdirectory files are loaded
@@ -375,11 +370,6 @@ describe('loadServerHierarchicalMemory', () => {
       [],
       DEFAULT_FOLDER_TRUST,
       'tree',
-      {
-        respectGitIgnore: true,
-        respectQwenIgnore: true,
-      },
-      1, // maxDirs
     );
 
     expect(result).toEqual({
