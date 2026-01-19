@@ -474,7 +474,7 @@ const SETTINGS_SCHEMA = {
           },
         },
       },
-      lastShownTimestamp: {
+      feedbackLastShownTimestamp: {
         type: 'number',
         label: 'Feedback Last Shown Timestamp',
         category: 'UI',

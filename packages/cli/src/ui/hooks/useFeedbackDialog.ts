@@ -6,6 +6,7 @@ import {
   UserFeedbackEvent,
   type UserFeedbackRating,
   isNodeError,
+  AuthType,
 } from '@qwen-code/qwen-code-core';
 import { StreamingState, MessageType, type HistoryItem } from '../types.js';
 import {
@@ -30,19 +31,19 @@ const lastMessageIsAIResponse = (history: HistoryItem[]): boolean =>
   history.length > 0 && history[history.length - 1].type === MessageType.GEMINI;
 
 /**
- * Read lastShownTimestamp directly from the user settings file
+ * Read feedbackLastShownTimestamp directly from the user settings file
  */
-const getLastShownTimestampFromFile = (): number => {
+const getFeedbackLastShownTimestampFromFile = (): number => {
   try {
     if (fs.existsSync(USER_SETTINGS_PATH)) {
       const content = fs.readFileSync(USER_SETTINGS_PATH, 'utf-8');
       const settings = JSON.parse(stripJsonComments(content));
-      return settings?.ui?.lastShownTimestamp ?? 0;
+      return settings?.ui?.feedbackLastShownTimestamp ?? 0;
     }
   } catch (error) {
     if (isNodeError(error) && error.code !== 'ENOENT') {
       console.warn(
-        'Failed to read lastShownTimestamp from settings file:',
+        'Failed to read feedbackLastShownTimestamp from settings file:',
         error,
       );
     }
@@ -54,10 +55,10 @@ const getLastShownTimestampFromFile = (): number => {
  * Check if we should show the feedback dialog based on fatigue mechanism
  */
 const shouldShowFeedbackBasedOnFatigue = (): boolean => {
-  const lastShownTimestamp = getLastShownTimestampFromFile();
+  const feedbackLastShownTimestamp = getFeedbackLastShownTimestampFromFile();
 
   const now = Date.now();
-  const timeSinceLastShown = now - lastShownTimestamp;
+  const timeSinceLastShown = now - feedbackLastShownTimestamp;
   const cooldownMs = FEEDBACK_COOLDOWN_HOURS * 60 * 60 * 1000;
 
   return timeSinceLastShown >= cooldownMs;
@@ -100,7 +101,11 @@ export const useFeedbackDialog = ({
     setIsFeedbackDialogOpen(true);
 
     // Record the timestamp when feedback dialog is shown (fire and forget)
-    settings.setValue(SettingScope.User, 'ui.lastShownTimestamp', Date.now());
+    settings.setValue(
+      SettingScope.User,
+      'ui.feedbackLastShownTimestamp',
+      Date.now(),
+    );
   }, [settings]);
 
   const closeFeedbackDialog = useCallback(
@@ -128,13 +133,15 @@ export const useFeedbackDialog = ({
     const checkAndShowFeedback = () => {
       if (streamingState === StreamingState.Idle && history.length > 0) {
         // Show feedback dialog if:
-        // 1. Qwen logger is enabled (required for feedback submission)
-        // 2. User feedback is enabled in settings
-        // 3. The last message is an AI response
-        // 4. Random chance (25% probability)
-        // 5. Meets minimum requirements (tool calls > 10 OR user messages > 5)
-        // 6. Fatigue mechanism allows showing (not shown recently across sessions)
+        // 1. User is authenticated via QWEN_OAUTH
+        // 2. Qwen logger is enabled (required for feedback submission)
+        // 3. User feedback is enabled in settings
+        // 4. The last message is an AI response
+        // 5. Random chance (25% probability)
+        // 6. Meets minimum requirements (tool calls > 10 OR user messages > 5)
+        // 7. Fatigue mechanism allows showing (not shown recently across sessions)
         if (
+          config.getAuthType() !== AuthType.QWEN_OAUTH ||
           !config.getUsageStatisticsEnabled() ||
           settings.merged.ui?.enableUserFeedback === false ||
           !lastMessageIsAIResponse(history) ||

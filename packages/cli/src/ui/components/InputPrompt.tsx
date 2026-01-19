@@ -329,7 +329,7 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
         return;
       }
 
-      // Intercept feedback dialog option keys (1, 2, 3) when dialog is open
+      // Intercept feedback dialog option keys (1, 2) when dialog is open
       if (
         uiState.isFeedbackDialogOpen &&
         (FEEDBACK_DIALOG_KEYS as readonly string[]).includes(key.name)
