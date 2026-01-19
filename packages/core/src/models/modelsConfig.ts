@@ -204,6 +204,18 @@ export class ModelsConfig {
   }
 
   /**
+   * Get all available models across all authTypes
+   */
+  getAllAvailableModels(): AvailableModel[] {
+    const allModels: AvailableModel[] = [];
+    for (const authType of Object.values(AuthType)) {
+      const models = this.modelRegistry.getModelsForAuthType(authType);
+      allModels.push(...models);
+    }
+    return allModels;
+  }
+
+  /**
    * Check if a model exists for the given authType
    */
   hasModel(authType: AuthType, modelId: string): boolean {

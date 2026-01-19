@@ -678,4 +678,120 @@ describe('ModelsConfig', () => {
     expect(modelsConfig.getModel()).toBe('updated-model');
     expect(modelsConfig.getGenerationConfig().model).toBe('updated-model');
   });
+
+  describe('getAllAvailableModels', () => {
+    it('should return all models across all authTypes', () => {
+      const modelProvidersConfig: ModelProvidersConfig = {
+        openai: [
+          {
+            id: 'openai-model-1',
+            name: 'OpenAI Model 1',
+            baseUrl: 'https://api.openai.com/v1',
+            envKey: 'OPENAI_API_KEY',
+          },
+          {
+            id: 'openai-model-2',
+            name: 'OpenAI Model 2',
+            baseUrl: 'https://api.openai.com/v1',
+            envKey: 'OPENAI_API_KEY',
+          },
+        ],
+        anthropic: [
+          {
+            id: 'anthropic-model-1',
+            name: 'Anthropic Model 1',
+            baseUrl: 'https://api.anthropic.com/v1',
+            envKey: 'ANTHROPIC_API_KEY',
+          },
+        ],
+        gemini: [
+          {
+            id: 'gemini-model-1',
+            name: 'Gemini Model 1',
+            baseUrl: 'https://generativelanguage.googleapis.com/v1',
+            envKey: 'GEMINI_API_KEY',
+          },
+        ],
+      };
+
+      const modelsConfig = new ModelsConfig({
+        modelProvidersConfig,
+      });
+
+      const allModels = modelsConfig.getAllAvailableModels();
+
+      // Should include qwen-oauth models (hard-coded)
+      const qwenModels = allModels.filter(
+        (m) => m.authType === AuthType.QWEN_OAUTH,
+      );
+      expect(qwenModels.length).toBeGreaterThan(0);
+
+      // Should include openai models
+      const openaiModels = allModels.filter(
+        (m) => m.authType === AuthType.USE_OPENAI,
+      );
+      expect(openaiModels.length).toBe(2);
+      expect(openaiModels.map((m) => m.id)).toContain('openai-model-1');
+      expect(openaiModels.map((m) => m.id)).toContain('openai-model-2');
+
+      // Should include anthropic models
+      const anthropicModels = allModels.filter(
+        (m) => m.authType === AuthType.USE_ANTHROPIC,
+      );
+      expect(anthropicModels.length).toBe(1);
+      expect(anthropicModels[0].id).toBe('anthropic-model-1');
+
+      // Should include gemini models
+      const geminiModels = allModels.filter(
+        (m) => m.authType === AuthType.USE_GEMINI,
+      );
+      expect(geminiModels.length).toBe(1);
+      expect(geminiModels[0].id).toBe('gemini-model-1');
+    });
+
+    it('should return empty array when no models are registered', () => {
+      const modelsConfig = new ModelsConfig();
+
+      const allModels = modelsConfig.getAllAvailableModels();
+
+      // Should still include qwen-oauth models (hard-coded)
+      expect(allModels.length).toBeGreaterThan(0);
+      const qwenModels = allModels.filter(
+        (m) => m.authType === AuthType.QWEN_OAUTH,
+      );
+      expect(qwenModels.length).toBeGreaterThan(0);
+    });
+
+    it('should return models with correct structure', () => {
+      const modelProvidersConfig: ModelProvidersConfig = {
+        openai: [
+          {
+            id: 'test-model',
+            name: 'Test Model',
+            description: 'A test model',
+            baseUrl: 'https://api.example.com/v1',
+            envKey: 'TEST_API_KEY',
+            capabilities: {
+              vision: true,
+            },
+          },
+        ],
+      };
+
+      const modelsConfig = new ModelsConfig({
+        modelProvidersConfig,
+      });
+
+      const allModels = modelsConfig.getAllAvailableModels();
+      const testModel = allModels.find((m) => m.id === 'test-model');
+
+      expect(testModel).toBeDefined();
+      expect(testModel?.id).toBe('test-model');
+      expect(testModel?.label).toBe('Test Model');
+      expect(testModel?.description).toBe('A test model');
+      expect(testModel?.authType).toBe(AuthType.USE_OPENAI);
+      expect(testModel?.isVision).toBe(true);
+      expect(testModel?.capabilities?.vision).toBe(true);
+    });
+  });
 });
