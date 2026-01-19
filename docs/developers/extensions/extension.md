@@ -4,11 +4,25 @@ Qwen Code extensions package prompts, MCP servers, and custom commands into a fa
 
 ## Extension management
 
-We offer a suite of extension management tools using `qwen extensions` commands.
+We offer a suite of extension management tools using both `qwen extensions` CLI commands and `/extensions` slash commands within the interactive CLI.
 
-Note that these commands are not supported from within the CLI, although you can list installed extensions using the `/extensions list` subcommand.
+### Runtime Extension Management (Slash Commands)
 
-Note that all of these commands will only be reflected in active CLI sessions on restart.
+You can manage extensions at runtime within the interactive CLI using `/extensions` slash commands. These commands support hot-reloading, meaning changes take effect immediately without restarting the application.
+
+| Command                                                | Description                                                     |
+| ------------------------------------------------------ | --------------------------------------------------------------- |
+| `/extensions` or `/extensions list`                    | List all installed extensions with their status                 |
+| `/extensions install <source>`                         | Install an extension from a git URL, local path, or marketplace |
+| `/extensions uninstall <name>`                         | Uninstall an extension                                          |
+| `/extensions enable <name> --scope <user\|workspace>`  | Enable an extension                                             |
+| `/extensions disable <name> --scope <user\|workspace>` | Disable an extension                                            |
+| `/extensions update <name>`                            | Update a specific extension                                     |
+| `/extensions update --all`                             | Update all extensions with available updates                    |
+
+### CLI Extension Management
+
+You can also manage extensions using `qwen extensions` CLI commands. Note that changes made via CLI commands will be reflected in active CLI sessions on restart.
 
 ### Installing an extension
 
@@ -98,7 +112,18 @@ The `qwen-extension.json` file contains the configuration for the extension. The
     }
   },
   "contextFileName": "QWEN.md",
-  "excludeTools": ["run_shell_command"]
+  "excludeTools": ["run_shell_command"],
+  "commands": "commands",
+  "skills": "skills",
+  "agents": "agents",
+  "settings": [
+    {
+      "name": "API Key",
+      "description": "Your API key for the service",
+      "envVar": "MY_API_KEY",
+      "sensitive": true
+    }
+  ]
 }
 ```
 
@@ -108,12 +133,18 @@ The `qwen-extension.json` file contains the configuration for the extension. The
   - Note that all MCP server configuration options are supported except for `trust`.
 - `contextFileName`: The name of the file that contains the context for the extension. This will be used to load the context from the extension directory. If this property is not used but a `QWEN.md` file is present in your extension directory, then that file will be loaded.
 - `excludeTools`: An array of tool names to exclude from the model. You can also specify command-specific restrictions for tools that support it, like the `run_shell_command` tool. For example, `"excludeTools": ["run_shell_command(rm -rf)"]` will block the `rm -rf` command. Note that this differs from the MCP server `excludeTools` functionality, which can be listed in the MCP server config. **Important:** Tools specified in `excludeTools` will be disabled for the entire conversation context and will affect all subsequent queries in the current session.
+- `commands`: The directory containing custom commands (default: `commands`). Commands are `.md` files that define prompts.
+- `skills`: The directory containing custom skills (default: `skills`). Skills are discovered automatically and become available via the `/skills` command.
+- `agents`: The directory containing custom subagents (default: `agents`). Subagents are `.yaml` or `.md` files that define specialized AI assistants.
+- `settings`: An array of settings that the extension requires. When installing, users will be prompted to provide values for these settings. The values are stored securely and passed to MCP servers as environment variables.
 
 When Qwen Code starts, it loads all the extensions and merges their configurations. If there are any conflicts, the workspace configuration takes precedence.
 
 ### Custom commands
 
-Extensions can provide [custom commands](./cli/commands.md#custom-commands) by placing TOML files in a `commands/` subdirectory within the extension directory. These commands follow the same format as user and project custom commands and use standard naming conventions.
+Extensions can provide [custom commands](./cli/commands.md#custom-commands) by placing Markdown files in a `commands/` subdirectory within the extension directory. These commands follow the same format as user and project custom commands and use standard naming conventions.
+
+> **Note:** The command format has been updated from TOML to Markdown. TOML files are deprecated but still supported. You can migrate existing TOML commands using the automatic migration prompt that appears when TOML files are detected.
 
 **Example**
 
@@ -123,15 +154,46 @@ An extension named `gcp` with the following structure:
 .qwen/extensions/gcp/
 ├── qwen-extension.json
 └── commands/
-    ├── deploy.toml
+    ├── deploy.md
     └── gcs/
-        └── sync.toml
+        └── sync.md
 ```
 
 Would provide these commands:
 
-- `/deploy` - Shows as `[gcp] Custom command from deploy.toml` in help
-- `/gcs:sync` - Shows as `[gcp] Custom command from sync.toml` in help
+- `/deploy` - Shows as `[gcp] Custom command from deploy.md` in help
+- `/gcs:sync` - Shows as `[gcp] Custom command from sync.md` in help
+
+### Custom skills
+
+Extensions can provide custom skills by placing skill files in a `skills/` subdirectory within the extension directory. Each skill should have a `SKILL.md` file with YAML frontmatter defining the skill's name and description.
+
+**Example**
+
+```
+.qwen/extensions/my-extension/
+├── qwen-extension.json
+└── skills/
+    └── pdf-processor/
+        └── SKILL.md
+```
+
+The skill will be available via the `/skills` command when the extension is active.
+
+### Custom subagents
+
+Extensions can provide custom subagents by placing agent configuration files in an `agents/` subdirectory within the extension directory. Agents are defined using YAML or Markdown files.
+
+**Example**
+
+```
+.qwen/extensions/my-extension/
+├── qwen-extension.json
+└── agents/
+    └── testing-expert.yaml
+```
+
+Extension subagents appear in the subagent manager dialog under "Extension Agents" section.
 
 ### Conflict resolution
 

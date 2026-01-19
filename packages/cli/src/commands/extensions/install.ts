@@ -13,7 +13,10 @@ import {
 import { getErrorMessage } from '../../utils/errors.js';
 import { isWorkspaceTrusted } from '../../config/trustedFolders.js';
 import { loadSettings } from '../../config/settings.js';
-import { requestConsentNonInteractive } from './consent.js';
+import {
+  requestConsentOrFail,
+  requestConsentNonInteractive,
+} from './consent.js';
 
 interface InstallArgs {
   source: string;
@@ -39,8 +42,8 @@ export async function handleInstall(args: InstallArgs) {
     }
 
     const requestConsent = args.consent
-      ? () => Promise.resolve(true)
-      : requestConsentNonInteractive;
+      ? () => Promise.resolve()
+      : requestConsentOrFail.bind(null, requestConsentNonInteractive);
     const workspaceDir = process.cwd();
     const extensionManager = new ExtensionManager({
       workspaceDir,

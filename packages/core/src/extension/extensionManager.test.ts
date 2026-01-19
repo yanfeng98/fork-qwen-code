@@ -20,8 +20,6 @@ import {
   validateName,
   getExtensionId,
   hashValue,
-  extensionConsentString,
-  maybeRequestConsentOrFail,
   parseInstallSource,
   type ExtensionConfig,
 } from './extensionManager.js';
@@ -886,125 +884,6 @@ describe('extension tests', () => {
         };
         const id = getExtensionId(config, metadata);
         expect(id).toBe(hashValue('https://github.com/owner/repo'));
-      });
-    });
-
-    describe('extensionConsentString', () => {
-      it('should generate basic consent string', () => {
-        const config: ExtensionConfig = { name: 'test-ext', version: '1.0.0' };
-        const consent = extensionConsentString(config);
-        expect(consent).toContain('Installing extension "test-ext"');
-        expect(consent).toContain(
-          'Extensions may introduce unexpected behavior',
-        );
-      });
-
-      it('should include MCP servers in consent string', () => {
-        const config: ExtensionConfig = {
-          name: 'test-ext',
-          version: '1.0.0',
-          mcpServers: {
-            'my-server': { command: 'node', args: ['server.js'] },
-          },
-        };
-        const consent = extensionConsentString(config);
-        expect(consent).toContain(
-          'This extension will run the following MCP servers',
-        );
-        expect(consent).toContain('my-server');
-      });
-
-      it('should include commands in consent string', () => {
-        const config: ExtensionConfig = { name: 'test-ext', version: '1.0.0' };
-        const consent = extensionConsentString(config, ['cmd1', 'cmd2']);
-        expect(consent).toContain(
-          'This extension will add the following commands',
-        );
-        expect(consent).toContain('cmd1, cmd2');
-      });
-
-      it('should include context file info', () => {
-        const config: ExtensionConfig = {
-          name: 'test-ext',
-          version: '1.0.0',
-          contextFileName: 'CONTEXT.md',
-        };
-        const consent = extensionConsentString(config);
-        expect(consent).toContain('CONTEXT.md');
-      });
-
-      it('should include excluded tools', () => {
-        const config: ExtensionConfig = {
-          name: 'test-ext',
-          version: '1.0.0',
-          excludeTools: ['tool1', 'tool2'],
-        };
-        const consent = extensionConsentString(config);
-        expect(consent).toContain('exclude the following core tools');
-      });
-    });
-
-    describe('maybeRequestConsentOrFail', () => {
-      it('should request consent for new installation', async () => {
-        const config: ExtensionConfig = { name: 'test-ext', version: '1.0.0' };
-        const requestConsent = vi.fn().mockResolvedValue(true);
-
-        await maybeRequestConsentOrFail(config, requestConsent, []);
-
-        expect(requestConsent).toHaveBeenCalledTimes(1);
-      });
-
-      it('should throw if user declines consent', async () => {
-        const config: ExtensionConfig = { name: 'test-ext', version: '1.0.0' };
-        const requestConsent = vi.fn().mockResolvedValue(false);
-
-        await expect(
-          maybeRequestConsentOrFail(config, requestConsent, []),
-        ).rejects.toThrow('Installation cancelled');
-      });
-
-      it('should skip consent if config unchanged during update', async () => {
-        const config: ExtensionConfig = { name: 'test-ext', version: '1.0.0' };
-        const previousConfig: ExtensionConfig = {
-          name: 'test-ext',
-          version: '0.9.0',
-        };
-        const requestConsent = vi.fn().mockResolvedValue(true);
-
-        await maybeRequestConsentOrFail(
-          config,
-          requestConsent,
-          [],
-          [],
-          [],
-          previousConfig,
-        );
-
-        expect(requestConsent).not.toHaveBeenCalled();
-      });
-
-      it('should request consent if config changed during update', async () => {
-        const config: ExtensionConfig = {
-          name: 'test-ext',
-          version: '1.0.0',
-          mcpServers: { server: { command: 'node' } },
-        };
-        const previousConfig: ExtensionConfig = {
-          name: 'test-ext',
-          version: '0.9.0',
-        };
-        const requestConsent = vi.fn().mockResolvedValue(true);
-
-        await maybeRequestConsentOrFail(
-          config,
-          requestConsent,
-          [],
-          [],
-          [],
-          previousConfig,
-        );
-
-        expect(requestConsent).toHaveBeenCalledTimes(1);
       });
     });
 

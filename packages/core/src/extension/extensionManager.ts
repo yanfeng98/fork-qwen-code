@@ -143,6 +143,17 @@ export enum ExtensionUpdateState {
   UNKNOWN = 'unknown',
 }
 
+export type ExtensionRequestOptions = {
+  extensionConfig: ExtensionConfig;
+  commands?: string[];
+  skills?: SkillConfig[];
+  subagents?: SubagentConfig[];
+  previousExtensionConfig?: ExtensionConfig;
+  previousCommands?: string[];
+  previousSkills?: SkillConfig[];
+  previousSubagents?: SubagentConfig[];
+};
+
 export interface ExtensionManagerOptions {
   /** Working directory for project-level extensions */
   workspaceDir?: string;
@@ -151,7 +162,7 @@ export interface ExtensionManagerOptions {
   isWorkspaceTrusted: boolean;
   telemetrySettings?: TelemetrySettings;
   config?: Config;
-  requestConsent?: (consent: string) => Promise<boolean>;
+  requestConsent?: (options?: ExtensionRequestOptions) => Promise<void>;
 }
 
 // ============================================================================
@@ -199,10 +210,7 @@ function getContextFileNames(config: ExtensionConfig): string[] {
   return config.contextFileName;
 }
 
-async function loadCommandsFromDir(
-  dir: string,
-  extensionName: string,
-): Promise<string[]> {
+async function loadCommandsFromDir(dir: string): Promise<string[]> {
   const globOptions = {
     nodir: true,
     dot: true,
@@ -221,12 +229,11 @@ async function loadCommandsFromDir(
         0,
         relativePathWithExt.length - 3,
       );
-      const baseCommandName = relativePath
+      const commandName = relativePath
         .split(path.sep)
         .map((segment) => segment.replaceAll(':', '_'))
         .join(':');
 
-      const commandName = `${extensionName}:${baseCommandName}`;
       return commandName;
     });
 
@@ -277,7 +284,7 @@ export class ExtensionManager {
   private config?: Config;
   private telemetrySettings?: TelemetrySettings;
   private isWorkspaceTrusted: boolean;
-  private requestConsent: (consent: string) => Promise<boolean>;
+  private requestConsent: (options?: ExtensionRequestOptions) => Promise<void>;
 
   constructor(options: ExtensionManagerOptions) {
     this.workspaceDir = options.workspaceDir ?? process.cwd();
@@ -289,8 +296,7 @@ export class ExtensionManager {
       this.configDir,
       'extension-enablement.json',
     );
-    this.requestConsent =
-      options.requestConsent || (() => Promise.resolve(true));
+    this.requestConsent = options.requestConsent || (() => Promise.resolve());
     this.config = options.config;
     this.telemetrySettings = options.telemetrySettings;
     this.isWorkspaceTrusted = options.isWorkspaceTrusted;
@@ -301,7 +307,7 @@ export class ExtensionManager {
   }
 
   setRequestConsent(
-    requestConsent: (consent: string) => Promise<boolean>,
+    requestConsent: (options?: ExtensionRequestOptions) => Promise<void>,
   ): void {
     this.requestConsent = requestConsent;
   }
@@ -611,7 +617,6 @@ export class ExtensionManager {
 
       extension.commands = await loadCommandsFromDir(
         `${effectiveExtensionPath}/commands`,
-        extension.name,
       );
 
       extension.contextFiles = getContextFileNames(config)
@@ -692,7 +697,7 @@ export class ExtensionManager {
    */
   async installExtension(
     installMetadata: ExtensionInstallMetadata,
-    requestConsent?: (consent: string) => Promise<boolean>,
+    requestConsent?: (options?: ExtensionRequestOptions) => Promise<void>,
     cwd?: string,
     previousExtensionConfig?: ExtensionConfig,
   ): Promise<Extension> {
@@ -827,27 +832,40 @@ export class ExtensionManager {
 
         const commands = await loadCommandsFromDir(
           `${localSourcePath}/commands`,
-          newExtensionConfig.name,
         );
         const previousCommands = previous?.commands ?? [];
 
         const skills = await loadSkillsFromDir(`${localSourcePath}/skills`);
         const previousSkills = previous?.skills ?? [];
 
-        const agents = await loadSubagentFromDir(`${localSourcePath}/agents`);
-        const previousAgents = previous?.agents ?? [];
-
-        await maybeRequestConsentOrFail(
-          newExtensionConfig,
-          requestConsent || this.requestConsent,
-          commands,
-          skills,
-          agents,
-          previousExtensionConfig,
-          previousCommands,
-          previousSkills,
-          previousAgents,
+        const subagents = await loadSubagentFromDir(
+          `${localSourcePath}/agents`,
         );
+        const previousSubagents = previous?.agents ?? [];
+
+        if (requestConsent) {
+          await requestConsent({
+            extensionConfig: newExtensionConfig,
+            commands,
+            skills,
+            subagents,
+            previousExtensionConfig,
+            previousCommands,
+            previousSkills,
+            previousSubagents,
+          });
+        } else {
+          this.requestConsent({
+            extensionConfig: newExtensionConfig,
+            commands,
+            skills,
+            subagents,
+            previousExtensionConfig,
+            previousCommands,
+            previousSkills,
+            previousSubagents,
+          });
+        }
 
         const extensionStorage = new ExtensionStorage(newExtensionName);
         const destinationPath = extensionStorage.getExtensionDir();
@@ -1087,7 +1105,7 @@ export class ExtensionManager {
 
   async performWorkspaceExtensionMigration(
     extensions: Extension[],
-    requestConsent: (consent: string) => Promise<boolean>,
+    requestConsent: (options?: ExtensionRequestOptions) => Promise<void>,
   ): Promise<string[]> {
     const failedInstallNames: string[] = [];
 
@@ -1278,105 +1296,6 @@ export function validateName(name: string) {
     throw new Error(
       `Invalid extension name: "${name}". Only letters (a-z, A-Z), numbers (0-9), and dashes (-) are allowed.`,
     );
-  }
-}
-
-/**
- * Builds a consent string for installing an extension based on it's
- * extensionConfig.
- */
-export function extensionConsentString(
-  extensionConfig: ExtensionConfig,
-  commands: string[] = [],
-  skills: SkillConfig[] = [],
-  subagents: SubagentConfig[] = [],
-): string {
-  const output: string[] = [];
-  const mcpServerEntries = Object.entries(extensionConfig.mcpServers || {});
-  output.push(`Installing extension "${extensionConfig.name}".`);
-  output.push(
-    '**Extensions may introduce unexpected behavior. Ensure you have investigated the extension source and trust the author.**',
-  );
-
-  if (mcpServerEntries.length) {
-    output.push('This extension will run the following MCP servers:');
-    for (const [key, mcpServer] of mcpServerEntries) {
-      const isLocal = !!mcpServer.command;
-      const source =
-        mcpServer.httpUrl ??
-        `${mcpServer.command || ''}${mcpServer.args ? ' ' + mcpServer.args.join(' ') : ''}`;
-      output.push(`  * ${key} (${isLocal ? 'local' : 'remote'}): ${source}`);
-    }
-  }
-  if (commands && commands.length > 0) {
-    output.push(
-      `This extension will add the following commands: ${commands.join(', ')}.`,
-    );
-  }
-  if (extensionConfig.contextFileName) {
-    output.push(
-      `This extension will append info to your QWEN.md context using ${extensionConfig.contextFileName}`,
-    );
-  }
-  if (extensionConfig.excludeTools) {
-    output.push(
-      `This extension will exclude the following core tools: ${extensionConfig.excludeTools}`,
-    );
-  }
-  if (skills.length > 0) {
-    output.push('This extension will install the following skills:');
-    for (const skill of skills) {
-      output.push(`  * ${chalk.bold(skill.name)}: ${skill.description}`);
-    }
-  }
-  if (subagents.length > 0) {
-    output.push('This extension will install the following subagents:');
-    for (const subagent of subagents) {
-      output.push(`  * ${chalk.bold(subagent.name)}: ${subagent.description}`);
-    }
-  }
-  return output.join('\n');
-}
-
-/**
- * Requests consent from the user to install an extension (extensionConfig), if
- * there is any difference between the consent string for `extensionConfig` and
- * `previousExtensionConfig`.
- *
- * Always requests consent if previousExtensionConfig is null.
- *
- * Throws if the user does not consent.
- */
-export async function maybeRequestConsentOrFail(
-  extensionConfig: ExtensionConfig,
-  requestConsent: (consent: string) => Promise<boolean>,
-  commands: string[],
-  skills: SkillConfig[] = [],
-  subagents: SubagentConfig[] = [],
-  previousExtensionConfig?: ExtensionConfig,
-  previousCommands: string[] = [],
-  previousSkills: SkillConfig[] = [],
-  previousSubagents: SubagentConfig[] = [],
-) {
-  const extensionConsent = extensionConsentString(
-    extensionConfig,
-    commands,
-    skills,
-    subagents,
-  );
-  if (previousExtensionConfig) {
-    const previousExtensionConsent = extensionConsentString(
-      previousExtensionConfig,
-      previousCommands,
-      previousSkills,
-      previousSubagents,
-    );
-    if (previousExtensionConsent === extensionConsent) {
-      return;
-    }
-  }
-  if (!(await requestConsent(extensionConsent))) {
-    throw new Error(`Installation cancelled for "${extensionConfig.name}".`);
   }
 }
 

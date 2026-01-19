@@ -68,11 +68,6 @@ export function createSlashCommandFromDefinition(
     .map((segment) => segment.replaceAll(':', '_'))
     .join(':');
 
-  // Prefix command name with extension name if provided
-  const commandName = extensionName
-    ? `${extensionName}:${baseCommandName}`
-    : baseCommandName;
-
   // Add extension name tag for extension commands
   const defaultDescription = `Custom command from ${path.basename(filePath)}`;
   let description = definition.description || defaultDescription;
@@ -109,7 +104,7 @@ export function createSlashCommandFromDefinition(
   }
 
   return {
-    name: commandName,
+    name: baseCommandName,
     description,
     kind: CommandKind.FILE,
     extensionName,
@@ -119,7 +114,7 @@ export function createSlashCommandFromDefinition(
     ): Promise<SlashCommandActionReturn> => {
       if (!context.invocation) {
         console.error(
-          `[FileCommandLoader] Critical error: Command '${commandName}' was executed without invocation context.`,
+          `[FileCommandLoader] Critical error: Command '${baseCommandName}' was executed without invocation context.`,
         );
         return {
           type: 'submit_prompt',

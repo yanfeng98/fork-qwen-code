@@ -148,22 +148,119 @@ Custom commands provide a way to create shortcuts for complex prompts. Let's add
     mkdir -p commands/fs
     ```
 
-2.  Create a file named `commands/fs/grep-code.toml`:
+2.  Create a file named `commands/fs/grep-code.md`:
 
-    ```toml
-    prompt = """
+    ```markdown
+    ---
+    description: Search for a pattern in code and summarize findings
+    ---
+
     Please summarize the findings for the pattern `{{args}}`.
 
     Search Results:
     !{grep -r {{args}} .}
-    """
     ```
 
     This command, `/fs:grep-code`, will take an argument, run the `grep` shell command with it, and pipe the results into a prompt for summarization.
 
+> **Note:** Commands use Markdown format with optional YAML frontmatter. TOML format is deprecated but still supported for backwards compatibility.
+
 After saving the file, restart the Qwen Code. You can now run `/fs:grep-code "some pattern"` to use your new command.
 
-## Step 5: Add a Custom `QWEN.md`
+## Step 5: Add Custom Skills and Subagents (Optional)
+
+Extensions can also provide custom skills and subagents to extend Qwen Code's capabilities.
+
+### Adding a Custom Skill
+
+Skills are model-invoked capabilities that the AI can automatically use when relevant.
+
+1.  Create a `skills` directory with a skill subdirectory:
+
+    ```bash
+    mkdir -p skills/code-analyzer
+    ```
+
+2.  Create a `skills/code-analyzer/SKILL.md` file:
+
+    ```markdown
+    ---
+    name: code-analyzer
+    description: Analyzes code structure and provides insights about complexity, dependencies, and potential improvements
+    ---
+
+    # Code Analyzer
+
+    ## Instructions
+
+    When analyzing code, focus on:
+
+    - Code complexity and maintainability
+    - Dependencies and coupling
+    - Potential performance issues
+    - Suggestions for improvements
+
+    ## Examples
+
+    - "Analyze the complexity of this function"
+    - "What are the dependencies of this module?"
+    ```
+
+### Adding a Custom Subagent
+
+Subagents are specialized AI assistants for specific tasks.
+
+1.  Create an `agents` directory:
+
+    ```bash
+    mkdir -p agents
+    ```
+
+2.  Create an `agents/refactoring-expert.md` file:
+
+    ```markdown
+    ---
+    name: refactoring-expert
+    description: Specialized in code refactoring, improving code structure and maintainability
+    tools:
+      - read_file
+      - write_file
+      - read_many_files
+    ---
+
+    You are a refactoring specialist focused on improving code quality.
+
+    Your expertise includes:
+
+    - Identifying code smells and anti-patterns
+    - Applying SOLID principles
+    - Improving code readability and maintainability
+    - Safe refactoring with minimal risk
+
+    For each refactoring task:
+
+    1. Analyze the current code structure
+    2. Identify areas for improvement
+    3. Propose refactoring steps
+    4. Implement changes incrementally
+    5. Verify functionality is preserved
+    ```
+
+3.  Update your `qwen-extension.json` to include the new directories:
+
+    ```json
+    {
+      "name": "my-first-extension",
+      "version": "1.0.0",
+      "skills": "skills",
+      "agents": "agents",
+      "mcpServers": { ... }
+    }
+    ```
+
+After restarting Qwen Code, your custom skills will be available via `/skills` and subagents via `/agents manage`.
+
+## Step 6: Add a Custom `QWEN.md`
 
 You can provide persistent context to the model by adding a `QWEN.md` file to your extension. This is useful for giving the model instructions on how to behave or information about your extension's tools. Note that you may not always need this for extensions built to expose commands and prompts.
 
@@ -194,7 +291,7 @@ You can provide persistent context to the model by adding a `QWEN.md` file to yo
 
 Restart the CLI again. The model will now have the context from your `QWEN.md` file in every session where the extension is active.
 
-## Step 6: Releasing Your Extension
+## Step 7: Releasing Your Extension
 
 Once you are happy with your extension, you can share it with others. The two primary ways of releasing extensions are via a Git repository or through GitHub Releases. Using a public Git repository is the simplest method.
 
@@ -207,6 +304,7 @@ You've successfully created a Qwen Code extension! You learned how to:
 - Bootstrap a new extension from a template.
 - Add custom tools with an MCP server.
 - Create convenient custom commands.
+- Add custom skills and subagents.
 - Provide persistent context to the model.
 - Link your extension for local development.
 

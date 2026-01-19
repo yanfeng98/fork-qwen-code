@@ -7,7 +7,10 @@
 import type { CommandModule } from 'yargs';
 import { type ExtensionInstallMetadata } from '@qwen-code/qwen-code-core';
 import { getErrorMessage } from '../../utils/errors.js';
-import { requestConsentNonInteractive } from './consent.js';
+import {
+  requestConsentNonInteractive,
+  requestConsentOrFail,
+} from './consent.js';
 import { getExtensionManager } from './utils.js';
 
 interface InstallArgs {
@@ -24,7 +27,7 @@ export async function handleLink(args: InstallArgs) {
 
     const extension = await extensionManager.installExtension(
       installMetadata,
-      requestConsentNonInteractive,
+      requestConsentOrFail.bind(null, requestConsentNonInteractive),
     );
     console.log(
       `Extension "${extension.name}" linked successfully and enabled.`,

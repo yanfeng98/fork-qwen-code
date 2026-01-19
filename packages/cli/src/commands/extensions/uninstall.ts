@@ -7,7 +7,10 @@
 import type { CommandModule } from 'yargs';
 import { getErrorMessage } from '../../utils/errors.js';
 import { ExtensionManager } from '@qwen-code/qwen-code-core';
-import { requestConsentNonInteractive } from './consent.js';
+import {
+  requestConsentNonInteractive,
+  requestConsentOrFail,
+} from './consent.js';
 import { isWorkspaceTrusted } from '../../config/trustedFolders.js';
 import { loadSettings } from '../../config/settings.js';
 
@@ -20,7 +23,10 @@ export async function handleUninstall(args: UninstallArgs) {
     const workspaceDir = process.cwd();
     const extensionManager = new ExtensionManager({
       workspaceDir,
-      requestConsent: requestConsentNonInteractive,
+      requestConsent: requestConsentOrFail.bind(
+        null,
+        requestConsentNonInteractive,
+      ),
       isWorkspaceTrusted: !!isWorkspaceTrusted(
         loadSettings(workspaceDir).merged,
       ),

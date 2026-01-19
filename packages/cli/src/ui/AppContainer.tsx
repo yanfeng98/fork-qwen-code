@@ -102,7 +102,10 @@ import { processVisionSwitchOutcome } from './hooks/useVisionAutoSwitch.js';
 import { useSubagentCreateDialog } from './hooks/useSubagentCreateDialog.js';
 import { useAgentsManagerDialog } from './hooks/useAgentsManagerDialog.js';
 import { useAttentionNotifications } from './hooks/useAttentionNotifications.js';
-import { requestConsentInteractive } from '../commands/extensions/consent.js';
+import {
+  requestConsentInteractive,
+  requestConsentOrFail,
+} from '../commands/extensions/consent.js';
 
 const CTRL_EXIT_PROMPT_DURATION_MS = 1000;
 
@@ -165,8 +168,10 @@ export const AppContainer = (props: AppContainerProps) => {
 
   const extensionManager = config.getExtensionManager();
 
-  extensionManager.setRequestConsent(async (description) =>
-    requestConsentInteractive(description, addConfirmUpdateExtensionRequest),
+  extensionManager.setRequestConsent(
+    requestConsentOrFail.bind(null, (description) =>
+      requestConsentInteractive(description, addConfirmUpdateExtensionRequest),
+    ),
   );
 
   const { addConfirmUpdateExtensionRequest, confirmUpdateExtensionRequests } =
