@@ -202,7 +202,7 @@ export async function main() {
   const settings = loadSettings();
   await cleanupCheckpoints();
 
-  let argv = await parseArguments();
+  let argv = await parseArguments(settings.merged);
 
   // Check for invalid input combinations early to prevent crashes
   if (argv.promptInteractive && !process.stdin.isTTY) {

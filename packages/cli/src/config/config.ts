@@ -164,7 +164,7 @@ function normalizeOutputFormat(
   return OutputFormat.TEXT;
 }
 
-export async function parseArguments(): Promise<CliArgs> {
+export async function parseArguments(settings: Settings): Promise<CliArgs> {
   let rawArgv = hideBin(process.argv);
 
   // hack: if the first argument is the CLI entry point, remove it
