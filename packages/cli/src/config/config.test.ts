@@ -897,138 +897,6 @@ describe('loadCliConfig telemetry', () => {
   });
 });
 
-describe('Hierarchical Memory Loading (config.ts) - Placeholder Suite', () => {
-  beforeEach(() => {
-    vi.resetAllMocks();
-    vi.mocked(os.homedir).mockReturnValue('/mock/home/user');
-    // Other common mocks would be reset here.
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it('should pass extension context file paths to loadServerHierarchicalMemory', async () => {
-    process.argv = ['node', 'script.js'];
-    const settings: Settings = {};
-    const extensions: Extension[] = [
-      {
-        path: '/path/to/ext1',
-        config: {
-          name: 'ext1',
-          version: '1.0.0',
-        },
-        contextFiles: ['/path/to/ext1/QWEN.md'],
-      },
-      {
-        path: '/path/to/ext2',
-        config: {
-          name: 'ext2',
-          version: '1.0.0',
-        },
-        contextFiles: [],
-      },
-      {
-        path: '/path/to/ext3',
-        config: {
-          name: 'ext3',
-          version: '1.0.0',
-        },
-        contextFiles: [
-          '/path/to/ext3/context1.md',
-          '/path/to/ext3/context2.md',
-        ],
-      },
-    ];
-    const argv = await parseArguments({} as Settings);
-    await loadCliConfig(
-      settings,
-      extensions,
-      new ExtensionEnablementManager(
-        ExtensionStorage.getUserExtensionsDir(),
-        argv.extensions,
-      ),
-      argv,
-    );
-    expect(ServerConfig.loadServerHierarchicalMemory).toHaveBeenCalledWith(
-      expect.any(String),
-      [],
-      false,
-      expect.any(Object),
-      [
-        '/path/to/ext1/QWEN.md',
-        '/path/to/ext3/context1.md',
-        '/path/to/ext3/context2.md',
-      ],
-      true,
-      'tree',
-    );
-  });
-
-  // NOTE TO FUTURE DEVELOPERS:
-  // To re-enable tests for loadHierarchicalGeminiMemory, ensure that:
-  // 1. os.homedir() is reliably mocked *before* the config.ts module is loaded
-  //    and its functions (which use os.homedir()) are called.
-  // 2. fs/promises and fs mocks correctly simulate file/directory existence,
-  //    readability, and content based on paths derived from the mocked os.homedir().
-  // 3. Spies on console functions (for logger output) are correctly set up if needed.
-  // Example of a previously failing test structure:
-  it.skip('should correctly use mocked homedir for global path', async () => {
-    const MOCK_GEMINI_DIR_LOCAL = path.join('/mock/home/user', '.qwen');
-    const MOCK_GLOBAL_PATH_LOCAL = path.join(MOCK_GEMINI_DIR_LOCAL, 'QWEN.md');
-    mockFs({
-      [MOCK_GLOBAL_PATH_LOCAL]: { type: 'file', content: 'GlobalContentOnly' },
-    });
-    const memory = await loadHierarchicalGeminiMemory('/some/other/cwd', false);
-    expect(memory).toBe('GlobalContentOnly');
-    expect(vi.mocked(os.homedir)).toHaveBeenCalled();
-    expect(fsPromises.readFile).toHaveBeenCalledWith(
-      MOCK_GLOBAL_PATH_LOCAL,
-      'utf-8',
-    );
-  });
-});
-
-describe('mergeMcpServers', () => {
-  it('should not modify the original settings object', async () => {
-    const settings: Settings = {
-      mcpServers: {
-        'test-server': {
-          url: 'http://localhost:8080',
-        },
-      },
-    };
-    const extensions: Extension[] = [
-      {
-        path: '/path/to/ext1',
-        config: {
-          name: 'ext1',
-          version: '1.0.0',
-          mcpServers: {
-            'ext1-server': {
-              url: 'http://localhost:8081',
-            },
-          },
-        },
-        contextFiles: [],
-      },
-    ];
-    const originalSettings = JSON.parse(JSON.stringify(settings));
-    process.argv = ['node', 'script.js'];
-    const argv = await parseArguments({} as Settings);
-    await loadCliConfig(
-      settings,
-      extensions,
-      new ExtensionEnablementManager(
-        ExtensionStorage.getUserExtensionsDir(),
-        argv.extensions,
-      ),
-      argv,
-    );
-    expect(settings).toEqual(originalSettings);
-  });
-});
-
 describe('mergeExcludeTools', () => {
   const defaultExcludes = [ShellTool.Name, EditTool.Name, WriteFileTool.Name];
   const originalIsTTY = process.stdin.isTTY;
@@ -1041,147 +909,21 @@ describe('mergeExcludeTools', () => {
     process.stdin.isTTY = originalIsTTY;
   });
 
-  it('should merge excludeTools from settings and extensions', async () => {
-    const settings: Settings = { tools: { exclude: ['tool1', 'tool2'] } };
-    const extensions: Extension[] = [
-      {
-        path: '/path/to/ext1',
-        config: {
-          name: 'ext1',
-          version: '1.0.0',
-          excludeTools: ['tool3', 'tool4'],
-        },
-        contextFiles: [],
-      },
-      {
-        path: '/path/to/ext2',
-        config: {
-          name: 'ext2',
-          version: '1.0.0',
-          excludeTools: ['tool5'],
-        },
-        contextFiles: [],
-      },
-    ];
-    process.argv = ['node', 'script.js'];
-    const argv = await parseArguments({} as Settings);
-    const config = await loadCliConfig(
-      settings,
-      extensions,
-      new ExtensionEnablementManager(
-        ExtensionStorage.getUserExtensionsDir(),
-        argv.extensions,
-      ),
-      argv,
-    );
-    expect(config.getExcludeTools()).toEqual(
-      expect.arrayContaining(['tool1', 'tool2', 'tool3', 'tool4', 'tool5']),
-    );
-    expect(config.getExcludeTools()).toHaveLength(5);
-  });
-
-  it('should handle overlapping excludeTools between settings and extensions', async () => {
-    const settings: Settings = { tools: { exclude: ['tool1', 'tool2'] } };
-    const extensions: Extension[] = [
-      {
-        path: '/path/to/ext1',
-        config: {
-          name: 'ext1',
-          version: '1.0.0',
-          excludeTools: ['tool2', 'tool3'],
-        },
-        contextFiles: [],
-      },
-    ];
-    process.argv = ['node', 'script.js'];
-    const argv = await parseArguments({} as Settings);
-    const config = await loadCliConfig(
-      settings,
-      extensions,
-      new ExtensionEnablementManager(
-        ExtensionStorage.getUserExtensionsDir(),
-        argv.extensions,
-      ),
-      argv,
-    );
-    expect(config.getExcludeTools()).toEqual(
-      expect.arrayContaining(['tool1', 'tool2', 'tool3']),
-    );
-    expect(config.getExcludeTools()).toHaveLength(3);
-  });
-
-  it('should handle overlapping excludeTools between extensions', async () => {
-    const settings: Settings = { tools: { exclude: ['tool1'] } };
-    const extensions: Extension[] = [
-      {
-        path: '/path/to/ext1',
-        config: {
-          name: 'ext1',
-          version: '1.0.0',
-          excludeTools: ['tool2', 'tool3'],
-        },
-        contextFiles: [],
-      },
-      {
-        path: '/path/to/ext2',
-        config: {
-          name: 'ext2',
-          version: '1.0.0',
-          excludeTools: ['tool3', 'tool4'],
-        },
-        contextFiles: [],
-      },
-    ];
-    process.argv = ['node', 'script.js'];
-    const argv = await parseArguments({} as Settings);
-    const config = await loadCliConfig(
-      settings,
-      extensions,
-      new ExtensionEnablementManager(
-        ExtensionStorage.getUserExtensionsDir(),
-        argv.extensions,
-      ),
-      argv,
-    );
-    expect(config.getExcludeTools()).toEqual(
-      expect.arrayContaining(['tool1', 'tool2', 'tool3', 'tool4']),
-    );
-    expect(config.getExcludeTools()).toHaveLength(4);
-  });
-
   it('should return an empty array when no excludeTools are specified and it is interactive', async () => {
     process.stdin.isTTY = true;
     const settings: Settings = {};
-    const extensions: Extension[] = [];
     process.argv = ['node', 'script.js'];
     const argv = await parseArguments({} as Settings);
-    const config = await loadCliConfig(
-      settings,
-      extensions,
-      new ExtensionEnablementManager(
-        ExtensionStorage.getUserExtensionsDir(),
-        argv.extensions,
-      ),
-      argv,
-    );
+    const config = await loadCliConfig(settings, argv, undefined, []);
     expect(config.getExcludeTools()).toEqual([]);
   });
 
   it('should return default excludes when no excludeTools are specified and it is not interactive', async () => {
     process.stdin.isTTY = false;
     const settings: Settings = {};
-    const extensions: Extension[] = [];
     process.argv = ['node', 'script.js', '-p', 'test'];
     const argv = await parseArguments({} as Settings);
-    const config = await loadCliConfig(
-      settings,
-      extensions,
-      new ExtensionEnablementManager(
-        ExtensionStorage.getUserExtensionsDir(),
-        argv.extensions,
-      ),
-      argv,
-    );
+    const config = await loadCliConfig(settings, argv, undefined, []);
     expect(config.getExcludeTools()).toEqual(defaultExcludes);
   });
 
@@ -1189,78 +931,11 @@ describe('mergeExcludeTools', () => {
     process.argv = ['node', 'script.js'];
     const argv = await parseArguments({} as Settings);
     const settings: Settings = { tools: { exclude: ['tool1', 'tool2'] } };
-    const extensions: Extension[] = [];
-    const config = await loadCliConfig(
-      settings,
-      extensions,
-      new ExtensionEnablementManager(
-        ExtensionStorage.getUserExtensionsDir(),
-        argv.extensions,
-      ),
-      argv,
-    );
+    const config = await loadCliConfig(settings, argv, undefined, []);
     expect(config.getExcludeTools()).toEqual(
       expect.arrayContaining(['tool1', 'tool2']),
     );
     expect(config.getExcludeTools()).toHaveLength(2);
-  });
-
-  it('should handle extensions with excludeTools but no settings', async () => {
-    const settings: Settings = {};
-    const extensions: Extension[] = [
-      {
-        path: '/path/to/ext',
-        config: {
-          name: 'ext1',
-          version: '1.0.0',
-          excludeTools: ['tool1', 'tool2'],
-        },
-        contextFiles: [],
-      },
-    ];
-    process.argv = ['node', 'script.js'];
-    const argv = await parseArguments({} as Settings);
-    const config = await loadCliConfig(
-      settings,
-      extensions,
-      new ExtensionEnablementManager(
-        ExtensionStorage.getUserExtensionsDir(),
-        argv.extensions,
-      ),
-      argv,
-    );
-    expect(config.getExcludeTools()).toEqual(
-      expect.arrayContaining(['tool1', 'tool2']),
-    );
-    expect(config.getExcludeTools()).toHaveLength(2);
-  });
-
-  it('should not modify the original settings object', async () => {
-    const settings: Settings = { tools: { exclude: ['tool1'] } };
-    const extensions: Extension[] = [
-      {
-        path: '/path/to/ext',
-        config: {
-          name: 'ext1',
-          version: '1.0.0',
-          excludeTools: ['tool2'],
-        },
-        contextFiles: [],
-      },
-    ];
-    const originalSettings = JSON.parse(JSON.stringify(settings));
-    process.argv = ['node', 'script.js'];
-    const argv = await parseArguments({} as Settings);
-    await loadCliConfig(
-      settings,
-      extensions,
-      new ExtensionEnablementManager(
-        ExtensionStorage.getUserExtensionsDir(),
-        argv.extensions,
-      ),
-      argv,
-    );
-    expect(settings).toEqual(originalSettings);
   });
 });
 

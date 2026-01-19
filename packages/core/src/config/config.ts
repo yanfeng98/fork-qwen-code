@@ -335,7 +335,6 @@ export interface ConfigParameters {
   cliVersion?: string;
   loadMemoryFromIncludeDirectories?: boolean;
   importFormat?: 'tree' | 'flat';
-  discoveryMaxDirs?: number;
   chatRecording?: boolean;
   // Web search providers
   webSearch?: {
@@ -482,7 +481,6 @@ export class Config {
   private readonly chatRecordingEnabled: boolean;
   private readonly loadMemoryFromIncludeDirectories: boolean = false;
   private readonly importFormat: 'tree' | 'flat';
-  private readonly discoveryMaxDirs: number;
   private readonly webSearch?: {
     provider: Array<{
       type: 'tavily' | 'google' | 'dashscope';
@@ -597,7 +595,6 @@ export class Config {
     this.loadMemoryFromIncludeDirectories =
       params.loadMemoryFromIncludeDirectories ?? false;
     this.importFormat = params.importFormat ?? 'tree';
-    this.discoveryMaxDirs = params.discoveryMaxDirs ?? 200;
     this.chatCompression = params.chatCompression;
     this.interactive = params.interactive ?? false;
     this.trustedFolder = params.trustedFolder;
@@ -721,8 +718,6 @@ export class Config {
       this.getExtensionContextFilePaths(),
       this.getFolderTrust(),
       this.getImportFormat(),
-      this.getFileFilteringOptions(),
-      this.getDiscoveryMaxDirs(),
     );
     this.setUserMemory(memoryContent);
     this.setGeminiMdFileCount(fileCount);
@@ -854,10 +849,6 @@ export class Config {
 
   getImportFormat(): 'tree' | 'flat' {
     return this.importFormat;
-  }
-
-  getDiscoveryMaxDirs(): number {
-    return this.discoveryMaxDirs;
   }
 
   getContentGeneratorConfig(): ContentGeneratorConfig {
