@@ -26,6 +26,7 @@ export const MODEL_GENERATION_CONFIG_FIELDS = [
   'schemaCompliance',
   'reasoning',
   'contextWindowSize',
+  'customHeaders',
 ] as const satisfies ReadonlyArray<keyof ContentGeneratorConfig>;
 
 /**
@@ -106,15 +107,6 @@ export const QWEN_OAUTH_MODELS: ModelConfig[] = [
     description:
       'The latest Qwen Coder model from Alibaba Cloud ModelStudio (version: qwen3-coder-plus-2025-09-23)',
     capabilities: { vision: false },
-    generationConfig: {
-      samplingParams: {
-        temperature: 0.7,
-        top_p: 0.9,
-        max_tokens: 8192,
-      },
-      timeout: 60000,
-      maxRetries: 3,
-    },
   },
   {
     id: 'vision-model',
@@ -122,14 +114,5 @@ export const QWEN_OAUTH_MODELS: ModelConfig[] = [
     description:
       'The latest Qwen Vision model from Alibaba Cloud ModelStudio (version: qwen3-vl-plus-2025-09-23)',
     capabilities: { vision: true },
-    generationConfig: {
-      samplingParams: {
-        temperature: 0.7,
-        top_p: 0.9,
-        max_tokens: 8192,
-      },
-      timeout: 60000,
-      maxRetries: 3,
-    },
   },
 ];
