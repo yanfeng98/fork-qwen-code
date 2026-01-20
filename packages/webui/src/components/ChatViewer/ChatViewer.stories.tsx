@@ -10,6 +10,7 @@ import {
   ChatViewer,
   type ChatMessageData,
   type ChatViewerHandle,
+  type ToolCallData,
 } from './ChatViewer.js';
 
 /**
@@ -303,6 +304,791 @@ export const SingleAssistantMessage: Story = {
         'coder-model',
       ),
     ],
+  },
+};
+
+// Real conversation example - Chrome Extension Native Host debugging session
+export const RealConversation: Story = {
+  args: {
+    messages: [
+      {
+        uuid: '20fb9426-40ca-4e85-92a1-7add59082167',
+        parentUuid: null,
+        sessionId: 'f05dd1fc-2947-44e0-9f31-cbddce461844',
+        timestamp: '2026-01-09T02:58:32.415Z',
+        type: 'user',
+        message: {
+          role: 'user',
+          content: `Message received: Object from: Object
+service-worker.js:137 Attempting to connect to Native Host: com.qwen.cli.bridge
+service-worker.js:202 Sending handshake...
+service-worker.js:175 Native host disconnected
+service-worker.js:177 Disconnect error: Object
+service-worker.js:178 Disconnect error message: Native host has exited.
+service-worker.js:207 Handshake timeout - no response from Native Host
+
+接收不到 host 的信息。正常应该是:
+service-worker.js:150 [Native Event] host_info Object
+service-worker.js:552 [Qwen] host_info Object  
+service-worker.js:617 [Host] Info Object
+service-worker.js:164 [Native Message] handshake_response Object
+service-worker.js:231 Handshake successful: Object`,
+        },
+      },
+      {
+        uuid: '86f72c75-4626-4292-a26f-13db6f80d4be',
+        parentUuid: '20fb9426-40ca-4e85-92a1-7add59082167',
+        sessionId: 'f05dd1fc-2947-44e0-9f31-cbddce461844',
+        timestamp: '2026-01-09T02:58:45.239Z',
+        type: 'assistant',
+        model: 'claude-opus-4-5-20251101',
+        message: {
+          role: 'assistant',
+          content: `I can see you're experiencing an issue with the Chrome extension's native host connection. The error shows that the native host is disconnecting with "Native host has exited" and there's a handshake timeout. However, the logs also show that sometimes the handshake is successful when the host_info is received properly.
+
+Let me help you troubleshoot this issue. First, I'll explore the codebase to understand how the native host communication works.`,
+        },
+      },
+      {
+        uuid: '6ffff579-8020-4ccb-9b79-7c1da76bbf82',
+        parentUuid: '86f72c75-4626-4292-a26f-13db6f80d4be',
+        sessionId: 'f05dd1fc-2947-44e0-9f31-cbddce461844',
+        timestamp: '2026-01-09T02:58:52.409Z',
+        type: 'assistant',
+        model: 'claude-opus-4-5-20251101',
+        message: {
+          role: 'assistant',
+          content: `Let me create a todo list to track the troubleshooting steps:
+
+1. **Explore the codebase** to understand the native host implementation
+2. **Check the native host configuration** and setup
+3. **Analyze the service worker code** that handles native messaging
+4. **Identify why the native host exits** unexpectedly
+5. **Propose fixes** for the native host connection issue`,
+        },
+      },
+      {
+        uuid: '8fd3dc96-1d34-4dae-845a-4827f435b890',
+        parentUuid: '6ffff579-8020-4ccb-9b79-7c1da76bbf82',
+        sessionId: 'f05dd1fc-2947-44e0-9f31-cbddce461844',
+        timestamp: '2026-01-09T02:58:57.366Z',
+        type: 'assistant',
+        model: 'claude-opus-4-5-20251101',
+        message: {
+          role: 'assistant',
+          content: `Let me start by exploring the codebase to understand the native host implementation.
+
+Looking at the project structure, I found the following relevant files:
+
+\`\`\`
+packages/chrome-extension/
+├── src/
+│   ├── service-worker.ts      # Main service worker
+│   ├── native-messaging/
+│   │   ├── host.ts            # Native host communication
+│   │   └── protocol.ts        # Message protocol
+│   └── manifest.json          # Extension manifest
+└── native-host/
+    ├── index.js               # Native host entry
+    └── com.qwen.cli.bridge.json  # Host manifest
+\`\`\`
+
+The issue appears to be in the handshake timing. The native host is exiting before the handshake completes.`,
+        },
+      },
+      {
+        uuid: 'user-follow-up-1',
+        parentUuid: '8fd3dc96-1d34-4dae-845a-4827f435b890',
+        sessionId: 'f05dd1fc-2947-44e0-9f31-cbddce461844',
+        timestamp: '2026-01-09T03:00:15.000Z',
+        type: 'user',
+        message: {
+          role: 'user',
+          content: '那应该怎么修复这个问题？',
+        },
+      },
+      {
+        uuid: 'assistant-fix-1',
+        parentUuid: 'user-follow-up-1',
+        sessionId: 'f05dd1fc-2947-44e0-9f31-cbddce461844',
+        timestamp: '2026-01-09T03:00:45.000Z',
+        type: 'assistant',
+        model: 'claude-opus-4-5-20251101',
+        message: {
+          role: 'assistant',
+          content: `Based on my analysis, here's how to fix the native host connection issue:
+
+## Root Cause
+The native host process is exiting prematurely because it's not keeping the stdin stream open for communication.
+
+## Solution
+
+Update the native host's \`index.js\`:
+
+\`\`\`javascript
+// native-host/index.js
+const { stdin, stdout } = process;
+
+// Keep the process alive by not closing stdin
+stdin.resume();
+
+// Handle incoming messages
+stdin.on('data', (data) => {
+  try {
+    const length = data.readUInt32LE(0);
+    const message = JSON.parse(data.slice(4, 4 + length).toString());
+    
+    if (message.type === 'handshake') {
+      sendMessage({ type: 'handshake_response', status: 'ok' });
+    }
+    // Handle other messages...
+  } catch (err) {
+    console.error('Error parsing message:', err);
+  }
+});
+
+function sendMessage(msg) {
+  const json = JSON.stringify(msg);
+  const length = Buffer.alloc(4);
+  length.writeUInt32LE(json.length, 0);
+  stdout.write(Buffer.concat([length, Buffer.from(json)]));
+}
+
+// Send host info on startup
+sendMessage({
+  type: 'host_info',
+  pid: process.pid,
+  node: process.execPath
+});
+\`\`\`
+
+## Key Changes
+1. Added \`stdin.resume()\` to prevent the process from exiting
+2. Properly handle the native messaging protocol (4-byte length prefix)
+3. Send \`host_info\` immediately on startup
+
+Would you like me to apply these changes to your codebase?`,
+        },
+      },
+    ],
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'A real debugging conversation about Chrome extension native host connection issues. Demonstrates multi-turn conversation with code blocks and mixed languages (English and Chinese).',
+      },
+    },
+  },
+};
+
+// Helper to create tool call data
+const createToolCall = (
+  id: string,
+  kind: string,
+  title: string,
+  status: 'pending' | 'in_progress' | 'completed' | 'failed',
+  content?: ToolCallData['content'],
+  locations?: ToolCallData['locations'],
+): ToolCallData => ({
+  toolCallId: id,
+  kind,
+  title,
+  status,
+  content,
+  locations,
+});
+
+// Conversation with tool calls - File reading and editing
+export const WithToolCalls: Story = {
+  args: {
+    messages: [
+      {
+        uuid: 'tc-1',
+        timestamp: '2026-01-15T14:00:00.000Z',
+        type: 'user',
+        message: {
+          role: 'user',
+          parts: [
+            { text: '帮我看看 package.json 文件，然后添加一个 lodash 依赖' },
+          ],
+        },
+      },
+      {
+        uuid: 'tc-2',
+        timestamp: '2026-01-15T14:00:05.000Z',
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: '好的，我先读取 package.json 文件来查看当前的依赖配置。',
+        },
+      },
+      {
+        uuid: 'tc-3',
+        timestamp: '2026-01-15T14:00:06.000Z',
+        type: 'tool_call',
+        toolCall: createToolCall(
+          'read-1',
+          'read',
+          'package.json',
+          'completed',
+          [
+            {
+              type: 'content',
+              content: {
+                type: 'text',
+                text: `{
+  "name": "my-project",
+  "version": "1.0.0",
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "vite": "^5.0.0"
+  }
+}`,
+              },
+            },
+          ],
+          [{ path: 'package.json', line: 1 }],
+        ),
+      },
+      {
+        uuid: 'tc-4',
+        timestamp: '2026-01-15T14:00:10.000Z',
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content:
+            '我看到当前项目使用 React 18 和 TypeScript。现在我来添加 lodash 依赖。',
+        },
+      },
+      {
+        uuid: 'tc-5',
+        timestamp: '2026-01-15T14:00:11.000Z',
+        type: 'tool_call',
+        toolCall: createToolCall(
+          'edit-1',
+          'edit',
+          'package.json',
+          'completed',
+          [
+            {
+              type: 'diff',
+              path: 'package.json',
+              oldText: `  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },`,
+              newText: `  "dependencies": {
+    "lodash": "^4.17.21",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },`,
+            },
+          ],
+          [{ path: 'package.json', line: 4 }],
+        ),
+      },
+      {
+        uuid: 'tc-6',
+        timestamp: '2026-01-15T14:00:15.000Z',
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: `已经成功添加 lodash 依赖到 package.json。
+
+你需要运行以下命令来安装新的依赖：
+
+\`\`\`bash
+npm install
+\`\`\`
+
+或者如果你使用 pnpm:
+
+\`\`\`bash
+pnpm install
+\`\`\``,
+        },
+      },
+    ],
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Demonstrates a conversation with Read and Edit tool calls, showing file reading and modification.',
+      },
+    },
+  },
+};
+
+// Conversation with Shell commands
+export const WithShellCommands: Story = {
+  args: {
+    messages: [
+      {
+        uuid: 'sh-1',
+        timestamp: '2026-01-15T15:00:00.000Z',
+        type: 'user',
+        message: {
+          role: 'user',
+          parts: [{ text: '帮我创建一个新的 React 组件文件夹结构' }],
+        },
+      },
+      {
+        uuid: 'sh-2',
+        timestamp: '2026-01-15T15:00:05.000Z',
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: '好的，我来创建一个标准的 React 组件文件夹结构。',
+        },
+      },
+      {
+        uuid: 'sh-3',
+        timestamp: '2026-01-15T15:00:06.000Z',
+        type: 'tool_call',
+        toolCall: createToolCall(
+          'shell-1',
+          'bash',
+          'mkdir -p src/components/Button',
+          'completed',
+          [
+            {
+              type: 'content',
+              content: {
+                type: 'text',
+                text: '',
+              },
+            },
+          ],
+        ),
+      },
+      {
+        uuid: 'sh-4',
+        timestamp: '2026-01-15T15:00:08.000Z',
+        type: 'tool_call',
+        toolCall: createToolCall(
+          'write-1',
+          'write',
+          'src/components/Button/Button.tsx',
+          'completed',
+          [
+            {
+              type: 'content',
+              content: {
+                type: 'text',
+                text: `import React from 'react';
+import './Button.css';
+
+interface ButtonProps {
+  children: React.ReactNode;
+  onClick?: () => void;
+  variant?: 'primary' | 'secondary';
+}
+
+export const Button: React.FC<ButtonProps> = ({
+  children,
+  onClick,
+  variant = 'primary',
+}) => {
+  return (
+    <button className={\`button button--\${variant}\`} onClick={onClick}>
+      {children}
+    </button>
+  );
+};`,
+              },
+            },
+          ],
+          [{ path: 'src/components/Button/Button.tsx' }],
+        ),
+      },
+      {
+        uuid: 'sh-5',
+        timestamp: '2026-01-15T15:00:10.000Z',
+        type: 'tool_call',
+        toolCall: createToolCall(
+          'write-2',
+          'write',
+          'src/components/Button/Button.css',
+          'completed',
+          [
+            {
+              type: 'content',
+              content: {
+                type: 'text',
+                text: `.button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.button--primary {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.button--secondary {
+  background-color: #e5e7eb;
+  color: #1f2937;
+}`,
+              },
+            },
+          ],
+          [{ path: 'src/components/Button/Button.css' }],
+        ),
+      },
+      {
+        uuid: 'sh-6',
+        timestamp: '2026-01-15T15:00:12.000Z',
+        type: 'tool_call',
+        toolCall: createToolCall(
+          'write-3',
+          'write',
+          'src/components/Button/index.ts',
+          'completed',
+          [
+            {
+              type: 'content',
+              content: {
+                type: 'text',
+                text: `export { Button } from './Button';
+export type { ButtonProps } from './Button';`,
+              },
+            },
+          ],
+          [{ path: 'src/components/Button/index.ts' }],
+        ),
+      },
+      {
+        uuid: 'sh-7',
+        timestamp: '2026-01-15T15:00:15.000Z',
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: `已创建完整的 Button 组件结构：
+
+\`\`\`
+src/components/Button/
+├── Button.tsx      # 主组件
+├── Button.css      # 样式
+└── index.ts        # 导出
+\`\`\`
+
+你可以这样使用：
+
+\`\`\`tsx
+import { Button } from './components/Button';
+
+<Button variant="primary" onClick={() => alert('Clicked!')}>
+  Click me
+</Button>
+\`\`\``,
+        },
+      },
+    ],
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Shows a conversation with Shell and Write tool calls, creating a complete component structure.',
+      },
+    },
+  },
+};
+
+// Conversation with Search and multiple file reads
+export const WithSearchAndRead: Story = {
+  args: {
+    messages: [
+      {
+        uuid: 'sr-1',
+        timestamp: '2026-01-15T16:00:00.000Z',
+        type: 'user',
+        message: {
+          role: 'user',
+          parts: [{ text: '帮我找一下项目中所有使用了 useState 的文件' }],
+        },
+      },
+      {
+        uuid: 'sr-2',
+        timestamp: '2026-01-15T16:00:05.000Z',
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: '好的，我来搜索项目中所有使用 useState 的文件。',
+        },
+      },
+      {
+        uuid: 'sr-3',
+        timestamp: '2026-01-15T16:00:06.000Z',
+        type: 'tool_call',
+        toolCall: createToolCall(
+          'search-1',
+          'grep',
+          'useState',
+          'completed',
+          [
+            {
+              type: 'content',
+              content: {
+                type: 'text',
+                text: `src/App.tsx:3:import { useState } from 'react';
+src/components/Counter.tsx:1:import { useState } from 'react';
+src/components/Form.tsx:2:import { useState, useEffect } from 'react';
+src/hooks/useLocalStorage.ts:1:import { useState, useEffect } from 'react';`,
+              },
+            },
+          ],
+          [
+            { path: 'src/App.tsx', line: 3 },
+            { path: 'src/components/Counter.tsx', line: 1 },
+            { path: 'src/components/Form.tsx', line: 2 },
+            { path: 'src/hooks/useLocalStorage.ts', line: 1 },
+          ],
+        ),
+      },
+      {
+        uuid: 'sr-4',
+        timestamp: '2026-01-15T16:00:10.000Z',
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: `找到了 **4 个文件** 使用了 \`useState\`：
+
+| 文件 | 行号 |
+|------|------|
+| \`src/App.tsx\` | 3 |
+| \`src/components/Counter.tsx\` | 1 |
+| \`src/components/Form.tsx\` | 2 |
+| \`src/hooks/useLocalStorage.ts\` | 1 |
+
+需要我详细查看其中某个文件吗？`,
+        },
+      },
+      {
+        uuid: 'sr-5',
+        timestamp: '2026-01-15T16:00:30.000Z',
+        type: 'user',
+        message: {
+          role: 'user',
+          parts: [{ text: '看看 Counter.tsx' }],
+        },
+      },
+      {
+        uuid: 'sr-6',
+        timestamp: '2026-01-15T16:00:31.000Z',
+        type: 'tool_call',
+        toolCall: createToolCall(
+          'read-2',
+          'read',
+          'src/components/Counter.tsx',
+          'completed',
+          [
+            {
+              type: 'content',
+              content: {
+                type: 'text',
+                text: `import { useState } from 'react';
+
+export const Counter = () => {
+  const [count, setCount] = useState(0);
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={() => setCount(c => c + 1)}>+</button>
+      <button onClick={() => setCount(c => c - 1)}>-</button>
+    </div>
+  );
+};`,
+              },
+            },
+          ],
+          [{ path: 'src/components/Counter.tsx' }],
+        ),
+      },
+      {
+        uuid: 'sr-7',
+        timestamp: '2026-01-15T16:00:35.000Z',
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: `这是一个简单的计数器组件，使用 \`useState\` 管理计数状态。
+
+**代码分析：**
+- 使用函数式更新 \`c => c + 1\` 来确保状态更新正确
+- 组件结构简洁，只有一个状态变量
+
+**潜在改进：**
+1. 可以添加 TypeScript 类型注解
+2. 可以提取 min/max 限制
+3. 可以添加 step 参数
+
+需要我帮你优化这个组件吗？`,
+        },
+      },
+    ],
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Demonstrates Search (grep) and Read tool calls in a code exploration conversation.',
+      },
+    },
+  },
+};
+
+// Conversation with Todo/Plan updates
+export const WithPlanUpdates: Story = {
+  args: {
+    messages: [
+      {
+        uuid: 'plan-1',
+        timestamp: '2026-01-15T17:00:00.000Z',
+        type: 'user',
+        message: {
+          role: 'user',
+          parts: [{ text: '帮我重构这个项目的认证模块' }],
+        },
+      },
+      {
+        uuid: 'plan-2',
+        timestamp: '2026-01-15T17:00:05.000Z',
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content:
+            '好的，这是一个比较复杂的任务。让我先创建一个计划来跟踪进度。',
+        },
+      },
+      {
+        uuid: 'plan-3',
+        timestamp: '2026-01-15T17:00:06.000Z',
+        type: 'tool_call',
+        toolCall: createToolCall(
+          'todo-1',
+          'todowrite',
+          'Create refactoring plan',
+          'completed',
+          [
+            {
+              type: 'content',
+              content: {
+                type: 'text',
+                text: JSON.stringify([
+                  { content: '分析现有认证代码结构', status: 'in_progress' },
+                  { content: '设计新的认证架构', status: 'pending' },
+                  { content: '实现 JWT token 管理', status: 'pending' },
+                  { content: '添加 refresh token 机制', status: 'pending' },
+                  { content: '更新相关测试', status: 'pending' },
+                ]),
+              },
+            },
+          ],
+        ),
+      },
+      {
+        uuid: 'plan-4',
+        timestamp: '2026-01-15T17:00:10.000Z',
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: '我已经创建了重构计划。现在让我先分析现有的认证代码。',
+        },
+      },
+      {
+        uuid: 'plan-5',
+        timestamp: '2026-01-15T17:00:11.000Z',
+        type: 'tool_call',
+        toolCall: createToolCall(
+          'search-2',
+          'glob',
+          '**/auth/**',
+          'completed',
+          undefined,
+          [
+            { path: 'src/auth/index.ts' },
+            { path: 'src/auth/login.ts' },
+            { path: 'src/auth/logout.ts' },
+            { path: 'src/auth/middleware.ts' },
+            { path: 'src/auth/types.ts' },
+          ],
+        ),
+      },
+      {
+        uuid: 'plan-6',
+        timestamp: '2026-01-15T17:00:15.000Z',
+        type: 'tool_call',
+        toolCall: createToolCall(
+          'read-3',
+          'read',
+          'src/auth/index.ts',
+          'completed',
+          [
+            {
+              type: 'content',
+              content: {
+                type: 'text',
+                text: `// Legacy auth module
+export { login } from './login';
+export { logout } from './logout';
+export { authMiddleware } from './middleware';
+export type { AuthUser, AuthToken } from './types';`,
+              },
+            },
+          ],
+          [{ path: 'src/auth/index.ts' }],
+        ),
+      },
+      {
+        uuid: 'plan-7',
+        timestamp: '2026-01-15T17:00:20.000Z',
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: `分析完成！现有的认证模块结构：
+
+\`\`\`
+src/auth/
+├── index.ts      # 导出入口
+├── login.ts      # 登录逻辑
+├── logout.ts     # 登出逻辑
+├── middleware.ts # 认证中间件
+└── types.ts      # 类型定义
+\`\`\`
+
+**发现的问题：**
+1. 没有 token 刷新机制
+2. 缺少认证状态持久化
+3. 错误处理不完善
+
+**建议的新架构：**
+- 添加 \`tokenManager.ts\` 管理 JWT
+- 添加 \`storage.ts\` 处理持久化
+- 添加 \`errors.ts\` 统一错误处理
+
+要我继续实现吗？`,
+        },
+      },
+    ],
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Shows a complex refactoring task with Todo/Plan updates, file search, and code analysis.',
+      },
+    },
   },
 };
 

@@ -88,7 +88,9 @@ export type {
   ChatViewerProps,
   ChatViewerHandle,
   ChatMessageData,
+  ClaudeContentItem,
   MessagePart,
+  ToolCallData as ChatViewerToolCallData,
 } from './components/ChatViewer';
 
 // UI Elements

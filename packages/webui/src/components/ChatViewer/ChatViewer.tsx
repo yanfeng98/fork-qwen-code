@@ -14,29 +14,64 @@ import {
 import { UserMessage } from '../messages/UserMessage.js';
 import { AssistantMessage } from '../messages/Assistant/AssistantMessage.js';
 import { ThinkingMessage } from '../messages/ThinkingMessage.js';
+import {
+  GenericToolCall,
+  ThinkToolCall,
+  EditToolCall,
+  WriteToolCall,
+  SearchToolCall,
+  UpdatedPlanToolCall,
+  ShellToolCall,
+  ReadToolCall,
+  shouldShowToolCall,
+} from '../toolcalls/index.js';
+import type { ToolCallData as BaseToolCallData } from '../toolcalls/index.js';
 import './ChatViewer.css';
 
 /**
- * Message part containing text content
+ * Message part containing text content (Qwen format)
  */
 export interface MessagePart {
   text: string;
 }
 
 /**
+ * Claude format content item
+ */
+export interface ClaudeContentItem {
+  type: 'text' | 'tool_use' | 'tool_result';
+  text?: string;
+  name?: string;
+  input?: unknown;
+}
+
+/**
+ * Tool call data for rendering tool call UI
+ */
+export type ToolCallData = BaseToolCallData;
+
+/**
  * Single chat message from JSONL format
+ * Supports both Qwen format and Claude format
  */
 export interface ChatMessageData {
   uuid: string;
-  parentUuid: string | null;
-  sessionId: string;
+  parentUuid?: string | null;
+  sessionId?: string;
   timestamp: string; // ISO timestamp string
-  type: 'user' | 'assistant' | 'system';
-  message: {
-    role: string;
-    parts: MessagePart[];
+  type: 'user' | 'assistant' | 'system' | 'tool_call';
+  // Qwen format
+  message?: {
+    role?: string;
+    parts?: MessagePart[];
+    content?: string | ClaudeContentItem[]; // Claude format content
   };
   model?: string; // for assistant messages
+  // Tool call data
+  toolCall?: ToolCallData;
+  // Additional Claude format fields
+  cwd?: string;
+  gitBranch?: string;
 }
 
 /**
@@ -72,10 +107,30 @@ export interface ChatViewerProps {
 }
 
 /**
- * Extract text content from message parts
+ * Extract text content from message (supports both Qwen and Claude formats)
  */
-function extractContent(parts: MessagePart[]): string {
-  return parts.map((part) => part.text).join('');
+function extractContent(message: ChatMessageData['message']): string {
+  if (!message) return '';
+
+  // Qwen format: message.parts[].text
+  if (message.parts && Array.isArray(message.parts)) {
+    return message.parts.map((part) => part.text || '').join('');
+  }
+
+  // Claude format: message.content as string
+  if (typeof message.content === 'string') {
+    return message.content;
+  }
+
+  // Claude format: message.content as array of content items
+  if (Array.isArray(message.content)) {
+    return message.content
+      .filter((item) => item.type === 'text' && item.text)
+      .map((item) => item.text || '')
+      .join('');
+  }
+
+  return '';
 }
 
 /**
@@ -84,6 +139,42 @@ function extractContent(parts: MessagePart[]): string {
 function parseTimestamp(isoString: string): number {
   const date = new Date(isoString);
   return isNaN(date.getTime()) ? Date.now() : date.getTime();
+}
+
+/**
+ * Get the appropriate tool call component based on kind
+ */
+function getToolCallComponent(kind: string) {
+  const normalizedKind = kind.toLowerCase();
+
+  switch (normalizedKind) {
+    case 'read':
+      return ReadToolCall;
+    case 'write':
+      return WriteToolCall;
+    case 'edit':
+      return EditToolCall;
+    case 'execute':
+    case 'bash':
+    case 'command':
+      return ShellToolCall;
+    case 'updated_plan':
+    case 'updatedplan':
+    case 'todo_write':
+    case 'update_todos':
+    case 'todowrite':
+      return UpdatedPlanToolCall;
+    case 'search':
+    case 'grep':
+    case 'glob':
+    case 'find':
+      return SearchToolCall;
+    case 'think':
+    case 'thinking':
+      return ThinkToolCall;
+    default:
+      return GenericToolCall;
+  }
 }
 
 /**
@@ -130,11 +221,18 @@ export const ChatViewer = forwardRef<ChatViewerHandle, ChatViewerProps>(
     const scrollAnchorRef = useRef<HTMLDivElement>(null);
     const prevMessageCountRef = useRef(0);
 
-    // Sort messages by timestamp and filter out system messages
+    // Sort messages by timestamp and filter out system messages and hidden tool calls
     const sortedMessages = useMemo(
       () =>
         messages
-          .filter((msg) => msg.type !== 'system')
+          .filter((msg) => {
+            if (msg.type === 'system') return false;
+            // Filter out hidden tool calls
+            if (msg.type === 'tool_call' && msg.toolCall) {
+              return shouldShowToolCall(msg.toolCall.kind);
+            }
+            return true;
+          })
           .sort(
             (a, b) => parseTimestamp(a.timestamp) - parseTimestamp(b.timestamp),
           ),
@@ -183,13 +281,40 @@ export const ChatViewer = forwardRef<ChatViewerHandle, ChatViewerProps>(
       prevMessageCountRef.current = currentCount;
     }, [sortedMessages.length, autoScroll]);
 
+    // Determine if a message is a tool call type
+    const isToolCallType = (msg: ChatMessageData) =>
+      msg.type === 'tool_call' && msg.toolCall;
+
     // Render individual message based on type
-    const renderMessage = (msg: ChatMessageData, index: number) => {
-      const content = extractContent(msg.message.parts);
-      const timestamp = parseTimestamp(msg.timestamp);
+    const renderMessage = (
+      msg: ChatMessageData,
+      index: number,
+      allMsgs: ChatMessageData[],
+    ) => {
       const key = msg.uuid || `msg-${index}`;
 
-      // Skip empty messages
+      // Handle tool calls
+      if (msg.type === 'tool_call' && msg.toolCall) {
+        const ToolCallComponent = getToolCallComponent(msg.toolCall.kind);
+        const prev = allMsgs[index - 1];
+        const next = allMsgs[index + 1];
+        const isFirst = !isToolCallType(prev);
+        const isLast = !isToolCallType(next);
+
+        return (
+          <ToolCallComponent
+            key={key}
+            toolCall={msg.toolCall}
+            isFirst={isFirst}
+            isLast={isLast}
+          />
+        );
+      }
+
+      const content = extractContent(msg.message);
+      const timestamp = parseTimestamp(msg.timestamp);
+
+      // Skip empty messages (but not tool calls)
       if (!content.trim()) {
         return null;
       }
@@ -207,7 +332,7 @@ export const ChatViewer = forwardRef<ChatViewerHandle, ChatViewerProps>(
 
         case 'assistant':
           // Check if this is a thinking message based on role
-          if (msg.message.role === 'thinking') {
+          if (msg.message?.role === 'thinking') {
             return (
               <ThinkingMessage
                 key={key}
@@ -255,7 +380,9 @@ export const ChatViewer = forwardRef<ChatViewerHandle, ChatViewerProps>(
             </div>
           ) : (
             <>
-              {sortedMessages.map((msg, index) => renderMessage(msg, index))}
+              {sortedMessages.map((msg, index) =>
+                renderMessage(msg, index, sortedMessages),
+              )}
               {/* Scroll anchor for auto-scroll functionality */}
               <div
                 ref={scrollAnchorRef}
