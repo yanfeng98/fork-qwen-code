@@ -57,7 +57,8 @@ describe('command-migration-tool', () => {
 
       const tomlFiles = await detectTomlCommands(tempDir);
 
-      expect(tomlFiles).toContain('subdir/nested.toml');
+      expect(tomlFiles).toHaveLength(1);
+      expect(tomlFiles[0]).toContain('nested.toml');
     });
 
     it('should return empty array for non-existent directory', async () => {
