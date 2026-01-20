@@ -632,10 +632,27 @@ export const App: React.FC = () => {
 
   console.log('[App] Rendering messages:', allMessages);
 
+  // Helper to check if an item is a user message (breaks AI sequence)
+  const isUserMessage = (x: unknown): boolean => {
+    if (!x || typeof x !== 'object') return true; // treat missing as boundary
+    const item = x as { type: string; data?: { role?: string } };
+    if (item.type === 'message') {
+      const msg = item.data as { role?: string };
+      return msg?.role === 'user';
+    }
+    return false;
+  };
+
   // Render all messages and tool calls
   const renderMessages = useCallback<() => React.ReactNode>(
     () =>
       allMessages.map((item, index) => {
+        const prev = allMessages[index - 1];
+        const next = allMessages[index + 1];
+        // Timeline position: first/last in AI response sequence
+        const isFirst = !prev || isUserMessage(prev);
+        const isLast = !next || isUserMessage(next);
+
         switch (item.type) {
           case 'message': {
             const msg = item.data as TextMessage;
@@ -682,6 +699,8 @@ export const App: React.FC = () => {
                   content={content}
                   timestamp={msg.timestamp || 0}
                   onFileClick={handleFileClick}
+                  isFirst={isFirst}
+                  isLast={isLast}
                 />
               );
             }
@@ -689,18 +708,6 @@ export const App: React.FC = () => {
 
           case 'in-progress-tool-call':
           case 'completed-tool-call': {
-            const prev = allMessages[index - 1];
-            const next = allMessages[index + 1];
-            const isToolCallType = (
-              x: unknown,
-            ): x is { type: 'in-progress-tool-call' | 'completed-tool-call' } =>
-              !!x &&
-              typeof x === 'object' &&
-              'type' in (x as Record<string, unknown>) &&
-              ((x as { type: string }).type === 'in-progress-tool-call' ||
-                (x as { type: string }).type === 'completed-tool-call');
-            const isFirst = !isToolCallType(prev);
-            const isLast = !isToolCallType(next);
             return (
               <ToolCall
                 key={`toolcall-${(item.data as ToolCallData).toolCallId}-${item.type}`}
