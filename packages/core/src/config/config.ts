@@ -727,12 +727,15 @@ export class Config {
    * Exclusive for `OpenAIKeyPrompt` to update credentials via `/auth`
    * Delegates to ModelsConfig.
    */
-  updateCredentials(credentials: {
-    apiKey?: string;
-    baseUrl?: string;
-    model?: string;
-  }): void {
-    this._modelsConfig.updateCredentials(credentials);
+  updateCredentials(
+    credentials: {
+      apiKey?: string;
+      baseUrl?: string;
+      model?: string;
+    },
+    settingsGenerationConfig?: Partial<ContentGeneratorConfig>,
+  ): void {
+    this._modelsConfig.updateCredentials(credentials, settingsGenerationConfig);
   }
 
   /**
