@@ -6,12 +6,20 @@ import type {
   LspCallHierarchyIncomingCall,
   LspCallHierarchyItem,
   LspCallHierarchyOutgoingCall,
+  LspCodeAction,
+  LspCodeActionContext,
+  LspCodeActionKind,
   LspDefinition,
+  LspDiagnostic,
+  LspDiagnosticSeverity,
+  LspFileDiagnostics,
   LspHoverResult,
   LspLocation,
   LspRange,
   LspReference,
   LspSymbolInformation,
+  LspTextEdit,
+  LspWorkspaceEdit,
 } from '@qwen-code/qwen-code-core';
 import type { EventEmitter } from 'events';
 import { LspConnectionFactory } from './LspConnectionFactory.js';
@@ -111,6 +119,32 @@ const SYMBOL_KIND_LABELS: Record<number, string> = {
   24: 'Event',
   25: 'Operator',
   26: 'TypeParameter',
+};
+
+/**
+ * Diagnostic severity labels for converting numeric LSP DiagnosticSeverity to readable strings.
+ * Based on the LSP specification.
+ */
+const DIAGNOSTIC_SEVERITY_LABELS: Record<number, LspDiagnosticSeverity> = {
+  1: 'error',
+  2: 'warning',
+  3: 'information',
+  4: 'hint',
+};
+
+/**
+ * Code action kind labels from LSP specification.
+ */
+const CODE_ACTION_KIND_LABELS: Record<string, LspCodeActionKind> = {
+  '': 'quickfix',
+  quickfix: 'quickfix',
+  refactor: 'refactor',
+  'refactor.extract': 'refactor.extract',
+  'refactor.inline': 'refactor.inline',
+  'refactor.rewrite': 'refactor.rewrite',
+  source: 'source',
+  'source.organizeImports': 'source.organizeImports',
+  'source.fixAll': 'source.fixAll',
 };
 
 const DEFAULT_LSP_STARTUP_TIMEOUT_MS = 10000;
@@ -694,6 +728,686 @@ export class NativeLspService {
     }
 
     return [];
+  }
+
+  /**
+   * 获取文档的诊断信息
+   */
+  async diagnostics(
+    uri: string,
+    serverName?: string,
+  ): Promise<LspDiagnostic[]> {
+    const handles = Array.from(this.serverHandles.entries()).filter(
+      ([name, handle]) =>
+        handle.status === 'READY' &&
+        handle.connection &&
+        (!serverName || name === serverName),
+    );
+
+    const allDiagnostics: LspDiagnostic[] = [];
+
+    for (const [name, handle] of handles) {
+      if (!handle.connection) {
+        continue;
+      }
+      try {
+        await this.warmupTypescriptServer(handle);
+
+        // Request pull diagnostics if the server supports it
+        const response = await handle.connection.request(
+          'textDocument/diagnostic',
+          {
+            textDocument: { uri },
+          },
+        );
+
+        if (response && typeof response === 'object') {
+          const responseObj = response as Record<string, unknown>;
+          const items = responseObj['items'];
+          if (Array.isArray(items)) {
+            for (const item of items) {
+              const normalized = this.normalizeDiagnostic(item, name);
+              if (normalized) {
+                allDiagnostics.push(normalized);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        // Fall back to cached diagnostics from publishDiagnostics notifications
+        // This is handled by the notification handler if implemented
+        console.warn(
+          `LSP textDocument/diagnostic failed for ${name}:`,
+          error,
+        );
+      }
+    }
+
+    return allDiagnostics;
+  }
+
+  /**
+   * 获取工作区所有文档的诊断信息
+   */
+  async workspaceDiagnostics(
+    serverName?: string,
+    limit = 100,
+  ): Promise<LspFileDiagnostics[]> {
+    const handles = Array.from(this.serverHandles.entries()).filter(
+      ([name, handle]) =>
+        handle.status === 'READY' &&
+        handle.connection &&
+        (!serverName || name === serverName),
+    );
+
+    const results: LspFileDiagnostics[] = [];
+
+    for (const [name, handle] of handles) {
+      if (!handle.connection) {
+        continue;
+      }
+      try {
+        await this.warmupTypescriptServer(handle);
+
+        // Request workspace diagnostics if supported
+        const response = await handle.connection.request(
+          'workspace/diagnostic',
+          {
+            previousResultIds: [],
+          },
+        );
+
+        if (response && typeof response === 'object') {
+          const responseObj = response as Record<string, unknown>;
+          const items = responseObj['items'];
+          if (Array.isArray(items)) {
+            for (const item of items) {
+              if (results.length >= limit) {
+                break;
+              }
+              const normalized = this.normalizeFileDiagnostics(item, name);
+              if (normalized && normalized.diagnostics.length > 0) {
+                results.push(normalized);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.warn(
+          `LSP workspace/diagnostic failed for ${name}:`,
+          error,
+        );
+      }
+
+      if (results.length >= limit) {
+        break;
+      }
+    }
+
+    return results.slice(0, limit);
+  }
+
+  /**
+   * 获取指定位置的代码操作
+   */
+  async codeActions(
+    uri: string,
+    range: LspRange,
+    context: LspCodeActionContext,
+    serverName?: string,
+    limit = 20,
+  ): Promise<LspCodeAction[]> {
+    const handles = Array.from(this.serverHandles.entries()).filter(
+      ([name, handle]) =>
+        handle.status === 'READY' &&
+        handle.connection &&
+        (!serverName || name === serverName),
+    );
+
+    for (const [name, handle] of handles) {
+      if (!handle.connection) {
+        continue;
+      }
+      try {
+        await this.warmupTypescriptServer(handle);
+
+        // Convert context diagnostics to LSP format
+        const lspDiagnostics = context.diagnostics.map((d) =>
+          this.denormalizeDiagnostic(d),
+        );
+
+        const response = await handle.connection.request(
+          'textDocument/codeAction',
+          {
+            textDocument: { uri },
+            range,
+            context: {
+              diagnostics: lspDiagnostics,
+              only: context.only,
+              triggerKind:
+                context.triggerKind === 'automatic'
+                  ? 2 // CodeActionTriggerKind.Automatic
+                  : 1, // CodeActionTriggerKind.Invoked
+            },
+          },
+        );
+
+        if (!Array.isArray(response)) {
+          continue;
+        }
+
+        const actions: LspCodeAction[] = [];
+        for (const item of response) {
+          const normalized = this.normalizeCodeAction(item, name);
+          if (normalized) {
+            actions.push(normalized);
+            if (actions.length >= limit) {
+              break;
+            }
+          }
+        }
+
+        if (actions.length > 0) {
+          return actions.slice(0, limit);
+        }
+      } catch (error) {
+        console.warn(
+          `LSP textDocument/codeAction failed for ${name}:`,
+          error,
+        );
+      }
+    }
+
+    return [];
+  }
+
+  /**
+   * 应用工作区编辑
+   */
+  async applyWorkspaceEdit(
+    edit: LspWorkspaceEdit,
+    serverName?: string,
+  ): Promise<boolean> {
+    // Apply edits locally - this doesn't go through LSP server
+    // Instead, it applies the edits to the file system
+    try {
+      if (edit.changes) {
+        for (const [uri, edits] of Object.entries(edit.changes)) {
+          await this.applyTextEdits(uri, edits);
+        }
+      }
+
+      if (edit.documentChanges) {
+        for (const docChange of edit.documentChanges) {
+          await this.applyTextEdits(docChange.textDocument.uri, docChange.edits);
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Failed to apply workspace edit:', error);
+      return false;
+    }
+  }
+
+  /**
+   * 应用文本编辑到文件
+   */
+  private async applyTextEdits(
+    uri: string,
+    edits: LspTextEdit[],
+  ): Promise<void> {
+    const filePath = uri.startsWith('file://')
+      ? uri.replace(/^file:\/\//, '')
+      : uri;
+
+    // Read the current file content
+    let content: string;
+    try {
+      content = fs.readFileSync(filePath, 'utf-8');
+    } catch {
+      // File doesn't exist, treat as empty
+      content = '';
+    }
+
+    // Sort edits in reverse order to apply from end to start
+    const sortedEdits = [...edits].sort((a, b) => {
+      if (a.range.start.line !== b.range.start.line) {
+        return b.range.start.line - a.range.start.line;
+      }
+      return b.range.start.character - a.range.start.character;
+    });
+
+    const lines = content.split('\n');
+
+    for (const edit of sortedEdits) {
+      const { range, newText } = edit;
+      const startLine = range.start.line;
+      const endLine = range.end.line;
+      const startChar = range.start.character;
+      const endChar = range.end.character;
+
+      // Get the affected lines
+      const startLineText = lines[startLine] ?? '';
+      const endLineText = lines[endLine] ?? '';
+
+      // Build the new content
+      const before = startLineText.slice(0, startChar);
+      const after = endLineText.slice(endChar);
+
+      // Replace the range with new text
+      const newLines = (before + newText + after).split('\n');
+
+      // Replace affected lines
+      lines.splice(startLine, endLine - startLine + 1, ...newLines);
+    }
+
+    // Write back to file
+    fs.writeFileSync(filePath, lines.join('\n'), 'utf-8');
+  }
+
+  /**
+   * 规范化诊断结果
+   */
+  private normalizeDiagnostic(
+    item: unknown,
+    serverName: string,
+  ): LspDiagnostic | null {
+    if (!item || typeof item !== 'object') {
+      return null;
+    }
+
+    const itemObj = item as Record<string, unknown>;
+    const range = this.normalizeRange(itemObj['range']);
+    if (!range) {
+      return null;
+    }
+
+    const message =
+      typeof itemObj['message'] === 'string'
+        ? (itemObj['message'] as string)
+        : '';
+    if (!message) {
+      return null;
+    }
+
+    const severityNum =
+      typeof itemObj['severity'] === 'number'
+        ? (itemObj['severity'] as number)
+        : undefined;
+    const severity = severityNum
+      ? DIAGNOSTIC_SEVERITY_LABELS[severityNum]
+      : undefined;
+
+    const code = itemObj['code'];
+    const codeValue =
+      typeof code === 'string' || typeof code === 'number' ? code : undefined;
+
+    const source =
+      typeof itemObj['source'] === 'string'
+        ? (itemObj['source'] as string)
+        : undefined;
+
+    const tags = this.normalizeDiagnosticTags(itemObj['tags']);
+    const relatedInfo = this.normalizeDiagnosticRelatedInfo(
+      itemObj['relatedInformation'],
+    );
+
+    return {
+      range,
+      severity,
+      code: codeValue,
+      source,
+      message,
+      tags: tags.length > 0 ? tags : undefined,
+      relatedInformation: relatedInfo.length > 0 ? relatedInfo : undefined,
+      serverName,
+    };
+  }
+
+  /**
+   * 将诊断转换回 LSP 格式
+   */
+  private denormalizeDiagnostic(
+    diagnostic: LspDiagnostic,
+  ): Record<string, unknown> {
+    const severityMap: Record<LspDiagnosticSeverity, number> = {
+      error: 1,
+      warning: 2,
+      information: 3,
+      hint: 4,
+    };
+
+    return {
+      range: diagnostic.range,
+      message: diagnostic.message,
+      severity: diagnostic.severity
+        ? severityMap[diagnostic.severity]
+        : undefined,
+      code: diagnostic.code,
+      source: diagnostic.source,
+    };
+  }
+
+  /**
+   * 规范化诊断标签
+   */
+  private normalizeDiagnosticTags(
+    tags: unknown,
+  ): Array<'unnecessary' | 'deprecated'> {
+    if (!Array.isArray(tags)) {
+      return [];
+    }
+
+    const result: Array<'unnecessary' | 'deprecated'> = [];
+    for (const tag of tags) {
+      if (tag === 1) {
+        result.push('unnecessary');
+      } else if (tag === 2) {
+        result.push('deprecated');
+      }
+    }
+    return result;
+  }
+
+  /**
+   * 规范化诊断相关信息
+   */
+  private normalizeDiagnosticRelatedInfo(
+    info: unknown,
+  ): Array<{ location: LspLocation; message: string }> {
+    if (!Array.isArray(info)) {
+      return [];
+    }
+
+    const result: Array<{ location: LspLocation; message: string }> = [];
+    for (const item of info) {
+      if (!item || typeof item !== 'object') {
+        continue;
+      }
+      const itemObj = item as Record<string, unknown>;
+      const location = itemObj['location'];
+      if (!location || typeof location !== 'object') {
+        continue;
+      }
+      const locObj = location as Record<string, unknown>;
+      const uri = locObj['uri'];
+      const range = this.normalizeRange(locObj['range']);
+      const message = itemObj['message'];
+
+      if (typeof uri === 'string' && range && typeof message === 'string') {
+        result.push({
+          location: { uri, range },
+          message,
+        });
+      }
+    }
+    return result;
+  }
+
+  /**
+   * 规范化文件诊断结果
+   */
+  private normalizeFileDiagnostics(
+    item: unknown,
+    serverName: string,
+  ): LspFileDiagnostics | null {
+    if (!item || typeof item !== 'object') {
+      return null;
+    }
+
+    const itemObj = item as Record<string, unknown>;
+    const uri =
+      typeof itemObj['uri'] === 'string' ? (itemObj['uri'] as string) : '';
+    if (!uri) {
+      return null;
+    }
+
+    const items = itemObj['items'];
+    if (!Array.isArray(items)) {
+      return null;
+    }
+
+    const diagnostics: LspDiagnostic[] = [];
+    for (const diagItem of items) {
+      const normalized = this.normalizeDiagnostic(diagItem, serverName);
+      if (normalized) {
+        diagnostics.push(normalized);
+      }
+    }
+
+    return {
+      uri,
+      diagnostics,
+      serverName,
+    };
+  }
+
+  /**
+   * 规范化代码操作结果
+   */
+  private normalizeCodeAction(
+    item: unknown,
+    serverName: string,
+  ): LspCodeAction | null {
+    if (!item || typeof item !== 'object') {
+      return null;
+    }
+
+    const itemObj = item as Record<string, unknown>;
+
+    // Check if this is a Command instead of CodeAction
+    if (itemObj['command'] && typeof itemObj['title'] === 'string' && !itemObj['kind']) {
+      // This is a raw Command, wrap it
+      return {
+        title: itemObj['title'] as string,
+        command: {
+          title: itemObj['title'] as string,
+          command: (itemObj['command'] as string) ?? '',
+          arguments: itemObj['arguments'] as unknown[] | undefined,
+        },
+        serverName,
+      };
+    }
+
+    const title =
+      typeof itemObj['title'] === 'string' ? (itemObj['title'] as string) : '';
+    if (!title) {
+      return null;
+    }
+
+    const kind =
+      typeof itemObj['kind'] === 'string'
+        ? (CODE_ACTION_KIND_LABELS[itemObj['kind'] as string] ??
+          (itemObj['kind'] as LspCodeActionKind))
+        : undefined;
+
+    const isPreferred =
+      typeof itemObj['isPreferred'] === 'boolean'
+        ? (itemObj['isPreferred'] as boolean)
+        : undefined;
+
+    const edit = this.normalizeWorkspaceEdit(itemObj['edit']);
+    const command = this.normalizeCommand(itemObj['command']);
+
+    const diagnostics: LspDiagnostic[] = [];
+    if (Array.isArray(itemObj['diagnostics'])) {
+      for (const diag of itemObj['diagnostics']) {
+        const normalized = this.normalizeDiagnostic(diag, serverName);
+        if (normalized) {
+          diagnostics.push(normalized);
+        }
+      }
+    }
+
+    return {
+      title,
+      kind,
+      diagnostics: diagnostics.length > 0 ? diagnostics : undefined,
+      isPreferred,
+      edit: edit ?? undefined,
+      command: command ?? undefined,
+      data: itemObj['data'],
+      serverName,
+    };
+  }
+
+  /**
+   * 规范化工作区编辑
+   */
+  private normalizeWorkspaceEdit(
+    edit: unknown,
+  ): LspWorkspaceEdit | null {
+    if (!edit || typeof edit !== 'object') {
+      return null;
+    }
+
+    const editObj = edit as Record<string, unknown>;
+    const result: LspWorkspaceEdit = {};
+
+    // Handle changes (map of URI to TextEdit[])
+    if (editObj['changes'] && typeof editObj['changes'] === 'object') {
+      const changes = editObj['changes'] as Record<string, unknown>;
+      result.changes = {};
+      for (const [uri, edits] of Object.entries(changes)) {
+        if (Array.isArray(edits)) {
+          const normalizedEdits: LspTextEdit[] = [];
+          for (const e of edits) {
+            const normalized = this.normalizeTextEdit(e);
+            if (normalized) {
+              normalizedEdits.push(normalized);
+            }
+          }
+          if (normalizedEdits.length > 0) {
+            result.changes[uri] = normalizedEdits;
+          }
+        }
+      }
+    }
+
+    // Handle documentChanges
+    if (Array.isArray(editObj['documentChanges'])) {
+      result.documentChanges = [];
+      for (const docChange of editObj['documentChanges']) {
+        const normalized = this.normalizeTextDocumentEdit(docChange);
+        if (normalized) {
+          result.documentChanges.push(normalized);
+        }
+      }
+    }
+
+    if (
+      (!result.changes || Object.keys(result.changes).length === 0) &&
+      (!result.documentChanges || result.documentChanges.length === 0)
+    ) {
+      return null;
+    }
+
+    return result;
+  }
+
+  /**
+   * 规范化文本编辑
+   */
+  private normalizeTextEdit(edit: unknown): LspTextEdit | null {
+    if (!edit || typeof edit !== 'object') {
+      return null;
+    }
+
+    const editObj = edit as Record<string, unknown>;
+    const range = this.normalizeRange(editObj['range']);
+    if (!range) {
+      return null;
+    }
+
+    const newText =
+      typeof editObj['newText'] === 'string'
+        ? (editObj['newText'] as string)
+        : '';
+
+    return { range, newText };
+  }
+
+  /**
+   * 规范化文本文档编辑
+   */
+  private normalizeTextDocumentEdit(
+    docEdit: unknown,
+  ): { textDocument: { uri: string; version?: number | null }; edits: LspTextEdit[] } | null {
+    if (!docEdit || typeof docEdit !== 'object') {
+      return null;
+    }
+
+    const docEditObj = docEdit as Record<string, unknown>;
+    const textDocument = docEditObj['textDocument'];
+    if (!textDocument || typeof textDocument !== 'object') {
+      return null;
+    }
+
+    const textDocObj = textDocument as Record<string, unknown>;
+    const uri =
+      typeof textDocObj['uri'] === 'string'
+        ? (textDocObj['uri'] as string)
+        : '';
+    if (!uri) {
+      return null;
+    }
+
+    const version =
+      typeof textDocObj['version'] === 'number'
+        ? (textDocObj['version'] as number)
+        : null;
+
+    const edits = docEditObj['edits'];
+    if (!Array.isArray(edits)) {
+      return null;
+    }
+
+    const normalizedEdits: LspTextEdit[] = [];
+    for (const e of edits) {
+      const normalized = this.normalizeTextEdit(e);
+      if (normalized) {
+        normalizedEdits.push(normalized);
+      }
+    }
+
+    if (normalizedEdits.length === 0) {
+      return null;
+    }
+
+    return {
+      textDocument: { uri, version },
+      edits: normalizedEdits,
+    };
+  }
+
+  /**
+   * 规范化命令
+   */
+  private normalizeCommand(
+    cmd: unknown,
+  ): { title: string; command: string; arguments?: unknown[] } | null {
+    if (!cmd || typeof cmd !== 'object') {
+      return null;
+    }
+
+    const cmdObj = cmd as Record<string, unknown>;
+    const title =
+      typeof cmdObj['title'] === 'string' ? (cmdObj['title'] as string) : '';
+    const command =
+      typeof cmdObj['command'] === 'string'
+        ? (cmdObj['command'] as string)
+        : '';
+
+    if (!command) {
+      return null;
+    }
+
+    const args = Array.isArray(cmdObj['arguments'])
+      ? (cmdObj['arguments'] as unknown[])
+      : undefined;
+
+    return { title, command, arguments: args };
   }
 
   /**

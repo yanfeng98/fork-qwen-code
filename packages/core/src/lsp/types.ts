@@ -95,6 +95,153 @@ export interface LspCallHierarchyOutgoingCall {
   fromRanges: LspRange[];
 }
 
+/**
+ * Diagnostic severity levels from LSP specification.
+ */
+export type LspDiagnosticSeverity = 'error' | 'warning' | 'information' | 'hint';
+
+/**
+ * A diagnostic message from a language server.
+ */
+export interface LspDiagnostic {
+  /** The range at which the diagnostic applies. */
+  range: LspRange;
+  /** The diagnostic's severity (error, warning, information, hint). */
+  severity?: LspDiagnosticSeverity;
+  /** The diagnostic's code (string or number). */
+  code?: string | number;
+  /** A human-readable string describing the source (e.g., 'typescript'). */
+  source?: string;
+  /** The diagnostic's message. */
+  message: string;
+  /** Additional metadata about the diagnostic. */
+  tags?: LspDiagnosticTag[];
+  /** Related diagnostic information. */
+  relatedInformation?: LspDiagnosticRelatedInformation[];
+  /** The LSP server that provided this diagnostic. */
+  serverName?: string;
+}
+
+/**
+ * Diagnostic tags from LSP specification.
+ */
+export type LspDiagnosticTag = 'unnecessary' | 'deprecated';
+
+/**
+ * Related diagnostic information.
+ */
+export interface LspDiagnosticRelatedInformation {
+  /** The location of the related diagnostic. */
+  location: LspLocation;
+  /** The message of the related diagnostic. */
+  message: string;
+}
+
+/**
+ * A file's diagnostics grouped by URI.
+ */
+export interface LspFileDiagnostics {
+  /** The document URI. */
+  uri: string;
+  /** The diagnostics for this document. */
+  diagnostics: LspDiagnostic[];
+  /** The LSP server that provided these diagnostics. */
+  serverName?: string;
+}
+
+/**
+ * A code action represents a change that can be performed in code.
+ */
+export interface LspCodeAction {
+  /** A short, human-readable title for this code action. */
+  title: string;
+  /** The kind of the code action (quickfix, refactor, etc.). */
+  kind?: LspCodeActionKind;
+  /** The diagnostics that this code action resolves. */
+  diagnostics?: LspDiagnostic[];
+  /** Marks this as a preferred action. */
+  isPreferred?: boolean;
+  /** The workspace edit this code action performs. */
+  edit?: LspWorkspaceEdit;
+  /** A command this code action executes. */
+  command?: LspCommand;
+  /** Opaque data used by the server for subsequent resolve calls. */
+  data?: unknown;
+  /** The LSP server that provided this code action. */
+  serverName?: string;
+}
+
+/**
+ * Code action kinds from LSP specification.
+ */
+export type LspCodeActionKind =
+  | 'quickfix'
+  | 'refactor'
+  | 'refactor.extract'
+  | 'refactor.inline'
+  | 'refactor.rewrite'
+  | 'source'
+  | 'source.organizeImports'
+  | 'source.fixAll'
+  | string;
+
+/**
+ * A workspace edit represents changes to many resources managed in the workspace.
+ */
+export interface LspWorkspaceEdit {
+  /** Holds changes to existing documents. */
+  changes?: Record<string, LspTextEdit[]>;
+  /** Versioned document changes (more precise control). */
+  documentChanges?: LspTextDocumentEdit[];
+}
+
+/**
+ * A text edit applicable to a document.
+ */
+export interface LspTextEdit {
+  /** The range of the text document to be manipulated. */
+  range: LspRange;
+  /** The string to be inserted (empty string for delete). */
+  newText: string;
+}
+
+/**
+ * Describes textual changes on a single text document.
+ */
+export interface LspTextDocumentEdit {
+  /** The text document to change. */
+  textDocument: {
+    uri: string;
+    version?: number | null;
+  };
+  /** The edits to be applied. */
+  edits: LspTextEdit[];
+}
+
+/**
+ * A command represents a reference to a command.
+ */
+export interface LspCommand {
+  /** Title of the command. */
+  title: string;
+  /** The identifier of the actual command handler. */
+  command: string;
+  /** Arguments to the command handler. */
+  arguments?: unknown[];
+}
+
+/**
+ * Context for code action requests.
+ */
+export interface LspCodeActionContext {
+  /** The diagnostics for which code actions are requested. */
+  diagnostics: LspDiagnostic[];
+  /** Requested kinds of code actions to return. */
+  only?: LspCodeActionKind[];
+  /** The reason why code actions were requested. */
+  triggerKind?: 'invoked' | 'automatic';
+}
+
 export interface LspClient {
   /**
    * Search for symbols across the workspace.
@@ -175,4 +322,39 @@ export interface LspClient {
     serverName?: string,
     limit?: number,
   ): Promise<LspCallHierarchyOutgoingCall[]>;
+
+  /**
+   * Get diagnostics for a specific document.
+   */
+  diagnostics(
+    uri: string,
+    serverName?: string,
+  ): Promise<LspDiagnostic[]>;
+
+  /**
+   * Get diagnostics for all open documents in the workspace.
+   */
+  workspaceDiagnostics(
+    serverName?: string,
+    limit?: number,
+  ): Promise<LspFileDiagnostics[]>;
+
+  /**
+   * Get code actions available at a specific location.
+   */
+  codeActions(
+    uri: string,
+    range: LspRange,
+    context: LspCodeActionContext,
+    serverName?: string,
+    limit?: number,
+  ): Promise<LspCodeAction[]>;
+
+  /**
+   * Apply a workspace edit (from code action or other sources).
+   */
+  applyWorkspaceEdit(
+    edit: LspWorkspaceEdit,
+    serverName?: string,
+  ): Promise<boolean>;
 }

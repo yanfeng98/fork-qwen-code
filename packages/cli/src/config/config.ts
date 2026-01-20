@@ -252,6 +252,43 @@ class NativeLspClient implements LspClient {
   ) {
     return this.service.outgoingCalls(item, serverName, limit);
   }
+
+  /**
+   * Get diagnostics for a specific document.
+   */
+  diagnostics(uri: string, serverName?: string) {
+    return this.service.diagnostics(uri, serverName);
+  }
+
+  /**
+   * Get diagnostics for all open documents in the workspace.
+   */
+  workspaceDiagnostics(serverName?: string, limit?: number) {
+    return this.service.workspaceDiagnostics(serverName, limit);
+  }
+
+  /**
+   * Get code actions available at a specific location.
+   */
+  codeActions(
+    uri: string,
+    range: Parameters<NativeLspService['codeActions']>[1],
+    context: Parameters<NativeLspService['codeActions']>[2],
+    serverName?: string,
+    limit?: number,
+  ) {
+    return this.service.codeActions(uri, range, context, serverName, limit);
+  }
+
+  /**
+   * Apply a workspace edit (from code action or other sources).
+   */
+  applyWorkspaceEdit(
+    edit: Parameters<NativeLspService['applyWorkspaceEdit']>[0],
+    serverName?: string,
+  ) {
+    return this.service.applyWorkspaceEdit(edit, serverName);
+  }
 }
 
 function normalizeOutputFormat(

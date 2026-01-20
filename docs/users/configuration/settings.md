@@ -287,6 +287,23 @@ If you are experiencing performance issues with file searching (e.g., with `@` c
 >
 > **Security Note for MCP servers:** These settings use simple string matching on MCP server names, which can be modified. If you're a system administrator looking to prevent users from bypassing this, consider configuring the `mcpServers` at the system settings level such that the user will not be able to configure any MCP servers of their own. This should not be used as an airtight security mechanism.
 
+#### lsp
+
+Language Server Protocol (LSP) settings for code intelligence features like go-to-definition, find references, and diagnostics. See the [LSP documentation](../features/lsp) for more details.
+
+| Setting            | Type             | Description                                                                                          | Default     |
+| ------------------ | ---------------- | ---------------------------------------------------------------------------------------------------- | ----------- |
+| `lsp.enabled`      | boolean          | Enable/disable LSP support.                                                                          | `true`      |
+| `lsp.autoDetect`   | boolean          | Automatically detect and start language servers based on project files.                              | `true`      |
+| `lsp.serverTimeout`| number           | LSP server startup timeout in milliseconds.                                                          | `10000`     |
+| `lsp.allowed`      | array of strings | An allowlist of LSP servers to allow. Empty means allow all detected servers.                        | `[]`        |
+| `lsp.excluded`     | array of strings | A denylist of LSP servers to exclude. A server listed in both is excluded.                           | `[]`        |
+| `lsp.languageServers` | object        | Custom language server configurations. See the [LSP documentation](../features/lsp#custom-language-servers) for configuration format. | `{}` |
+
+> [!note]
+>
+> **Security Note for LSP servers:** LSP servers run with your user permissions and can execute code. They are only started in trusted workspaces by default. You can configure per-server trust requirements in the `.lsp.json` configuration file.
+
 #### security
 
 | Setting                        | Type    | Description                                       | Default     |

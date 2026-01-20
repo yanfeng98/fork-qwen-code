@@ -15,7 +15,12 @@ import type {
   LspCallHierarchyItem,
   LspCallHierarchyOutgoingCall,
   LspClient,
+  LspCodeAction,
+  LspCodeActionContext,
+  LspCodeActionKind,
   LspDefinition,
+  LspDiagnostic,
+  LspFileDiagnostics,
   LspLocation,
   LspRange,
   LspReference,
@@ -34,7 +39,10 @@ export type LspOperation =
   | 'goToImplementation'
   | 'prepareCallHierarchy'
   | 'incomingCalls'
-  | 'outgoingCalls';
+  | 'outgoingCalls'
+  | 'diagnostics'
+  | 'workspaceDiagnostics'
+  | 'codeActions';
 
 /**
  * Parameters for the unified LSP tool.
@@ -48,6 +56,10 @@ export interface LspToolParams {
   line?: number;
   /** 1-based character/column number when targeting a specific file location. */
   character?: number;
+  /** End line for range-based operations (1-based). */
+  endLine?: number;
+  /** End character for range-based operations (1-based). */
+  endCharacter?: number;
   /** Whether to include the declaration in reference results. */
   includeDeclaration?: boolean;
   /** Query string for workspace symbol search. */
@@ -58,6 +70,10 @@ export interface LspToolParams {
   serverName?: string;
   /** Optional maximum number of results. */
   limit?: number;
+  /** Diagnostics for code action context. */
+  diagnostics?: LspDiagnostic[];
+  /** Code action kinds to filter by. */
+  codeActionKinds?: LspCodeActionKind[];
 }
 
 type ResolvedTarget =
@@ -77,7 +93,10 @@ const LOCATION_REQUIRED_OPERATIONS = new Set<LspOperation>([
 ]);
 
 /** Operations that only require filePath. */
-const FILE_REQUIRED_OPERATIONS = new Set<LspOperation>(['documentSymbol']);
+const FILE_REQUIRED_OPERATIONS = new Set<LspOperation>([
+  'documentSymbol',
+  'diagnostics',
+]);
 
 /** Operations that require query. */
 const QUERY_REQUIRED_OPERATIONS = new Set<LspOperation>(['workspaceSymbol']);
@@ -87,6 +106,12 @@ const ITEM_REQUIRED_OPERATIONS = new Set<LspOperation>([
   'incomingCalls',
   'outgoingCalls',
 ]);
+
+/** Operations that require filePath and range for code actions. */
+const RANGE_REQUIRED_OPERATIONS = new Set<LspOperation>(['codeActions']);
+
+/** Operations that don't require specific parameters. */
+const NO_PARAM_OPERATIONS = new Set<LspOperation>(['workspaceDiagnostics']);
 
 class LspToolInvocation extends BaseToolInvocation<LspToolParams, ToolResult> {
   constructor(
@@ -147,6 +172,12 @@ class LspToolInvocation extends BaseToolInvocation<LspToolParams, ToolResult> {
         return this.executeIncomingCalls(client);
       case 'outgoingCalls':
         return this.executeOutgoingCalls(client);
+      case 'diagnostics':
+        return this.executeDiagnostics(client);
+      case 'workspaceDiagnostics':
+        return this.executeWorkspaceDiagnostics(client);
+      case 'codeActions':
+        return this.executeCodeActions(client);
       default: {
         const message = `Unsupported LSP operation: ${this.params.operation}`;
         return { llmContent: message, returnDisplay: message };
@@ -608,6 +639,162 @@ class LspToolInvocation extends BaseToolInvocation<LspToolParams, ToolResult> {
     };
   }
 
+  private async executeDiagnostics(client: LspClient): Promise<ToolResult> {
+    const workspaceRoot = this.config.getProjectRoot();
+    const filePath = this.params.filePath ?? '';
+    const uri = this.resolveUri(filePath, workspaceRoot);
+    if (!uri) {
+      const message = 'A valid filePath is required for diagnostics.';
+      return { llmContent: message, returnDisplay: message };
+    }
+
+    let diagnostics: LspDiagnostic[] = [];
+    try {
+      diagnostics = await client.diagnostics(uri, this.params.serverName);
+    } catch (error) {
+      const message = `LSP diagnostics failed: ${
+        (error as Error)?.message || String(error)
+      }`;
+      return { llmContent: message, returnDisplay: message };
+    }
+
+    if (!diagnostics.length) {
+      const fileLabel = this.formatUriForDisplay(uri, workspaceRoot);
+      const message = `No diagnostics found for ${fileLabel}.`;
+      return { llmContent: message, returnDisplay: message };
+    }
+
+    const lines = diagnostics.map((diag, index) => {
+      const severity = diag.severity ? `[${diag.severity.toUpperCase()}]` : '';
+      const position = `${diag.range.start.line + 1}:${diag.range.start.character + 1}`;
+      const code = diag.code ? ` (${diag.code})` : '';
+      const source = diag.source ? ` [${diag.source}]` : '';
+      return `${index + 1}. ${severity} ${position}${code}${source}: ${diag.message}`;
+    });
+
+    const fileLabel = this.formatUriForDisplay(uri, workspaceRoot);
+    const heading = `Diagnostics for ${fileLabel} (${diagnostics.length} issues):`;
+    return {
+      llmContent: [heading, ...lines].join('\n'),
+      returnDisplay: lines.join('\n'),
+    };
+  }
+
+  private async executeWorkspaceDiagnostics(
+    client: LspClient,
+  ): Promise<ToolResult> {
+    const limit = this.params.limit ?? 50;
+    let fileDiagnostics: LspFileDiagnostics[] = [];
+    try {
+      fileDiagnostics = await client.workspaceDiagnostics(
+        this.params.serverName,
+        limit,
+      );
+    } catch (error) {
+      const message = `LSP workspace diagnostics failed: ${
+        (error as Error)?.message || String(error)
+      }`;
+      return { llmContent: message, returnDisplay: message };
+    }
+
+    if (!fileDiagnostics.length) {
+      const message = 'No diagnostics found in the workspace.';
+      return { llmContent: message, returnDisplay: message };
+    }
+
+    const workspaceRoot = this.config.getProjectRoot();
+    const lines: string[] = [];
+    let totalIssues = 0;
+
+    for (const fileDiag of fileDiagnostics) {
+      const fileLabel = this.formatUriForDisplay(fileDiag.uri, workspaceRoot);
+      const serverSuffix = fileDiag.serverName ? ` [${fileDiag.serverName}]` : '';
+      lines.push(`\n${fileLabel}${serverSuffix}:`);
+
+      for (const diag of fileDiag.diagnostics) {
+        const severity = diag.severity ? `[${diag.severity.toUpperCase()}]` : '';
+        const position = `${diag.range.start.line + 1}:${diag.range.start.character + 1}`;
+        const code = diag.code ? ` (${diag.code})` : '';
+        lines.push(`  ${severity} ${position}${code}: ${diag.message}`);
+        totalIssues++;
+      }
+    }
+
+    const heading = `Workspace diagnostics (${totalIssues} issues in ${fileDiagnostics.length} files):`;
+    return {
+      llmContent: [heading, ...lines].join('\n'),
+      returnDisplay: lines.join('\n'),
+    };
+  }
+
+  private async executeCodeActions(client: LspClient): Promise<ToolResult> {
+    const workspaceRoot = this.config.getProjectRoot();
+    const filePath = this.params.filePath ?? '';
+    const uri = this.resolveUri(filePath, workspaceRoot);
+    if (!uri) {
+      const message = 'A valid filePath is required for code actions.';
+      return { llmContent: message, returnDisplay: message };
+    }
+
+    // Build range from params
+    const startLine = Math.max(0, (this.params.line ?? 1) - 1);
+    const startChar = Math.max(0, (this.params.character ?? 1) - 1);
+    const endLine = Math.max(0, (this.params.endLine ?? this.params.line ?? 1) - 1);
+    const endChar = Math.max(0, (this.params.endCharacter ?? this.params.character ?? 1) - 1);
+
+    const range: LspRange = {
+      start: { line: startLine, character: startChar },
+      end: { line: endLine, character: endChar },
+    };
+
+    // Build context
+    const context: LspCodeActionContext = {
+      diagnostics: this.params.diagnostics ?? [],
+      only: this.params.codeActionKinds,
+      triggerKind: 'invoked',
+    };
+
+    const limit = this.params.limit ?? 20;
+    let actions: LspCodeAction[] = [];
+    try {
+      actions = await client.codeActions(
+        uri,
+        range,
+        context,
+        this.params.serverName,
+        limit,
+      );
+    } catch (error) {
+      const message = `LSP code actions failed: ${
+        (error as Error)?.message || String(error)
+      }`;
+      return { llmContent: message, returnDisplay: message };
+    }
+
+    if (!actions.length) {
+      const fileLabel = this.formatUriForDisplay(uri, workspaceRoot);
+      const message = `No code actions available at ${fileLabel}:${startLine + 1}:${startChar + 1}.`;
+      return { llmContent: message, returnDisplay: message };
+    }
+
+    const lines = actions.slice(0, limit).map((action, index) => {
+      const kind = action.kind ? ` [${action.kind}]` : '';
+      const preferred = action.isPreferred ? ' ★' : '';
+      const hasEdit = action.edit ? ' (has edit)' : '';
+      const hasCommand = action.command ? ' (has command)' : '';
+      const serverSuffix = action.serverName ? ` [${action.serverName}]` : '';
+      return `${index + 1}. ${action.title}${kind}${preferred}${hasEdit}${hasCommand}${serverSuffix}`;
+    });
+
+    const fileLabel = this.formatUriForDisplay(uri, workspaceRoot);
+    const heading = `Code actions at ${fileLabel}:${startLine + 1}:${startChar + 1}:`;
+    const jsonSection = this.formatJsonSection('Code actions (JSON)', actions.slice(0, limit));
+    return {
+      llmContent: [heading, ...lines].join('\n') + jsonSection,
+      returnDisplay: lines.join('\n'),
+    };
+  }
+
   private resolveLocationTarget(): ResolvedTarget {
     const filePath = this.params.filePath;
     if (!filePath) {
@@ -787,6 +974,12 @@ class LspToolInvocation extends BaseToolInvocation<LspToolParams, ToolResult> {
         return 'incoming calls';
       case 'outgoingCalls':
         return 'outgoing calls';
+      case 'diagnostics':
+        return 'diagnostics';
+      case 'workspaceDiagnostics':
+        return 'workspace diagnostics';
+      case 'codeActions':
+        return 'code actions';
       default:
         return this.params.operation;
     }
@@ -804,6 +997,9 @@ class LspToolInvocation extends BaseToolInvocation<LspToolParams, ToolResult> {
  * - prepareCallHierarchy: Get call hierarchy item at a position
  * - incomingCalls: Find all functions that call the given function
  * - outgoingCalls: Find all functions called by the given function
+ * - diagnostics: Get diagnostic messages (errors, warnings) for a file
+ * - workspaceDiagnostics: Get all diagnostic messages across the workspace
+ * - codeActions: Get available code actions (quick fixes, refactorings) at a location
  */
 export class LspTool extends BaseDeclarativeTool<LspToolParams, ToolResult> {
   static readonly Name = ToolNames.LSP;
@@ -812,7 +1008,7 @@ export class LspTool extends BaseDeclarativeTool<LspToolParams, ToolResult> {
     super(
       LspTool.Name,
       ToolDisplayNames.LSP,
-      'Unified LSP operations for definitions, references, hover, symbols, and call hierarchy.',
+      'Unified LSP operations for definitions, references, hover, symbols, call hierarchy, diagnostics, and code actions.',
       Kind.Other,
       {
         type: 'object',
@@ -830,6 +1026,9 @@ export class LspTool extends BaseDeclarativeTool<LspToolParams, ToolResult> {
               'prepareCallHierarchy',
               'incomingCalls',
               'outgoingCalls',
+              'diagnostics',
+              'workspaceDiagnostics',
+              'codeActions',
             ],
           },
           filePath: {
@@ -844,6 +1043,14 @@ export class LspTool extends BaseDeclarativeTool<LspToolParams, ToolResult> {
             type: 'number',
             description:
               '1-based character/column number for the target location.',
+          },
+          endLine: {
+            type: 'number',
+            description: '1-based end line number for range-based operations.',
+          },
+          endCharacter: {
+            type: 'number',
+            description: '1-based end character for range-based operations.',
           },
           includeDeclaration: {
             type: 'boolean',
@@ -865,6 +1072,16 @@ export class LspTool extends BaseDeclarativeTool<LspToolParams, ToolResult> {
           limit: {
             type: 'number',
             description: 'Optional maximum number of results to return.',
+          },
+          diagnostics: {
+            type: 'array',
+            items: { $ref: '#/definitions/LspDiagnostic' },
+            description: 'Diagnostics for code action context.',
+          },
+          codeActionKinds: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Filter code actions by kind (quickfix, refactor, etc.).',
           },
         },
         required: ['operation'],
@@ -899,6 +1116,21 @@ export class LspTool extends BaseDeclarativeTool<LspToolParams, ToolResult> {
               serverName: { type: 'string' },
             },
             required: ['name', 'uri', 'range', 'selectionRange'],
+          },
+          LspDiagnostic: {
+            type: 'object',
+            properties: {
+              range: { $ref: '#/definitions/LspRange' },
+              severity: {
+                type: 'string',
+                enum: ['error', 'warning', 'information', 'hint'],
+              },
+              code: { type: ['string', 'number'] },
+              source: { type: 'string' },
+              message: { type: 'string' },
+              serverName: { type: 'string' },
+            },
+            required: ['range', 'message'],
           },
         },
       },
@@ -939,11 +1171,26 @@ export class LspTool extends BaseDeclarativeTool<LspToolParams, ToolResult> {
       }
     }
 
+    if (RANGE_REQUIRED_OPERATIONS.has(operation)) {
+      if (!params.filePath || params.filePath.trim() === '') {
+        return `filePath is required for ${operation}.`;
+      }
+      if (typeof params.line !== 'number') {
+        return `line is required for ${operation}.`;
+      }
+    }
+
     if (params.line !== undefined && params.line < 1) {
       return 'line must be a positive number.';
     }
     if (params.character !== undefined && params.character < 1) {
       return 'character must be a positive number.';
+    }
+    if (params.endLine !== undefined && params.endLine < 1) {
+      return 'endLine must be a positive number.';
+    }
+    if (params.endCharacter !== undefined && params.endCharacter < 1) {
+      return 'endCharacter must be a positive number.';
     }
     if (params.limit !== undefined && params.limit <= 0) {
       return 'limit must be a positive number.';
