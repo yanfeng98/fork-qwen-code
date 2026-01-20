@@ -607,132 +607,8 @@ describe('extension tests', () => {
     describe('refreshTools and refreshMemory', () => {
       it('refreshTools should return early if config is not set', async () => {
         const manager = createExtensionManager();
-        const extension = {
-          name: 'test-ext',
-          config: { name: 'test-ext', version: '1.0.0' },
-          excludeTools: ['tool1'],
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any;
-
         // Should not throw when config is undefined
-        await expect(manager.refreshTools(extension)).resolves.not.toThrow();
-      });
-
-      it('refreshTools should call setTools when extension has excludeTools', async () => {
-        const mockSetTools = vi.fn().mockResolvedValue(undefined);
-        const mockRefreshCache = vi.fn();
-        const mockRestartMcpServers = vi.fn();
-        const mockRefreshHierarchicalMemory = vi.fn();
-
-        const mockConfig = {
-          getGeminiClient: () => ({
-            isInitialized: () => true,
-            setTools: mockSetTools,
-          }),
-          getToolRegistry: () => ({
-            restartMcpServers: mockRestartMcpServers,
-          }),
-          getSkillManager: () => ({
-            refreshCache: mockRefreshCache,
-          }),
-          getSubagentManager: () => ({
-            refreshCache: mockRefreshCache,
-          }),
-          refreshHierarchicalMemory: mockRefreshHierarchicalMemory,
-        };
-
-        const manager = createExtensionManager();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (manager as any).config = mockConfig;
-
-        const extension = {
-          name: 'test-ext',
-          config: { name: 'test-ext', version: '1.0.0' },
-          excludeTools: ['tool1', 'tool2'],
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any;
-
-        await manager.refreshTools(extension);
-
-        expect(mockSetTools).toHaveBeenCalledOnce();
-      });
-
-      it('refreshTools should not call setTools when extension has no excludeTools', async () => {
-        const mockSetTools = vi.fn().mockResolvedValue(undefined);
-        const mockRefreshCache = vi.fn();
-        const mockRestartMcpServers = vi.fn();
-        const mockRefreshHierarchicalMemory = vi.fn();
-
-        const mockConfig = {
-          getGeminiClient: () => ({
-            isInitialized: () => true,
-            setTools: mockSetTools,
-          }),
-          getToolRegistry: () => ({
-            restartMcpServers: mockRestartMcpServers,
-          }),
-          getSkillManager: () => ({
-            refreshCache: mockRefreshCache,
-          }),
-          getSubagentManager: () => ({
-            refreshCache: mockRefreshCache,
-          }),
-          refreshHierarchicalMemory: mockRefreshHierarchicalMemory,
-        };
-
-        const manager = createExtensionManager();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (manager as any).config = mockConfig;
-
-        const extension = {
-          name: 'test-ext',
-          config: { name: 'test-ext', version: '1.0.0' },
-          excludeTools: [],
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any;
-
-        await manager.refreshTools(extension);
-
-        expect(mockSetTools).not.toHaveBeenCalled();
-      });
-
-      it('refreshTools should not call setTools when geminiClient is not initialized', async () => {
-        const mockSetTools = vi.fn().mockResolvedValue(undefined);
-        const mockRefreshCache = vi.fn();
-        const mockRestartMcpServers = vi.fn();
-        const mockRefreshHierarchicalMemory = vi.fn();
-
-        const mockConfig = {
-          getGeminiClient: () => ({
-            isInitialized: () => false,
-            setTools: mockSetTools,
-          }),
-          getToolRegistry: () => ({
-            restartMcpServers: mockRestartMcpServers,
-          }),
-          getSkillManager: () => ({
-            refreshCache: mockRefreshCache,
-          }),
-          getSubagentManager: () => ({
-            refreshCache: mockRefreshCache,
-          }),
-          refreshHierarchicalMemory: mockRefreshHierarchicalMemory,
-        };
-
-        const manager = createExtensionManager();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (manager as any).config = mockConfig;
-
-        const extension = {
-          name: 'test-ext',
-          config: { name: 'test-ext', version: '1.0.0' },
-          excludeTools: ['tool1'],
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any;
-
-        await manager.refreshTools(extension);
-
-        expect(mockSetTools).not.toHaveBeenCalled();
+        await expect(manager.refreshTools()).resolves.not.toThrow();
       });
 
       it('refreshTools should always call refreshMemory', async () => {
@@ -761,14 +637,7 @@ describe('extension tests', () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (manager as any).config = mockConfig;
 
-        const extension = {
-          name: 'test-ext',
-          config: { name: 'test-ext', version: '1.0.0' },
-          excludeTools: [],
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any;
-
-        await manager.refreshTools(extension);
+        await manager.refreshTools();
 
         // refreshMemory should be called which includes these
         expect(mockRestartMcpServers).toHaveBeenCalledOnce();

@@ -21,7 +21,6 @@ export interface GeminiExtensionConfig {
   version: string;
   mcpServers?: Record<string, unknown>;
   contextFileName?: string | string[];
-  excludeTools?: string[];
   settings?: ExtensionSetting[];
 }
 
@@ -51,7 +50,6 @@ export function convertGeminiToQwenConfig(
     version: geminiConfig.version,
     mcpServers: geminiConfig.mcpServers as ExtensionConfig['mcpServers'],
     contextFileName: geminiConfig.contextFileName,
-    excludeTools: geminiConfig.excludeTools,
     settings,
   };
 }

@@ -145,13 +145,6 @@ export function extensionConsentString(
       ),
     );
   }
-  if (extensionConfig.excludeTools) {
-    output.push(
-      t('This extension will exclude the following core tools: {{tools}}', {
-        tools: extensionConfig.excludeTools.join(', '),
-      }),
-    );
-  }
   if (skills.length > 0) {
     output.push(t('This extension will install the following skills:'));
     for (const skill of skills) {

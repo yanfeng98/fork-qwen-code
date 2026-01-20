@@ -58,7 +58,6 @@ describe('convertGeminiToQwenConfig', () => {
       version: '2.0.0',
       mcpServers: { server1: {} },
       contextFileName: 'context.txt',
-      excludeTools: ['tool1', 'tool2'],
       settings: [
         { name: 'Setting1', envVar: 'VAR1', description: 'Test setting' },
       ],
@@ -72,7 +71,6 @@ describe('convertGeminiToQwenConfig', () => {
     expect(result.version).toBe('2.0.0');
     expect(result.mcpServers).toEqual({ server1: {} });
     expect(result.contextFileName).toBe('context.txt');
-    expect(result.excludeTools).toEqual(['tool1', 'tool2']);
     expect(result.settings).toHaveLength(1);
     expect(result.settings?.[0].name).toBe('Setting1');
   });

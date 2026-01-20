@@ -1044,14 +1044,7 @@ export class Config {
   }
 
   getExcludeTools(): string[] | undefined {
-    const allExcludeTools = new Set(this.excludeTools || []);
-    const extensions = this.getActiveExtensions();
-    for (const extension of extensions) {
-      for (const tool of extension.config.excludeTools || []) {
-        allExcludeTools.add(tool);
-      }
-    }
-    return [...allExcludeTools];
+    return this.excludeTools;
   }
 
   getToolDiscoveryCommand(): string | undefined {

@@ -90,7 +90,6 @@ export interface Extension {
 
   mcpServers?: Record<string, MCPServerConfig>;
   contextFiles: string[];
-  excludeTools?: string[];
   settings?: ExtensionSetting[];
   resolvedSettings?: ResolvedExtensionSetting[];
   commands?: string[];
@@ -103,7 +102,6 @@ export interface ExtensionConfig {
   version: string;
   mcpServers?: Record<string, MCPServerConfig>;
   contextFileName?: string | string[];
-  excludeTools?: string[];
   commands?: string | string[];
   skills?: string | string[];
   agents?: string | string[];
@@ -384,7 +382,7 @@ export class ExtensionManager {
     const config = getTelemetryConfig(currentDir, this.telemetrySettings);
     logExtensionEnable(config, new ExtensionEnableEvent(name, scope));
     extension.isActive = true;
-    await this.refreshTools(extension);
+    await this.refreshTools();
   }
 
   /**
@@ -414,7 +412,7 @@ export class ExtensionManager {
     this.disableByPath(name, true, scopePath);
     logExtensionDisable(config, new ExtensionDisableEvent(name, scope));
     extension.isActive = false;
-    await this.refreshTools(extension);
+    await this.refreshTools();
   }
 
   /**
@@ -597,7 +595,6 @@ export class ExtensionManager {
         isActive: this.isEnabled(config.name, this.workspaceDir),
         config,
         settings: config.settings,
-        excludeTools: config.excludeTools,
         contextFiles: [],
       };
 
@@ -928,7 +925,7 @@ export class ExtensionManager {
               'success',
             ),
           );
-          this.refreshTools(extension);
+          this.refreshTools();
         } else {
           logExtensionInstallEvent(
             telemetryConfig,
@@ -1041,7 +1038,7 @@ export class ExtensionManager {
     if (isUpdate) return;
 
     this.removeEnablementConfig(extension.name);
-    this.refreshTools(extension);
+    this.refreshTools();
 
     logExtensionUninstall(
       telemetryConfig,
@@ -1087,12 +1084,6 @@ export class ExtensionManager {
       output += `\n MCP servers:`;
       Object.keys(extension.config.mcpServers).forEach((key) => {
         output += `\n  ${key}`;
-      });
-    }
-    if (extension.config.excludeTools) {
-      output += `\n Excluded tools:`;
-      extension.config.excludeTools.forEach((tool) => {
-        output += `\n  ${tool}`;
       });
     }
     return output;
@@ -1234,7 +1225,6 @@ export class ExtensionManager {
   async refreshMemory(): Promise<void> {
     if (!this.config) return;
     // refresh mcp servers
-    // FIXME: restart all mcp servers, can be optimized by only restarting changed ones and move to 'refreshTools'
     this.config.getToolRegistry().restartMcpServers();
     // refresh skills
     this.config.getSkillManager()?.refreshCache();
@@ -1244,14 +1234,9 @@ export class ExtensionManager {
     this.config.refreshHierarchicalMemory();
   }
 
-  async refreshTools(extension: Extension): Promise<void> {
+  async refreshTools(): Promise<void> {
     if (!this.config) return;
-    if (extension.excludeTools && extension.excludeTools.length > 0) {
-      const geminiClient = this.config?.getGeminiClient();
-      if (geminiClient?.isInitialized()) {
-        await geminiClient.setTools();
-      }
-    }
+    // FIXME: restart all mcp servers now, this can be optimized by only restarting changed ones at here
     this.refreshMemory();
   }
 }

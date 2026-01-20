@@ -118,21 +118,6 @@ describe('extensionConsentString', () => {
     expect(result).toContain('FILE1.md, FILE2.md');
   });
 
-  it('should include excluded tools when present', () => {
-    const config: ExtensionConfig = {
-      name: 'test-extension',
-      version: '1.0.0',
-      excludeTools: ['tool1', 'tool2'],
-    };
-
-    const result = extensionConsentString(config);
-
-    expect(result).toContain(
-      'This extension will exclude the following core tools',
-    );
-    expect(result).toContain('tool1, tool2');
-  });
-
   it('should include skills when present', () => {
     const config: ExtensionConfig = {
       name: 'test-extension',
@@ -241,21 +226,6 @@ describe('requestConsentOrFail', () => {
     });
 
     expect(mockRequestConsent).not.toHaveBeenCalled();
-  });
-
-  it('should request consent when consent string changes', async () => {
-    mockRequestConsent.mockResolvedValueOnce(true);
-
-    await requestConsentOrFail(mockRequestConsent, {
-      extensionConfig: {
-        name: 'test-extension',
-        version: '1.0.0',
-        excludeTools: ['tool1'],
-      },
-      previousExtensionConfig: { name: 'test-extension', version: '1.0.0' },
-    });
-
-    expect(mockRequestConsent).toHaveBeenCalled();
   });
 
   it('should request consent when commands change', async () => {
