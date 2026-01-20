@@ -33,7 +33,7 @@ const preview: Preview = {
   },
   decorators: [
     (Story, context) => {
-      // For ChatViewer stories, use full height container
+      // For ChatViewer stories, use full height container with internal scroll
       const isFullHeight =
         context.title?.includes('ChatViewer') ||
         context.parameters?.fullHeight === true;
@@ -41,14 +41,17 @@ const preview: Preview = {
       return React.createElement(
         'div',
         {
-          className: 'storybook-container',
+          className: isFullHeight
+            ? 'storybook-container storybook-fullheight'
+            : 'storybook-container',
           style: {
             backgroundColor: 'var(--app-background)',
             color: 'var(--app-primary-foreground)',
             height: isFullHeight ? '100vh' : 'auto',
             minHeight: isFullHeight ? '100vh' : '100px',
             padding: isFullHeight ? '0' : '16px',
-            overflow: isFullHeight ? 'hidden' : 'visible',
+            display: isFullHeight ? 'flex' : 'block',
+            flexDirection: 'column',
           },
         },
         React.createElement(Story),
