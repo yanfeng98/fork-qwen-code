@@ -232,3 +232,73 @@ This approach maintains the existing architecture while achieving the desired di
 ## Expected Outcome
 
 The unified display names will provide a more consistent user experience, preventing confusion when users switch between CLI and VSCode Extension as the same tools will have identical names in both interfaces.
+
+---
+
+## Additional Context
+
+### Related Work: Unified UI Architecture Migration
+
+This issue is closely related to the ongoing `feat/unified-ui-for-vscode-extension` branch, which introduces a shared UI component library (`@qwen-code/webui`) to consolidate UI code between CLI and VSCode Extension.
+
+#### Current Branch Changes (162 files, +15,849/-3,699 lines)
+
+**New Package: `@qwen-code/webui`**
+
+- Shared React components for ChatViewer, ToolCalls, Messages
+- Unified CSS variables and theme system
+- Data adapters for ACP and JSONL protocols
+- Storybook for component development and testing
+
+**Migrated Components:**
+
+- `ShellToolCall` - Handles bash/execute/command kinds
+- `ReadToolCall` - Handles read/list_directory/skill kinds
+- `WriteToolCall` - Handles write kind
+- `EditToolCall` - Handles edit kind
+- `SearchToolCall` - Handles grep/glob/web_search kinds
+- `AssistantMessage` - Markdown rendering with code blocks
+- `PermissionDrawer` - Permission request UI
+
+**Architecture Changes:**
+
+- Tool call components now use `toolCall.title` when available for display names
+- Fallback to kind-based display names via `getToolCallComponent` mapping
+- CSS variables allow platform-specific theming without component changes
+
+#### How This Relates to Display Name Unification
+
+The unified UI architecture provides the foundation for implementing display name consistency:
+
+1. **Single Source of Truth**: Tool call components now live in `@qwen-code/webui`, making it easy to update display names in one place
+2. **Title Property Support**: Components already check `toolCall.title` first, which can carry the canonical display name from the backend
+3. **Mapping Consolidation**: The `getToolCallComponent` function in webui can be updated to use consistent display names
+
+#### Recommended Next Steps
+
+1. **Backend Change**: Ensure ACP protocol includes `title` field with canonical tool display name
+2. **Component Update**: Update webui components to use `title` as primary display, fall back to kind-based name
+3. **Testing**: Use the test plan in `VSCODE_IDE_COMPANION_TEST_PLAN.md` to verify no regressions
+
+#### Files Changed in Current Branch
+
+Key files relevant to display name unification:
+
+```
+packages/webui/src/components/toolcalls/
+├── ShellToolCall.tsx      # Shell/Bash/Execute display
+├── ReadToolCall.tsx       # Read/ListFiles/Skill display
+├── WriteToolCall.tsx      # Write display
+├── EditToolCall.tsx       # Edit display
+├── SearchToolCall.tsx     # Grep/Glob/WebSearch display
+└── shared/LayoutComponents.tsx  # Shared tool call layout
+
+packages/vscode-ide-companion/src/webview/components/messages/toolcalls/
+└── index.tsx              # Kind-to-component mapping
+```
+
+#### Labels
+
+- `area/ux` - User experience improvement
+- `kind/enhancement` - Feature enhancement
+- `priority/P2` - Medium priority (not blocking, but improves UX)
