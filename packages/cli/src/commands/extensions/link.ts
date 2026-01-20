@@ -29,6 +29,10 @@ export async function handleLink(args: InstallArgs) {
       installMetadata,
       requestConsentOrFail.bind(null, requestConsentNonInteractive),
     );
+    if (!extension) {
+      console.log('Link extension failed to install.');
+      return;
+    }
     console.log(
       `Extension "${extension.name}" linked successfully and enabled.`,
     );

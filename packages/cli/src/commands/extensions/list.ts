@@ -13,7 +13,7 @@ export async function handleList() {
     const extensionManager = await getExtensionManager();
     const extensions = extensionManager.getLoadedExtensions();
 
-    if (extensions.length === 0) {
+    if (!extensions || extensions.length === 0) {
       console.log('No extensions installed.');
       return;
     }

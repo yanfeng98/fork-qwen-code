@@ -208,6 +208,7 @@ describe('Server Config (config.ts)', () => {
     telemetry: TELEMETRY_SETTINGS,
     model: MODEL,
     usageStatisticsEnabled: false,
+    overrideExtensions: [],
   };
 
   beforeEach(() => {
