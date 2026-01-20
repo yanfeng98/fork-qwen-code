@@ -31,7 +31,8 @@ describe('modelConfigUtils', () => {
 
     beforeEach(() => {
       vi.resetModules();
-      process.env = { ...originalEnv };
+      // Start with a clean env - getAuthTypeFromEnv only checks auth-related vars
+      process.env = {};
     });
 
     afterEach(() => {
