@@ -958,11 +958,15 @@ describe('SettingsDialog', () => {
         general: { outputLanguage: 'en' },
       });
 
-      const { stdin, unmount } = render(
+      const { stdin, unmount, lastFrame } = render(
         <KeypressProvider kittyProtocolEnabled={false}>
           <SettingsDialog settings={settings} onSelect={() => {}} />
         </KeypressProvider>,
       );
+
+      await waitFor(() => {
+        expect(lastFrame()).toContain('Settings');
+      });
 
       // Navigate to the output language setting, start editing, then commit empty.
       // Avoid hard-coding the item index because schema-driven ordering can differ by platform.
@@ -970,22 +974,35 @@ describe('SettingsDialog', () => {
         'general.outputLanguage',
       );
       expect(outputLanguageIndex).toBeGreaterThanOrEqual(0);
-      for (let i = 0; i < outputLanguageIndex; i++) {
-        stdin.write(TerminalKeys.DOWN_ARROW as string);
+
+      const press = async (key: string) => {
+        act(() => {
+          stdin.write(key);
+        });
         await wait();
+      };
+
+      for (let i = 0; i < outputLanguageIndex; i++) {
+        await press(TerminalKeys.DOWN_ARROW as string);
       }
-      stdin.write(TerminalKeys.ENTER as string);
-      await wait();
-      stdin.write(TerminalKeys.ENTER as string);
-      await wait();
+      await press(TerminalKeys.ENTER as string);
+      await press(TerminalKeys.ENTER as string);
 
       // Empty input should set 'auto' in settings (rule file is updated on restart)
+      await waitFor(() => {
+        const outputLanguageCall = vi
+          .mocked(saveModifiedSettings)
+          .mock.calls.find((call) =>
+            (call[0] as Set<string>).has('general.outputLanguage'),
+          );
+        expect(outputLanguageCall).toBeTruthy();
+      });
+
       const outputLanguageCall = vi
         .mocked(saveModifiedSettings)
         .mock.calls.find((call) =>
           (call[0] as Set<string>).has('general.outputLanguage'),
         );
-      expect(outputLanguageCall).toBeTruthy();
       // Should save 'auto' to settings
       expect(outputLanguageCall?.[1]).toMatchObject({
         general: { outputLanguage: OUTPUT_LANGUAGE_AUTO },
