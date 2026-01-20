@@ -14,6 +14,20 @@ import prompts from 'prompts';
 import { EXTENSION_SETTINGS_FILENAME } from './variables.js';
 import { KeychainTokenStorage } from '../mcp/token-storage/keychain-token-storage.js';
 
+export interface ExtensionSetting {
+  name: string;
+  description: string;
+  envVar: string;
+  sensitive?: boolean;
+}
+
+export interface ResolvedExtensionSetting {
+  name: string;
+  envVar: string;
+  value: string;
+  sensitive: boolean;
+}
+
 export enum ExtensionSettingScope {
   USER = 'user',
   WORKSPACE = 'workspace',

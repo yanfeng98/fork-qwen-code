@@ -6,7 +6,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { parseEnvFile, generateEnvFile, validateSettings } from './settings.js';
-import type { ExtensionSetting } from './extensionManager.js';
+import type { ExtensionSetting } from './extensionSettings.js';
 
 describe('Extension Settings', () => {
   describe('parseEnvFile', () => {

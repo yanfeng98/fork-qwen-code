@@ -50,6 +50,10 @@ import {
   maybePromptForSettings,
   promptForSetting,
 } from './extensionSettings.js';
+import type {
+  ExtensionSetting,
+  ResolvedExtensionSetting,
+} from './extensionSettings.js';
 import type { TelemetrySettings } from '../config/config.js';
 import { logExtensionUpdateEvent } from '../telemetry/loggers.js';
 import {
@@ -104,20 +108,6 @@ export interface ExtensionConfig {
   skills?: string | string[];
   agents?: string | string[];
   settings?: ExtensionSetting[];
-}
-
-export interface ExtensionSetting {
-  name: string;
-  description: string;
-  envVar: string;
-  sensitive?: boolean;
-}
-
-export interface ResolvedExtensionSetting {
-  name: string;
-  envVar: string;
-  value: string;
-  sensitive: boolean;
 }
 
 export interface ExtensionUpdateInfo {
