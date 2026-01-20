@@ -10,7 +10,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { Session } from './Session.js';
 import type { Config, GeminiChat } from '@qwen-code/qwen-code-core';
-import { ApprovalMode } from '@qwen-code/qwen-code-core';
+import { ApprovalMode, AuthType } from '@qwen-code/qwen-code-core';
 import type * as acp from '../acp.js';
 import type { LoadedSettings } from '../../config/settings.js';
 import * as nonInteractiveCliCommands from '../../nonInteractiveCliCommands.js';
@@ -27,14 +27,19 @@ describe('Session', () => {
   let mockSettings: LoadedSettings;
   let session: Session;
   let currentModel: string;
-  let setModelSpy: ReturnType<typeof vi.fn>;
+  let currentAuthType: AuthType;
+  let switchModelSpy: ReturnType<typeof vi.fn>;
   let getAvailableCommandsSpy: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     currentModel = 'qwen3-code-plus';
-    setModelSpy = vi.fn().mockImplementation(async (modelId: string) => {
-      currentModel = modelId;
-    });
+    currentAuthType = AuthType.USE_OPENAI;
+    switchModelSpy = vi
+      .fn()
+      .mockImplementation(async (authType: AuthType, modelId: string) => {
+        currentAuthType = authType;
+        currentModel = modelId;
+      });
 
     mockChat = {
       sendMessageStream: vi.fn(),
@@ -46,7 +51,7 @@ describe('Session', () => {
 
     mockConfig = {
       setApprovalMode: vi.fn(),
-      setModel: setModelSpy,
+      switchModel: switchModelSpy,
       getModel: vi.fn().mockImplementation(() => currentModel),
       getSessionId: vi.fn().mockReturnValue('test-session-id'),
       getTelemetryLogPromptsEnabled: vi.fn().mockReturnValue(false),
@@ -62,6 +67,7 @@ describe('Session', () => {
       getEnableRecursiveFileSearch: vi.fn().mockReturnValue(false),
       getTargetDir: vi.fn().mockReturnValue(process.cwd()),
       getDebugMode: vi.fn().mockReturnValue(false),
+      getAuthType: vi.fn().mockImplementation(() => currentAuthType),
     } as unknown as Config;
 
     mockClient = {
@@ -108,17 +114,25 @@ describe('Session', () => {
 
   describe('setModel', () => {
     it('sets model via config and returns current model', async () => {
+      const requested = `qwen3-coder-plus(${AuthType.USE_OPENAI})`;
       const result = await session.setModel({
         sessionId: 'test-session-id',
-        modelId: '  qwen3-coder-plus  ',
+        modelId: `  ${requested}  `,
       });
 
-      expect(mockConfig.setModel).toHaveBeenCalledWith('qwen3-coder-plus', {
-        reason: 'user_request_acp',
-        context: 'session/set_model',
-      });
+      expect(mockConfig.switchModel).toHaveBeenCalledWith(
+        AuthType.USE_OPENAI,
+        'qwen3-coder-plus',
+        undefined,
+        {
+          reason: 'user_request_acp',
+          context: 'session/set_model',
+        },
+      );
       expect(mockConfig.getModel).toHaveBeenCalled();
-      expect(result).toEqual({ modelId: 'qwen3-coder-plus' });
+      expect(result).toEqual({
+        modelId: `qwen3-coder-plus(${AuthType.USE_OPENAI})`,
+      });
     });
 
     it('rejects empty/whitespace model IDs', async () => {
@@ -129,17 +143,17 @@ describe('Session', () => {
         }),
       ).rejects.toThrow('Invalid params');
 
-      expect(mockConfig.setModel).not.toHaveBeenCalled();
+      expect(mockConfig.switchModel).not.toHaveBeenCalled();
     });
 
-    it('propagates errors from config.setModel', async () => {
+    it('propagates errors from config.switchModel', async () => {
       const configError = new Error('Invalid model');
-      setModelSpy.mockRejectedValueOnce(configError);
+      switchModelSpy.mockRejectedValueOnce(configError);
 
       await expect(
         session.setModel({
           sessionId: 'test-session-id',
-          modelId: 'invalid-model',
+          modelId: `invalid-model(${AuthType.USE_OPENAI})`,
         }),
       ).rejects.toThrow('Invalid model');
     });
