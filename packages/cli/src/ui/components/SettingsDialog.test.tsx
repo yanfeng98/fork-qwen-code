@@ -130,6 +130,14 @@ vi.mock('../../utils/settingsUtils.js', async () => {
   };
 });
 
+vi.mock('../../utils/languageUtils.js', async () => {
+  const actual = await vi.importActual('../../utils/languageUtils.js');
+  return {
+    ...actual,
+    updateOutputLanguageFile: vi.fn(),
+  };
+});
+
 // Helper function to simulate key presses (commented out for now)
 // const simulateKeyPress = async (keyData: Partial<Key> & { name: string }) => {
 //   if (currentKeypressHandler) {
@@ -956,11 +964,16 @@ describe('SettingsDialog', () => {
         </KeypressProvider>,
       );
 
-      // Navigate to "Language: Model" (3rd item), start editing, then commit empty.
-      stdin.write(TerminalKeys.DOWN_ARROW as string);
-      await wait();
-      stdin.write(TerminalKeys.DOWN_ARROW as string);
-      await wait();
+      // Navigate to the output language setting, start editing, then commit empty.
+      // Avoid hard-coding the item index because schema-driven ordering can differ by platform.
+      const outputLanguageIndex = getDialogSettingKeys().indexOf(
+        'general.outputLanguage',
+      );
+      expect(outputLanguageIndex).toBeGreaterThanOrEqual(0);
+      for (let i = 0; i < outputLanguageIndex; i++) {
+        stdin.write(TerminalKeys.DOWN_ARROW as string);
+        await wait();
+      }
       stdin.write(TerminalKeys.ENTER as string);
       await wait();
       stdin.write(TerminalKeys.ENTER as string);

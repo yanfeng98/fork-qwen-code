@@ -6,6 +6,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 // Mock fs module
 vi.mock('node:fs', () => ({
@@ -172,11 +173,15 @@ describe('languageUtils', () => {
     it('should create directory and write file', () => {
       writeOutputLanguageFile('Chinese');
 
-      expect(fs.mkdirSync).toHaveBeenCalledWith('/mock/home/.qwen', {
+      const globalDir = '/mock/home/.qwen';
+      const expectedDir = path.join(globalDir);
+      const expectedFilePath = path.join(globalDir, 'output-language.md');
+
+      expect(fs.mkdirSync).toHaveBeenCalledWith(expectedDir, {
         recursive: true,
       });
       expect(fs.writeFileSync).toHaveBeenCalledWith(
-        '/mock/home/.qwen/output-language.md',
+        expectedFilePath,
         expect.any(String),
         'utf-8',
       );
