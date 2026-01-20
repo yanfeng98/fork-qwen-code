@@ -12,6 +12,7 @@ import {
   promptForSetting,
   updateSetting,
 } from '@qwen-code/qwen-code-core';
+import { t } from '../../i18n/index.js';
 
 // --- SET COMMAND ---
 interface SetArgs {
@@ -22,21 +23,21 @@ interface SetArgs {
 
 const setCommand: CommandModule<object, SetArgs> = {
   command: 'set [--scope] <name> <setting>',
-  describe: 'Set a specific setting for an extension.',
+  describe: t('Set a specific setting for an extension.'),
   builder: (yargs) =>
     yargs
       .positional('name', {
-        describe: 'Name of the extension to configure.',
+        describe: t('Name of the extension to configure.'),
         type: 'string',
         demandOption: true,
       })
       .positional('setting', {
-        describe: 'The setting to configure (name or env var).',
+        describe: t('The setting to configure (name or env var).'),
         type: 'string',
         demandOption: true,
       })
       .option('scope', {
-        describe: 'The scope to set the setting in.',
+        describe: t('The scope to set the setting in.'),
         type: 'string',
         choices: ['user', 'workspace'],
         default: 'user',
@@ -49,7 +50,7 @@ const setCommand: CommandModule<object, SetArgs> = {
     if (!extensions || extensions.length === 0) return;
     const extension = extensions.find((e) => e.name === name);
     if (!extension) {
-      console.log(`Extension "${name}" not found.`);
+      console.log(t('Extension "{{name}}" not found.', { name }));
       return;
     }
     await updateSetting(
@@ -69,10 +70,10 @@ interface ListArgs {
 
 const listCommand: CommandModule<object, ListArgs> = {
   command: 'list <name>',
-  describe: 'List all settings for an extension.',
+  describe: t('List all settings for an extension.'),
   builder: (yargs) =>
     yargs.positional('name', {
-      describe: 'Name of the extension.',
+      describe: t('Name of the extension.'),
       type: 'string',
       demandOption: true,
     }),
@@ -84,11 +85,13 @@ const listCommand: CommandModule<object, ListArgs> = {
     if (!extensions || extensions.length === 0) return;
     const extension = extensions.find((e) => e.name === name);
     if (!extension) {
-      console.log(`Extension "${name}" not found.`);
+      console.log(t('Extension "{{name}}" not found.', { name }));
       return;
     }
     if (!extension || !extension.settings || extension.settings.length === 0) {
-      console.log(`Extension "${name}" has no settings to configure.`);
+      console.log(
+        t('Extension "{{name}}" has no settings to configure.', { name }),
+      );
       return;
     }
 
@@ -104,29 +107,29 @@ const listCommand: CommandModule<object, ListArgs> = {
     );
     const mergedSettings = { ...userSettings, ...workspaceSettings };
 
-    console.log(`Settings for "${name}":`);
+    console.log(t('Settings for "{{name}}":', { name }));
     for (const setting of extension.settings) {
       const value = mergedSettings[setting.envVar];
       let displayValue: string;
       let scopeInfo = '';
 
       if (workspaceSettings[setting.envVar] !== undefined) {
-        scopeInfo = ' (workspace)';
+        scopeInfo = ' ' + t('(workspace)');
       } else if (userSettings[setting.envVar] !== undefined) {
-        scopeInfo = ' (user)';
+        scopeInfo = ' ' + t('(user)');
       }
 
       if (value === undefined) {
-        displayValue = '[not set]';
+        displayValue = t('[not set]');
       } else if (setting.sensitive) {
-        displayValue = '[value stored in keychain]';
+        displayValue = t('[value stored in keychain]');
       } else {
         displayValue = value;
       }
       console.log(`
 - ${setting.name} (${setting.envVar})`);
-      console.log(`  Description: ${setting.description}`);
-      console.log(`  Value: ${displayValue}${scopeInfo}`);
+      console.log(`  ${t('Description:')} ${setting.description}`);
+      console.log(`  ${t('Value:')} ${displayValue}${scopeInfo}`);
     }
   },
 };
@@ -134,12 +137,12 @@ const listCommand: CommandModule<object, ListArgs> = {
 // --- SETTINGS COMMAND ---
 export const settingsCommand: CommandModule = {
   command: 'settings <command>',
-  describe: 'Manage extension settings.',
+  describe: t('Manage extension settings.'),
   builder: (yargs) =>
     yargs
       .command(setCommand)
       .command(listCommand)
-      .demandCommand(1, 'You need to specify a command (set or list).')
+      .demandCommand(1, t('You need to specify a command (set or list).'))
       .version(false),
   handler: () => {
     // This handler is not called when a subcommand is provided.

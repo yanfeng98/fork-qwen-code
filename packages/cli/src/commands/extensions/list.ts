@@ -7,6 +7,7 @@
 import type { CommandModule } from 'yargs';
 import { getErrorMessage } from '../../utils/errors.js';
 import { getExtensionManager } from './utils.js';
+import { t } from '../../i18n/index.js';
 
 export async function handleList() {
   try {
@@ -14,7 +15,7 @@ export async function handleList() {
     const extensions = extensionManager.getLoadedExtensions();
 
     if (!extensions || extensions.length === 0) {
-      console.log('No extensions installed.');
+      console.log(t('No extensions installed.'));
       return;
     }
     console.log(
@@ -32,7 +33,7 @@ export async function handleList() {
 
 export const listCommand: CommandModule = {
   command: 'list',
-  describe: 'Lists installed extensions.',
+  describe: t('Lists installed extensions.'),
   builder: (yargs) => yargs,
   handler: async () => {
     await handleList();

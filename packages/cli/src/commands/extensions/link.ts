@@ -12,6 +12,7 @@ import {
   requestConsentOrFail,
 } from './consent.js';
 import { getExtensionManager } from './utils.js';
+import { t } from '../../i18n/index.js';
 
 interface InstallArgs {
   path: string;
@@ -30,11 +31,13 @@ export async function handleLink(args: InstallArgs) {
       requestConsentOrFail.bind(null, requestConsentNonInteractive),
     );
     if (!extension) {
-      console.log('Link extension failed to install.');
+      console.log(t('Link extension failed to install.'));
       return;
     }
     console.log(
-      `Extension "${extension.name}" linked successfully and enabled.`,
+      t('Extension "{{name}}" linked successfully and enabled.', {
+        name: extension.name,
+      }),
     );
   } catch (error) {
     console.error(getErrorMessage(error));
@@ -44,12 +47,13 @@ export async function handleLink(args: InstallArgs) {
 
 export const linkCommand: CommandModule = {
   command: 'link <path>',
-  describe:
+  describe: t(
     'Links an extension from a local path. Updates made to the local path will always be reflected.',
+  ),
   builder: (yargs) =>
     yargs
       .positional('path', {
-        describe: 'The name of the extension to link.',
+        describe: t('The name of the extension to link.'),
         type: 'string',
       })
       .check((_) => true),

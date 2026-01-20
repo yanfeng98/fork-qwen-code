@@ -13,6 +13,7 @@ import {
 } from './consent.js';
 import { isWorkspaceTrusted } from '../../config/trustedFolders.js';
 import { loadSettings } from '../../config/settings.js';
+import { t } from '../../i18n/index.js';
 
 interface UninstallArgs {
   name: string; // can be extension name or source URL.
@@ -33,7 +34,9 @@ export async function handleUninstall(args: UninstallArgs) {
     });
     await extensionManager.refreshCache();
     await extensionManager.uninstallExtension(args.name, false);
-    console.log(`Extension "${args.name}" successfully uninstalled.`);
+    console.log(
+      t('Extension "{{name}}" successfully uninstalled.', { name: args.name }),
+    );
   } catch (error) {
     console.error(getErrorMessage(error));
     process.exit(1);
@@ -42,17 +45,19 @@ export async function handleUninstall(args: UninstallArgs) {
 
 export const uninstallCommand: CommandModule = {
   command: 'uninstall <name>',
-  describe: 'Uninstalls an extension.',
+  describe: t('Uninstalls an extension.'),
   builder: (yargs) =>
     yargs
       .positional('name', {
-        describe: 'The name or source path of the extension to uninstall.',
+        describe: t('The name or source path of the extension to uninstall.'),
         type: 'string',
       })
       .check((argv) => {
         if (!argv.name) {
           throw new Error(
-            'Please include the name of the extension to uninstall as a positional argument.',
+            t(
+              'Please include the name of the extension to uninstall as a positional argument.',
+            ),
           );
         }
         return true;

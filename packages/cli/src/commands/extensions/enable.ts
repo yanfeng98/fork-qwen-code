@@ -8,6 +8,7 @@ import { type CommandModule } from 'yargs';
 import { FatalConfigError, getErrorMessage } from '@qwen-code/qwen-code-core';
 import { SettingScope } from '../../config/settings.js';
 import { getExtensionManager } from './utils.js';
+import { t } from '../../i18n/index.js';
 
 interface EnableArgs {
   name: string;
@@ -25,11 +26,16 @@ export async function handleEnable(args: EnableArgs) {
     }
     if (args.scope) {
       console.log(
-        `Extension "${args.name}" successfully enabled for scope "${args.scope}".`,
+        t('Extension "{{name}}" successfully enabled for scope "{{scope}}".', {
+          name: args.name,
+          scope: args.scope,
+        }),
       );
     } else {
       console.log(
-        `Extension "${args.name}" successfully enabled in all scopes.`,
+        t('Extension "{{name}}" successfully enabled in all scopes.', {
+          name: args.name,
+        }),
       );
     }
   } catch (error) {
@@ -39,16 +45,17 @@ export async function handleEnable(args: EnableArgs) {
 
 export const enableCommand: CommandModule = {
   command: 'enable [--scope] <name>',
-  describe: 'Enables an extension.',
+  describe: t('Enables an extension.'),
   builder: (yargs) =>
     yargs
       .positional('name', {
-        describe: 'The name of the extension to enable.',
+        describe: t('The name of the extension to enable.'),
         type: 'string',
       })
       .option('scope', {
-        describe:
+        describe: t(
           'The scope to enable the extenison in. If not set, will be enabled in all scopes.',
+        ),
         type: 'string',
       })
       .check((argv) => {
@@ -59,11 +66,12 @@ export const enableCommand: CommandModule = {
             .includes((argv.scope as string).toLowerCase())
         ) {
           throw new Error(
-            `Invalid scope: ${argv.scope}. Please use one of ${Object.values(
-              SettingScope,
-            )
-              .map((s) => s.toLowerCase())
-              .join(', ')}.`,
+            t('Invalid scope: {{scope}}. Please use one of {{scopes}}.', {
+              scope: argv.scope as string,
+              scopes: Object.values(SettingScope)
+                .map((s) => s.toLowerCase())
+                .join(', '),
+            }),
           );
         }
         return true;

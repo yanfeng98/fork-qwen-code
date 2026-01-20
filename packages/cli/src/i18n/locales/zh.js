@@ -388,6 +388,78 @@ export default {
   'This extension will install the following subagents:':
     '此扩展将安装以下子代理：',
   'Installation cancelled for "{{name}}".': '已取消安装 "{{name}}"。',
+  '--ref and --auto-update are not applicable for marketplace extensions.':
+    '--ref 和 --auto-update 不适用于市场扩展。',
+  'Extension "{{name}}" installed successfully and enabled.':
+    '扩展 "{{name}}" 安装成功并已启用。',
+  'Installs an extension from a git repository URL, local path, or claude marketplace (marketplace-url:plugin-name).':
+    '从 Git 仓库 URL、本地路径或 Claude 市场（marketplace-url:plugin-name）安装扩展。',
+  'The github URL, local path, or marketplace source (marketplace-url:plugin-name) of the extension to install.':
+    '要安装的扩展的 GitHub URL、本地路径或市场源（marketplace-url:plugin-name）。',
+  'The git ref to install from.': '要安装的 Git 引用。',
+  'Enable auto-update for this extension.': '为此扩展启用自动更新。',
+  'Enable pre-release versions for this extension.': '为此扩展启用预发布版本。',
+  'Acknowledge the security risks of installing an extension and skip the confirmation prompt.':
+    '确认安装扩展的安全风险并跳过确认提示。',
+  'The source argument must be provided.': '必须提供来源参数。',
+  'Extension "{{name}}" successfully uninstalled.':
+    '扩展 "{{name}}" 卸载成功。',
+  'Uninstalls an extension.': '卸载扩展。',
+  'The name or source path of the extension to uninstall.':
+    '要卸载的扩展的名称或源路径。',
+  'Please include the name of the extension to uninstall as a positional argument.':
+    '请将要卸载的扩展名称作为位置参数。',
+  'Enables an extension.': '启用扩展。',
+  'The name of the extension to enable.': '要启用的扩展名称。',
+  'The scope to enable the extenison in. If not set, will be enabled in all scopes.':
+    '启用扩展的作用域。如果未设置，将在所有作用域中启用。',
+  'Extension "{{name}}" successfully enabled for scope "{{scope}}".':
+    '扩展 "{{name}}" 已在作用域 "{{scope}}" 中启用。',
+  'Extension "{{name}}" successfully enabled in all scopes.':
+    '扩展 "{{name}}" 已在所有作用域中启用。',
+  'Invalid scope: {{scope}}. Please use one of {{scopes}}.':
+    '无效的作用域：{{scope}}。请使用 {{scopes}} 之一。',
+  'Disables an extension.': '禁用扩展。',
+  'The name of the extension to disable.': '要禁用的扩展名称。',
+  'The scope to disable the extenison in.': '禁用扩展的作用域。',
+  'Extension "{{name}}" successfully disabled for scope "{{scope}}".':
+    '扩展 "{{name}}" 已在作用域 "{{scope}}" 中禁用。',
+  'Extension "{{name}}" successfully updated: {{oldVersion}} → {{newVersion}}.':
+    '扩展 "{{name}}" 更新成功：{{oldVersion}} → {{newVersion}}。',
+  'Unable to install extension "{{name}}" due to missing install metadata':
+    '由于缺少安装元数据，无法安装扩展 "{{name}}"',
+  'Extension "{{name}}" is already up to date.':
+    '扩展 "{{name}}" 已是最新版本。',
+  'Updates all extensions or a named extension to the latest version.':
+    '将所有扩展或指定扩展更新到最新版本。',
+  'The name of the extension to update.': '要更新的扩展名称。',
+  'Update all extensions.': '更新所有扩展。',
+  'Either an extension name or --all must be provided':
+    '必须提供扩展名称或 --all',
+  'Lists installed extensions.': '列出已安装的扩展。',
+  'Link extension failed to install.': '链接扩展安装失败。',
+  'Extension "{{name}}" linked successfully and enabled.':
+    '扩展 "{{name}}" 链接成功并已启用。',
+  'Links an extension from a local path. Updates made to the local path will always be reflected.':
+    '从本地路径链接扩展。对本地路径的更新将始终反映。',
+  'The name of the extension to link.': '要链接的扩展名称。',
+  'Set a specific setting for an extension.': '为扩展设置特定配置。',
+  'Name of the extension to configure.': '要配置的扩展名称。',
+  'The setting to configure (name or env var).':
+    '要配置的设置（名称或环境变量）。',
+  'The scope to set the setting in.': '设置配置的作用域。',
+  'List all settings for an extension.': '列出扩展的所有设置。',
+  'Name of the extension.': '扩展名称。',
+  'Extension "{{name}}" has no settings to configure.':
+    '扩展 "{{name}}" 没有可配置的设置。',
+  'Settings for "{{name}}":': '"{{name}}" 的设置：',
+  '(workspace)': '（工作区）',
+  '(user)': '（用户）',
+  '[not set]': '［未设置］',
+  '[value stored in keychain]': '［值存储在钥匙串中］',
+  'Manage extension settings.': '管理扩展设置。',
+  'You need to specify a command (set or list).':
+    '您需要指定命令（set 或 list）。',
   'manage IDE integration': '管理 IDE 集成',
   'check status of IDE integration': '检查 IDE 集成状态',
   'install required IDE companion for {{ideName}}':

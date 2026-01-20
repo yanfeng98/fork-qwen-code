@@ -412,6 +412,91 @@ export default {
     'Diese Erweiterung wird folgende Unteragenten installieren:',
   'Installation cancelled for "{{name}}".':
     'Installation von "{{name}}" abgebrochen.',
+  '--ref and --auto-update are not applicable for marketplace extensions.':
+    '--ref und --auto-update sind nicht anwendbar für Marketplace-Erweiterungen.',
+  'Extension "{{name}}" installed successfully and enabled.':
+    'Erweiterung "{{name}}" erfolgreich installiert und aktiviert.',
+  'Installs an extension from a git repository URL, local path, or claude marketplace (marketplace-url:plugin-name).':
+    'Installiert eine Erweiterung von einer Git-Repository-URL, einem lokalen Pfad oder dem Claude-Marketplace (marketplace-url:plugin-name).',
+  'The github URL, local path, or marketplace source (marketplace-url:plugin-name) of the extension to install.':
+    'Die GitHub-URL, der lokale Pfad oder die Marketplace-Quelle (marketplace-url:plugin-name) der zu installierenden Erweiterung.',
+  'The git ref to install from.': 'Die Git-Referenz für die Installation.',
+  'Enable auto-update for this extension.':
+    'Automatisches Update für diese Erweiterung aktivieren.',
+  'Enable pre-release versions for this extension.':
+    'Pre-Release-Versionen für diese Erweiterung aktivieren.',
+  'Acknowledge the security risks of installing an extension and skip the confirmation prompt.':
+    'Sicherheitsrisiken der Erweiterungsinstallation bestätigen und Bestätigungsaufforderung überspringen.',
+  'The source argument must be provided.':
+    'Das Quellargument muss angegeben werden.',
+  'Extension "{{name}}" successfully uninstalled.':
+    'Erweiterung "{{name}}" erfolgreich deinstalliert.',
+  'Uninstalls an extension.': 'Deinstalliert eine Erweiterung.',
+  'The name or source path of the extension to uninstall.':
+    'Der Name oder Quellpfad der zu deinstallierenden Erweiterung.',
+  'Please include the name of the extension to uninstall as a positional argument.':
+    'Bitte geben Sie den Namen der zu deinstallierenden Erweiterung als Positionsargument an.',
+  'Enables an extension.': 'Aktiviert eine Erweiterung.',
+  'The name of the extension to enable.':
+    'Der Name der zu aktivierenden Erweiterung.',
+  'The scope to enable the extenison in. If not set, will be enabled in all scopes.':
+    'Der Bereich, in dem die Erweiterung aktiviert werden soll. Wenn nicht gesetzt, wird sie in allen Bereichen aktiviert.',
+  'Extension "{{name}}" successfully enabled for scope "{{scope}}".':
+    'Erweiterung "{{name}}" erfolgreich für Bereich "{{scope}}" aktiviert.',
+  'Extension "{{name}}" successfully enabled in all scopes.':
+    'Erweiterung "{{name}}" erfolgreich in allen Bereichen aktiviert.',
+  'Invalid scope: {{scope}}. Please use one of {{scopes}}.':
+    'Ungültiger Bereich: {{scope}}. Bitte verwenden Sie einen von {{scopes}}.',
+  'Disables an extension.': 'Deaktiviert eine Erweiterung.',
+  'The name of the extension to disable.':
+    'Der Name der zu deaktivierenden Erweiterung.',
+  'The scope to disable the extenison in.':
+    'Der Bereich, in dem die Erweiterung deaktiviert werden soll.',
+  'Extension "{{name}}" successfully disabled for scope "{{scope}}".':
+    'Erweiterung "{{name}}" erfolgreich für Bereich "{{scope}}" deaktiviert.',
+  'Extension "{{name}}" successfully updated: {{oldVersion}} → {{newVersion}}.':
+    'Erweiterung "{{name}}" erfolgreich aktualisiert: {{oldVersion}} → {{newVersion}}.',
+  'Unable to install extension "{{name}}" due to missing install metadata':
+    'Erweiterung "{{name}}" kann aufgrund fehlender Installationsmetadaten nicht installiert werden',
+  'Extension "{{name}}" is already up to date.':
+    'Erweiterung "{{name}}" ist bereits aktuell.',
+  'Updates all extensions or a named extension to the latest version.':
+    'Aktualisiert alle Erweiterungen oder eine benannte Erweiterung auf die neueste Version.',
+  'The name of the extension to update.':
+    'Der Name der zu aktualisierenden Erweiterung.',
+  'Update all extensions.': 'Alle Erweiterungen aktualisieren.',
+  'Either an extension name or --all must be provided':
+    'Entweder ein Erweiterungsname oder --all muss angegeben werden',
+  'Lists installed extensions.': 'Listet installierte Erweiterungen auf.',
+  'Link extension failed to install.':
+    'Verknüpfte Erweiterung konnte nicht installiert werden.',
+  'Extension "{{name}}" linked successfully and enabled.':
+    'Erweiterung "{{name}}" erfolgreich verknüpft und aktiviert.',
+  'Links an extension from a local path. Updates made to the local path will always be reflected.':
+    'Verknüpft eine Erweiterung von einem lokalen Pfad. Änderungen am lokalen Pfad werden immer widergespiegelt.',
+  'The name of the extension to link.':
+    'Der Name der zu verknüpfenden Erweiterung.',
+  'Set a specific setting for an extension.':
+    'Legt eine bestimmte Einstellung für eine Erweiterung fest.',
+  'Name of the extension to configure.':
+    'Name der zu konfigurierenden Erweiterung.',
+  'The setting to configure (name or env var).':
+    'Die zu konfigurierende Einstellung (Name oder Umgebungsvariable).',
+  'The scope to set the setting in.':
+    'Der Bereich, in dem die Einstellung gesetzt werden soll.',
+  'List all settings for an extension.':
+    'Listet alle Einstellungen einer Erweiterung auf.',
+  'Name of the extension.': 'Name der Erweiterung.',
+  'Extension "{{name}}" has no settings to configure.':
+    'Erweiterung "{{name}}" hat keine zu konfigurierenden Einstellungen.',
+  'Settings for "{{name}}":': 'Einstellungen für "{{name}}":',
+  '(workspace)': '(Arbeitsbereich)',
+  '(user)': '(Benutzer)',
+  '[not set]': '[nicht gesetzt]',
+  '[value stored in keychain]': '[Wert in Schlüsselbund gespeichert]',
+  'Manage extension settings.': 'Erweiterungseinstellungen verwalten.',
+  'You need to specify a command (set or list).':
+    'Sie müssen einen Befehl angeben (set oder list).',
   'manage IDE integration': 'IDE-Integration verwalten',
   'check status of IDE integration': 'Status der IDE-Integration prüfen',
   'install required IDE companion for {{ideName}}':

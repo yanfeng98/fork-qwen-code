@@ -410,6 +410,84 @@ export default {
   'This extension will install the following subagents:':
     'Это расширение установит следующие подагенты:',
   'Installation cancelled for "{{name}}".': 'Установка "{{name}}" отменена.',
+  '--ref and --auto-update are not applicable for marketplace extensions.':
+    '--ref и --auto-update неприменимы для расширений из маркетплейса.',
+  'Extension "{{name}}" installed successfully and enabled.':
+    'Расширение "{{name}}" успешно установлено и включено.',
+  'Installs an extension from a git repository URL, local path, or claude marketplace (marketplace-url:plugin-name).':
+    'Устанавливает расширение из URL Git-репозитория, локального пути или маркетплейса Claude (marketplace-url:plugin-name).',
+  'The github URL, local path, or marketplace source (marketplace-url:plugin-name) of the extension to install.':
+    'URL GitHub, локальный путь или источник в маркетплейсе (marketplace-url:plugin-name) устанавливаемого расширения.',
+  'The git ref to install from.': 'Git-ссылка для установки.',
+  'Enable auto-update for this extension.':
+    'Включить автообновление для этого расширения.',
+  'Enable pre-release versions for this extension.':
+    'Включить пре-релизные версии для этого расширения.',
+  'Acknowledge the security risks of installing an extension and skip the confirmation prompt.':
+    'Подтвердить риски безопасности установки расширения и пропустить запрос подтверждения.',
+  'The source argument must be provided.':
+    'Необходимо указать аргумент источника.',
+  'Extension "{{name}}" successfully uninstalled.':
+    'Расширение "{{name}}" успешно удалено.',
+  'Uninstalls an extension.': 'Удаляет расширение.',
+  'The name or source path of the extension to uninstall.':
+    'Имя или путь к источнику удаляемого расширения.',
+  'Please include the name of the extension to uninstall as a positional argument.':
+    'Пожалуйста, укажите имя удаляемого расширения как позиционный аргумент.',
+  'Enables an extension.': 'Включает расширение.',
+  'The name of the extension to enable.': 'Имя включаемого расширения.',
+  'The scope to enable the extenison in. If not set, will be enabled in all scopes.':
+    'Область для включения расширения. Если не задана, будет включено во всех областях.',
+  'Extension "{{name}}" successfully enabled for scope "{{scope}}".':
+    'Расширение "{{name}}" успешно включено для области "{{scope}}".',
+  'Extension "{{name}}" successfully enabled in all scopes.':
+    'Расширение "{{name}}" успешно включено во всех областях.',
+  'Invalid scope: {{scope}}. Please use one of {{scopes}}.':
+    'Недопустимая область: {{scope}}. Пожалуйста, используйте одну из {{scopes}}.',
+  'Disables an extension.': 'Отключает расширение.',
+  'The name of the extension to disable.': 'Имя отключаемого расширения.',
+  'The scope to disable the extenison in.':
+    'Область для отключения расширения.',
+  'Extension "{{name}}" successfully disabled for scope "{{scope}}".':
+    'Расширение "{{name}}" успешно отключено для области "{{scope}}".',
+  'Extension "{{name}}" successfully updated: {{oldVersion}} → {{newVersion}}.':
+    'Расширение "{{name}}" успешно обновлено: {{oldVersion}} → {{newVersion}}.',
+  'Unable to install extension "{{name}}" due to missing install metadata':
+    'Невозможно установить расширение "{{name}}" из-за отсутствия метаданных установки',
+  'Extension "{{name}}" is already up to date.':
+    'Расширение "{{name}}" уже актуально.',
+  'Updates all extensions or a named extension to the latest version.':
+    'Обновляет все расширения или указанное расширение до последней версии.',
+  'The name of the extension to update.': 'Имя обновляемого расширения.',
+  'Update all extensions.': 'Обновить все расширения.',
+  'Either an extension name or --all must be provided':
+    'Необходимо указать имя расширения или --all',
+  'Lists installed extensions.': 'Показывает установленные расширения.',
+  'Link extension failed to install.':
+    'Не удалось установить связанное расширение.',
+  'Extension "{{name}}" linked successfully and enabled.':
+    'Расширение "{{name}}" успешно связано и включено.',
+  'Links an extension from a local path. Updates made to the local path will always be reflected.':
+    'Связывает расширение из локального пути. Изменения в локальном пути будут всегда отражаться.',
+  'The name of the extension to link.': 'Имя связываемого расширения.',
+  'Set a specific setting for an extension.':
+    'Установить конкретную настройку для расширения.',
+  'Name of the extension to configure.': 'Имя настраиваемого расширения.',
+  'The setting to configure (name or env var).':
+    'Настройка для конфигурирования (имя или переменная окружения).',
+  'The scope to set the setting in.': 'Область для установки настройки.',
+  'List all settings for an extension.': 'Показать все настройки расширения.',
+  'Name of the extension.': 'Имя расширения.',
+  'Extension "{{name}}" has no settings to configure.':
+    'Расширение "{{name}}" не имеет настроек для конфигурирования.',
+  'Settings for "{{name}}":': 'Настройки для "{{name}}":',
+  '(workspace)': '(рабочее пространство)',
+  '(user)': '(пользователь)',
+  '[not set]': '[не задано]',
+  '[value stored in keychain]': '[значение хранится в связке ключей]',
+  'Manage extension settings.': 'Управление настройками расширений.',
+  'You need to specify a command (set or list).':
+    'Необходимо указать команду (set или list).',
   'manage IDE integration': 'Управление интеграцией с IDE',
   'check status of IDE integration': 'Проверить статус интеграции с IDE',
   'install required IDE companion for {{ideName}}':

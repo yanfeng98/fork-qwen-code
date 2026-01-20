@@ -17,6 +17,7 @@ import {
   requestConsentOrFail,
   requestConsentNonInteractive,
 } from './consent.js';
+import { t } from '../../i18n/index.js';
 
 interface InstallArgs {
   source: string;
@@ -36,7 +37,9 @@ export async function handleInstall(args: InstallArgs) {
     ) {
       if (args.ref || args.autoUpdate) {
         throw new Error(
-          '--ref and --auto-update are not applicable for marketplace extensions.',
+          t(
+            '--ref and --auto-update are not applicable for marketplace extensions.',
+          ),
         );
       }
     }
@@ -64,7 +67,9 @@ export async function handleInstall(args: InstallArgs) {
       requestConsent,
     );
     console.log(
-      `Extension "${extension.name}" installed successfully and enabled.`,
+      t('Extension "{{name}}" installed successfully and enabled.', {
+        name: extension.name,
+      }),
     );
   } catch (error) {
     console.error(getErrorMessage(error));
@@ -74,37 +79,40 @@ export async function handleInstall(args: InstallArgs) {
 
 export const installCommand: CommandModule = {
   command: 'install <source>',
-  describe:
+  describe: t(
     'Installs an extension from a git repository URL, local path, or claude marketplace (marketplace-url:plugin-name).',
+  ),
   builder: (yargs) =>
     yargs
       .positional('source', {
-        describe:
+        describe: t(
           'The github URL, local path, or marketplace source (marketplace-url:plugin-name) of the extension to install.',
+        ),
         type: 'string',
         demandOption: true,
       })
       .option('ref', {
-        describe: 'The git ref to install from.',
+        describe: t('The git ref to install from.'),
         type: 'string',
       })
       .option('auto-update', {
-        describe: 'Enable auto-update for this extension.',
+        describe: t('Enable auto-update for this extension.'),
         type: 'boolean',
       })
       .option('pre-release', {
-        describe: 'Enable pre-release versions for this extension.',
+        describe: t('Enable pre-release versions for this extension.'),
         type: 'boolean',
       })
       .option('consent', {
-        describe:
+        describe: t(
           'Acknowledge the security risks of installing an extension and skip the confirmation prompt.',
+        ),
         type: 'boolean',
         default: false,
       })
       .check((argv) => {
         if (!argv.source) {
-          throw new Error('The source argument must be provided.');
+          throw new Error(t('The source argument must be provided.'));
         }
         return true;
       }),

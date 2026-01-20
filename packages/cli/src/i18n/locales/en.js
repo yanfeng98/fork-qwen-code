@@ -406,6 +406,85 @@ export default {
     'This extension will install the following subagents:',
   'Installation cancelled for "{{name}}".':
     'Installation cancelled for "{{name}}".',
+  '--ref and --auto-update are not applicable for marketplace extensions.':
+    '--ref and --auto-update are not applicable for marketplace extensions.',
+  'Extension "{{name}}" installed successfully and enabled.':
+    'Extension "{{name}}" installed successfully and enabled.',
+  'Installs an extension from a git repository URL, local path, or claude marketplace (marketplace-url:plugin-name).':
+    'Installs an extension from a git repository URL, local path, or claude marketplace (marketplace-url:plugin-name).',
+  'The github URL, local path, or marketplace source (marketplace-url:plugin-name) of the extension to install.':
+    'The github URL, local path, or marketplace source (marketplace-url:plugin-name) of the extension to install.',
+  'The git ref to install from.': 'The git ref to install from.',
+  'Enable auto-update for this extension.':
+    'Enable auto-update for this extension.',
+  'Enable pre-release versions for this extension.':
+    'Enable pre-release versions for this extension.',
+  'Acknowledge the security risks of installing an extension and skip the confirmation prompt.':
+    'Acknowledge the security risks of installing an extension and skip the confirmation prompt.',
+  'The source argument must be provided.':
+    'The source argument must be provided.',
+  'Extension "{{name}}" successfully uninstalled.':
+    'Extension "{{name}}" successfully uninstalled.',
+  'Uninstalls an extension.': 'Uninstalls an extension.',
+  'The name or source path of the extension to uninstall.':
+    'The name or source path of the extension to uninstall.',
+  'Please include the name of the extension to uninstall as a positional argument.':
+    'Please include the name of the extension to uninstall as a positional argument.',
+  'Enables an extension.': 'Enables an extension.',
+  'The name of the extension to enable.':
+    'The name of the extension to enable.',
+  'The scope to enable the extenison in. If not set, will be enabled in all scopes.':
+    'The scope to enable the extenison in. If not set, will be enabled in all scopes.',
+  'Extension "{{name}}" successfully enabled for scope "{{scope}}".':
+    'Extension "{{name}}" successfully enabled for scope "{{scope}}".',
+  'Extension "{{name}}" successfully enabled in all scopes.':
+    'Extension "{{name}}" successfully enabled in all scopes.',
+  'Invalid scope: {{scope}}. Please use one of {{scopes}}.':
+    'Invalid scope: {{scope}}. Please use one of {{scopes}}.',
+  'Disables an extension.': 'Disables an extension.',
+  'The name of the extension to disable.':
+    'The name of the extension to disable.',
+  'The scope to disable the extenison in.':
+    'The scope to disable the extenison in.',
+  'Extension "{{name}}" successfully disabled for scope "{{scope}}".':
+    'Extension "{{name}}" successfully disabled for scope "{{scope}}".',
+  'Extension "{{name}}" successfully updated: {{oldVersion}} → {{newVersion}}.':
+    'Extension "{{name}}" successfully updated: {{oldVersion}} → {{newVersion}}.',
+  'Unable to install extension "{{name}}" due to missing install metadata':
+    'Unable to install extension "{{name}}" due to missing install metadata',
+  'Extension "{{name}}" is already up to date.':
+    'Extension "{{name}}" is already up to date.',
+  'Updates all extensions or a named extension to the latest version.':
+    'Updates all extensions or a named extension to the latest version.',
+  'Update all extensions.': 'Update all extensions.',
+  'Either an extension name or --all must be provided':
+    'Either an extension name or --all must be provided',
+  'Lists installed extensions.': 'Lists installed extensions.',
+  'Link extension failed to install.': 'Link extension failed to install.',
+  'Extension "{{name}}" linked successfully and enabled.':
+    'Extension "{{name}}" linked successfully and enabled.',
+  'Links an extension from a local path. Updates made to the local path will always be reflected.':
+    'Links an extension from a local path. Updates made to the local path will always be reflected.',
+  'The name of the extension to link.': 'The name of the extension to link.',
+  'Set a specific setting for an extension.':
+    'Set a specific setting for an extension.',
+  'Name of the extension to configure.': 'Name of the extension to configure.',
+  'The setting to configure (name or env var).':
+    'The setting to configure (name or env var).',
+  'The scope to set the setting in.': 'The scope to set the setting in.',
+  'List all settings for an extension.': 'List all settings for an extension.',
+  'Name of the extension.': 'Name of the extension.',
+  'Extension "{{name}}" has no settings to configure.':
+    'Extension "{{name}}" has no settings to configure.',
+  'Settings for "{{name}}":': 'Settings for "{{name}}":',
+  '(workspace)': '(workspace)',
+  '(user)': '(user)',
+  '[not set]': '[not set]',
+  '[value stored in keychain]': '[value stored in keychain]',
+  'Value:': 'Value:',
+  'Manage extension settings.': 'Manage extension settings.',
+  'You need to specify a command (set or list).':
+    'You need to specify a command (set or list).',
   'manage IDE integration': 'manage IDE integration',
   'check status of IDE integration': 'check status of IDE integration',
   'install required IDE companion for {{ideName}}':
