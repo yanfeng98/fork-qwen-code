@@ -14,9 +14,29 @@
   padding-bottom: 8px;
   user-select: text;
   align-items: flex-start;
+  transition: background-color 0.15s ease;
+  border-radius: 6px;
 }
 
-/* Default timeline connector line */
+/* Hover effect */
+.toolcall-container:hover {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* Light theme hover (when parent has light-theme class) */
+.light-theme .toolcall-container:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+/*
+ * Timeline positioning calculation:
+ * - Container padding-top: 8px
+ * - Bullet font-size: 10px, line-height ~10px
+ * - Bullet vertical center: 8px + 5px = 13px from top
+ * - Line left: 12px (centered under bullet at left: 8px + ~4px offset)
+ */
+
+/* Default timeline connector line - full height */
 .toolcall-container::after {
   content: '';
   position: absolute;
@@ -24,70 +44,62 @@
   top: 0;
   bottom: 0;
   width: 1px;
-  background-color: var(--app-primary-border-color);
+  background-color: var(--app-primary-border-color, rgba(255, 255, 255, 0.15));
 }
 
-/* First item: connector starts from status point position */
-.toolcall-container:first-child::after {
-  top: 24px;
+/* First item in sequence: connector starts from bullet center */
+.toolcall-container[data-first="true"]::after {
+  top: 13px;
 }
 
-/* Last item: connector shows only upper part */
-.toolcall-container:last-child::after {
-  height: calc(100% - 24px);
-  top: 0;
-  bottom: auto;
+/* Last item in sequence: connector ends at bullet center */
+.toolcall-container[data-last="true"]::after {
+  bottom: calc(100% - 13px);
 }
 
-/* Status-specific styles using ::before pseudo-element for bullet points */
-.toolcall-container.toolcall-status-default::before {
-  content: '\25cf';
-  position: absolute;
-  left: 8px;
-  padding-top: 2px;
-  font-size: 10px;
-  color: var(--app-secondary-foreground);
-  z-index: 1;
+/* Single item (both first and last): no connector */
+.toolcall-container[data-first="true"][data-last="true"]::after {
+  display: none;
 }
 
-.toolcall-container.toolcall-status-success::before {
-  content: '\25cf';
-  position: absolute;
-  left: 8px;
-  font-size: 10px;
-  color: #74c991;
-  z-index: 1;
-}
-
-.toolcall-container.toolcall-status-error::before {
-  content: '\25cf';
-  position: absolute;
-  left: 8px;
-  font-size: 10px;
-  color: #c74e39;
-  z-index: 1;
-}
-
-.toolcall-container.toolcall-status-warning::before {
-  content: '\25cf';
-  position: absolute;
-  left: 8px;
-  padding-top: 2px;
-  font-size: 10px;
-  color: #e1c08d;
-  z-index: 1;
-}
-
+/* 
+ * Status bullet points - all use consistent positioning
+ * Position: left 8px, top 8px (aligned with container padding)
+ */
+.toolcall-container.toolcall-status-default::before,
+.toolcall-container.toolcall-status-success::before,
+.toolcall-container.toolcall-status-error::before,
+.toolcall-container.toolcall-status-warning::before,
 .toolcall-container.toolcall-status-loading::before {
   content: '\25cf';
   position: absolute;
   left: 8px;
-  padding-top: 2px;
+  top: 8px;
   font-size: 10px;
-  color: var(--app-secondary-foreground);
-  background-color: var(--app-secondary-background);
-  animation: toolcallPulse 1s linear infinite;
+  line-height: 10px;
   z-index: 1;
+}
+
+/* Status colors */
+.toolcall-container.toolcall-status-default::before {
+  color: var(--app-secondary-foreground);
+}
+
+.toolcall-container.toolcall-status-success::before {
+  color: #74c991;
+}
+
+.toolcall-container.toolcall-status-error::before {
+  color: #c74e39;
+}
+
+.toolcall-container.toolcall-status-warning::before {
+  color: #e1c08d;
+}
+
+.toolcall-container.toolcall-status-loading::before {
+  color: var(--app-secondary-foreground);
+  animation: toolcallPulse 1s linear infinite;
 }
 
 /* Loading animation */

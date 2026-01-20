@@ -89,7 +89,8 @@
 }
 
 .chat-viewer-messages > *:not(:last-child) {
-  padding-bottom: 8px;
+  padding-bottom: 0;
+  padding-top: 0;
 }
 
 /* Disable overflow anchoring on individual items for manual scroll control */
@@ -100,6 +101,15 @@
 /* User message container spacing */
 .chat-viewer-messages .user-message-container:first-child {
   margin-top: 0;
+}
+
+/* ===========================
+   Timeline Wrapper Styles
+   =========================== */
+
+/* Tool call wrapper - transparent container for timeline continuity */
+.chat-viewer-toolcall-wrapper {
+  position: relative;
 }
 
 /* ===========================
@@ -149,4 +159,25 @@
 .chat-viewer-scroll-anchor {
   height: 1px;
   overflow-anchor: auto;
+}
+
+/* ===========================
+   ChatViewer-specific Styles
+   =========================== */
+
+/* Better spacing between message groups */
+.chat-viewer-messages .user-message-container {
+  margin-top: 16px;
+}
+
+/* Ensure proper stacking context */
+.chat-viewer-messages > * {
+  isolation: isolate;
+}
+
+/* Responsive adjustments for ChatViewer */
+@media (max-width: 600px) {
+  .chat-viewer-messages {
+    padding: 12px;
+  }
 }

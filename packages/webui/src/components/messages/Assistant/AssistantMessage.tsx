@@ -22,6 +22,10 @@ export interface AssistantMessageProps {
   status?: AssistantMessageStatus;
   /** When true, render without the left status bullet (no ::before dot) */
   hideStatusIcon?: boolean;
+  /** Whether this is the first item in an AI response sequence (for timeline) */
+  isFirst?: boolean;
+  /** Whether this is the last item in an AI response sequence (for timeline) */
+  isLast?: boolean;
 }
 
 /**
@@ -34,6 +38,8 @@ export const AssistantMessage: FC<AssistantMessageProps> = ({
   onFileClick,
   status = 'default',
   hideStatusIcon = false,
+  isFirst = false,
+  isLast = false,
 }) => {
   // Empty content not rendered directly
   if (!content || content.trim().length === 0) {
@@ -61,6 +67,8 @@ export const AssistantMessage: FC<AssistantMessageProps> = ({
   return (
     <div
       className={`qwen-message message-item assistant-message-container ${getStatusClass()}`}
+      data-first={isFirst}
+      data-last={isLast}
       style={{
         width: '100%',
         alignItems: 'flex-start',

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useRef } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import {
   ChatViewer,
@@ -1211,4 +1211,417 @@ export const WithRefControl: Story = {
       },
     },
   },
+};
+
+// Comprehensive sample data for playground with all tool types
+const PLAYGROUND_SAMPLE = `[
+  {
+    "uuid": "1",
+    "timestamp": "2026-01-15T14:00:00.000Z",
+    "type": "user",
+    "message": {
+      "role": "user",
+      "parts": [{ "text": "帮我创建一个 React 组件，并添加到项目中" }]
+    }
+  },
+  {
+    "uuid": "2",
+    "timestamp": "2026-01-15T14:00:05.000Z",
+    "type": "assistant",
+    "message": {
+      "role": "assistant",
+      "content": "好的，我来帮你创建一个 React 组件。首先让我搜索一下项目结构。"
+    }
+  },
+  {
+    "uuid": "3",
+    "timestamp": "2026-01-15T14:00:06.000Z",
+    "type": "tool_call",
+    "toolCall": {
+      "toolCallId": "search-1",
+      "kind": "grep",
+      "title": "Searching for component patterns",
+      "status": "completed",
+      "rawInput": "export.*Component",
+      "content": [{
+        "type": "content",
+        "content": {
+          "type": "text",
+          "text": "src/components/Button.tsx:export const Button: FC = () => {\\nsrc/components/Card.tsx:export const Card: FC = () => {"
+        }
+      }],
+      "locations": [
+        { "path": "src/components/Button.tsx", "line": 5 },
+        { "path": "src/components/Card.tsx", "line": 8 }
+      ]
+    }
+  },
+  {
+    "uuid": "4",
+    "timestamp": "2026-01-15T14:00:08.000Z",
+    "type": "tool_call",
+    "toolCall": {
+      "toolCallId": "read-1",
+      "kind": "read",
+      "title": "src/components/Button.tsx",
+      "status": "completed",
+      "content": [{
+        "type": "content",
+        "content": {
+          "type": "text",
+          "text": "import type { FC } from 'react';\\n\\nexport interface ButtonProps {\\n  label: string;\\n  onClick?: () => void;\\n}\\n\\nexport const Button: FC<ButtonProps> = ({ label, onClick }) => (\\n  <button onClick={onClick}>{label}</button>\\n);"
+        }
+      }],
+      "locations": [{ "path": "src/components/Button.tsx" }]
+    }
+  },
+  {
+    "uuid": "5",
+    "timestamp": "2026-01-15T14:00:10.000Z",
+    "type": "assistant",
+    "message": {
+      "role": "assistant",
+      "content": "我找到了项目的组件结构。现在我来创建新的组件文件。"
+    }
+  },
+  {
+    "uuid": "6",
+    "timestamp": "2026-01-15T14:00:12.000Z",
+    "type": "tool_call",
+    "toolCall": {
+      "toolCallId": "write-1",
+      "kind": "write",
+      "title": "Creating src/components/Modal.tsx",
+      "status": "completed",
+      "content": [{
+        "type": "diff",
+        "path": "src/components/Modal.tsx",
+        "oldText": null,
+        "newText": "import type { FC, ReactNode } from 'react';\\nimport './Modal.css';\\n\\nexport interface ModalProps {\\n  isOpen: boolean;\\n  onClose: () => void;\\n  title: string;\\n  children: ReactNode;\\n}\\n\\nexport const Modal: FC<ModalProps> = ({\\n  isOpen,\\n  onClose,\\n  title,\\n  children,\\n}) => {\\n  if (!isOpen) return null;\\n\\n  return (\\n    <div className=\\"modal-overlay\\">\\n      <div className=\\"modal-content\\">\\n        <header className=\\"modal-header\\">\\n          <h2>{title}</h2>\\n          <button onClick={onClose}>×</button>\\n        </header>\\n        <div className=\\"modal-body\\">\\n          {children}\\n        </div>\\n      </div>\\n    </div>\\n  );\\n};"
+      }],
+      "locations": [{ "path": "src/components/Modal.tsx" }]
+    }
+  },
+  {
+    "uuid": "7",
+    "timestamp": "2026-01-15T14:00:15.000Z",
+    "type": "tool_call",
+    "toolCall": {
+      "toolCallId": "edit-1",
+      "kind": "edit",
+      "title": "Updating src/components/index.ts",
+      "status": "completed",
+      "content": [{
+        "type": "diff",
+        "path": "src/components/index.ts",
+        "oldText": "export { Button } from './Button';\\nexport { Card } from './Card';",
+        "newText": "export { Button } from './Button';\\nexport { Card } from './Card';\\nexport { Modal } from './Modal';"
+      }],
+      "locations": [{ "path": "src/components/index.ts", "line": 3 }]
+    }
+  },
+  {
+    "uuid": "8",
+    "timestamp": "2026-01-15T14:00:18.000Z",
+    "type": "assistant",
+    "message": {
+      "role": "assistant",
+      "content": "组件已创建。让我运行测试确保没有问题。"
+    }
+  },
+  {
+    "uuid": "9",
+    "timestamp": "2026-01-15T14:00:20.000Z",
+    "type": "tool_call",
+    "toolCall": {
+      "toolCallId": "bash-1",
+      "kind": "bash",
+      "title": "Running tests",
+      "status": "completed",
+      "rawInput": "npm run test -- --coverage",
+      "content": [{
+        "type": "content",
+        "content": {
+          "type": "text",
+          "text": "PASS src/components/Modal.test.tsx\\n  Modal Component\\n    ✓ renders when isOpen is true (15ms)\\n    ✓ does not render when isOpen is false (3ms)\\n    ✓ calls onClose when close button clicked (8ms)\\n\\nTest Suites: 1 passed, 1 total\\nTests:       3 passed, 3 total\\nCoverage:    92.5%"
+        }
+      }]
+    }
+  },
+  {
+    "uuid": "10",
+    "timestamp": "2026-01-15T14:00:25.000Z",
+    "type": "tool_call",
+    "toolCall": {
+      "toolCallId": "plan-1",
+      "kind": "todowrite",
+      "title": "Updating task progress",
+      "status": "completed",
+      "content": [{
+        "type": "content",
+        "content": {
+          "type": "plan",
+          "entries": [
+            { "content": "Search project structure", "status": "completed" },
+            { "content": "Create Modal component", "status": "completed" },
+            { "content": "Update exports", "status": "completed" },
+            { "content": "Run tests", "status": "completed" },
+            { "content": "Add documentation", "status": "pending" }
+          ]
+        }
+      }]
+    }
+  },
+  {
+    "uuid": "11",
+    "timestamp": "2026-01-15T14:00:30.000Z",
+    "type": "assistant",
+    "message": {
+      "role": "assistant",
+      "content": "Modal 组件已成功创建并通过所有测试！\\n\\n**创建的文件：**\\n- \`src/components/Modal.tsx\` - 主组件文件\\n- \`src/components/Modal.css\` - 样式文件\\n\\n**功能特性：**\\n- 支持打开/关闭状态控制\\n- 可自定义标题和内容\\n- 点击关闭按钮触发回调\\n\\n还需要我添加文档吗？"
+    }
+  }
+]`;
+
+// Playground component for testing JSON input with auto-render
+const PlaygroundTemplate = () => {
+  const [jsonInput, setJsonInput] = useState(PLAYGROUND_SAMPLE);
+  const [messages, setMessages] = useState<ChatMessageData[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [autoRender, setAutoRender] = useState(true);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const parseAndRender = useCallback((input: string) => {
+    try {
+      const parsed = JSON.parse(input);
+      if (!Array.isArray(parsed)) {
+        throw new Error('JSON must be an array of messages');
+      }
+      setMessages(parsed);
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Invalid JSON');
+      setMessages([]);
+    }
+  }, []);
+
+  // Auto-render with debounce when JSON input changes
+  useEffect(() => {
+    if (!autoRender) return;
+
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    debounceRef.current = setTimeout(() => {
+      parseAndRender(jsonInput);
+    }, 300);
+
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, [jsonInput, autoRender, parseAndRender]);
+
+  // Parse on initial load
+  useEffect(() => {
+    parseAndRender(jsonInput);
+  }, [parseAndRender, jsonInput]);
+
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '16px',
+        height: '700px',
+        fontFamily: 'system-ui, sans-serif',
+      }}
+    >
+      {/* Left Panel - JSON Input */}
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          minWidth: 0,
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+        >
+          <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600 }}>
+            JSON Input (Messages Array)
+          </h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                fontSize: '12px',
+                color: 'var(--app-secondary-foreground, #a1a1aa)',
+                cursor: 'pointer',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={autoRender}
+                onChange={(e) => setAutoRender(e.target.checked)}
+                style={{ cursor: 'pointer' }}
+              />
+              Auto Render
+            </label>
+            {!autoRender && (
+              <button
+                onClick={() => parseAndRender(jsonInput)}
+                style={{
+                  padding: '6px 12px',
+                  background: '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                }}
+              >
+                Render
+              </button>
+            )}
+          </div>
+        </div>
+        <textarea
+          value={jsonInput}
+          onChange={(e) => setJsonInput(e.target.value)}
+          style={{
+            flex: 1,
+            padding: '12px',
+            fontFamily: 'ui-monospace, monospace',
+            fontSize: '12px',
+            border: '1px solid var(--app-border, #3f3f46)',
+            borderRadius: '6px',
+            background: 'var(--app-input-background, #3c3c3c)',
+            color: 'var(--app-primary-foreground, #e4e4e7)',
+            resize: 'none',
+            outline: 'none',
+          }}
+          placeholder="Paste your JSON messages array here..."
+        />
+        {error && (
+          <div
+            style={{
+              padding: '8px 12px',
+              background: 'rgba(239, 68, 68, 0.1)',
+              border: '1px solid #ef4444',
+              borderRadius: '4px',
+              color: '#ef4444',
+              fontSize: '13px',
+            }}
+          >
+            Error: {error}
+          </div>
+        )}
+        <div
+          style={{
+            fontSize: '11px',
+            color: 'var(--app-secondary-foreground, #a1a1aa)',
+            lineHeight: 1.5,
+          }}
+        >
+          <strong>Supported message types:</strong>
+          <br />• <code>user</code> - User messages with{' '}
+          <code>message.parts[].text</code> or <code>message.content</code>
+          <br />• <code>assistant</code> - AI responses
+          <br />• <code>tool_call</code> - Tool calls with{' '}
+          <code>toolCall.kind</code> (read, write, edit, bash, grep, etc.)
+        </div>
+      </div>
+
+      {/* Right Panel - ChatViewer Preview */}
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          minWidth: 0,
+        }}
+      >
+        <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600 }}>
+          ChatViewer Preview
+        </h3>
+        <div
+          style={{
+            flex: 1,
+            border: '1px solid var(--app-border, #3f3f46)',
+            borderRadius: '6px',
+            overflow: 'hidden',
+          }}
+        >
+          <ChatViewer
+            messages={messages}
+            emptyMessage="Paste JSON to preview"
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const Playground: Story = {
+  render: () => <PlaygroundTemplate />,
+  parameters: {
+    layout: 'fullscreen',
+    docs: {
+      description: {
+        story: `
+**Interactive Playground** for testing ChatViewer with custom JSON data.
+
+Paste your chat history JSON (array of messages) on the left, click "Render" to see the result.
+
+### Message Format
+
+\`\`\`json
+{
+  "uuid": "unique-id",
+  "timestamp": "2026-01-15T14:00:00.000Z",
+  "type": "user" | "assistant" | "tool_call",
+  "message": {
+    "role": "user" | "assistant",
+    "parts": [{ "text": "..." }],  // Qwen format
+    "content": "..."               // Claude format
+  },
+  "toolCall": {                    // For tool_call type
+    "toolCallId": "...",
+    "kind": "read" | "write" | "edit" | "bash" | "grep" | ...,
+    "title": "...",
+    "status": "completed" | "in_progress" | "failed",
+    "content": [...],
+    "locations": [...]
+  }
+}
+\`\`\`
+        `,
+      },
+    },
+  },
+  decorators: [
+    (Story) => (
+      <div
+        style={{
+          background: 'var(--app-background, #1e1e1e)',
+          padding: '20px',
+          minHeight: '100vh',
+        }}
+      >
+        <Story />
+      </div>
+    ),
+  ],
 };

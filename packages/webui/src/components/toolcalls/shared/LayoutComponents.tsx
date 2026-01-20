@@ -19,14 +19,18 @@ export interface ToolCallContainerProps {
   label: string;
   /** Status for bullet color: 'success' | 'error' | 'warning' | 'loading' | 'default' */
   status?: 'success' | 'error' | 'warning' | 'loading' | 'default';
-  /** Main content to display */
-  children: React.ReactNode;
+  /** Main content to display (optional - some tool calls only show title) */
+  children?: React.ReactNode;
   /** Tool call ID for debugging */
   toolCallId?: string;
   /** Optional trailing content rendered next to label (e.g., clickable filename) */
   labelSuffix?: React.ReactNode;
   /** Optional custom class name */
   className?: string;
+  /** Whether this is the first item in an AI response sequence (for timeline) */
+  isFirst?: boolean;
+  /** Whether this is the last item in an AI response sequence (for timeline) */
+  isLast?: boolean;
 }
 
 /**
@@ -40,9 +44,13 @@ export const ToolCallContainer: FC<ToolCallContainerProps> = ({
   toolCallId: _toolCallId,
   labelSuffix,
   className: _className,
+  isFirst = false,
+  isLast = false,
 }) => (
   <div
     className={`qwen-message message-item ${_className || ''} relative pl-[30px] py-2 select-text toolcall-container toolcall-status-${status}`}
+    data-first={isFirst}
+    data-last={isLast}
   >
     <div className="toolcall-content-wrapper flex flex-col gap-2 min-w-0 max-w-full">
       <div className="flex items-baseline gap-1 relative min-w-0">

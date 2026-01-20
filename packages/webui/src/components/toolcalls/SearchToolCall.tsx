@@ -11,100 +11,10 @@ import {
   safeTitle,
   groupContent,
   mapToolStatusToContainerStatus,
+  ToolCallContainer,
 } from './shared/index.js';
-import type { BaseToolCallProps } from './shared/index.js';
+import type { BaseToolCallProps, ContainerStatus } from './shared/index.js';
 import { FileLink } from '../layout/FileLink.js';
-
-/**
- * Inline container for compact search results display
- */
-const InlineContainer: FC<{
-  status: 'success' | 'error' | 'warning' | 'loading' | 'default';
-  labelSuffix?: string;
-  children?: React.ReactNode;
-  isFirst?: boolean;
-  isLast?: boolean;
-  displayLabel: string;
-}> = ({ status, labelSuffix, children, isFirst, isLast, displayLabel }) => {
-  const beforeStatusClass = `toolcall-container toolcall-status-${status}`;
-  const lineCropTop = isFirst ? 'top-[24px]' : 'top-0';
-  const lineCropBottom = isLast
-    ? 'bottom-auto h-[calc(100%-24px)]'
-    : 'bottom-0';
-  return (
-    <div
-      className={
-        `qwen-message message-item relative pl-[30px] py-2 select-text ` +
-        `before:absolute before:left-[8px] before:top-2 before:content-["\\25cf"] before:text-[10px] before:z-[1] ` +
-        beforeStatusClass
-      }
-    >
-      {/* timeline vertical line */}
-      <div
-        className={`absolute left-[12px] ${lineCropTop} ${lineCropBottom} w-px bg-[var(--app-primary-border-color)]`}
-        aria-hidden
-      />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-baseline gap-2 min-w-0">
-          <span className="text-[14px] leading-none font-bold text-[var(--app-primary-foreground)]">
-            {displayLabel}
-          </span>
-          {labelSuffix ? (
-            <span className="text-[11px] text-[var(--app-secondary-foreground)]">
-              {labelSuffix}
-            </span>
-          ) : null}
-        </div>
-        {children ? (
-          <div className="mt-1 text-[var(--app-secondary-foreground)]">
-            {children}
-          </div>
-        ) : null}
-      </div>
-    </div>
-  );
-};
-
-/**
- * Card layout for multi-result or error display
- */
-const SearchCard: FC<{
-  status: 'success' | 'error' | 'warning' | 'loading' | 'default';
-  children: React.ReactNode;
-  isFirst?: boolean;
-  isLast?: boolean;
-}> = ({ status, children, isFirst, isLast }) => {
-  const beforeStatusClass =
-    status === 'success'
-      ? 'before:text-qwen-success'
-      : status === 'error'
-        ? 'before:text-qwen-error'
-        : status === 'warning'
-          ? 'before:text-qwen-warning'
-          : 'before:text-qwen-loading before:opacity-70 before:animate-pulse-slow';
-  const lineCropTop = isFirst ? 'top-[24px]' : 'top-0';
-  const lineCropBottom = isLast
-    ? 'bottom-auto h-[calc(100%-24px)]'
-    : 'bottom-0';
-  return (
-    <div
-      className={
-        `qwen-message message-item relative pl-[30px] py-2 select-text ` +
-        `before:absolute before:left-[8px] before:top-2 before:content-["\\25cf"] before:text-[10px] before:z-[1] ` +
-        beforeStatusClass
-      }
-    >
-      {/* timeline vertical line */}
-      <div
-        className={`absolute left-[12px] ${lineCropTop} ${lineCropBottom} w-px bg-[var(--app-primary-border-color)]`}
-        aria-hidden
-      />
-      <div className="bg-[var(--app-input-background)] border border-[var(--app-input-border)] rounded-medium p-large my-medium">
-        <div className="flex flex-col gap-3 min-w-0">{children}</div>
-      </div>
-    </div>
-  );
-};
 
 /**
  * Row component for search card layout
@@ -120,6 +30,15 @@ const SearchRow: FC<{ label: string; children: React.ReactNode }> = ({
     <div className="text-[var(--app-primary-foreground)] min-w-0 break-words">
       {children}
     </div>
+  </div>
+);
+
+/**
+ * Card content wrapper for search results
+ */
+const SearchCardContent: FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div className="bg-[var(--app-input-background)] border border-[var(--app-input-border)] rounded-md p-3 mt-1">
+    <div className="flex flex-col gap-3 min-w-0">{children}</div>
   </div>
 );
 
@@ -164,6 +83,9 @@ export const SearchToolCall: FC<BaseToolCallProps> = ({
   const { kind, title, content, locations } = toolCall;
   const queryText = safeTitle(title);
   const displayLabel = getDisplayLabel(kind);
+  const containerStatus: ContainerStatus = mapToolStatusToContainerStatus(
+    toolCall.status,
+  );
 
   // Group content by type
   const { errors, textOutputs } = groupContent(content);
@@ -171,58 +93,73 @@ export const SearchToolCall: FC<BaseToolCallProps> = ({
   // Error case: show search query + error in card layout
   if (errors.length > 0) {
     return (
-      <SearchCard status="error" isFirst={isFirst} isLast={isLast}>
-        <SearchRow label={displayLabel}>
-          <div className="font-mono">{queryText}</div>
-        </SearchRow>
-        <SearchRow label="Error">
-          <div className="text-qwen-error font-medium">{errors.join('\n')}</div>
-        </SearchRow>
-      </SearchCard>
+      <ToolCallContainer
+        label={displayLabel}
+        labelSuffix={queryText}
+        status="error"
+        isFirst={isFirst}
+        isLast={isLast}
+      >
+        <SearchCardContent>
+          <SearchRow label="Query">
+            <div className="font-mono">{queryText}</div>
+          </SearchRow>
+          <SearchRow label="Error">
+            <div className="text-[#c74e39] font-medium">
+              {errors.join('\n')}
+            </div>
+          </SearchRow>
+        </SearchCardContent>
+      </ToolCallContainer>
     );
   }
 
   // Success case with results: show search query + file list
   if (locations && locations.length > 0) {
-    const containerStatus = mapToolStatusToContainerStatus(toolCall.status);
     // Multiple results use card layout
     if (locations.length > 1) {
       return (
-        <SearchCard status={containerStatus} isFirst={isFirst} isLast={isLast}>
-          <SearchRow label={displayLabel}>
-            <div className="font-mono">{queryText}</div>
-          </SearchRow>
-          <SearchRow label={`Found (${locations.length})`}>
-            <LocationsListLocal locations={locations} />
-          </SearchRow>
-        </SearchCard>
+        <ToolCallContainer
+          label={displayLabel}
+          labelSuffix={queryText}
+          status={containerStatus}
+          isFirst={isFirst}
+          isLast={isLast}
+        >
+          <SearchCardContent>
+            <SearchRow label={displayLabel}>
+              <div className="font-mono">{queryText}</div>
+            </SearchRow>
+            <SearchRow label={`Found (${locations.length})`}>
+              <LocationsListLocal locations={locations} />
+            </SearchRow>
+          </SearchCardContent>
+        </ToolCallContainer>
       );
     }
     // Single result - compact format
     return (
-      <InlineContainer
+      <ToolCallContainer
+        label={displayLabel}
+        labelSuffix={queryText}
         status={containerStatus}
-        labelSuffix={`(${queryText})`}
         isFirst={isFirst}
         isLast={isLast}
-        displayLabel={displayLabel}
       >
-        <span className="mx-2 opacity-50">→</span>
         <LocationsListLocal locations={locations} />
-      </InlineContainer>
+      </ToolCallContainer>
     );
   }
 
   // Show content text if available
   if (textOutputs.length > 0) {
-    const containerStatus = mapToolStatusToContainerStatus(toolCall.status);
     return (
-      <InlineContainer
+      <ToolCallContainer
+        label={displayLabel}
+        labelSuffix={queryText || undefined}
         status={containerStatus}
-        labelSuffix={queryText ? `(${queryText})` : undefined}
         isFirst={isFirst}
         isLast={isLast}
-        displayLabel={displayLabel}
       >
         <div className="flex flex-col">
           {textOutputs.map((text: string, index: number) => (
@@ -235,22 +172,20 @@ export const SearchToolCall: FC<BaseToolCallProps> = ({
             </div>
           ))}
         </div>
-      </InlineContainer>
+      </ToolCallContainer>
     );
   }
 
   // No results - show query only
   if (queryText) {
-    const containerStatus = mapToolStatusToContainerStatus(toolCall.status);
     return (
-      <InlineContainer
+      <ToolCallContainer
+        label={displayLabel}
+        labelSuffix={queryText}
         status={containerStatus}
         isFirst={isFirst}
         isLast={isLast}
-        displayLabel={displayLabel}
-      >
-        <span className="font-mono">{queryText}</span>
-      </InlineContainer>
+      />
     );
   }
 

@@ -220,5 +220,21 @@ export type { CompletionItem, CompletionItemType } from './types/completion';
 export { groupSessionsByDate, getTimeAgo } from './utils/sessionGrouping';
 export type { SessionGroup } from './utils/sessionGrouping';
 
+// Adapters - for normalizing different data formats
+export {
+  adaptJSONLMessages,
+  adaptACPMessages,
+  filterEmptyMessages,
+  isToolCallData,
+  isMessageData,
+} from './adapters';
+export type {
+  UnifiedMessage,
+  UnifiedMessageType,
+  JSONLMessage,
+  ACPMessage,
+  ACPMessageData,
+} from './adapters';
+
 // VSCode Webview utilities
 export { default as WebviewContainer } from './components/WebviewContainer';

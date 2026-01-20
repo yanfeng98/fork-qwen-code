@@ -281,9 +281,9 @@ export const ChatViewer = forwardRef<ChatViewerHandle, ChatViewerProps>(
       prevMessageCountRef.current = currentCount;
     }, [sortedMessages.length, autoScroll]);
 
-    // Determine if a message is a tool call type
-    const isToolCallType = (msg: ChatMessageData) =>
-      msg.type === 'tool_call' && msg.toolCall;
+    // Determine if previous/next is a user message (breaks the AI sequence)
+    const isUserType = (msg: ChatMessageData | undefined) =>
+      !msg || msg.type === 'user';
 
     // Render individual message based on type
     const renderMessage = (
@@ -292,22 +292,32 @@ export const ChatViewer = forwardRef<ChatViewerHandle, ChatViewerProps>(
       allMsgs: ChatMessageData[],
     ) => {
       const key = msg.uuid || `msg-${index}`;
+      const prev = allMsgs[index - 1];
+      const next = allMsgs[index + 1];
+
+      // Calculate timeline position for AI responses
+      const isFirst = isUserType(prev);
+      const isLast = isUserType(next);
 
       // Handle tool calls
       if (msg.type === 'tool_call' && msg.toolCall) {
         const ToolCallComponent = getToolCallComponent(msg.toolCall.kind);
-        const prev = allMsgs[index - 1];
-        const next = allMsgs[index + 1];
-        const isFirst = !isToolCallType(prev);
-        const isLast = !isToolCallType(next);
 
         return (
-          <ToolCallComponent
+          <div
             key={key}
-            toolCall={msg.toolCall}
-            isFirst={isFirst}
-            isLast={isLast}
-          />
+            className="chat-viewer-toolcall-wrapper"
+            data-first={isFirst}
+            data-last={isLast}
+          >
+            {ToolCallComponent && (
+              <ToolCallComponent
+                toolCall={msg.toolCall}
+                isFirst={isFirst}
+                isLast={isLast}
+              />
+            )}
+          </div>
         );
       }
 
@@ -348,6 +358,8 @@ export const ChatViewer = forwardRef<ChatViewerHandle, ChatViewerProps>(
               content={content}
               timestamp={timestamp}
               onFileClick={onFileClick}
+              isFirst={isFirst}
+              isLast={isLast}
             />
           );
 
