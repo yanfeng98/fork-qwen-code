@@ -296,7 +296,7 @@ export default {
   // ============================================================================
   'Vim Mode': 'Режим Vim',
   'Disable Auto Update': 'Отключить автообновление',
-  'Add AI Co-Author to Commits': 'Добавлять ИИ как соавтора в коммиты',
+  'Attribution: commit': 'Атрибуция: коммит',
   'Terminal Bell Notification': 'Звуковое уведомление терминала',
   'Enable Usage Statistics': 'Включить сбор статистики использования',
   Theme: 'Тема',
@@ -304,7 +304,8 @@ export default {
   'Auto-connect to IDE': 'Автоподключение к IDE',
   'Enable Prompt Completion': 'Включить автодополнение промптов',
   'Debug Keystroke Logging': 'Логирование нажатий клавиш для отладки',
-  Language: 'Язык',
+  'Language: UI': 'Язык: интерфейс',
+  'Language: Model': 'Язык: модель',
   'Output Format': 'Формат вывода',
   'Hide Window Title': 'Скрыть заголовок окна',
   'Show Status in Title': 'Показывать статус в заголовке',
@@ -350,6 +351,7 @@ export default {
   'Folder Trust': 'Доверие к папке',
   'Vision Model Preview': 'Визуальная модель (предпросмотр)',
   'Tool Schema Compliance': 'Соответствие схеме инструмента',
+  'Experimental: Skills': 'Экспериментальное: Навыки',
   // Варианты перечислений настроек
   'Auto (detect from system)': 'Авто (определить из системы)',
   Text: 'Текст',
@@ -448,6 +450,8 @@ export default {
   'Example: /language output English': 'Пример: /language output English',
   'Example: /language output 日本語': 'Пример: /language output 日本語',
   'UI language changed to {{lang}}': 'Язык интерфейса изменен на {{lang}}',
+  'LLM output language set to {{lang}}':
+    'Язык вывода LLM установлен на {{lang}}',
   'LLM output language rule file generated at {{path}}':
     'Файл правил языка вывода LLM создан в {{path}}',
   'Please restart the application for the changes to take effect.':

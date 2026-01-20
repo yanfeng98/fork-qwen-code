@@ -17,7 +17,6 @@ import {
   getDialogSettingKeys,
   setPendingSettingValue,
   getDisplayValue,
-  hasRestartRequiredSettings,
   saveModifiedSettings,
   getSettingDefinition,
   isDefaultValue,
@@ -28,6 +27,7 @@ import {
   getNestedValue,
   getEffectiveValue,
 } from '../../utils/settingsUtils.js';
+import { updateOutputLanguageFile } from '../../utils/languageUtils.js';
 import { useVimMode } from '../contexts/VimModeContext.js';
 import { type Config } from '@qwen-code/qwen-code-core';
 import { useKeypress } from '../hooks/useKeypress.js';
@@ -68,7 +68,6 @@ export function SettingsDialog({
   const [activeSettingIndex, setActiveSettingIndex] = useState(0);
   // Scroll offset for settings
   const [scrollOffset, setScrollOffset] = useState(0);
-  const [showRestartPrompt, setShowRestartPrompt] = useState(false);
 
   // Local pending settings state for the selected scope
   const [pendingSettings, setPendingSettings] = useState<Settings>(() =>
@@ -88,16 +87,17 @@ export function SettingsDialog({
   >(new Map());
 
   // Track restart-required settings across scope changes
-  const [_restartRequiredSettings, setRestartRequiredSettings] = useState<
+  const [restartRequiredSettings, setRestartRequiredSettings] = useState<
     Set<string>
   >(new Set());
+
+  const showRestartPrompt = restartRequiredSettings.size > 0;
 
   useEffect(() => {
     // Base settings for selected scope
     let updated = structuredClone(settings.forScope(selectedScope).settings);
     // Overlay globally pending (unsaved) changes so user sees their modifications in any scope
     const newModified = new Set<string>();
-    const newRestartRequired = new Set<string>();
     for (const [key, value] of globalPendingChanges.entries()) {
       const def = getSettingDefinition(key);
       if (def?.type === 'boolean' && typeof value === 'boolean') {
@@ -111,12 +111,9 @@ export function SettingsDialog({
         updated = setPendingSettingValueAny(key, value, updated);
       }
       newModified.add(key);
-      if (requiresRestart(key)) newRestartRequired.add(key);
     }
     setPendingSettings(updated);
     setModifiedSettings(newModified);
-    setRestartRequiredSettings(newRestartRequired);
-    setShowRestartPrompt(newRestartRequired.size > 0);
   }, [selectedScope, settings, globalPendingChanges]);
 
   const generateSettingsItems = () => {
@@ -226,31 +223,22 @@ export function SettingsDialog({
               structuredClone(settings.forScope(selectedScope).settings),
             );
           } else {
-            // For restart-required settings, track as modified
-            setModifiedSettings((prev) => {
-              const updated = new Set(prev).add(key);
-              const needsRestart = hasRestartRequiredSettings(updated);
-              console.log(
-                `[DEBUG SettingsDialog] Modified settings:`,
-                Array.from(updated),
-                'Needs restart:',
-                needsRestart,
-              );
-              if (needsRestart) {
-                setShowRestartPrompt(true);
-                setRestartRequiredSettings((prevRestart) =>
-                  new Set(prevRestart).add(key),
-                );
-              }
-              return updated;
-            });
+            // For restart-required settings, save immediately but show restart prompt
+            const immediateSettings = new Set([key]);
+            const immediateSettingsObject = setPendingSettingValueAny(
+              key,
+              newValue,
+              {} as Settings,
+            );
+            saveModifiedSettings(
+              immediateSettings,
+              immediateSettingsObject,
+              settings,
+              selectedScope,
+            );
 
-            // Add/update pending change globally so it persists across scopes
-            setGlobalPendingChanges((prev) => {
-              const next = new Map(prev);
-              next.set(key, newValue as PendingValue);
-              return next;
-            });
+            // Mark as needing restart and show prompt
+            setRestartRequiredSettings((prev) => new Set(prev).add(key));
           }
         },
       };
@@ -293,7 +281,7 @@ export function SettingsDialog({
       return;
     }
 
-    let parsed: string | number;
+    let parsed: string | number | undefined;
     if (type === 'number') {
       const numParsed = Number(editBuffer.trim());
       if (Number.isNaN(numParsed)) {
@@ -306,19 +294,32 @@ export function SettingsDialog({
       parsed = numParsed;
     } else {
       // For strings, use the buffer as is.
-      parsed = editBuffer;
+      // Special handling for outputLanguage: empty input means 'auto'
+      if (key === 'general.outputLanguage') {
+        const trimmed = editBuffer.trim();
+        parsed = trimmed === '' ? 'auto' : trimmed;
+      } else {
+        parsed = editBuffer;
+      }
     }
 
     // Update pending
-    setPendingSettings((prev) => setPendingSettingValueAny(key, parsed, prev));
+    setPendingSettings((prev) =>
+      parsed === undefined
+        ? setPendingSettingValueAny(
+            key,
+            undefined as unknown as SettingsValue,
+            prev,
+          )
+        : setPendingSettingValueAny(key, parsed, prev),
+    );
 
     if (!requiresRestart(key)) {
       const immediateSettings = new Set([key]);
-      const immediateSettingsObject = setPendingSettingValueAny(
-        key,
-        parsed,
-        {} as Settings,
-      );
+      const immediateSettingsObject =
+        parsed === undefined
+          ? ({} as Settings)
+          : setPendingSettingValueAny(key, parsed, {} as Settings);
       saveModifiedSettings(
         immediateSettings,
         immediateSettingsObject,
@@ -346,25 +347,26 @@ export function SettingsDialog({
         return next;
       });
     } else {
-      // Mark as modified and needing restart
-      setModifiedSettings((prev) => {
-        const updated = new Set(prev).add(key);
-        const needsRestart = hasRestartRequiredSettings(updated);
-        if (needsRestart) {
-          setShowRestartPrompt(true);
-          setRestartRequiredSettings((prevRestart) =>
-            new Set(prevRestart).add(key),
-          );
-        }
-        return updated;
-      });
+      // For restart-required settings, save immediately but show restart prompt
+      const immediateSettings = new Set([key]);
+      const immediateSettingsObject =
+        parsed === undefined
+          ? ({} as Settings)
+          : setPendingSettingValueAny(key, parsed, {} as Settings);
+      saveModifiedSettings(
+        immediateSettings,
+        immediateSettingsObject,
+        settings,
+        selectedScope,
+      );
 
-      // Record pending change globally for persistence across scopes
-      setGlobalPendingChanges((prev) => {
-        const next = new Map(prev);
-        next.set(key, parsed as PendingValue);
-        return next;
-      });
+      // Update output language rule file immediately (no restart needed for LLM effect)
+      if (key === 'general.outputLanguage' && typeof parsed === 'string') {
+        updateOutputLanguageFile(parsed);
+      }
+
+      // Mark as needing restart and show prompt
+      setRestartRequiredSettings((prev) => new Set(prev).add(key));
     }
 
     setEditingKey(null);
@@ -691,6 +693,9 @@ export function SettingsDialog({
                   return next;
                 });
               }
+              setRestartRequiredSettings((prev) =>
+                new Set(prev).add(currentSetting.value),
+              );
             }
           }
         }
@@ -720,7 +725,6 @@ export function SettingsDialog({
           });
         }
 
-        setShowRestartPrompt(false);
         setRestartRequiredSettings(new Set()); // Clear restart-required settings
         if (onRestartRequest) onRestartRequest();
       }
@@ -837,9 +841,10 @@ export function SettingsDialog({
                     {isActive ? '●' : ''}
                   </Text>
                 </Box>
-                <Box minWidth={50}>
+                <Box flexGrow={1} flexShrink={1}>
                   <Text
                     color={isActive ? theme.status.success : theme.text.primary}
+                    wrap="truncate"
                   >
                     {item.label}
                     {scopeMessage && (
@@ -847,18 +852,20 @@ export function SettingsDialog({
                     )}
                   </Text>
                 </Box>
-                <Box minWidth={3} />
-                <Text
-                  color={
-                    isActive
-                      ? theme.status.success
-                      : shouldBeGreyedOut
-                        ? theme.text.secondary
-                        : theme.text.primary
-                  }
-                >
-                  {displayValue}
-                </Text>
+                <Box marginLeft={1} flexShrink={0}>
+                  <Text
+                    color={
+                      isActive
+                        ? theme.status.success
+                        : shouldBeGreyedOut
+                          ? theme.text.secondary
+                          : theme.text.primary
+                    }
+                    wrap="truncate"
+                  >
+                    {displayValue}
+                  </Text>
+                </Box>
               </Box>
             );
           })}

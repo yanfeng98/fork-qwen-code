@@ -275,7 +275,7 @@ export default {
   // ============================================================================
   'Vim Mode': 'Vim-Modus',
   'Disable Auto Update': 'Automatische Updates deaktivieren',
-  'Add AI Co-Author to Commits': 'KI als Co-Autor zu Commits hinzufügen',
+  'Attribution: commit': 'Attribution: Commit',
   'Terminal Bell Notification': 'Terminal-Signalton',
   'Enable Usage Statistics': 'Nutzungsstatistiken aktivieren',
   Theme: 'Farbschema',
@@ -283,7 +283,8 @@ export default {
   'Auto-connect to IDE': 'Automatische Verbindung zur IDE',
   'Enable Prompt Completion': 'Eingabevervollständigung aktivieren',
   'Debug Keystroke Logging': 'Debug-Protokollierung von Tastatureingaben',
-  Language: 'Sprache',
+  'Language: UI': 'Sprache: Benutzeroberfläche',
+  'Language: Model': 'Sprache: Modell',
   'Output Format': 'Ausgabeformat',
   'Hide Window Title': 'Fenstertitel ausblenden',
   'Show Status in Title': 'Status im Titel anzeigen',
@@ -330,6 +331,7 @@ export default {
   'Folder Trust': 'Ordnervertrauen',
   'Vision Model Preview': 'Vision-Modell-Vorschau',
   'Tool Schema Compliance': 'Werkzeug-Schema-Konformität',
+  'Experimental: Skills': 'Experimentell: Fähigkeiten',
   // Settings enum options
   'Auto (detect from system)': 'Automatisch (vom System erkennen)',
   Text: 'Text',
@@ -427,6 +429,8 @@ export default {
   'Example: /language output English': 'Beispiel: /language output English',
   'Example: /language output 日本語': 'Beispiel: /language output Japanisch',
   'UI language changed to {{lang}}': 'UI-Sprache geändert zu {{lang}}',
+  'LLM output language set to {{lang}}':
+    'LLM-Ausgabesprache auf {{lang}} gesetzt',
   'LLM output language rule file generated at {{path}}':
     'LLM-Ausgabesprach-Regeldatei generiert unter {{path}}',
   'Please restart the application for the changes to take effect.':

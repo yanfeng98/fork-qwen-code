@@ -163,7 +163,7 @@ const SETTINGS_SCHEMA = {
       },
       gitCoAuthor: {
         type: 'boolean',
-        label: 'Add AI Co-Author to Commits',
+        label: 'Attribution: commit',
         category: 'General',
         requiresRestart: false,
         default: true,
@@ -202,7 +202,7 @@ const SETTINGS_SCHEMA = {
       },
       language: {
         type: 'enum',
-        label: 'Language',
+        label: 'Language: UI',
         category: 'General',
         requiresRestart: true,
         default: 'auto',
@@ -218,6 +218,17 @@ const SETTINGS_SCHEMA = {
           { value: 'ru', label: 'Русский (Russian)' },
           { value: 'de', label: 'Deutsch (German)' },
         ],
+      },
+      outputLanguage: {
+        type: 'string',
+        label: 'Language: Model',
+        category: 'General',
+        requiresRestart: true,
+        default: 'auto',
+        description:
+          'The language for LLM output. Use "auto" to detect from system settings, ' +
+          'or set a specific language (e.g., "English", "中文", "日本語").',
+        showInDialog: true,
       },
       terminalBell: {
         type: 'boolean',
@@ -1143,7 +1154,7 @@ const SETTINGS_SCHEMA = {
     properties: {
       skills: {
         type: 'boolean',
-        label: 'Skills',
+        label: 'Experimental: Skills',
         category: 'Experimental',
         requiresRestart: true,
         default: false,

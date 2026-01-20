@@ -292,7 +292,7 @@ export default {
   // ============================================================================
   'Vim Mode': 'Vim Mode',
   'Disable Auto Update': 'Disable Auto Update',
-  'Add AI Co-Author to Commits': 'Add AI Co-Author to Commits',
+  'Attribution: commit': 'Attribution: commit',
   'Terminal Bell Notification': 'Terminal Bell Notification',
   'Enable Usage Statistics': 'Enable Usage Statistics',
   Theme: 'Theme',
@@ -300,7 +300,8 @@ export default {
   'Auto-connect to IDE': 'Auto-connect to IDE',
   'Enable Prompt Completion': 'Enable Prompt Completion',
   'Debug Keystroke Logging': 'Debug Keystroke Logging',
-  Language: 'Language',
+  'Language: UI': 'Language: UI',
+  'Language: Model': 'Language: Model',
   'Output Format': 'Output Format',
   'Hide Window Title': 'Hide Window Title',
   'Show Status in Title': 'Show Status in Title',
@@ -346,6 +347,7 @@ export default {
   'Folder Trust': 'Folder Trust',
   'Vision Model Preview': 'Vision Model Preview',
   'Tool Schema Compliance': 'Tool Schema Compliance',
+  'Experimental: Skills': 'Experimental: Skills',
   // Settings enum options
   'Auto (detect from system)': 'Auto (detect from system)',
   Text: 'Text',
@@ -441,6 +443,7 @@ export default {
   'Example: /language output English': 'Example: /language output English',
   'Example: /language output 日本語': 'Example: /language output 日本語',
   'UI language changed to {{lang}}': 'UI language changed to {{lang}}',
+  'LLM output language set to {{lang}}': 'LLM output language set to {{lang}}',
   'LLM output language rule file generated at {{path}}':
     'LLM output language rule file generated at {{path}}',
   'Please restart the application for the changes to take effect.':

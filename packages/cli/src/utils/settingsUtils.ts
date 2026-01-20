@@ -17,6 +17,7 @@ import type {
 } from '../config/settingsSchema.js';
 import { getSettingsSchema } from '../config/settingsSchema.js';
 import { t } from '../i18n/index.js';
+import { isAutoLanguage } from './languageUtils.js';
 
 // The schema is now nested, but many parts of the UI and logic work better
 // with a flattened structure and dot-notation keys. This section flattens the
@@ -268,13 +269,16 @@ const SETTINGS_DIALOG_ORDER: readonly string[] = [
 
   // Localization - users often set this first
   'general.language',
+  'general.outputLanguage',
+
+  // Theme
+  'ui.theme',
 
   // Editor/Shell Experience
   'general.vimMode',
   'tools.shell.enableInteractiveShell',
 
   // Display Preferences
-  'ui.theme',
   'general.preferredEditor',
   'ide.enabled',
   'ui.showLineNumbers',
@@ -465,14 +469,20 @@ export function saveModifiedSettings(
       path,
     );
 
-    if (value === undefined) {
-      return;
-    }
-
     const existsInOriginalFile = settingExistsInScope(
       settingKey,
       loadedSettings.forScope(scope).settings,
     );
+
+    if (value === undefined) {
+      // Treat `undefined` as "unset" when the key exists in the scope file.
+      // LoadedSettings.setValue(..., undefined) is used elsewhere in the codebase
+      // to remove optional settings from disk.
+      if (existsInOriginalFile) {
+        loadedSettings.setValue(scope, settingKey, undefined);
+      }
+      return;
+    }
 
     const isDefaultValue = value === getDefaultValue(settingKey);
 
@@ -509,7 +519,10 @@ export function getDisplayValue(
 
   let valueString = String(value);
 
-  if (definition?.type === 'enum' && definition.options) {
+  // Special handling for outputLanguage 'auto' value
+  if (key === 'general.outputLanguage' && isAutoLanguage(value as string)) {
+    valueString = t('Auto (detect from system)');
+  } else if (definition?.type === 'enum' && definition.options) {
     const option = definition.options?.find((option) => option.value === value);
     if (option?.label) {
       valueString = t(option.label) || option.label;

@@ -34,6 +34,7 @@ import {
   saveModifiedSettings,
   TEST_ONLY,
 } from '../../utils/settingsUtils.js';
+import { OUTPUT_LANGUAGE_AUTO } from '../../utils/languageUtils.js';
 
 // Mock the VimModeContext
 const mockToggleVimEnabled = vi.fn();
@@ -282,7 +283,12 @@ describe('SettingsDialog', () => {
         stdin.write(TerminalKeys.DOWN_ARROW as string); // Down arrow
       });
 
-      expect(lastFrame()).toContain('● Language');
+      const secondKey = getDialogSettingKeys()[1];
+      expect(secondKey).toBeDefined();
+      const secondLabel = secondKey
+        ? (getSettingDefinition(secondKey)?.label ?? secondKey)
+        : '';
+      expect(lastFrame()).toContain(`● ${secondLabel}`);
 
       // The active index should have changed (tested indirectly through behavior)
       unmount();
@@ -375,14 +381,17 @@ describe('SettingsDialog', () => {
         expect(lastFrame()).toContain('● Tool Approval Mode');
       });
 
-      // Navigate to Vim Mode setting (third setting - a boolean) and verify we're there
-      act(() => {
-        stdin.write(TerminalKeys.DOWN_ARROW as string); // -> Language
-      });
-      await wait();
-      act(() => {
-        stdin.write(TerminalKeys.DOWN_ARROW as string); // -> Vim Mode
-      });
+      const dialogKeys = getDialogSettingKeys();
+      const targetIndex = dialogKeys.indexOf('general.vimMode');
+      expect(targetIndex).toBeGreaterThan(0);
+
+      // Navigate to Vim Mode setting and verify we're there
+      for (let i = 0; i < targetIndex; i++) {
+        act(() => {
+          stdin.write(TerminalKeys.DOWN_ARROW as string);
+        });
+        await wait();
+      }
       await waitFor(() => {
         expect(lastFrame()).toContain('● Vim Mode');
       });
@@ -579,7 +588,7 @@ describe('SettingsDialog', () => {
 
       // Wait for initial render
       await waitFor(() => {
-        expect(lastFrame()).toContain('Vim Mode');
+        expect(lastFrame()).toContain('Tool Approval Mode');
       });
 
       // The UI should show settings mode is active (scope is in separate view)
@@ -651,7 +660,7 @@ describe('SettingsDialog', () => {
 
       // Wait for initial render
       await waitFor(() => {
-        expect(lastFrame()).toContain('Vim Mode');
+        expect(lastFrame()).toContain('Tool Approval Mode');
       });
 
       // Verify the dialog is rendered properly (scope is in separate view)
@@ -857,17 +866,40 @@ describe('SettingsDialog', () => {
       unmount();
     });
 
-    it('should clear restart prompt when switching scopes', async () => {
+    it('should keep restart prompt when switching scopes', async () => {
       const settings = createMockSettings();
       const onSelect = vi.fn();
 
-      const { unmount } = render(
+      const { stdin, lastFrame, unmount } = render(
         <KeypressProvider kittyProtocolEnabled={false}>
           <SettingsDialog settings={settings} onSelect={onSelect} />
         </KeypressProvider>,
       );
 
-      // Restart prompt should be cleared when switching scopes
+      // Trigger a restart-required setting change: navigate to "Language: UI" (2nd item) and toggle it.
+      stdin.write(TerminalKeys.DOWN_ARROW as string);
+      await wait();
+      stdin.write(TerminalKeys.ENTER as string);
+      await wait();
+
+      await waitFor(() => {
+        expect(lastFrame()).toContain(
+          'To see changes, Qwen Code must be restarted',
+        );
+      });
+
+      // Switch scopes; restart prompt should remain visible.
+      stdin.write(TerminalKeys.TAB as string);
+      await wait();
+      stdin.write('2');
+      await wait();
+
+      await waitFor(() => {
+        expect(lastFrame()).toContain(
+          'To see changes, Qwen Code must be restarted',
+        );
+      });
+
       unmount();
     });
   });
@@ -909,6 +941,44 @@ describe('SettingsDialog', () => {
       const output = lastFrame();
       // Should show settings with override indicators
       expect(output).toContain('Settings');
+    });
+  });
+
+  describe('Output Language', () => {
+    it('treats empty output language as auto', async () => {
+      const settings = createMockSettings({
+        general: { outputLanguage: 'en' },
+      });
+
+      const { stdin, unmount } = render(
+        <KeypressProvider kittyProtocolEnabled={false}>
+          <SettingsDialog settings={settings} onSelect={() => {}} />
+        </KeypressProvider>,
+      );
+
+      // Navigate to "Language: Model" (3rd item), start editing, then commit empty.
+      stdin.write(TerminalKeys.DOWN_ARROW as string);
+      await wait();
+      stdin.write(TerminalKeys.DOWN_ARROW as string);
+      await wait();
+      stdin.write(TerminalKeys.ENTER as string);
+      await wait();
+      stdin.write(TerminalKeys.ENTER as string);
+      await wait();
+
+      // Empty input should set 'auto' in settings (rule file is updated on restart)
+      const outputLanguageCall = vi
+        .mocked(saveModifiedSettings)
+        .mock.calls.find((call) =>
+          (call[0] as Set<string>).has('general.outputLanguage'),
+        );
+      expect(outputLanguageCall).toBeTruthy();
+      // Should save 'auto' to settings
+      expect(outputLanguageCall?.[1]).toMatchObject({
+        general: { outputLanguage: OUTPUT_LANGUAGE_AUTO },
+      });
+
+      unmount();
     });
   });
 
@@ -1001,7 +1071,7 @@ describe('SettingsDialog', () => {
 
       // Wait for initial render
       await waitFor(() => {
-        expect(lastFrame()).toContain('Vim Mode');
+        expect(lastFrame()).toContain('Tool Approval Mode');
       });
 
       // Verify initial state: settings mode active (scope is in separate view)
@@ -1063,7 +1133,7 @@ describe('SettingsDialog', () => {
 
       // Wait for initial render
       await waitFor(() => {
-        expect(lastFrame()).toContain('Vim Mode');
+        expect(lastFrame()).toContain('Tool Approval Mode');
       });
 
       // Verify the complete UI is rendered (scope is in separate view)

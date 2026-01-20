@@ -283,7 +283,7 @@ export default {
   // ============================================================================
   'Vim Mode': 'Vim 模式',
   'Disable Auto Update': '禁用自动更新',
-  'Add AI Co-Author to Commits': '在提交中添加 AI 协作者',
+  'Attribution: commit': '署名：提交',
   'Terminal Bell Notification': '终端响铃通知',
   'Enable Usage Statistics': '启用使用统计',
   Theme: '主题',
@@ -291,7 +291,8 @@ export default {
   'Auto-connect to IDE': '自动连接到 IDE',
   'Enable Prompt Completion': '启用提示补全',
   'Debug Keystroke Logging': '调试按键记录',
-  Language: '语言',
+  'Language: UI': '语言：界面',
+  'Language: Model': '语言：模型',
   'Output Format': '输出格式',
   'Hide Window Title': '隐藏窗口标题',
   'Show Status in Title': '在标题中显示状态',
@@ -335,6 +336,7 @@ export default {
   'Folder Trust': '文件夹信任',
   'Vision Model Preview': '视觉模型预览',
   'Tool Schema Compliance': '工具 Schema 兼容性',
+  'Experimental: Skills': '实验性: 技能',
   // Settings enum options
   'Auto (detect from system)': '自动（从系统检测）',
   Text: '文本',
@@ -424,6 +426,7 @@ export default {
   'Example: /language output English': '示例：/language output English',
   'Example: /language output 日本語': '示例：/language output 日本語',
   'UI language changed to {{lang}}': 'UI 语言已更改为 {{lang}}',
+  'LLM output language set to {{lang}}': 'LLM 输出语言已设置为 {{lang}}',
   'LLM output language rule file generated at {{path}}':
     'LLM 输出语言规则文件已生成于 {{path}}',
   'Please restart the application for the changes to take effect.':
