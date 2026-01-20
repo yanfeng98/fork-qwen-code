@@ -27,5 +27,18 @@ const config: StorybookConfig = {
     getAbsolutePath('@storybook/addon-onboarding'),
   ],
   framework: getAbsolutePath('@storybook/react-vite'),
+  // Set ChatViewer Playground as default story when Storybook opens
+  managerHead: (head) => `
+    ${head}
+    <script>
+      // Redirect to ChatViewer Playground if on root path
+      if (window.location.pathname === '/' || window.location.pathname === '/iframe.html') {
+        const targetPath = '/?path=/story/chat-chatviewer--playground';
+        if (!window.location.search.includes('path=')) {
+          window.history.replaceState(null, '', targetPath);
+        }
+      }
+    </script>
+  `,
 };
 export default config;

@@ -6,6 +6,9 @@
 
 /* Import CSS variables BEFORE Tailwind so they're available */
 @import '../src/styles/variables.css';
+/* Import component styles */
+@import '../src/styles/components.css';
+@import '../src/styles/timeline.css';
 
 @tailwind base;
 @tailwind components;
@@ -14,4 +17,26 @@
 /* Ensure text color is inherited properly in Storybook */
 body {
   color: var(--app-primary-foreground);
+  margin: 0;
+  padding: 0;
+}
+
+/* Storybook container styling */
+.storybook-container {
+  box-sizing: border-box;
+}
+
+/* Fix Storybook iframe height for full-height stories */
+#storybook-root {
+  height: 100%;
+}
+
+/* Ensure stories with large content don't overflow awkwardly */
+.sb-show-main.sb-main-padded {
+  padding: 0 !important;
+}
+
+/* Full height stories should fill the iframe */
+[data-story-block='true'] {
+  height: 100%;
 }

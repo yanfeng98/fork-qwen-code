@@ -1,4 +1,4 @@
-# @anthropic/webui
+# @qwen-code/webui
 
 A shared React component library for Qwen Code applications, providing cross-platform UI components with consistent styling and behavior.
 
@@ -13,14 +13,14 @@ A shared React component library for Qwen Code applications, providing cross-pla
 ## Installation
 
 ```bash
-npm install @anthropic/webui
+npm install @qwen-code/webui
 ```
 
 ## Quick Start
 
 ```tsx
-import { Button, Input, Tooltip } from '@anthropic/webui';
-import { PlatformProvider } from '@anthropic/webui/context';
+import { Button, Input, Tooltip } from '@qwen-code/webui';
+import { PlatformProvider } from '@qwen-code/webui/context';
 
 function App() {
   return (
@@ -40,7 +40,7 @@ function App() {
 #### Button
 
 ```tsx
-import { Button } from '@anthropic/webui';
+import { Button } from '@qwen-code/webui';
 
 <Button variant="primary" size="md" loading={false}>
   Submit
@@ -59,7 +59,7 @@ import { Button } from '@anthropic/webui';
 #### Input
 
 ```tsx
-import { Input } from '@anthropic/webui';
+import { Input } from '@qwen-code/webui';
 
 <Input
   label="Email"
@@ -82,7 +82,7 @@ import { Input } from '@anthropic/webui';
 #### Tooltip
 
 ```tsx
-import { Tooltip } from '@anthropic/webui';
+import { Tooltip } from '@qwen-code/webui';
 
 <Tooltip content="Helpful tip">
   <span>Hover me</span>
@@ -92,7 +92,7 @@ import { Tooltip } from '@anthropic/webui';
 ### Icons
 
 ```tsx
-import { FileIcon, FolderIcon, CheckIcon } from '@anthropic/webui/icons';
+import { FileIcon, FolderIcon, CheckIcon } from '@qwen-code/webui/icons';
 
 <FileIcon size={16} className="text-gray-500" />;
 ```
@@ -126,7 +126,7 @@ Available icon categories:
 The Platform Context provides an abstraction layer for platform-specific capabilities:
 
 ```tsx
-import { PlatformProvider, usePlatform } from '@anthropic/webui/context';
+import { PlatformProvider, usePlatform } from '@qwen-code/webui/context';
 
 const platformContext = {
   postMessage: (message) => vscode.postMessage(message),
@@ -161,7 +161,7 @@ Use the shared Tailwind preset for consistent styling:
 ```js
 // tailwind.config.js
 module.exports = {
-  presets: [require('@anthropic/webui/tailwind.preset.cjs')],
+  presets: [require('@qwen-code/webui/tailwind.preset.cjs')],
   // your customizations
 };
 ```
