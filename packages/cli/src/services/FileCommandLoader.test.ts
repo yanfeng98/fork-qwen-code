@@ -568,9 +568,9 @@ describe('FileCommandLoader', () => {
 
       expect(commands).toHaveLength(3);
       const commandNames = commands.map((cmd) => cmd.name);
-      expect(commandNames).toEqual(['user', 'project', 'test-ext:ext']);
+      expect(commandNames).toEqual(['user', 'project', 'ext']);
 
-      const extCommand = commands.find((cmd) => cmd.name === 'test-ext:ext');
+      const extCommand = commands.find((cmd) => cmd.name === 'ext');
       expect(extCommand?.extensionName).toBe('test-ext');
       expect(extCommand?.description).toMatch(/^\[test-ext\]/);
     });
@@ -656,14 +656,14 @@ describe('FileCommandLoader', () => {
         expect(result1.content).toEqual([{ text: 'Project deploy command' }]);
       }
 
-      expect(commands[2].name).toBe('test-ext:deploy');
+      expect(commands[2].name).toBe('deploy');
       expect(commands[2].extensionName).toBe('test-ext');
       expect(commands[2].description).toMatch(/^\[test-ext\]/);
       const result2 = await commands[2].action?.(
         createMockCommandContext({
           invocation: {
-            raw: '/test-ext:deploy',
-            name: 'test-ext:deploy',
+            raw: '/test-ext.deploy',
+            name: 'test-ext.deploy',
             args: '',
           },
         }),
@@ -729,7 +729,7 @@ describe('FileCommandLoader', () => {
       const commands = await loader.loadCommands(signal);
 
       expect(commands).toHaveLength(1);
-      expect(commands[0].name).toBe('active-ext:active');
+      expect(commands[0].name).toBe('active');
       expect(commands[0].extensionName).toBe('active-ext');
       expect(commands[0].description).toMatch(/^\[active-ext\]/);
     });
@@ -803,17 +803,17 @@ describe('FileCommandLoader', () => {
       expect(commands).toHaveLength(3);
 
       const commandNames = commands.map((cmd) => cmd.name).sort();
-      expect(commandNames).toEqual(['a:b:c', 'a:b:d:e', 'a:simple']);
+      expect(commandNames).toEqual(['b:c', 'b:d:e', 'simple']);
 
-      const nestedCmd = commands.find((cmd) => cmd.name === 'a:b:c');
+      const nestedCmd = commands.find((cmd) => cmd.name === 'b:c');
       expect(nestedCmd?.extensionName).toBe('a');
       expect(nestedCmd?.description).toMatch(/^\[a\]/);
       expect(nestedCmd).toBeDefined();
       const result = await nestedCmd!.action?.(
         createMockCommandContext({
           invocation: {
-            raw: '/a:b:c',
-            name: 'a:b:c',
+            raw: '/a.b:c',
+            name: 'a.b:c',
             args: '',
           },
         }),
