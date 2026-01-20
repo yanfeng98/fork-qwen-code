@@ -551,12 +551,17 @@ export class ExtensionManager {
   async loadExtensionsFromDir(dir: string): Promise<Extension[]> {
     const storage = new Storage(dir);
     const extensionsDir = storage.getExtensionsDir();
-    if (!fs.existsSync(extensionsDir)) {
+
+    let subdirs: string[];
+    try {
+      subdirs = fs.readdirSync(extensionsDir);
+    } catch {
+      // Directory doesn't exist or is inaccessible
       return [];
     }
 
     const extensions: Extension[] = [];
-    for (const subdir of fs.readdirSync(extensionsDir)) {
+    for (const subdir of subdirs) {
       const extensionDir = path.join(extensionsDir, subdir);
 
       const extension = await this.loadExtension({
