@@ -18,9 +18,11 @@ import {
   StopIcon,
 } from '../icons/index.js';
 import { CompletionMenu } from '../layout/CompletionMenu.js';
+import { ModelSelector } from '../layout/ModelSelector.js';
 import type { CompletionItem } from '../../../types/completionItemTypes.js';
 import { getApprovalModeInfoFromString } from '../../../types/acpTypes.js';
 import type { ApprovalModeValue } from '../../../types/approvalModeValueTypes.js';
+import type { ModelInfo } from '../../../types/acpTypes.js';
 import { ContextIndicator } from './ContextIndicator.js';
 
 interface InputFormProps {
@@ -58,6 +60,12 @@ interface InputFormProps {
   completionItems?: CompletionItem[];
   onCompletionSelect?: (item: CompletionItem) => void;
   onCompletionClose?: () => void;
+  // Model selector props
+  showModelSelector?: boolean;
+  availableModels?: ModelInfo[];
+  currentModelId?: string | null;
+  onSelectModel?: (modelId: string) => void;
+  onCloseModelSelector?: () => void;
 }
 
 // Get edit mode display info using helper function
@@ -118,6 +126,11 @@ export const InputForm: React.FC<InputFormProps> = ({
   completionItems,
   onCompletionSelect,
   onCompletionClose,
+  showModelSelector,
+  availableModels,
+  currentModelId,
+  onSelectModel,
+  onCloseModelSelector,
 }) => {
   const editModeInfo = getEditModeInfo(editMode);
   const composerDisabled = isStreaming || isWaitingForResponse;
@@ -171,6 +184,19 @@ export const InputForm: React.FC<InputFormProps> = ({
                   onSelect={onCompletionSelect}
                   onClose={onCompletionClose}
                   title={undefined}
+                />
+              )}
+
+            {showModelSelector &&
+              availableModels &&
+              onSelectModel &&
+              onCloseModelSelector && (
+                <ModelSelector
+                  visible={showModelSelector}
+                  models={availableModels}
+                  currentModelId={currentModelId ?? null}
+                  onSelectModel={onSelectModel}
+                  onClose={onCloseModelSelector}
                 />
               )}
 

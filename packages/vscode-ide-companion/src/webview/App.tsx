@@ -42,7 +42,8 @@ import {
 } from './components/messages/index.js';
 import { InputForm } from './components/layout/InputForm.js';
 import { SessionSelector } from './components/layout/SessionSelector.js';
-import { FileIcon, UserIcon } from './components/icons/index.js';
+import { FileIcon } from './components/icons/index.js';
+import type { AvailableCommand } from '../types/acpTypes.js';
 import { ApprovalMode, NEXT_APPROVAL_MODE } from '../types/acpTypes.js';
 import type { ApprovalModeValue } from '../types/approvalModeValueTypes.js';
 import type { PlanEntry, UsageStatsPayload } from '../types/chatTypes.js';
@@ -77,6 +78,11 @@ export const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true); // Track if we're still initializing/loading
   const [modelInfo, setModelInfo] = useState<ModelInfo | null>(null);
   const [usageStats, setUsageStats] = useState<UsageStatsPayload | null>(null);
+  const [availableCommands, setAvailableCommands] = useState<
+    AvailableCommand[]
+  >([]);
+  const [availableModels, setAvailableModels] = useState<ModelInfo[]>([]);
+  const [showModelSelector, setShowModelSelector] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(
     null,
   ) as React.RefObject<HTMLDivElement>;
@@ -146,23 +152,58 @@ export const App: React.FC = () => {
 
         return allItems;
       } else {
-        // Handle slash commands
-        const commands: CompletionItem[] = [
+        // Handle slash commands with grouping
+        // Model group - special items without / prefix
+        const modelGroupItems: CompletionItem[] = [
           {
-            id: 'login',
-            label: '/login',
-            description: 'Login to Qwen Code',
+            id: 'model',
+            label: 'Switch model...',
+            description: modelInfo?.name || 'Default',
             type: 'command',
-            icon: <UserIcon />,
+            group: 'Model',
           },
         ];
 
-        return commands.filter((cmd) =>
-          cmd.label.toLowerCase().includes(query.toLowerCase()),
+        // Account group
+        const accountGroupItems: CompletionItem[] = [
+          {
+            id: 'login',
+            label: 'Login',
+            description: 'Login to Qwen Code',
+            type: 'command',
+            group: 'Account',
+          },
+        ];
+
+        // Slash Commands group - commands from server (available_commands_update)
+        const slashCommandItems: CompletionItem[] = availableCommands.map(
+          (cmd) => ({
+            id: cmd.name,
+            label: `/${cmd.name}`,
+            description: cmd.description,
+            type: 'command' as const,
+            group: 'Slash Commands',
+          }),
+        );
+
+        // Combine all commands
+        const allCommands = [
+          ...modelGroupItems,
+          ...accountGroupItems,
+          ...slashCommandItems,
+        ];
+
+        // Filter by query
+        const lowerQuery = query.toLowerCase();
+        return allCommands.filter(
+          (cmd) =>
+            cmd.label.toLowerCase().includes(lowerQuery) ||
+            (cmd.description &&
+              cmd.description.toLowerCase().includes(lowerQuery)),
         );
       }
     },
-    [fileContext],
+    [fileContext, availableCommands, modelInfo?.name],
   );
 
   const completion = useCompletionTrigger(inputFieldRef, getCompletionItems);
@@ -300,6 +341,12 @@ export const App: React.FC = () => {
     setUsageStats: (stats) => setUsageStats(stats ?? null),
     setModelInfo: (info) => {
       setModelInfo(info);
+    },
+    setAvailableCommands: (commands) => {
+      setAvailableCommands(commands);
+    },
+    setAvailableModels: (models) => {
+      setAvailableModels(models);
     },
   });
 
@@ -451,11 +498,91 @@ export const App: React.FC = () => {
         return;
       }
 
-      // Slash commands can execute immediately
+      // Commands can execute immediately
       if (item.type === 'command') {
-        const command = (item.label || '').trim();
-        if (command === '/login') {
+        const itemId = item.id;
+
+        // Helper to clear trigger text from input
+        const clearTriggerText = () => {
+          const text = inputElement.textContent || '';
+          const selection = window.getSelection();
+          if (!selection || selection.rangeCount === 0) {
+            // Fallback: just clear everything
+            inputElement.textContent = '';
+            setInputText('');
+            return;
+          }
+
+          // Find and remove the slash command trigger
+          const range = selection.getRangeAt(0);
+          let cursorPos = text.length;
+          if (range.startContainer === inputElement) {
+            const childIndex = range.startOffset;
+            let offset = 0;
+            for (
+              let i = 0;
+              i < childIndex && i < inputElement.childNodes.length;
+              i++
+            ) {
+              offset += inputElement.childNodes[i].textContent?.length || 0;
+            }
+            cursorPos = offset || text.length;
+          } else if (range.startContainer.nodeType === Node.TEXT_NODE) {
+            const walker = document.createTreeWalker(
+              inputElement,
+              NodeFilter.SHOW_TEXT,
+              null,
+            );
+            let offset = 0;
+            let found = false;
+            let node: Node | null = walker.nextNode();
+            while (node) {
+              if (node === range.startContainer) {
+                offset += range.startOffset;
+                found = true;
+                break;
+              }
+              offset += node.textContent?.length || 0;
+              node = walker.nextNode();
+            }
+            cursorPos = found ? offset : text.length;
+          }
+
+          const textBeforeCursor = text.substring(0, cursorPos);
+          const slashPos = textBeforeCursor.lastIndexOf('/');
+          if (slashPos >= 0) {
+            const newText =
+              text.substring(0, slashPos) + text.substring(cursorPos);
+            inputElement.textContent = newText;
+            setInputText(newText);
+          }
+        };
+
+        // Handle special commands by id
+        if (itemId === 'login') {
+          clearTriggerText();
           vscode.postMessage({ type: 'login', data: {} });
+          completion.closeCompletion();
+          return;
+        }
+        if (itemId === 'model') {
+          clearTriggerText();
+          setShowModelSelector(true);
+          completion.closeCompletion();
+          return;
+        }
+
+        // Handle server-provided slash commands by sending them as messages
+        // CLI will detect slash commands in session/prompt and execute them
+        const serverCmd = availableCommands.find((c) => c.name === itemId);
+        if (serverCmd) {
+          // Clear the trigger text since we're sending the command
+          clearTriggerText();
+          // Send the slash command as a user message
+          vscode.postMessage({
+            type: 'sendMessage',
+            data: { text: `/${serverCmd.name}` },
+          });
           completion.closeCompletion();
           return;
         }
@@ -543,7 +670,25 @@ export const App: React.FC = () => {
       // Close the completion menu
       completion.closeCompletion();
     },
-    [completion, inputFieldRef, setInputText, fileContext, vscode],
+    [
+      completion,
+      inputFieldRef,
+      setInputText,
+      fileContext,
+      vscode,
+      availableCommands,
+    ],
+  );
+
+  // Handle model selection
+  const handleModelSelect = useCallback(
+    (modelId: string) => {
+      vscode.postMessage({
+        type: 'setModel',
+        data: { modelId },
+      });
+    },
+    [vscode],
   );
 
   // Handle attach context click
@@ -866,6 +1011,11 @@ export const App: React.FC = () => {
           completionItems={completion.items}
           onCompletionSelect={handleCompletionSelect}
           onCompletionClose={completion.closeCompletion}
+          showModelSelector={showModelSelector}
+          availableModels={availableModels}
+          currentModelId={modelInfo?.modelId}
+          onSelectModel={handleModelSelect}
+          onCloseModelSelector={() => setShowModelSelector(false)}
         />
       )}
 
