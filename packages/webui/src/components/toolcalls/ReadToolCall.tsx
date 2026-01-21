@@ -44,7 +44,7 @@ const ReadToolCallContainer: FC<ToolCallContainerProps> = ({
         </span>
       </div>
       {children && (
-        <div className="text-[var(--app-secondary-foreground)] py-1">
+        <div className="text-[var(--app-secondary-foreground)] py-0.5">
           {children}
         </div>
       )}
@@ -62,7 +62,10 @@ export const ReadToolCall: FC<BaseToolCallProps> = ({ toolCall }) => {
   const openedDiffsRef = useRef<Map<string, string>>(new Map());
 
   // Group content by type; memoize to avoid new array identities on every render
-  const { errors, diffs } = useMemo(() => groupContent(content), [content]);
+  const { errors, diffs, textOutputs } = useMemo(
+    () => groupContent(content),
+    [content],
+  );
 
   /**
    * Open diff view (if platform supports it)
@@ -125,7 +128,7 @@ export const ReadToolCall: FC<BaseToolCallProps> = ({ toolCall }) => {
   // Compute container status based on toolCall.status
   const containerStatus = mapToolStatusToContainerStatus(toolCall.status);
 
-  // Error case: show error
+  // Error case: show error from content
   if (errors.length > 0) {
     const path = locations?.[0]?.path || '';
     return (
@@ -145,6 +148,32 @@ export const ReadToolCall: FC<BaseToolCallProps> = ({ toolCall }) => {
         }
       >
         {errors.join('\n')}
+      </ReadToolCallContainer>
+    );
+  }
+
+  // Failed status case: show failure message even if no explicit error content
+  if (toolCall.status === 'failed') {
+    const path = locations?.[0]?.path || '';
+    const failureMessage =
+      textOutputs.length > 0 ? textOutputs.join('\n') : 'Read operation failed';
+    return (
+      <ReadToolCallContainer
+        label="Read"
+        className="read-tool-call-error"
+        status="error"
+        toolCallId={toolCallId}
+        labelSuffix={
+          path ? (
+            <FileLink
+              path={path}
+              showFullPath={false}
+              className="text-xs font-mono text-[var(--app-secondary-foreground)] hover:underline"
+            />
+          ) : undefined
+        }
+      >
+        {failureMessage}
       </ReadToolCallContainer>
     );
   }

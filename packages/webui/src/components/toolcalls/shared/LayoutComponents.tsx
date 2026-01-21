@@ -52,8 +52,8 @@ export const ToolCallContainer: FC<ToolCallContainerProps> = ({
     data-first={isFirst}
     data-last={isLast}
   >
-    <div className="toolcall-content-wrapper flex flex-col gap-2 min-w-0 max-w-full">
-      <div className="flex items-baseline gap-1 relative min-w-0">
+    <div className="toolcall-content-wrapper flex flex-col min-w-0 max-w-full">
+      <div className="flex items-baseline relative min-w-0">
         <span className="text-[14px] leading-none font-bold text-[var(--app-primary-foreground)]">
           {label}
         </span>
@@ -62,9 +62,7 @@ export const ToolCallContainer: FC<ToolCallContainerProps> = ({
         </span>
       </div>
       {children && (
-        <div className="text-[var(--app-secondary-foreground)] py-1">
-          {children}
-        </div>
+        <div className="text-[var(--app-secondary-foreground)]">{children}</div>
       )}
     </div>
   </div>

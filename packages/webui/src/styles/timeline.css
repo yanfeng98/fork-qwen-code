@@ -8,7 +8,7 @@
  * - LayoutComponents.css (tool calls)
  * - AssistantMessage.css (assistant messages)
  * 
- * Timeline is controlled via data-first and data-last attributes
+ * Timeline connectors are inferred from DOM order; data-first/data-last can override
  */
 
 /* Base message item styles */
@@ -28,4 +28,31 @@
 
 .user-message-container:first-child {
   margin-top: 0;
+}
+
+/*
+ * Timeline fallback for environments without data-first/data-last.
+ * Uses sibling selectors and :has() to detect AI sequence boundaries.
+ */
+.qwen-message.message-item:not(.user-message-container):first-child::after,
+.user-message-container
+  + .qwen-message.message-item:not(.user-message-container)::after,
+.chat-viewer-toolcall-wrapper:first-child .toolcall-container::after,
+.user-message-container + .chat-viewer-toolcall-wrapper .toolcall-container::after {
+  top: var(--timeline-center-offset, 13px);
+}
+
+.qwen-message.message-item:not(.user-message-container):has(+ .user-message-container)::after,
+.qwen-message.message-item:not(.user-message-container):has(
+    + :not(.qwen-message.message-item):not(.chat-viewer-toolcall-wrapper)
+  )::after,
+.qwen-message.message-item:not(.user-message-container):last-child::after,
+.chat-viewer-toolcall-wrapper:has(+ .user-message-container)
+  .toolcall-container::after,
+.chat-viewer-toolcall-wrapper:has(
+    + :not(.chat-viewer-toolcall-wrapper):not(.qwen-message.message-item)
+  )
+  .toolcall-container::after,
+.chat-viewer-toolcall-wrapper:last-child .toolcall-container::after {
+  bottom: calc(100% - var(--timeline-center-offset, 13px));
 }

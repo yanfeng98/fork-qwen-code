@@ -78,6 +78,22 @@ export const WithError: Story = {
 };
 
 /**
+ * Failed status without explicit error content
+ */
+export const FailedStatusFallback: Story = {
+  args: {
+    toolCall: {
+      toolCallId: 'read-8',
+      kind: 'read',
+      title: 'Read file',
+      status: 'failed',
+      content: [],
+      locations: [{ path: 'src/missing-file-no-error.ts' }],
+    },
+  },
+};
+
+/**
  * Read multiple files
  */
 export const ReadManyFiles: Story = {

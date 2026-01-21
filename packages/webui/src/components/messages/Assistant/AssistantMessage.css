@@ -10,21 +10,11 @@
 /* Base assistant message styles */
 .assistant-message-container {
   position: relative;
+  --timeline-center-offset: 13px;
   padding-left: 30px;
   padding-top: 8px;
   padding-bottom: 8px;
-  transition: background-color 0.15s ease;
   border-radius: 6px;
-}
-
-/* Hover effect */
-.assistant-message-container:hover {
-  background-color: rgba(255, 255, 255, 0.02);
-}
-
-/* Light theme hover */
-.light-theme .assistant-message-container:hover {
-  background-color: rgba(0, 0, 0, 0.02);
 }
 
 /*
@@ -46,7 +36,7 @@
   left: 8px;
   top: 8px;
   font-size: 10px;
-  line-height: 10px;
+  line-height: 20px;
   z-index: 1;
 }
 
@@ -89,17 +79,17 @@
 }
 
 /* First item in sequence: connector starts from bullet center */
-.assistant-message-container[data-first="true"]::after {
-  top: 13px;
+.assistant-message-container:first-child::after {
+  top: var(--timeline-center-offset, 13px);
 }
 
 /* Last item in sequence: connector ends at bullet center */
-.assistant-message-container[data-last="true"]::after {
-  bottom: calc(100% - 13px);
+.assistant-message-container:last-child::after {
+  bottom: calc(100% - var(--timeline-center-offset, 13px));
 }
 
 /* Single item (both first and last): no connector */
-.assistant-message-container[data-first="true"][data-last="true"]::after {
+.assistant-message-container:first-child:last-child::after {
   display: none;
 }
 

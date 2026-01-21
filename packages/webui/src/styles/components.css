@@ -424,7 +424,7 @@
 }
 
 .composer-input:empty::before,
-.composer-input[data-empty='true']::before {
+.composer-input[data-empty="true"]::before {
   content: attr(data-placeholder);
   color: var(--app-input-placeholder-foreground);
   pointer-events: none;
@@ -440,7 +440,7 @@
 }
 
 .composer-input:disabled,
-.composer-input[contenteditable='false'] {
+.composer-input[contenteditable="false"] {
   color: #999;
   cursor: not-allowed;
 }
@@ -497,7 +497,6 @@
   word-break: break-all;
   min-width: 0;
   font-family: var(--app-font-mono);
-  color: var(--app-link-foreground);
   overflow-wrap: anywhere;
 }
 

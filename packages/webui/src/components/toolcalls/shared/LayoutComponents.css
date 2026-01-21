@@ -9,30 +9,20 @@
 /* ToolCallContainer with timeline support */
 .toolcall-container {
   position: relative;
+  --timeline-center-offset: 15px;
   padding-left: 30px;
   padding-top: 8px;
   padding-bottom: 8px;
   user-select: text;
   align-items: flex-start;
-  transition: background-color 0.15s ease;
   border-radius: 6px;
-}
-
-/* Hover effect */
-.toolcall-container:hover {
-  background-color: rgba(255, 255, 255, 0.02);
-}
-
-/* Light theme hover (when parent has light-theme class) */
-.light-theme .toolcall-container:hover {
-  background-color: rgba(0, 0, 0, 0.02);
 }
 
 /*
  * Timeline positioning calculation:
  * - Container padding-top: 8px
- * - Bullet font-size: 10px, line-height ~10px
- * - Bullet vertical center: 8px + 5px = 13px from top
+ * - Bullet font-size: 10px, line-height: 20px (to match content height)
+ * - Bullet vertical center: 8px (container padding) + 2px (padding-top) + 5px (half of 10px bullet) = 15px from top
  * - Line left: 12px (centered under bullet at left: 8px + ~4px offset)
  */
 
@@ -48,23 +38,23 @@
 }
 
 /* First item in sequence: connector starts from bullet center */
-.toolcall-container[data-first="true"]::after {
-  top: 13px;
+.toolcall-container:first-child::after {
+  top: var(--timeline-center-offset, 15px);
 }
 
 /* Last item in sequence: connector ends at bullet center */
-.toolcall-container[data-last="true"]::after {
-  bottom: calc(100% - 13px);
+.toolcall-container:last-child::after {
+  bottom: calc(100% - var(--timeline-center-offset, 15px));
 }
 
 /* Single item (both first and last): no connector */
-.toolcall-container[data-first="true"][data-last="true"]::after {
+.toolcall-container:first-child:last-child::after {
   display: none;
 }
 
-/* 
+/*
  * Status bullet points - all use consistent positioning
- * Position: left 8px, top 8px (aligned with container padding)
+ * Following the same calculation as AssistantMessage for consistency
  */
 .toolcall-container.toolcall-status-default::before,
 .toolcall-container.toolcall-status-success::before,
@@ -76,7 +66,7 @@
   left: 8px;
   top: 8px;
   font-size: 10px;
-  line-height: 10px;
+  line-height: 1.5;
   z-index: 1;
 }
 
