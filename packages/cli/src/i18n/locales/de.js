@@ -1285,4 +1285,12 @@ export default {
     'Haben Sie versucht, es aus- und wieder einzuschalten? (Den Ladebildschirm, nicht mich.)',
     'Zusätzliche Pylonen werden gebaut...',
   ],
+
+  // ============================================================================
+  // Extension Settings Input
+  // ============================================================================
+  'Enter value...': 'Wert eingeben...',
+  'Enter sensitive value...': 'Sensiblen Wert eingeben...',
+  'Press Enter to submit, Escape to cancel':
+    'Enter zum Absenden, Escape zum Abbrechen drücken',
 };

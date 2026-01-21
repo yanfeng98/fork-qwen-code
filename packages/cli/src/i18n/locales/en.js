@@ -1249,4 +1249,12 @@ export default {
     'Have you tried turning it off and on again? (The loading screen, not me.)',
     'Constructing additional pylons...',
   ],
+
+  // ============================================================================
+  // Extension Settings Input
+  // ============================================================================
+  'Enter value...': 'Enter value...',
+  'Enter sensitive value...': 'Enter sensitive value...',
+  'Press Enter to submit, Escape to cancel':
+    'Press Enter to submit, Escape to cancel',
 };

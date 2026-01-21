@@ -151,6 +151,7 @@ export interface ExtensionManagerOptions {
   telemetrySettings?: TelemetrySettings;
   config?: Config;
   requestConsent?: (options?: ExtensionRequestOptions) => Promise<void>;
+  requestSetting?: (setting: ExtensionSetting) => Promise<string>;
 }
 
 // ============================================================================
@@ -273,6 +274,7 @@ export class ExtensionManager {
   private telemetrySettings?: TelemetrySettings;
   private isWorkspaceTrusted: boolean;
   private requestConsent: (options?: ExtensionRequestOptions) => Promise<void>;
+  private requestSetting?: (setting: ExtensionSetting) => Promise<string>;
 
   constructor(options: ExtensionManagerOptions) {
     this.workspaceDir = options.workspaceDir ?? process.cwd();
@@ -284,6 +286,7 @@ export class ExtensionManager {
       this.configDir,
       'extension-enablement.json',
     );
+    this.requestSetting = options.requestSetting;
     this.requestConsent = options.requestConsent || (() => Promise.resolve());
     this.config = options.config;
     this.telemetrySettings = options.telemetrySettings;
@@ -298,6 +301,12 @@ export class ExtensionManager {
     requestConsent: (options?: ExtensionRequestOptions) => Promise<void>,
   ): void {
     this.requestConsent = requestConsent;
+  }
+
+  setRequestSetting(
+    requestSetting?: (setting: ExtensionSetting) => Promise<string>,
+  ): void {
+    this.requestSetting = requestSetting;
   }
 
   // ==========================================================================
@@ -690,6 +699,7 @@ export class ExtensionManager {
   async installExtension(
     installMetadata: ExtensionInstallMetadata,
     requestConsent?: (options?: ExtensionRequestOptions) => Promise<void>,
+    requestSetting?: (setting: ExtensionSetting) => Promise<string>,
     cwd?: string,
     previousExtensionConfig?: ExtensionConfig,
   ): Promise<Extension> {
@@ -847,7 +857,7 @@ export class ExtensionManager {
             previousSubagents,
           });
         } else {
-          this.requestConsent({
+          await this.requestConsent({
             extensionConfig: newExtensionConfig,
             commands,
             skills,
@@ -876,7 +886,7 @@ export class ExtensionManager {
           await maybePromptForSettings(
             newExtensionConfig,
             extensionId,
-            promptForSetting,
+            requestSetting || this.requestSetting || promptForSetting,
             previousExtensionConfig,
             previousSettings,
           );
@@ -884,7 +894,7 @@ export class ExtensionManager {
           await maybePromptForSettings(
             newExtensionConfig,
             extensionId,
-            promptForSetting,
+            requestSetting || this.requestSetting || promptForSetting,
           );
         }
 
@@ -1092,6 +1102,7 @@ export class ExtensionManager {
   async performWorkspaceExtensionMigration(
     extensions: Extension[],
     requestConsent: (options?: ExtensionRequestOptions) => Promise<void>,
+    requestSetting?: (setting: ExtensionSetting) => Promise<string>,
   ): Promise<string[]> {
     const failedInstallNames: string[] = [];
 
@@ -1101,7 +1112,11 @@ export class ExtensionManager {
           source: extension.path,
           type: 'local',
         };
-        await this.installExtension(installMetadata, requestConsent);
+        await this.installExtension(
+          installMetadata,
+          requestConsent,
+          requestSetting,
+        );
       } catch (_) {
         failedInstallNames.push(extension.config.name);
       }
@@ -1162,6 +1177,7 @@ export class ExtensionManager {
       try {
         updatedExtension = await this.installExtension(
           installMetadata,
+          undefined,
           undefined,
           undefined,
           previousExtensionConfig,

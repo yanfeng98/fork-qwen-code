@@ -9,7 +9,11 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
-import { useExtensionUpdates } from './useExtensionUpdates.js';
+import {
+  useExtensionUpdates,
+  useSettingInputRequests,
+  useConfirmUpdateRequests,
+} from './useExtensionUpdates.js';
 import {
   QWEN_DIR,
   type ExtensionManager,
@@ -17,7 +21,7 @@ import {
   type ExtensionUpdateInfo,
   ExtensionUpdateState,
 } from '@qwen-code/qwen-code-core';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import { MessageType } from '../types.js';
 
 vi.mock('os', async (importOriginal) => {
@@ -70,6 +74,202 @@ function createMockExtensionManager(
     updateExtension: vi.fn(async () => updateResult),
   } as unknown as ExtensionManager;
 }
+
+describe('useConfirmUpdateRequests', () => {
+  it('should add a confirmation request', () => {
+    const { result } = renderHook(() => useConfirmUpdateRequests());
+
+    const onConfirm = vi.fn();
+    act(() => {
+      result.current.addConfirmUpdateExtensionRequest({
+        prompt: 'Test prompt',
+        onConfirm,
+      });
+    });
+
+    expect(result.current.confirmUpdateExtensionRequests).toHaveLength(1);
+    expect(result.current.confirmUpdateExtensionRequests[0].prompt).toBe(
+      'Test prompt',
+    );
+  });
+
+  it('should remove a confirmation request when confirmed', () => {
+    const { result } = renderHook(() => useConfirmUpdateRequests());
+
+    const onConfirm = vi.fn();
+    act(() => {
+      result.current.addConfirmUpdateExtensionRequest({
+        prompt: 'Test prompt',
+        onConfirm,
+      });
+    });
+
+    expect(result.current.confirmUpdateExtensionRequests).toHaveLength(1);
+
+    // Confirm the request
+    act(() => {
+      result.current.confirmUpdateExtensionRequests[0].onConfirm(true);
+    });
+
+    expect(result.current.confirmUpdateExtensionRequests).toHaveLength(0);
+    expect(onConfirm).toHaveBeenCalledWith(true);
+  });
+
+  it('should handle multiple confirmation requests', () => {
+    const { result } = renderHook(() => useConfirmUpdateRequests());
+
+    const onConfirm1 = vi.fn();
+    const onConfirm2 = vi.fn();
+
+    act(() => {
+      result.current.addConfirmUpdateExtensionRequest({
+        prompt: 'Prompt 1',
+        onConfirm: onConfirm1,
+      });
+      result.current.addConfirmUpdateExtensionRequest({
+        prompt: 'Prompt 2',
+        onConfirm: onConfirm2,
+      });
+    });
+
+    expect(result.current.confirmUpdateExtensionRequests).toHaveLength(2);
+
+    // Confirm first request
+    act(() => {
+      result.current.confirmUpdateExtensionRequests[0].onConfirm(false);
+    });
+
+    expect(result.current.confirmUpdateExtensionRequests).toHaveLength(1);
+    expect(result.current.confirmUpdateExtensionRequests[0].prompt).toBe(
+      'Prompt 2',
+    );
+    expect(onConfirm1).toHaveBeenCalledWith(false);
+  });
+});
+
+describe('useSettingInputRequests', () => {
+  it('should add a setting input request', () => {
+    const { result } = renderHook(() => useSettingInputRequests());
+
+    const onSubmit = vi.fn();
+    const onCancel = vi.fn();
+    act(() => {
+      result.current.addSettingInputRequest({
+        settingName: 'API_KEY',
+        settingDescription: 'Enter your API key',
+        sensitive: true,
+        onSubmit,
+        onCancel,
+      });
+    });
+
+    expect(result.current.settingInputRequests).toHaveLength(1);
+    expect(result.current.settingInputRequests[0].settingName).toBe('API_KEY');
+    expect(result.current.settingInputRequests[0].settingDescription).toBe(
+      'Enter your API key',
+    );
+    expect(result.current.settingInputRequests[0].sensitive).toBe(true);
+  });
+
+  it('should remove a setting input request when submitted', () => {
+    const { result } = renderHook(() => useSettingInputRequests());
+
+    const onSubmit = vi.fn();
+    const onCancel = vi.fn();
+    act(() => {
+      result.current.addSettingInputRequest({
+        settingName: 'API_KEY',
+        settingDescription: 'Enter your API key',
+        sensitive: true,
+        onSubmit,
+        onCancel,
+      });
+    });
+
+    expect(result.current.settingInputRequests).toHaveLength(1);
+
+    // Submit the value
+    act(() => {
+      result.current.settingInputRequests[0].onSubmit('my-secret-key');
+    });
+
+    expect(result.current.settingInputRequests).toHaveLength(0);
+    expect(onSubmit).toHaveBeenCalledWith('my-secret-key');
+    expect(onCancel).not.toHaveBeenCalled();
+  });
+
+  it('should remove a setting input request when cancelled', () => {
+    const { result } = renderHook(() => useSettingInputRequests());
+
+    const onSubmit = vi.fn();
+    const onCancel = vi.fn();
+    act(() => {
+      result.current.addSettingInputRequest({
+        settingName: 'API_KEY',
+        settingDescription: 'Enter your API key',
+        sensitive: true,
+        onSubmit,
+        onCancel,
+      });
+    });
+
+    expect(result.current.settingInputRequests).toHaveLength(1);
+
+    // Cancel the request
+    act(() => {
+      result.current.settingInputRequests[0].onCancel();
+    });
+
+    expect(result.current.settingInputRequests).toHaveLength(0);
+    expect(onCancel).toHaveBeenCalled();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('should handle multiple setting input requests in sequence', () => {
+    const { result } = renderHook(() => useSettingInputRequests());
+
+    const onSubmit1 = vi.fn();
+    const onCancel1 = vi.fn();
+    const onSubmit2 = vi.fn();
+    const onCancel2 = vi.fn();
+
+    act(() => {
+      result.current.addSettingInputRequest({
+        settingName: 'USERNAME',
+        settingDescription: 'Enter username',
+        sensitive: false,
+        onSubmit: onSubmit1,
+        onCancel: onCancel1,
+      });
+      result.current.addSettingInputRequest({
+        settingName: 'PASSWORD',
+        settingDescription: 'Enter password',
+        sensitive: true,
+        onSubmit: onSubmit2,
+        onCancel: onCancel2,
+      });
+    });
+
+    expect(result.current.settingInputRequests).toHaveLength(2);
+
+    // Submit first request
+    act(() => {
+      result.current.settingInputRequests[0].onSubmit('john_doe');
+    });
+
+    expect(result.current.settingInputRequests).toHaveLength(1);
+    expect(result.current.settingInputRequests[0].settingName).toBe('PASSWORD');
+    expect(onSubmit1).toHaveBeenCalledWith('john_doe');
+
+    // Submit second request
+    act(() => {
+      result.current.settingInputRequests[0].onSubmit('secret123');
+    });
+
+    expect(result.current.settingInputRequests).toHaveLength(0);
+    expect(onSubmit2).toHaveBeenCalledWith('secret123');
+  });
+});
 
 describe('useExtensionUpdates', () => {
   let tempHomeDir: string;

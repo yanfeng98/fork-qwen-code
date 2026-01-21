@@ -92,6 +92,7 @@ import { useGitBranchName } from './hooks/useGitBranchName.js';
 import {
   useExtensionUpdates,
   useConfirmUpdateRequests,
+  useSettingInputRequests,
 } from './hooks/useExtensionUpdates.js';
 import { ShellFocusContext } from './contexts/ShellFocusContext.js';
 import { t } from '../i18n/index.js';
@@ -169,14 +170,34 @@ export const AppContainer = (props: AppContainerProps) => {
 
   const extensionManager = config.getExtensionManager();
 
+  const { addConfirmUpdateExtensionRequest, confirmUpdateExtensionRequests } =
+    useConfirmUpdateRequests();
+
+  const { addSettingInputRequest, settingInputRequests } =
+    useSettingInputRequests();
+
   extensionManager.setRequestConsent(
     requestConsentOrFail.bind(null, (description) =>
       requestConsentInteractive(description, addConfirmUpdateExtensionRequest),
     ),
   );
 
-  const { addConfirmUpdateExtensionRequest, confirmUpdateExtensionRequests } =
-    useConfirmUpdateRequests();
+  extensionManager.setRequestSetting(
+    (setting) =>
+      new Promise<string>((resolve, reject) => {
+        addSettingInputRequest({
+          settingName: setting.name,
+          settingDescription: setting.description,
+          sensitive: setting.sensitive ?? false,
+          onSubmit: (value) => {
+            resolve(value);
+          },
+          onCancel: () => {
+            reject(new Error('Setting input cancelled'));
+          },
+        });
+      }),
+  );
 
   const {
     extensionsUpdateState,
@@ -1284,6 +1305,7 @@ export const AppContainer = (props: AppContainerProps) => {
     !!shellConfirmationRequest ||
     !!confirmationRequest ||
     confirmUpdateExtensionRequests.length > 0 ||
+    settingInputRequests.length > 0 ||
     !!loopDetectionConfirmationRequest ||
     isThemeDialogOpen ||
     isSettingsDialogOpen ||
@@ -1345,6 +1367,7 @@ export const AppContainer = (props: AppContainerProps) => {
       shellConfirmationRequest,
       confirmationRequest,
       confirmUpdateExtensionRequests,
+      settingInputRequests,
       loopDetectionConfirmationRequest,
       geminiMdFileCount,
       streamingState,
@@ -1436,6 +1459,7 @@ export const AppContainer = (props: AppContainerProps) => {
       shellConfirmationRequest,
       confirmationRequest,
       confirmUpdateExtensionRequests,
+      settingInputRequests,
       loopDetectionConfirmationRequest,
       geminiMdFileCount,
       streamingState,

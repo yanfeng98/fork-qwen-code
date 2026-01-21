@@ -11,6 +11,7 @@ import { LoopDetectionConfirmation } from './LoopDetectionConfirmation.js';
 import { FolderTrustDialog } from './FolderTrustDialog.js';
 import { ShellConfirmationDialog } from './ShellConfirmationDialog.js';
 import { ConsentPrompt } from './ConsentPrompt.js';
+import { SettingInputPrompt } from './SettingInputPrompt.js';
 import { ThemeDialog } from './ThemeDialog.js';
 import { SettingsDialog } from './SettingsDialog.js';
 import { QwenOAuthProgress } from './QwenOAuthProgress.js';
@@ -127,6 +128,21 @@ export const DialogManager = ({
       <ConsentPrompt
         prompt={request.prompt}
         onConfirm={request.onConfirm}
+        terminalWidth={terminalWidth}
+      />
+    );
+  }
+  if (uiState.settingInputRequests.length > 0) {
+    const request = uiState.settingInputRequests[0];
+    // Use settingName as key to force re-mount when switching between different settings
+    return (
+      <SettingInputPrompt
+        key={request.settingName}
+        settingName={request.settingName}
+        settingDescription={request.settingDescription}
+        sensitive={request.sensitive}
+        onSubmit={request.onSubmit}
+        onCancel={request.onCancel}
         terminalWidth={terminalWidth}
       />
     );

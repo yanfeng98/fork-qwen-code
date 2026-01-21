@@ -13,7 +13,11 @@ import {
 } from '../state/extensions.js';
 import { useCallback, useEffect, useMemo, useReducer } from 'react';
 import type { UseHistoryManagerReturn } from './useHistoryManager.js';
-import { MessageType, type ConfirmationRequest } from '../types.js';
+import {
+  MessageType,
+  type ConfirmationRequest,
+  type SettingInputRequest,
+} from '../types.js';
 import { checkExhaustive } from '../../utils/checks.js';
 
 type ConfirmationRequestWrapper = {
@@ -69,6 +73,74 @@ export const useConfirmUpdateRequests = () => {
     addConfirmUpdateExtensionRequest,
     confirmUpdateExtensionRequests,
     dispatchConfirmUpdateExtensionRequests,
+  };
+};
+
+type SettingInputRequestWrapper = {
+  settingName: string;
+  settingDescription: string;
+  sensitive: boolean;
+  onSubmit: (value: string) => void;
+  onCancel: () => void;
+};
+
+type SettingInputRequestAction =
+  | { type: 'add'; request: SettingInputRequestWrapper }
+  | { type: 'remove'; request: SettingInputRequestWrapper };
+
+function settingInputRequestsReducer(
+  state: SettingInputRequestWrapper[],
+  action: SettingInputRequestAction,
+): SettingInputRequestWrapper[] {
+  switch (action.type) {
+    case 'add':
+      return [...state, action.request];
+    case 'remove':
+      return state.filter((r) => r !== action.request);
+    default:
+      checkExhaustive(action);
+      return state;
+  }
+}
+
+export const useSettingInputRequests = () => {
+  const [settingInputRequests, dispatchSettingInputRequests] = useReducer(
+    settingInputRequestsReducer,
+    [],
+  );
+  const addSettingInputRequest = useCallback(
+    (original: SettingInputRequest) => {
+      const wrappedRequest: SettingInputRequestWrapper = {
+        settingName: original.settingName,
+        settingDescription: original.settingDescription,
+        sensitive: original.sensitive,
+        onSubmit: (value: string) => {
+          // Remove it from the outstanding list of requests by identity.
+          dispatchSettingInputRequests({
+            type: 'remove',
+            request: wrappedRequest,
+          });
+          original.onSubmit(value);
+        },
+        onCancel: () => {
+          dispatchSettingInputRequests({
+            type: 'remove',
+            request: wrappedRequest,
+          });
+          original.onCancel();
+        },
+      };
+      dispatchSettingInputRequests({
+        type: 'add',
+        request: wrappedRequest,
+      });
+    },
+    [dispatchSettingInputRequests],
+  );
+  return {
+    addSettingInputRequest,
+    settingInputRequests,
+    dispatchSettingInputRequests,
   };
 };
 
