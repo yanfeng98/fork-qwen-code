@@ -53,7 +53,7 @@ export const ToolCallContainer: FC<ToolCallContainerProps> = ({
     data-last={isLast}
   >
     <div className="toolcall-content-wrapper flex flex-col min-w-0 max-w-full">
-      <div className="flex items-baseline relative min-w-0">
+      <div className="flex items-baseline gap-1.5 relative min-w-0">
         <span className="text-[14px] leading-none font-bold text-[var(--app-primary-foreground)]">
           {label}
         </span>

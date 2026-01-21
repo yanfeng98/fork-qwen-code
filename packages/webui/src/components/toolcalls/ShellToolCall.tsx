@@ -34,11 +34,15 @@ const ExecuteToolCallContainer: FC<ToolCallContainerProps> = ({
   toolCallId: _toolCallId,
   labelSuffix,
   className: _className,
+  isFirst = false,
+  isLast = false,
 }) => (
   <div
     className={`ExecuteToolCall qwen-message message-item ${_className || ''} relative pl-[30px] py-2 select-text toolcall-container toolcall-status-${status}`}
+    data-first={isFirst}
+    data-last={isLast}
   >
-    <div className="toolcall-content-wrapper flex flex-col gap-0 min-w-0 max-w-full">
+    <div className="toolcall-content-wrapper flex flex-col min-w-0 max-w-full">
       <div className="flex items-baseline gap-1.5 relative min-w-0">
         <span className="text-[14px] leading-none font-bold text-[var(--app-primary-foreground)]">
           {label}
@@ -95,6 +99,8 @@ const getInputCommand = (
 const ShellToolCallImpl: FC<BaseToolCallProps & { variant: ShellVariant }> = ({
   toolCall,
   variant,
+  isFirst,
+  isLast,
 }) => {
   const { title, content, rawInput, toolCallId } = toolCall;
   const classPrefix = variant;
@@ -157,7 +163,13 @@ const ShellToolCallImpl: FC<BaseToolCallProps & { variant: ShellVariant }> = ({
   // Error case
   if (errors.length > 0) {
     return (
-      <Container label={label} status={containerStatus} toolCallId={toolCallId}>
+      <Container
+        label={label}
+        status={containerStatus}
+        toolCallId={toolCallId}
+        isFirst={isFirst}
+        isLast={isLast}
+      >
         {/* Branch connector summary */}
         <div className="inline-flex text-[var(--app-secondary-foreground)] text-[0.85em] opacity-70 mt-[2px] mb-[2px] flex-row items-start w-full gap-1">
           <span className="flex-shrink-0 relative top-[-0.1em]">⎿</span>
@@ -203,7 +215,13 @@ const ShellToolCallImpl: FC<BaseToolCallProps & { variant: ShellVariant }> = ({
       output.length > 500 ? output.substring(0, 500) + '...' : output;
 
     return (
-      <Container label={label} status={containerStatus} toolCallId={toolCallId}>
+      <Container
+        label={label}
+        status={containerStatus}
+        toolCallId={toolCallId}
+        isFirst={isFirst}
+        isLast={isLast}
+      >
         {/* Branch connector summary */}
         <div className="inline-flex text-[var(--app-secondary-foreground)] text-[0.85em] opacity-70 mt-[2px] mb-[2px] flex-row items-start w-full gap-1">
           <span className="flex-shrink-0 relative top-[-0.1em]">⎿</span>
@@ -248,7 +266,13 @@ const ShellToolCallImpl: FC<BaseToolCallProps & { variant: ShellVariant }> = ({
 
   // Success without output: show command with branch connector
   return (
-    <Container label={label} status={containerStatus} toolCallId={toolCallId}>
+    <Container
+      label={label}
+      status={containerStatus}
+      toolCallId={toolCallId}
+      isFirst={isFirst}
+      isLast={isLast}
+    >
       <div
         className="inline-flex text-[var(--app-secondary-foreground)] text-[0.85em] opacity-70 mt-[2px] mb-[2px] flex-row items-start w-full gap-1"
         onClick={handleInClick}

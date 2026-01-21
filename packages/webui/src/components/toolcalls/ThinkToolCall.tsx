@@ -20,7 +20,11 @@ import type { BaseToolCallProps } from './shared/index.js';
  * Optimized for displaying AI reasoning and thought processes
  * Minimal display: just show the thoughts (no context)
  */
-export const ThinkToolCall: FC<BaseToolCallProps> = ({ toolCall }) => {
+export const ThinkToolCall: FC<BaseToolCallProps> = ({
+  toolCall,
+  isFirst,
+  isLast,
+}) => {
   const { content } = toolCall;
 
   // Group content by type
@@ -29,7 +33,12 @@ export const ThinkToolCall: FC<BaseToolCallProps> = ({ toolCall }) => {
   // Error case (rare for thinking)
   if (errors.length > 0) {
     return (
-      <ToolCallContainer label="SaveMemory" status="error">
+      <ToolCallContainer
+        label="SaveMemory"
+        status="error"
+        isFirst={isFirst}
+        isLast={isLast}
+      >
         {errors.join('\n')}
       </ToolCallContainer>
     );
@@ -61,7 +70,12 @@ export const ThinkToolCall: FC<BaseToolCallProps> = ({ toolCall }) => {
         ? 'loading'
         : 'default';
     return (
-      <ToolCallContainer label="SaveMemory" status={status}>
+      <ToolCallContainer
+        label="SaveMemory"
+        status={status}
+        isFirst={isFirst}
+        isLast={isLast}
+      >
         <span className="italic opacity-90">{thoughts}</span>
       </ToolCallContainer>
     );

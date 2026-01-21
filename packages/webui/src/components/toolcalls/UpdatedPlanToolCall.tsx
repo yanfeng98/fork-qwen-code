@@ -27,9 +27,13 @@ const PlanToolCallContainer: FC<ToolCallContainerProps> = ({
   toolCallId: _toolCallId,
   labelSuffix,
   className: _className,
+  isFirst = false,
+  isLast = false,
 }) => (
   <div
     className={`qwen-message message-item ${_className || ''} relative pl-[30px] py-2 select-text toolcall-container toolcall-status-${status}`}
+    data-first={isFirst}
+    data-last={isLast}
   >
     <div className="UpdatedPlanToolCall toolcall-content-wrapper flex flex-col gap-2 min-w-0 max-w-full">
       <div className="flex items-baseline gap-1 relative min-w-0">
@@ -113,14 +117,23 @@ const parsePlanEntries = (textOutputs: string[]): PlanEntry[] => {
  * Specialized component for UpdatedPlan tool calls
  * Optimized for displaying plan update operations
  */
-export const UpdatedPlanToolCall: FC<BaseToolCallProps> = ({ toolCall }) => {
+export const UpdatedPlanToolCall: FC<BaseToolCallProps> = ({
+  toolCall,
+  isFirst,
+  isLast,
+}) => {
   const { content, status } = toolCall;
   const { errors, textOutputs } = groupContent(content);
 
   // Error-first display
   if (errors.length > 0) {
     return (
-      <PlanToolCallContainer label="TodoWrite" status="error">
+      <PlanToolCallContainer
+        label="TodoWrite"
+        status="error"
+        isFirst={isFirst}
+        isLast={isLast}
+      >
         {errors.join('\n')}
       </PlanToolCallContainer>
     );
@@ -134,6 +147,8 @@ export const UpdatedPlanToolCall: FC<BaseToolCallProps> = ({ toolCall }) => {
       label={label}
       status={mapToolStatusToBullet(status)}
       className="update-plan-toolcall"
+      isFirst={isFirst}
+      isLast={isLast}
     >
       <ul className="Fr list-none p-0 m-0 flex flex-col gap-1">
         {entries.map((entry, idx) => {

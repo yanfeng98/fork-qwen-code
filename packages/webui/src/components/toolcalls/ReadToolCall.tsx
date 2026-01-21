@@ -30,9 +30,13 @@ const ReadToolCallContainer: FC<ToolCallContainerProps> = ({
   toolCallId: _toolCallId,
   labelSuffix,
   className: _className,
+  isFirst = false,
+  isLast = false,
 }) => (
   <div
     className={`ReadToolCall qwen-message message-item ${_className || ''} relative pl-[30px] py-2 select-text toolcall-container toolcall-status-${status}`}
+    data-first={isFirst}
+    data-last={isLast}
   >
     <div className="toolcall-content-wrapper flex flex-col gap-1 min-w-0 max-w-full">
       <div className="flex items-baseline gap-1.5 relative min-w-0">
@@ -56,7 +60,11 @@ const ReadToolCallContainer: FC<ToolCallContainerProps> = ({
  * ReadToolCall - displays file reading operations
  * Shows: Read filename (no content preview)
  */
-export const ReadToolCall: FC<BaseToolCallProps> = ({ toolCall }) => {
+export const ReadToolCall: FC<BaseToolCallProps> = ({
+  toolCall,
+  isFirst,
+  isLast,
+}) => {
   const { content, locations, toolCallId } = toolCall;
   const platform = usePlatform();
   const openedDiffsRef = useRef<Map<string, string>>(new Map());
@@ -137,6 +145,8 @@ export const ReadToolCall: FC<BaseToolCallProps> = ({ toolCall }) => {
         className="read-tool-call-error"
         status="error"
         toolCallId={toolCallId}
+        isFirst={isFirst}
+        isLast={isLast}
         labelSuffix={
           path ? (
             <FileLink
@@ -163,6 +173,8 @@ export const ReadToolCall: FC<BaseToolCallProps> = ({ toolCall }) => {
         className="read-tool-call-error"
         status="error"
         toolCallId={toolCallId}
+        isFirst={isFirst}
+        isLast={isLast}
         labelSuffix={
           path ? (
             <FileLink
@@ -187,6 +199,8 @@ export const ReadToolCall: FC<BaseToolCallProps> = ({ toolCall }) => {
         className="read-tool-call-success"
         status={containerStatus}
         toolCallId={toolCallId}
+        isFirst={isFirst}
+        isLast={isLast}
         labelSuffix={
           path ? (
             <FileLink
@@ -211,6 +225,8 @@ export const ReadToolCall: FC<BaseToolCallProps> = ({ toolCall }) => {
         className="read-tool-call-success"
         status={containerStatus}
         toolCallId={toolCallId}
+        isFirst={isFirst}
+        isLast={isLast}
         labelSuffix={
           path ? (
             <FileLink

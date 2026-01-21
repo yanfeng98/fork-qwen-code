@@ -22,7 +22,11 @@ import type { BaseToolCallProps } from './shared/index.js';
  * Used as fallback for unknown tool call kinds
  * Minimal display: show description and outcome
  */
-export const GenericToolCall: FC<BaseToolCallProps> = ({ toolCall }) => {
+export const GenericToolCall: FC<BaseToolCallProps> = ({
+  toolCall,
+  isFirst,
+  isLast,
+}) => {
   const { kind, title, content, locations, toolCallId } = toolCall;
   const operationText = safeTitle(title);
 
@@ -94,6 +98,8 @@ export const GenericToolCall: FC<BaseToolCallProps> = ({ toolCall }) => {
         label={getDisplayLabel()}
         status={statusFlag}
         toolCallId={toolCallId}
+        isFirst={isFirst}
+        isLast={isLast}
       >
         {operationText || output}
       </ToolCallContainer>
@@ -111,6 +117,8 @@ export const GenericToolCall: FC<BaseToolCallProps> = ({ toolCall }) => {
         label={getDisplayLabel()}
         status={statusFlag}
         toolCallId={toolCallId}
+        isFirst={isFirst}
+        isLast={isLast}
       >
         <LocationsList locations={locations} />
       </ToolCallContainer>
@@ -128,6 +136,8 @@ export const GenericToolCall: FC<BaseToolCallProps> = ({ toolCall }) => {
         label={getDisplayLabel()}
         status={statusFlag}
         toolCallId={toolCallId}
+        isFirst={isFirst}
+        isLast={isLast}
       >
         {operationText}
       </ToolCallContainer>

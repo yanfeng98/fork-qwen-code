@@ -27,9 +27,13 @@ const EditToolCallContainer: React.FC<ToolCallContainerProps> = ({
   toolCallId: _toolCallId,
   labelSuffix,
   className: _className,
+  isFirst = false,
+  isLast = false,
 }) => (
   <div
     className={`qwen-message message-item ${_className || ''} relative pl-[30px] py-2 select-text toolcall-container toolcall-status-${status}`}
+    data-first={isFirst}
+    data-last={isLast}
   >
     <div className="EditToolCall toolcall-content-wrapper flex flex-col gap-1 min-w-0 max-w-full">
       <div className="flex items-baseline gap-1.5 relative min-w-0">
@@ -71,7 +75,11 @@ const getDiffSummary = (
  * Specialized component for Edit tool calls
  * Optimized for displaying file editing operations with diffs
  */
-export const EditToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
+export const EditToolCall: React.FC<BaseToolCallProps> = ({
+  toolCall,
+  isFirst,
+  isLast,
+}) => {
   const { content, locations, toolCallId } = toolCall;
 
   // Group content by type; memoize to avoid new array identities on every render
@@ -85,6 +93,8 @@ export const EditToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
     return (
       <div
         className={`qwen-message message-item relative py-2 select-text toolcall-container toolcall-status-${containerStatus}`}
+        data-first={isFirst}
+        data-last={isLast}
       >
         <div className="toolcall-edit-content flex flex-col gap-1 min-w-0 max-w-full">
           <div className="flex items-center justify-between min-w-0">
@@ -118,6 +128,8 @@ export const EditToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
         label={'Edit'}
         status="error"
         toolCallId={toolCallId}
+        isFirst={isFirst}
+        isLast={isLast}
         labelSuffix={
           path ? (
             <FileLink
@@ -142,6 +154,8 @@ export const EditToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
     return (
       <div
         className={`qwen-message message-item relative py-2 select-text toolcall-container toolcall-status-${containerStatus}`}
+        data-first={isFirst}
+        data-last={isLast}
       >
         <div className="toolcall-edit-content flex flex-col gap-1 min-w-0 max-w-full">
           <div className="flex items-center justify-between min-w-0">
@@ -175,6 +189,8 @@ export const EditToolCall: React.FC<BaseToolCallProps> = ({ toolCall }) => {
         label={`Edit`}
         status={containerStatus}
         toolCallId={toolCallId}
+        isFirst={isFirst}
+        isLast={isLast}
         labelSuffix={
           <FileLink
             path={locations[0].path}

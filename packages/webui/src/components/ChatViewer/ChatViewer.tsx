@@ -303,21 +303,17 @@ export const ChatViewer = forwardRef<ChatViewerHandle, ChatViewerProps>(
       if (msg.type === 'tool_call' && msg.toolCall) {
         const ToolCallComponent = getToolCallComponent(msg.toolCall.kind);
 
+        if (!ToolCallComponent) {
+          return null;
+        }
+
         return (
-          <div
+          <ToolCallComponent
             key={key}
-            className="chat-viewer-toolcall-wrapper"
-            data-first={isFirst}
-            data-last={isLast}
-          >
-            {ToolCallComponent && (
-              <ToolCallComponent
-                toolCall={msg.toolCall}
-                isFirst={isFirst}
-                isLast={isLast}
-              />
-            )}
-          </div>
+            toolCall={msg.toolCall}
+            isFirst={isFirst}
+            isLast={isLast}
+          />
         );
       }
 
@@ -380,7 +376,10 @@ export const ChatViewer = forwardRef<ChatViewerHandle, ChatViewerProps>(
 
     return (
       <div className={containerClasses}>
-        <div ref={scrollContainerRef} className="chat-viewer-messages">
+        <div
+          ref={scrollContainerRef}
+          className="chat-viewer-messages chat-messages"
+        >
           {sortedMessages.length === 0 ? (
             <div className="chat-viewer-empty">
               {showEmptyIcon && (

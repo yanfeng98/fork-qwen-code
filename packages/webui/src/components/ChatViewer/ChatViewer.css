@@ -82,15 +82,16 @@
   gap: 0;
   align-items: flex-start;
   text-align: left;
-  padding: 8px 0;
+  padding-top: 8px;
+  padding-bottom: 8px;
   flex-direction: column;
   position: relative;
   animation: chatViewerFadeIn 0.2s ease-in;
 }
 
-.chat-viewer-messages > *:not(:last-child) {
-  padding-bottom: 0;
-  padding-top: 0;
+.chat-viewer-messages > .chat-viewer-scroll-anchor {
+  padding: 0;
+  display: block;
 }
 
 /* Disable overflow anchoring on individual items for manual scroll control */
@@ -101,15 +102,6 @@
 /* User message container spacing */
 .chat-viewer-messages .user-message-container:first-child {
   margin-top: 0;
-}
-
-/* ===========================
-   Timeline Wrapper Styles
-   =========================== */
-
-/* Tool call wrapper - transparent container for timeline continuity */
-.chat-viewer-toolcall-wrapper {
-  position: relative;
 }
 
 /* ===========================

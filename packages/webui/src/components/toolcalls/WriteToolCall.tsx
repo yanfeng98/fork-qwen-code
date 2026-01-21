@@ -19,7 +19,11 @@ import { FileLink } from '../layout/FileLink.js';
  * Specialized component for Write tool calls
  * Shows: Write filename + error message + content preview
  */
-export const WriteToolCall: FC<BaseToolCallProps> = ({ toolCall }) => {
+export const WriteToolCall: FC<BaseToolCallProps> = ({
+  toolCall,
+  isFirst,
+  isLast,
+}) => {
   const { content, locations, rawInput, toolCallId } = toolCall;
 
   // Group content by type
@@ -50,6 +54,8 @@ export const WriteToolCall: FC<BaseToolCallProps> = ({ toolCall }) => {
         label={'WriteFile'}
         status="error"
         toolCallId={toolCallId}
+        isFirst={isFirst}
+        isLast={isLast}
         labelSuffix={
           path ? (
             <FileLink
@@ -85,6 +91,8 @@ export const WriteToolCall: FC<BaseToolCallProps> = ({ toolCall }) => {
         label={'WriteFile'}
         status={containerStatus}
         toolCallId={toolCallId}
+        isFirst={isFirst}
+        isLast={isLast}
         labelSuffix={
           path ? (
             <FileLink
@@ -111,6 +119,8 @@ export const WriteToolCall: FC<BaseToolCallProps> = ({ toolCall }) => {
         label="WriteFile"
         status={containerStatus}
         toolCallId={toolCallId}
+        isFirst={isFirst}
+        isLast={isLast}
       >
         {textOutputs.join('\n')}
       </ToolCallContainer>
