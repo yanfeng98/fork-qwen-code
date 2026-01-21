@@ -39,8 +39,7 @@ const getShortcuts = (): Shortcut[] => [
 
 const ShortcutItem: React.FC<{ shortcut: Shortcut }> = ({ shortcut }) => (
   <Text color={theme.text.secondary}>
-    <Text color={theme.text.primary}>{shortcut.key}</Text>{' '}
-    {shortcut.description}
+    <Text color={theme.text.accent}>{shortcut.key}</Text> {shortcut.description}
   </Text>
 );
 
