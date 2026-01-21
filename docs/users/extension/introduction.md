@@ -2,6 +2,8 @@
 
 Qwen Code extensions package prompts, MCP servers, and custom commands into a familiar and user-friendly format. With extensions, you can expand the capabilities of Qwen Code and share those capabilities with others. They are designed to be easily installable and shareable.
 
+This cross-platform compatibility gives you access to a rich ecosystem of extensions and plugins, dramatically expanding Qwen Code's capabilities without requiring extension authors to maintain separate versions.
+
 ## Extension management
 
 We offer a suite of extension management tools using both `qwen extensions` CLI commands and `/extensions` slash commands within the interactive CLI.
@@ -10,15 +12,16 @@ We offer a suite of extension management tools using both `qwen extensions` CLI 
 
 You can manage extensions at runtime within the interactive CLI using `/extensions` slash commands. These commands support hot-reloading, meaning changes take effect immediately without restarting the application.
 
-| Command                                                | Description                                                     |
-| ------------------------------------------------------ | --------------------------------------------------------------- |
-| `/extensions` or `/extensions list`                    | List all installed extensions with their status                 |
-| `/extensions install <source>`                         | Install an extension from a git URL, local path, or marketplace |
-| `/extensions uninstall <name>`                         | Uninstall an extension                                          |
-| `/extensions enable <name> --scope <user\|workspace>`  | Enable an extension                                             |
-| `/extensions disable <name> --scope <user\|workspace>` | Disable an extension                                            |
-| `/extensions update <name>`                            | Update a specific extension                                     |
-| `/extensions update --all`                             | Update all extensions with available updates                    |
+| Command                                                | Description                                                       |
+| ------------------------------------------------------ | ----------------------------------------------------------------- |
+| `/extensions` or `/extensions list`                    | List all installed extensions with their status                   |
+| `/extensions install <source>`                         | Install an extension from a git URL, local path, or marketplace   |
+| `/extensions uninstall <name>`                         | Uninstall an extension                                            |
+| `/extensions enable <name> --scope <user\|workspace>`  | Enable an extension                                               |
+| `/extensions disable <name> --scope <user\|workspace>` | Disable an extension                                              |
+| `/extensions update <name>`                            | Update a specific extension                                       |
+| `/extensions update --all`                             | Update all extensions with available updates                      |
+| `/extensions explore [source]`                         | Open extensions source page(Gemini or ClaudeCode) in your browser |
 
 ### CLI Extension Management
 
@@ -26,15 +29,54 @@ You can also manage extensions using `qwen extensions` CLI commands. Note that c
 
 ### Installing an extension
 
-You can install an extension using `qwen extensions install` with either a GitHub URL or a local path`.
+You can install an extension using `qwen extensions install` from multiple sources:
+
+#### From Gemini CLI Extensions Marketplace
+
+Qwen Code fully supports extensions from the [Gemini CLI Extensions Marketplace](https://geminicli.com/extensions/). Simply install them using the git URL:
+
+```bash
+qwen extensions install <gemini-cli-extension-url>
+```
+
+Gemini extensions are automatically converted to Qwen Code format during installation:
+
+- `gemini-extension.json` is converted to `qwen-extension.json`
+- TOML command files are automatically migrated to Markdown format
+- MCP servers, context files, and settings are preserved
+
+#### From Claude Code Marketplace
+
+Qwen Code also supports plugins from the [Claude Code Marketplace](https://claudemarketplaces.com/). Install them using the marketplace URL format:
+
+```bash
+qwen extensions install <claude-code-marketplace-url>:<plugin-name>
+```
+
+Claude plugins are automatically converted to Qwen Code format during installation:
+
+- `claude-plugin.json` is converted to `qwen-extension.json`
+- Agent configurations are converted to Qwen subagent format
+- Skill configurations are converted to Qwen skill format
+- Tool mappings are automatically handled
+
+> **Cross-Platform Compatibility**: This allows you to leverage the rich extension ecosystems from both Gemini CLI and Claude Code, dramatically expanding the available functionality for Qwen Code users.
+
+#### From Git Repository
+
+```bash
+qwen extensions install https://github.com/github/github-mcp-server
+```
+
+This will install the github mcp server extension.
+
+#### From Local Path
+
+```bash
+qwen extensions install /path/to/your/extension
+```
 
 Note that we create a copy of the installed extension, so you will need to run `qwen extensions update` to pull in changes from both locally-defined extensions and those on GitHub.
-
-```
-qwen extensions install https://github.com/qwen-cli-extensions/security
-```
-
-This will install the Qwen Code Security extension, which offers support for a `/security:analyze` command.
 
 ### Uninstalling an extension
 
@@ -66,29 +108,19 @@ You can update all extensions with:
 qwen extensions update --all
 ```
 
-## Extension creation
+### Exploring Extension Marketplaces
 
-We offer commands to make extension development easier.
+You can quickly browse available extensions from different marketplaces using the `/extensions explore` command:
 
-### Create a boilerplate extension
+```bash
+# Open Gemini CLI Extensions marketplace
+/extensions explore Gemini
 
-We offer several example extensions `context`, `custom-commands`, `exclude-tools` and `mcp-server`. You can view these examples [here](https://github.com/QwenLM/qwen-code/tree/main/packages/cli/src/commands/extensions/examples).
-
-To copy one of these examples into a development directory using the type of your choosing, run:
-
-```
-qwen extensions new path/to/directory custom-commands
+# Open Claude Code marketplace
+/extensions explore ClaudeCode
 ```
 
-### Link a local extension
-
-The `qwen extensions link` command will create a symbolic link from the extension installation directory to the development path.
-
-This is useful so you don't have to run `qwen extensions update` every time you make changes you'd like to test.
-
-```
-qwen extensions link path/to/directory
-```
+This command opens the respective marketplace in your default browser, allowing you to discover new extensions to enhance your Qwen Code experience.
 
 ## How it works
 
@@ -135,6 +167,46 @@ The `qwen-extension.json` file contains the configuration for the extension. The
 - `skills`: The directory containing custom skills (default: `skills`). Skills are discovered automatically and become available via the `/skills` command.
 - `agents`: The directory containing custom subagents (default: `agents`). Subagents are `.yaml` or `.md` files that define specialized AI assistants.
 - `settings`: An array of settings that the extension requires. When installing, users will be prompted to provide values for these settings. The values are stored securely and passed to MCP servers as environment variables.
+  - Each setting has the following properties:
+    - `name`: Display name for the setting
+    - `description`: A description of what this setting is used for
+    - `envVar`: The environment variable name that will be set
+    - `sensitive`: Boolean indicating if the value should be hidden (e.g., API keys, passwords)
+
+### Managing Extension Settings
+
+Extensions can require configuration through settings (such as API keys or credentials). These settings can be managed using the `qwen extensions settings` CLI command:
+
+**Set a setting value:**
+
+```bash
+qwen extensions settings set <extension-name> <setting-name> [--scope user|workspace]
+```
+
+**List all settings for an extension:**
+
+```bash
+qwen extensions settings list <extension-name>
+```
+
+**View current values (user and workspace):**
+
+```bash
+qwen extensions settings show <extension-name> <setting-name>
+```
+
+**Remove a setting value:**
+
+```bash
+qwen extensions settings unset <extension-name> <setting-name> [--scope user|workspace]
+```
+
+Settings can be configured at two levels:
+
+- **User level** (default): Settings apply across all projects (`~/.qwen/.env`)
+- **Workspace level**: Settings apply only to the current project (`.qwen/.env`)
+
+Workspace settings take precedence over user settings. Sensitive settings are stored securely and never displayed in plain text.
 
 When Qwen Code starts, it loads all the extensions and merges their configurations. If there are any conflicts, the workspace configuration takes precedence.
 

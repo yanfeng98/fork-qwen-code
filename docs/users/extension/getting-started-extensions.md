@@ -246,18 +246,6 @@ Subagents are specialized AI assistants for specific tasks.
     5. Verify functionality is preserved
     ```
 
-3.  Update your `qwen-extension.json` to include the new directories:
-
-    ```json
-    {
-      "name": "my-first-extension",
-      "version": "1.0.0",
-      "skills": "skills",
-      "agents": "agents",
-      "mcpServers": { ... }
-    }
-    ```
-
 After restarting Qwen Code, your custom skills will be available via `/skills` and subagents via `/agents manage`.
 
 ## Step 6: Add a Custom `QWEN.md`
