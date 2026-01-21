@@ -19,6 +19,14 @@ import {
   type ExtensionUpdateInfo,
 } from '@qwen-code/qwen-code-core';
 import { SettingScope } from '../../config/settings.js';
+import open from 'open';
+
+const EXTENSION_EXPLORE_URL = {
+  Gemini: 'https://geminicli.com/extensions/',
+  ClaudeCode: 'https://claudemarketplaces.com/',
+} as const;
+
+type ExtensionExploreSource = keyof typeof EXTENSION_EXPLORE_URL;
 
 function showMessageIfNoExtensions(
   context: CommandContext,
@@ -35,6 +43,71 @@ function showMessageIfNoExtensions(
     return true;
   }
   return false;
+}
+
+async function exploreAction(context: CommandContext, args: string) {
+  const source = args.trim();
+  const extensionsUrl = source
+    ? EXTENSION_EXPLORE_URL[source as ExtensionExploreSource]
+    : '';
+  if (!extensionsUrl) {
+    context.ui.addItem(
+      {
+        type: MessageType.ERROR,
+        text: t('Unknown extensions source: {{source}}.', { source }),
+      },
+      Date.now(),
+    );
+    return;
+  }
+  // Only check for NODE_ENV for explicit test mode, not for unit test framework
+  if (process.env['NODE_ENV'] === 'test') {
+    context.ui.addItem(
+      {
+        type: MessageType.INFO,
+        text: t(
+          'Would open extensions page in your browser: {{url}} (skipped in test environment)',
+          { url: extensionsUrl },
+        ),
+      },
+      Date.now(),
+    );
+  } else if (
+    process.env['SANDBOX'] &&
+    process.env['SANDBOX'] !== 'sandbox-exec'
+  ) {
+    context.ui.addItem(
+      {
+        type: MessageType.INFO,
+        text: t('View available extensions at {{url}}', { url: extensionsUrl }),
+      },
+      Date.now(),
+    );
+  } else {
+    context.ui.addItem(
+      {
+        type: MessageType.INFO,
+        text: t('Opening extensions page in your browser: {{url}}', {
+          url: extensionsUrl,
+        }),
+      },
+      Date.now(),
+    );
+    try {
+      await open(extensionsUrl);
+    } catch (_error) {
+      context.ui.addItem(
+        {
+          type: MessageType.ERROR,
+          text: t(
+            'Failed to open browser. Check out the extensions gallery at {{url}}',
+            { url: extensionsUrl },
+          ),
+        },
+        Date.now(),
+      );
+    }
+  }
 }
 
 async function listAction(context: CommandContext) {
@@ -440,6 +513,27 @@ export async function completeExtensionsAndScopes(
   ]);
 }
 
+export async function completeExtensionsExplore(
+  context: CommandContext,
+  partialArg: string,
+) {
+  const suggestions = Object.keys(EXTENSION_EXPLORE_URL).filter((name) =>
+    name.startsWith(partialArg),
+  );
+
+  return suggestions;
+}
+
+const exploreExtensionsCommand: SlashCommand = {
+  name: 'explore',
+  get description() {
+    return t('Open extensions page in your browser');
+  },
+  kind: CommandKind.BUILT_IN,
+  action: exploreAction,
+  completion: completeExtensionsExplore,
+};
+
 const listExtensionsCommand: SlashCommand = {
   name: 'list',
   get description() {
@@ -511,6 +605,7 @@ export const extensionsCommand: SlashCommand = {
     enableCommand,
     installCommand,
     uninstallCommand,
+    exploreExtensionsCommand,
   ],
   action: (context, args) =>
     // Default to list if no subcommand is provided

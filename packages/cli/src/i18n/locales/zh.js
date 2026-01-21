@@ -1099,4 +1099,42 @@ export default {
   'Enter value...': '请输入值...',
   'Enter sensitive value...': '请输入敏感值...',
   'Press Enter to submit, Escape to cancel': '按 Enter 提交，Escape 取消',
+
+  // ============================================================================
+  // Command Migration Tool
+  // ============================================================================
+  'Markdown file already exists: {{filename}}':
+    'Markdown 文件已存在：{{filename}}',
+  'TOML Command Format Deprecation Notice': 'TOML 命令格式弃用通知',
+  'Found {{count}} command file(s) in TOML format:':
+    '发现 {{count}} 个 TOML 格式的命令文件：',
+  'The TOML format for commands is being deprecated in favor of Markdown format.':
+    '命令的 TOML 格式正在被弃用，推荐使用 Markdown 格式。',
+  'Markdown format is more readable and easier to edit.':
+    'Markdown 格式更易读、更易编辑。',
+  'You can migrate these files automatically using:':
+    '您可以使用以下命令自动迁移这些文件：',
+  'Or manually convert each file:': '或手动转换每个文件：',
+  'TOML: prompt = "..." / description = "..."':
+    'TOML：prompt = "..." / description = "..."',
+  'Markdown: YAML frontmatter + content': 'Markdown：YAML frontmatter + 内容',
+  'The migration tool will:': '迁移工具将：',
+  'Convert TOML files to Markdown': '将 TOML 文件转换为 Markdown',
+  'Create backups of original files': '创建原始文件的备份',
+  'Preserve all command functionality': '保留所有命令功能',
+  'TOML format will continue to work for now, but migration is recommended.':
+    'TOML 格式目前仍可使用，但建议迁移。',
+
+  // ============================================================================
+  // Extensions - Explore Command
+  // ============================================================================
+  'Open extensions page in your browser': '在浏览器中打开扩展市场页面',
+  'Unknown extensions source: {{source}}.': '未知的扩展来源：{{source}}。',
+  'Would open extensions page in your browser: {{url}} (skipped in test environment)':
+    '将在浏览器中打开扩展页面：{{url}}（测试环境中已跳过）',
+  'View available extensions at {{url}}': '在 {{url}} 查看可用扩展',
+  'Opening extensions page in your browser: {{url}}':
+    '正在浏览器中打开扩展页面：{{url}}',
+  'Failed to open browser. Check out the extensions gallery at {{url}}':
+    '打开浏览器失败。请访问扩展市场：{{url}}',
 };

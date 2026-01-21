@@ -1276,4 +1276,47 @@ export default {
   'Enter sensitive value...': 'Введите секретное значение...',
   'Press Enter to submit, Escape to cancel':
     'Нажмите Enter для отправки, Escape для отмены',
+
+  // ============================================================================
+  // Command Migration Tool
+  // ============================================================================
+  'Markdown file already exists: {{filename}}':
+    'Markdown-файл уже существует: {{filename}}',
+  'TOML Command Format Deprecation Notice':
+    'Уведомление об устаревании формата TOML',
+  'Found {{count}} command file(s) in TOML format:':
+    'Найдено {{count}} файл(ов) команд в формате TOML:',
+  'The TOML format for commands is being deprecated in favor of Markdown format.':
+    'Формат TOML для команд устаревает в пользу формата Markdown.',
+  'Markdown format is more readable and easier to edit.':
+    'Формат Markdown более читаемый и простой для редактирования.',
+  'You can migrate these files automatically using:':
+    'Вы можете автоматически мигрировать эти файлы с помощью:',
+  'Or manually convert each file:': 'Или вручную конвертировать каждый файл:',
+  'TOML: prompt = "..." / description = "..."':
+    'TOML: prompt = "..." / description = "..."',
+  'Markdown: YAML frontmatter + content':
+    'Markdown: YAML frontmatter + содержимое',
+  'The migration tool will:': 'Инструмент миграции:',
+  'Convert TOML files to Markdown': 'Конвертирует TOML-файлы в Markdown',
+  'Create backups of original files': 'Создаёт резервные копии исходных файлов',
+  'Preserve all command functionality': 'Сохраняет всю функциональность команд',
+  'TOML format will continue to work for now, but migration is recommended.':
+    'Формат TOML пока продолжит работать, но миграция рекомендуется.',
+
+  // ============================================================================
+  // Extensions - Explore Command
+  // ============================================================================
+  'Open extensions page in your browser':
+    'Открыть страницу расширений в браузере',
+  'Unknown extensions source: {{source}}.':
+    'Неизвестный источник расширений: {{source}}.',
+  'Would open extensions page in your browser: {{url}} (skipped in test environment)':
+    'Страница расширений была бы открыта в браузере: {{url}} (пропущено в тестовой среде)',
+  'View available extensions at {{url}}':
+    'Посмотреть доступные расширения на {{url}}',
+  'Opening extensions page in your browser: {{url}}':
+    'Открываем страницу расширений в браузере: {{url}}',
+  'Failed to open browser. Check out the extensions gallery at {{url}}':
+    'Не удалось открыть браузер. Посетите галерею расширений по адресу {{url}}',
 };

@@ -1293,4 +1293,46 @@ export default {
   'Enter sensitive value...': 'Sensiblen Wert eingeben...',
   'Press Enter to submit, Escape to cancel':
     'Enter zum Absenden, Escape zum Abbrechen drücken',
+
+  // ============================================================================
+  // Command Migration Tool
+  // ============================================================================
+  'Markdown file already exists: {{filename}}':
+    'Markdown-Datei existiert bereits: {{filename}}',
+  'TOML Command Format Deprecation Notice':
+    'TOML-Befehlsformat Veraltet-Hinweis',
+  'Found {{count}} command file(s) in TOML format:':
+    '{{count}} Befehlsdatei(en) im TOML-Format gefunden:',
+  'The TOML format for commands is being deprecated in favor of Markdown format.':
+    'Das TOML-Format für Befehle wird zugunsten des Markdown-Formats eingestellt.',
+  'Markdown format is more readable and easier to edit.':
+    'Das Markdown-Format ist lesbarer und einfacher zu bearbeiten.',
+  'You can migrate these files automatically using:':
+    'Sie können diese Dateien automatisch migrieren mit:',
+  'Or manually convert each file:': 'Oder jede Datei manuell konvertieren:',
+  'TOML: prompt = "..." / description = "..."':
+    'TOML: prompt = "..." / description = "..."',
+  'Markdown: YAML frontmatter + content': 'Markdown: YAML-Frontmatter + Inhalt',
+  'The migration tool will:': 'Das Migrationstool wird:',
+  'Convert TOML files to Markdown': 'TOML-Dateien in Markdown konvertieren',
+  'Create backups of original files':
+    'Sicherungen der Originaldateien erstellen',
+  'Preserve all command functionality': 'Alle Befehlsfunktionen beibehalten',
+  'TOML format will continue to work for now, but migration is recommended.':
+    'Das TOML-Format funktioniert vorerst weiter, aber eine Migration wird empfohlen.',
+
+  // ============================================================================
+  // Extensions - Explore Command
+  // ============================================================================
+  'Open extensions page in your browser': 'Erweiterungsseite im Browser öffnen',
+  'Unknown extensions source: {{source}}.':
+    'Unbekannte Erweiterungsquelle: {{source}}.',
+  'Would open extensions page in your browser: {{url}} (skipped in test environment)':
+    'Würde Erweiterungsseite im Browser öffnen: {{url}} (übersprungen in Testumgebung)',
+  'View available extensions at {{url}}':
+    'Verfügbare Erweiterungen ansehen unter {{url}}',
+  'Opening extensions page in your browser: {{url}}':
+    'Erweiterungsseite wird im Browser geöffnet: {{url}}',
+  'Failed to open browser. Check out the extensions gallery at {{url}}':
+    'Browser konnte nicht geöffnet werden. Besuchen Sie die Erweiterungsgalerie unter {{url}}',
 };

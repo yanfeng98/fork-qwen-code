@@ -12,6 +12,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { glob } from 'glob';
 import { convertTomlToMarkdown } from '@qwen-code/qwen-code-core';
+import { t } from '../i18n/index.js';
 
 export interface MigrationResult {
   success: boolean;
@@ -93,7 +94,9 @@ export async function migrateTomlCommands(
       try {
         await fs.access(markdownPath);
         throw new Error(
-          `Markdown file already exists: ${path.basename(markdownPath)}`,
+          t('Markdown file already exists: {{filename}}', {
+            filename: path.basename(markdownPath),
+          }),
         );
       } catch (error) {
         if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
@@ -138,32 +141,33 @@ export function generateMigrationPrompt(tomlFiles: string[]): string {
   }
 
   const count = tomlFiles.length;
+  const moreCount = tomlFiles.length - 3;
   const fileList =
     tomlFiles.length <= 5
       ? tomlFiles.map((f) => `  - ${f}`).join('\n')
-      : `  - ${tomlFiles.slice(0, 3).join('\n  - ')}\n  - ... and ${tomlFiles.length - 3} more`;
+      : `  - ${tomlFiles.slice(0, 3).join('\n  - ')}\n  - ${t('... and {{count}} more', { count: String(moreCount) })}`;
 
   return `
-⚠️  TOML Command Format Deprecation Notice
+⚠️  ${t('TOML Command Format Deprecation Notice')}
 
-Found ${count} command file${count > 1 ? 's' : ''} in TOML format:
+${t('Found {{count}} command file(s) in TOML format:', { count: String(count) })}
 ${fileList}
 
-The TOML format for commands is being deprecated in favor of Markdown format.
-Markdown format is more readable and easier to edit.
+${t('The TOML format for commands is being deprecated in favor of Markdown format.')}
+${t('Markdown format is more readable and easier to edit.')}
 
-You can migrate these files automatically using:
+${t('You can migrate these files automatically using:')}
   qwen-code migrate-commands
 
-Or manually convert each file:
-  - TOML: prompt = "..." / description = "..."
-  - Markdown: YAML frontmatter + content
+${t('Or manually convert each file:')}
+  - ${t('TOML: prompt = "..." / description = "..."')}
+  - ${t('Markdown: YAML frontmatter + content')}
 
-The migration tool will:
-  ✓ Convert TOML files to Markdown
-  ✓ Create backups of original files
-  ✓ Preserve all command functionality
+${t('The migration tool will:')}
+  ✓ ${t('Convert TOML files to Markdown')}
+  ✓ ${t('Create backups of original files')}
+  ✓ ${t('Preserve all command functionality')}
 
-TOML format will continue to work for now, but migration is recommended.
+${t('TOML format will continue to work for now, but migration is recommended.')}
 `.trim();
 }

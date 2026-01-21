@@ -1257,4 +1257,47 @@ export default {
   'Enter sensitive value...': 'Enter sensitive value...',
   'Press Enter to submit, Escape to cancel':
     'Press Enter to submit, Escape to cancel',
+
+  // ============================================================================
+  // Command Migration Tool
+  // ============================================================================
+  'Markdown file already exists: {{filename}}':
+    'Markdown file already exists: {{filename}}',
+  'TOML Command Format Deprecation Notice':
+    'TOML Command Format Deprecation Notice',
+  'Found {{count}} command file(s) in TOML format:':
+    'Found {{count}} command file(s) in TOML format:',
+  'The TOML format for commands is being deprecated in favor of Markdown format.':
+    'The TOML format for commands is being deprecated in favor of Markdown format.',
+  'Markdown format is more readable and easier to edit.':
+    'Markdown format is more readable and easier to edit.',
+  'You can migrate these files automatically using:':
+    'You can migrate these files automatically using:',
+  'Or manually convert each file:': 'Or manually convert each file:',
+  'TOML: prompt = "..." / description = "..."':
+    'TOML: prompt = "..." / description = "..."',
+  'Markdown: YAML frontmatter + content':
+    'Markdown: YAML frontmatter + content',
+  'The migration tool will:': 'The migration tool will:',
+  'Convert TOML files to Markdown': 'Convert TOML files to Markdown',
+  'Create backups of original files': 'Create backups of original files',
+  'Preserve all command functionality': 'Preserve all command functionality',
+  'TOML format will continue to work for now, but migration is recommended.':
+    'TOML format will continue to work for now, but migration is recommended.',
+
+  // ============================================================================
+  // Extensions - Explore Command
+  // ============================================================================
+  'Open extensions page in your browser':
+    'Open extensions page in your browser',
+  'Unknown extensions source: {{source}}.':
+    'Unknown extensions source: {{source}}.',
+  'Would open extensions page in your browser: {{url}} (skipped in test environment)':
+    'Would open extensions page in your browser: {{url}} (skipped in test environment)',
+  'View available extensions at {{url}}':
+    'View available extensions at {{url}}',
+  'Opening extensions page in your browser: {{url}}':
+    'Opening extensions page in your browser: {{url}}',
+  'Failed to open browser. Check out the extensions gallery at {{url}}':
+    'Failed to open browser. Check out the extensions gallery at {{url}}',
 };
