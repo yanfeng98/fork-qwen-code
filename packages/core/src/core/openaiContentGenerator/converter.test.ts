@@ -122,7 +122,13 @@ describe('OpenAIContentConverter', () => {
       const toolMessage = messages.find((message) => message.role === 'tool');
 
       expect(toolMessage).toBeDefined();
-      expect(toolMessage?.content).toBe('Raw output text');
+      expect(Array.isArray(toolMessage?.content)).toBe(true);
+      const contentArray = toolMessage?.content as Array<{
+        type: string;
+        text?: string;
+      }>;
+      expect(contentArray[0].type).toBe('text');
+      expect(contentArray[0].text).toBe('Raw output text');
     });
 
     it('should prioritize error field when present', () => {
@@ -134,7 +140,13 @@ describe('OpenAIContentConverter', () => {
       const toolMessage = messages.find((message) => message.role === 'tool');
 
       expect(toolMessage).toBeDefined();
-      expect(toolMessage?.content).toBe('Command failed');
+      expect(Array.isArray(toolMessage?.content)).toBe(true);
+      const contentArray = toolMessage?.content as Array<{
+        type: string;
+        text?: string;
+      }>;
+      expect(contentArray[0].type).toBe('text');
+      expect(contentArray[0].text).toBe('Command failed');
     });
 
     it('should stringify non-string responses', () => {
@@ -146,7 +158,318 @@ describe('OpenAIContentConverter', () => {
       const toolMessage = messages.find((message) => message.role === 'tool');
 
       expect(toolMessage).toBeDefined();
-      expect(toolMessage?.content).toBe('{"data":{"value":42}}');
+      expect(Array.isArray(toolMessage?.content)).toBe(true);
+      const contentArray = toolMessage?.content as Array<{
+        type: string;
+        text?: string;
+      }>;
+      expect(contentArray[0].type).toBe('text');
+      expect(contentArray[0].text).toBe('{"data":{"value":42}}');
+    });
+
+    it('should convert function responses with inlineData to tool message with embedded image_url', () => {
+      const request: GenerateContentParameters = {
+        model: 'models/test',
+        contents: [
+          {
+            role: 'model',
+            parts: [
+              {
+                functionCall: {
+                  id: 'call_1',
+                  name: 'Read',
+                  args: {},
+                },
+              },
+            ],
+          },
+          {
+            role: 'user',
+            parts: [
+              {
+                functionResponse: {
+                  id: 'call_1',
+                  name: 'Read',
+                  response: { output: 'Image content' },
+                  parts: [
+                    {
+                      inlineData: {
+                        mimeType: 'image/png',
+                        data: 'base64encodedimagedata',
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      };
+
+      const messages = converter.convertGeminiRequestToOpenAI(request);
+
+      // Should have tool message with both text and image content
+      const toolMessage = messages.find((message) => message.role === 'tool');
+      expect(toolMessage).toBeDefined();
+      expect((toolMessage as { tool_call_id?: string }).tool_call_id).toBe(
+        'call_1',
+      );
+      expect(Array.isArray(toolMessage?.content)).toBe(true);
+      const contentArray = toolMessage?.content as Array<{
+        type: string;
+        text?: string;
+        image_url?: { url: string };
+      }>;
+      expect(contentArray).toHaveLength(2);
+      expect(contentArray[0].type).toBe('text');
+      expect(contentArray[0].text).toBe('Image content');
+      expect(contentArray[1].type).toBe('image_url');
+      expect(contentArray[1].image_url?.url).toBe(
+        'data:image/png;base64,base64encodedimagedata',
+      );
+
+      // No separate user message should be created
+      const userMessage = messages.find((message) => message.role === 'user');
+      expect(userMessage).toBeUndefined();
+    });
+
+    it('should convert function responses with fileData to tool message with embedded input_file', () => {
+      const request: GenerateContentParameters = {
+        model: 'models/test',
+        contents: [
+          {
+            role: 'model',
+            parts: [
+              {
+                functionCall: {
+                  id: 'call_1',
+                  name: 'Read',
+                  args: {},
+                },
+              },
+            ],
+          },
+          {
+            role: 'user',
+            parts: [
+              {
+                functionResponse: {
+                  id: 'call_1',
+                  name: 'Read',
+                  response: { output: 'File content' },
+                  parts: [
+                    {
+                      fileData: {
+                        mimeType: 'image/jpeg',
+                        fileUri: 'base64imagedata',
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      };
+
+      const messages = converter.convertGeminiRequestToOpenAI(request);
+
+      // Should have tool message with both text and file content
+      const toolMessage = messages.find((message) => message.role === 'tool');
+      expect(toolMessage).toBeDefined();
+      expect(Array.isArray(toolMessage?.content)).toBe(true);
+      const contentArray = toolMessage?.content as Array<{
+        type: string;
+        text?: string;
+        file?: { filename: string; file_data: string };
+      }>;
+      expect(contentArray).toHaveLength(2);
+      expect(contentArray[0].type).toBe('text');
+      expect(contentArray[0].text).toBe('File content');
+      expect(contentArray[1].type).toBe('file');
+      expect(contentArray[1].file?.filename).toBe('file'); // Default filename when displayName not provided
+      expect(contentArray[1].file?.file_data).toBe(
+        'data:image/jpeg;base64,base64imagedata',
+      );
+
+      // No separate user message should be created
+      const userMessage = messages.find((message) => message.role === 'user');
+      expect(userMessage).toBeUndefined();
+    });
+
+    it('should convert PDF fileData to tool message with embedded input_file', () => {
+      const request: GenerateContentParameters = {
+        model: 'models/test',
+        contents: [
+          {
+            role: 'model',
+            parts: [
+              {
+                functionCall: {
+                  id: 'call_1',
+                  name: 'Read',
+                  args: {},
+                },
+              },
+            ],
+          },
+          {
+            role: 'user',
+            parts: [
+              {
+                functionResponse: {
+                  id: 'call_1',
+                  name: 'Read',
+                  response: { output: 'PDF content' },
+                  parts: [
+                    {
+                      fileData: {
+                        mimeType: 'application/pdf',
+                        fileUri: 'base64pdfdata',
+                        displayName: 'document.pdf',
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      };
+
+      const messages = converter.convertGeminiRequestToOpenAI(request);
+
+      // Should have tool message with both text and file content
+      const toolMessage = messages.find((message) => message.role === 'tool');
+      expect(toolMessage).toBeDefined();
+      expect(Array.isArray(toolMessage?.content)).toBe(true);
+      const contentArray = toolMessage?.content as Array<{
+        type: string;
+        text?: string;
+        file?: { filename: string; file_data: string };
+      }>;
+      expect(contentArray).toHaveLength(2);
+      expect(contentArray[0].type).toBe('text');
+      expect(contentArray[0].text).toBe('PDF content');
+      expect(contentArray[1].type).toBe('file');
+      expect(contentArray[1].file?.filename).toBe('document.pdf');
+      expect(contentArray[1].file?.file_data).toBe(
+        'data:application/pdf;base64,base64pdfdata',
+      );
+
+      // No separate user message should be created
+      const userMessage = messages.find((message) => message.role === 'user');
+      expect(userMessage).toBeUndefined();
+    });
+
+    it('should convert audio parts to tool message with embedded input_audio', () => {
+      const request: GenerateContentParameters = {
+        model: 'models/test',
+        contents: [
+          {
+            role: 'model',
+            parts: [
+              {
+                functionCall: {
+                  id: 'call_1',
+                  name: 'Record',
+                  args: {},
+                },
+              },
+            ],
+          },
+          {
+            role: 'user',
+            parts: [
+              {
+                functionResponse: {
+                  id: 'call_1',
+                  name: 'Record',
+                  response: { output: 'Audio recorded' },
+                  parts: [
+                    {
+                      inlineData: {
+                        mimeType: 'audio/wav',
+                        data: 'audiobase64data',
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      };
+
+      const messages = converter.convertGeminiRequestToOpenAI(request);
+
+      // Should have tool message with both text and audio content
+      const toolMessage = messages.find((message) => message.role === 'tool');
+      expect(toolMessage).toBeDefined();
+      expect(Array.isArray(toolMessage?.content)).toBe(true);
+      const contentArray = toolMessage?.content as Array<{
+        type: string;
+        text?: string;
+        input_audio?: { data: string; format: string };
+      }>;
+      expect(contentArray).toHaveLength(2);
+      expect(contentArray[0].type).toBe('text');
+      expect(contentArray[0].text).toBe('Audio recorded');
+      expect(contentArray[1].type).toBe('input_audio');
+      expect(contentArray[1].input_audio?.data).toBe('audiobase64data');
+      expect(contentArray[1].input_audio?.format).toBe('wav');
+
+      // No separate user message should be created
+      const userMessage = messages.find((message) => message.role === 'user');
+      expect(userMessage).toBeUndefined();
+    });
+
+    it('should create tool message with text-only content when no media parts', () => {
+      const request = createRequestWithFunctionResponse({
+        output: 'Plain text output',
+      });
+
+      const messages = converter.convertGeminiRequestToOpenAI(request);
+      const toolMessage = messages.find((message) => message.role === 'tool');
+
+      expect(toolMessage).toBeDefined();
+      expect(Array.isArray(toolMessage?.content)).toBe(true);
+      const contentArray = toolMessage?.content as Array<{
+        type: string;
+        text?: string;
+      }>;
+      expect(contentArray).toHaveLength(1);
+      expect(contentArray[0].type).toBe('text');
+      expect(contentArray[0].text).toBe('Plain text output');
+
+      // No user message should be created when there's no media
+      const userMessage = messages.find((message) => message.role === 'user');
+      expect(userMessage).toBeUndefined();
+    });
+
+    it('should skip empty function responses with no media and no text', () => {
+      const request: GenerateContentParameters = {
+        model: 'models/test',
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                functionResponse: {
+                  id: 'call_1',
+                  name: 'Empty',
+                  response: { output: '' },
+                },
+              },
+            ],
+          },
+        ],
+      };
+
+      const messages = converter.convertGeminiRequestToOpenAI(request);
+
+      // Should have no messages for empty response
+      expect(messages).toHaveLength(0);
     });
   });
 
@@ -180,6 +503,35 @@ describe('OpenAIContentConverter', () => {
       );
     });
 
+    it('should convert reasoning to a thought part for non-streaming responses', () => {
+      const response = converter.convertOpenAIResponseToGemini({
+        object: 'chat.completion',
+        id: 'chatcmpl-2',
+        created: 123,
+        model: 'gpt-test',
+        choices: [
+          {
+            index: 0,
+            message: {
+              role: 'assistant',
+              content: 'final answer',
+              reasoning: 'chain-of-thought',
+            },
+            finish_reason: 'stop',
+            logprobs: null,
+          },
+        ],
+      } as unknown as OpenAI.Chat.ChatCompletion);
+
+      const parts = response.candidates?.[0]?.content?.parts;
+      expect(parts?.[0]).toEqual(
+        expect.objectContaining({ thought: true, text: 'chain-of-thought' }),
+      );
+      expect(parts?.[1]).toEqual(
+        expect.objectContaining({ text: 'final answer' }),
+      );
+    });
+
     it('should convert streaming reasoning_content delta to a thought part', () => {
       const chunk = converter.convertOpenAIChunkToGemini({
         object: 'chat.completion.chunk',
@@ -191,6 +543,34 @@ describe('OpenAIContentConverter', () => {
             delta: {
               content: 'visible text',
               reasoning_content: 'thinking...',
+            },
+            finish_reason: 'stop',
+            logprobs: null,
+          },
+        ],
+        model: 'gpt-test',
+      } as unknown as OpenAI.Chat.ChatCompletionChunk);
+
+      const parts = chunk.candidates?.[0]?.content?.parts;
+      expect(parts?.[0]).toEqual(
+        expect.objectContaining({ thought: true, text: 'thinking...' }),
+      );
+      expect(parts?.[1]).toEqual(
+        expect.objectContaining({ text: 'visible text' }),
+      );
+    });
+
+    it('should convert streaming reasoning delta to a thought part', () => {
+      const chunk = converter.convertOpenAIChunkToGemini({
+        object: 'chat.completion.chunk',
+        id: 'chunk-1b',
+        created: 456,
+        choices: [
+          {
+            index: 0,
+            delta: {
+              content: 'visible text',
+              reasoning: 'thinking...',
             },
             finish_reason: 'stop',
             logprobs: null,
@@ -584,11 +964,7 @@ describe('OpenAIContentConverter', () => {
 
       expect(messages).toHaveLength(1);
       expect(messages[0].role).toBe('assistant');
-      const content = messages[0]
-        .content as OpenAI.Chat.ChatCompletionContentPart[];
-      expect(content).toHaveLength(2);
-      expect(content[0]).toEqual({ type: 'text', text: 'First part' });
-      expect(content[1]).toEqual({ type: 'text', text: 'Second part' });
+      expect(messages[0].content).toBe('First partSecond part');
     });
 
     it('should merge multiple consecutive assistant messages', () => {
@@ -614,9 +990,7 @@ describe('OpenAIContentConverter', () => {
 
       expect(messages).toHaveLength(1);
       expect(messages[0].role).toBe('assistant');
-      const content = messages[0]
-        .content as OpenAI.Chat.ChatCompletionContentPart[];
-      expect(content).toHaveLength(3);
+      expect(messages[0].content).toBe('Part 1Part 2Part 3');
     });
 
     it('should merge tool_calls from consecutive assistant messages', () => {
@@ -674,7 +1048,9 @@ describe('OpenAIContentConverter', () => {
         ],
       };
 
-      const messages = converter.convertGeminiRequestToOpenAI(request);
+      const messages = converter.convertGeminiRequestToOpenAI(request, {
+        cleanOrphanToolCalls: false,
+      });
 
       // Should have: assistant (tool_call_1), tool (result_1), assistant (tool_call_2), tool (result_2)
       expect(messages).toHaveLength(4);
@@ -729,10 +1105,7 @@ describe('OpenAIContentConverter', () => {
       const messages = converter.convertGeminiRequestToOpenAI(request);
 
       expect(messages).toHaveLength(1);
-      const content = messages[0]
-        .content as OpenAI.Chat.ChatCompletionContentPart[];
-      expect(Array.isArray(content)).toBe(true);
-      expect(content).toHaveLength(2);
+      expect(messages[0].content).toBe('Text partAnother text');
     });
 
     it('should merge empty content correctly', () => {
@@ -758,11 +1131,7 @@ describe('OpenAIContentConverter', () => {
 
       // Empty messages should be filtered out
       expect(messages).toHaveLength(1);
-      const content = messages[0]
-        .content as OpenAI.Chat.ChatCompletionContentPart[];
-      expect(content).toHaveLength(2);
-      expect(content[0]).toEqual({ type: 'text', text: 'First' });
-      expect(content[1]).toEqual({ type: 'text', text: 'Second' });
+      expect(messages[0].content).toBe('FirstSecond');
     });
   });
 });

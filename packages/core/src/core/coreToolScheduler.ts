@@ -30,7 +30,12 @@ import {
   ToolOutputTruncatedEvent,
   InputFormat,
 } from '../index.js';
-import type { Part, PartListUnion } from '@google/genai';
+import type {
+  FunctionResponse,
+  FunctionResponsePart,
+  Part,
+  PartListUnion,
+} from '@google/genai';
 import { getResponseTextFromParts } from '../utils/generateContentResponseUtilities.js';
 import type { ModifyContext } from '../tools/modifiable-tool.js';
 import {
@@ -151,13 +156,17 @@ function createFunctionResponsePart(
   callId: string,
   toolName: string,
   output: string,
+  mediaParts?: FunctionResponsePart[],
 ): Part {
+  const functionResponse: FunctionResponse = {
+    id: callId,
+    name: toolName,
+    response: { output },
+    ...(mediaParts && mediaParts.length > 0 ? { parts: mediaParts } : {}),
+  };
+
   return {
-    functionResponse: {
-      id: callId,
-      name: toolName,
-      response: { output },
-    },
+    functionResponse,
   };
 }
 
@@ -198,16 +207,21 @@ export function convertToFunctionResponse(
   }
 
   if (contentToProcess.inlineData || contentToProcess.fileData) {
-    const mimeType =
-      contentToProcess.inlineData?.mimeType ||
-      contentToProcess.fileData?.mimeType ||
-      'unknown';
+    const mediaParts: FunctionResponsePart[] = [];
+    if (contentToProcess.inlineData) {
+      mediaParts.push({ inlineData: contentToProcess.inlineData });
+    }
+    if (contentToProcess.fileData) {
+      mediaParts.push({ fileData: contentToProcess.fileData });
+    }
+
     const functionResponse = createFunctionResponsePart(
       callId,
       toolName,
-      `Binary content of type ${mimeType} was processed.`,
+      '',
+      mediaParts,
     );
-    return [functionResponse, contentToProcess];
+    return [functionResponse];
   }
 
   if (contentToProcess.text !== undefined) {

@@ -383,6 +383,7 @@ describe('ReadManyFilesTool', () => {
               0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
             ]).toString('base64'),
             mimeType: 'image/png',
+            displayName: 'image.png',
           },
         },
         '\n--- End of content ---',
@@ -407,6 +408,7 @@ describe('ReadManyFilesTool', () => {
               0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
             ]).toString('base64'),
             mimeType: 'image/png',
+            displayName: 'myExactImage.png',
           },
         },
         '\n--- End of content ---',
@@ -434,32 +436,34 @@ describe('ReadManyFilesTool', () => {
       );
     });
 
-    it('should include PDF files as inlineData parts if explicitly requested by extension', async () => {
+    it('should include PDF files as fileData parts if explicitly requested by extension', async () => {
       createBinaryFile('important.pdf', Buffer.from('%PDF-1.4...'));
       const params = { paths: ['*.pdf'] }; // Explicitly requesting .pdf files
       const invocation = tool.build(params);
       const result = await invocation.execute(new AbortController().signal);
       expect(result.llmContent).toEqual([
         {
-          inlineData: {
-            data: Buffer.from('%PDF-1.4...').toString('base64'),
+          fileData: {
+            fileUri: Buffer.from('%PDF-1.4...').toString('base64'),
             mimeType: 'application/pdf',
+            displayName: 'important.pdf',
           },
         },
         '\n--- End of content ---',
       ]);
     });
 
-    it('should include PDF files as inlineData parts if explicitly requested by name', async () => {
+    it('should include PDF files as fileData parts if explicitly requested by name', async () => {
       createBinaryFile('report-final.pdf', Buffer.from('%PDF-1.4...'));
       const params = { paths: ['report-final.pdf'] };
       const invocation = tool.build(params);
       const result = await invocation.execute(new AbortController().signal);
       expect(result.llmContent).toEqual([
         {
-          inlineData: {
-            data: Buffer.from('%PDF-1.4...').toString('base64'),
+          fileData: {
+            fileUri: Buffer.from('%PDF-1.4...').toString('base64'),
             mimeType: 'application/pdf',
+            displayName: 'report-final.pdf',
           },
         },
         '\n--- End of content ---',

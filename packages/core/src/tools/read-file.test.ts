@@ -283,6 +283,7 @@ describe('ReadFileTool', () => {
         inlineData: {
           data: pngHeader.toString('base64'),
           mimeType: 'image/png',
+          displayName: 'image.png',
         },
       });
       expect(result.returnDisplay).toBe('Read image file: image.png');
@@ -301,9 +302,10 @@ describe('ReadFileTool', () => {
 
       const result = await invocation.execute(abortSignal);
       expect(result.llmContent).toEqual({
-        inlineData: {
-          data: pdfHeader.toString('base64'),
+        fileData: {
+          fileUri: pdfHeader.toString('base64'),
           mimeType: 'application/pdf',
+          displayName: 'document.pdf',
         },
       });
       expect(result.returnDisplay).toBe('Read pdf file: document.pdf');
