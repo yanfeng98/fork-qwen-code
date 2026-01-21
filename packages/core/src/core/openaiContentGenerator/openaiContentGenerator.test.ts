@@ -22,17 +22,7 @@ const mockTokenizer = {
 };
 
 vi.mock('../../../utils/request-tokenizer/index.js', () => ({
-  getDefaultTokenizer: vi.fn(() => mockTokenizer),
-  DefaultRequestTokenizer: vi.fn(() => mockTokenizer),
-  disposeDefaultTokenizer: vi.fn(),
-}));
-
-// Mock tiktoken as well for completeness
-vi.mock('tiktoken', () => ({
-  get_encoding: vi.fn(() => ({
-    encode: vi.fn(() => new Array(50)), // Mock 50 tokens
-    free: vi.fn(),
-  })),
+  RequestTokenEstimator: vi.fn(() => mockTokenizer),
 }));
 
 // Now import the modules that depend on the mocked modules
@@ -134,7 +124,7 @@ describe('OpenAIContentGenerator (Refactored)', () => {
   });
 
   describe('countTokens', () => {
-    it('should count tokens using tiktoken', async () => {
+    it('should count tokens using character-based estimation', async () => {
       const request: CountTokensParameters = {
         contents: [{ role: 'user', parts: [{ text: 'Hello world' }] }],
         model: 'gpt-4',
@@ -142,26 +132,27 @@ describe('OpenAIContentGenerator (Refactored)', () => {
 
       const result = await generator.countTokens(request);
 
-      expect(result.totalTokens).toBe(50); // Mocked value
+      // 'Hello world' = 11 ASCII chars
+      // 11 / 4 = 2.75 -> ceil = 3 tokens
+      expect(result.totalTokens).toBe(3);
     });
 
-    it('should fall back to character approximation if tiktoken fails', async () => {
-      // Mock tiktoken to throw error
-      vi.doMock('tiktoken', () => ({
-        get_encoding: vi.fn().mockImplementation(() => {
-          throw new Error('Tiktoken failed');
-        }),
-      }));
-
+    it('should handle multimodal content', async () => {
       const request: CountTokensParameters = {
-        contents: [{ role: 'user', parts: [{ text: 'Hello world' }] }],
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: 'Hello' }, { text: ' world' }],
+          },
+        ],
         model: 'gpt-4',
       };
 
       const result = await generator.countTokens(request);
 
-      // Should use character approximation (content length / 4)
-      expect(result.totalTokens).toBeGreaterThan(0);
+      // Parts are combined for estimation:
+      // 'Hello world' = 11 ASCII chars -> 11/4 = 2.75 -> ceil = 3 tokens
+      expect(result.totalTokens).toBe(3);
     });
   });
 
