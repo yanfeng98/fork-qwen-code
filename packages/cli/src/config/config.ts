@@ -121,6 +121,7 @@ export interface CliArgs {
   acp: boolean | undefined;
   experimentalAcp: boolean | undefined;
   experimentalSkills: boolean | undefined;
+  experimentalLsp: boolean | undefined;
   extensions: string[] | undefined;
   listExtensions: boolean | undefined;
   openaiLogging: boolean | undefined;
@@ -479,6 +480,12 @@ export async function parseArguments(settings: Settings): Promise<CliArgs> {
             ).tools?.experimental?.skills;
             return settings.experimental?.skills ?? legacySkills ?? false;
           })(),
+        })
+        .option('experimental-lsp', {
+          type: 'boolean',
+          description:
+            'Enable experimental LSP (Language Server Protocol) feature for code intelligence',
+          default: false,
         })
         .option('channel', {
           type: 'string',
@@ -902,8 +909,8 @@ export async function loadCliConfig(
 
   let mcpServers = mergeMcpServers(settings, activeExtensions);
 
-  // LSP configuration derived from settings; defaults to disabled for safety.
-  const lspEnabled = settings.lsp?.enabled ?? false;
+  // LSP configuration: enabled only via --experimental-lsp flag
+  const lspEnabled = argv.experimentalLsp === true;
   const lspAllowed = settings.lsp?.allowed ?? settings.mcp?.allowed;
   const lspExcluded = settings.lsp?.excluded ?? settings.mcp?.excluded;
   const lspLanguageServers = settings.lsp?.languageServers;

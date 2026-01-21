@@ -5,8 +5,9 @@ export const lspSettingsSchema: JSONSchema7 = {
   properties: {
     'lsp.enabled': {
       type: 'boolean',
-      default: true,
-      description: '启用 LSP 语言服务器协议支持'
+      default: false,
+      description:
+        '启用 LSP 语言服务器协议支持（实验性功能）。必须通过 --experimental-lsp 命令行参数显式开启。'
     },
     'lsp.allowed': {
       type: 'array',

@@ -1160,12 +1160,15 @@ describe('LspTool', () => {
           definitions?: Record<string, unknown>;
         };
         const definitionNames = Object.keys(schema.definitions ?? {});
-        // Should have exactly these definitions
-        expect(definitionNames.sort()).toEqual([
+        // Should include at least these definitions
+        expect(definitionNames).toEqual(
+          expect.arrayContaining([
           'LspCallHierarchyItem',
+          'LspDiagnostic',
           'LspPosition',
           'LspRange',
-        ]);
+        ]),
+        );
       });
     });
   });

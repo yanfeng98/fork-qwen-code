@@ -1039,7 +1039,7 @@ const SETTINGS_SCHEMA = {
     requiresRestart: true,
     default: {},
     description:
-      'Settings for the native Language Server Protocol integration.',
+      'Settings for the native Language Server Protocol integration. Enable with --experimental-lsp flag.',
     showInDialog: false,
     properties: {
       enabled: {
@@ -1049,7 +1049,7 @@ const SETTINGS_SCHEMA = {
         requiresRestart: true,
         default: false,
         description:
-          'Enable the native LSP client to connect to language servers discovered in the workspace.',
+          'Enable the native LSP client. Prefer using --experimental-lsp command line flag instead.',
         showInDialog: false,
       },
       allowed: {

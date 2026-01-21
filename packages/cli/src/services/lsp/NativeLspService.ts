@@ -24,7 +24,7 @@ import type {
 import type { EventEmitter } from 'events';
 import { LspConnectionFactory } from './LspConnectionFactory.js';
 import * as path from 'path';
-import { pathToFileURL } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 import { spawn, type ChildProcess } from 'node:child_process';
 import * as fs from 'node:fs';
 import { globSync } from 'glob';
@@ -957,9 +957,13 @@ export class NativeLspService {
     uri: string,
     edits: LspTextEdit[],
   ): Promise<void> {
-    const filePath = uri.startsWith('file://')
-      ? uri.replace(/^file:\/\//, '')
-      : uri;
+    let filePath = uri.startsWith('file://') ? fileURLToPath(uri) : uri;
+    if (!path.isAbsolute(filePath)) {
+      filePath = path.resolve(this.workspaceRoot, filePath);
+    }
+    if (!this.workspaceContext.isPathWithinWorkspace(filePath)) {
+      throw new Error(`Refusing to apply edits outside workspace: ${filePath}`);
+    }
 
     // Read the current file content
     let content: string;

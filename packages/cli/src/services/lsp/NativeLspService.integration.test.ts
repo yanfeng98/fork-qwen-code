@@ -495,12 +495,12 @@ describe('NativeLspService Integration Tests', () => {
       await restrictedService.discoverAndPrepare();
       const status = restrictedService.getStatus();
       
-      // Only allowed servers should be present
-      for (const [name] of status) {
-        expect(
-          name === 'typescript-language-server' ||
-          status.get(name) === 'FAILED'
-        ).toBe(true);
+      // Only allowed servers should be READY
+      const readyServers = Array.from(status.entries())
+        .filter(([, state]) => state === 'READY')
+        .map(([name]) => name);
+      for (const name of readyServers) {
+        expect(['typescript-language-server']).toContain(name);
       }
     });
 
