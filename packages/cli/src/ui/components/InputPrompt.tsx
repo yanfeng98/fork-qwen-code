@@ -714,10 +714,10 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
     statusColor = theme.ui.symbol;
     statusText = t('Shell mode');
   } else if (showYoloStyling) {
-    statusColor = theme.status.error;
+    statusColor = theme.status.errorDim;
     statusText = t('YOLO mode');
   } else if (showAutoAcceptStyling) {
-    statusColor = theme.status.warning;
+    statusColor = theme.status.warningDim;
     statusText = t('Accepting edits');
   }
 
