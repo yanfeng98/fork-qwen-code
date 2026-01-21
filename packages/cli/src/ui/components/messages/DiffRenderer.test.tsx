@@ -9,6 +9,7 @@ import { render } from 'ink-testing-library';
 import { DiffRenderer } from './DiffRenderer.js';
 import * as CodeColorizer from '../../utils/CodeColorizer.js';
 import { vi } from 'vitest';
+import type { LoadedSettings } from '../../../config/settings.js';
 
 describe('<OverflowProvider><DiffRenderer /></OverflowProvider>', () => {
   const mockColorizeCode = vi.spyOn(CodeColorizer, 'colorizeCode');
@@ -45,6 +46,7 @@ index 0000000..e69de29
       undefined,
       80,
       undefined,
+      undefined,
     );
   });
 
@@ -73,6 +75,7 @@ index 0000000..e69de29
       undefined,
       80,
       undefined,
+      undefined,
     );
   });
 
@@ -96,6 +99,7 @@ index 0000000..e69de29
       null,
       undefined,
       80,
+      undefined,
       undefined,
     );
   });
@@ -361,5 +365,87 @@ fileDiff Index: Dockerfile
     expect(output).toEqual(`1 FROM node:14
 2 RUN npm install
 3 RUN npm run build`);
+  });
+
+  describe('showLineNumbers setting', () => {
+    const diffContent = `
+diff --git a/test.txt b/test.txt
+index 0000001..0000002 100644
+--- a/test.txt
++++ b/test.txt
+@@ -1,2 +1,2 @@
+-old line 1
++new line 1
+ context line 2
+`;
+
+    it('should show line numbers by default when settings is undefined', () => {
+      const { lastFrame } = render(
+        <OverflowProvider>
+          <DiffRenderer
+            diffContent={diffContent}
+            filename="test.txt"
+            terminalWidth={80}
+          />
+        </OverflowProvider>,
+      );
+      const output = lastFrame();
+      expect(output).toContain('1 -');
+      expect(output).toContain('1 +');
+      expect(output).toContain('2  ');
+    });
+
+    it('should show line numbers when showLineNumbers is true', () => {
+      const mockSettings = {
+        merged: {
+          ui: {
+            showLineNumbers: true,
+          },
+        },
+      } as unknown as LoadedSettings;
+
+      const { lastFrame } = render(
+        <OverflowProvider>
+          <DiffRenderer
+            diffContent={diffContent}
+            filename="test.txt"
+            terminalWidth={80}
+            settings={mockSettings}
+          />
+        </OverflowProvider>,
+      );
+      const output = lastFrame();
+      expect(output).toContain('1 -');
+      expect(output).toContain('1 +');
+      expect(output).toContain('2  ');
+    });
+
+    it('should hide line numbers when showLineNumbers is false', () => {
+      const mockSettings = {
+        merged: {
+          ui: {
+            showLineNumbers: false,
+          },
+        },
+      } as unknown as LoadedSettings;
+
+      const { lastFrame } = render(
+        <OverflowProvider>
+          <DiffRenderer
+            diffContent={diffContent}
+            filename="test.txt"
+            terminalWidth={80}
+            settings={mockSettings}
+          />
+        </OverflowProvider>,
+      );
+      const output = lastFrame();
+      // Line numbers should not be present
+      expect(output).not.toMatch(/^\s*\d+\s*[-+]/m);
+      // But the content should still be there
+      expect(output).toContain('old line 1');
+      expect(output).toContain('new line 1');
+      expect(output).toContain('context line 2');
+    });
   });
 });

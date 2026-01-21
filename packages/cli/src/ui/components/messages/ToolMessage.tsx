@@ -30,6 +30,8 @@ import {
   TOOL_STATUS,
 } from '../../constants.js';
 import { theme } from '../../semantic-colors.js';
+import { SettingsContext } from '../../contexts/SettingsContext.js';
+import type { LoadedSettings } from '../../../config/settings.js';
 
 const STATIC_HEIGHT = 1;
 const RESERVED_LINE_COUNT = 5; // for tool name, status, padding etc.
@@ -210,12 +212,14 @@ const DiffResultRenderer: React.FC<{
   data: { fileDiff: string; fileName: string };
   availableHeight?: number;
   childWidth: number;
-}> = ({ data, availableHeight, childWidth }) => (
+  settings?: LoadedSettings;
+}> = ({ data, availableHeight, childWidth, settings }) => (
   <DiffRenderer
     diffContent={data.fileDiff}
     filename={data.fileName}
     availableTerminalHeight={availableHeight}
     terminalWidth={childWidth}
+    settings={settings}
   />
 );
 
@@ -243,6 +247,7 @@ export const ToolMessage: React.FC<ToolMessageProps> = ({
   ptyId,
   config,
 }) => {
+  const settings = React.useContext(SettingsContext);
   const isThisShellFocused =
     (name === SHELL_COMMAND_NAME || name === 'Shell') &&
     status === ToolCallStatus.Executing &&
@@ -349,6 +354,7 @@ export const ToolMessage: React.FC<ToolMessageProps> = ({
                 data={displayRenderer.data}
                 availableHeight={availableHeight}
                 childWidth={childWidth}
+                settings={settings}
               />
             )}
             {displayRenderer.type === 'ansi' && (

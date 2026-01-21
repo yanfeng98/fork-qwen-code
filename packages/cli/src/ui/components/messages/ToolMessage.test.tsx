@@ -58,10 +58,17 @@ vi.mock('../GeminiRespondingSpinner.js', () => ({
 vi.mock('./DiffRenderer.js', () => ({
   DiffRenderer: function MockDiffRenderer({
     diffContent,
+    settings,
   }: {
     diffContent: string;
+    settings?: unknown;
   }) {
-    return <Text>MockDiff:{diffContent}</Text>;
+    return (
+      <Text>
+        MockDiff:{diffContent}
+        {settings ? ':withSettings' : ''}
+      </Text>
+    );
   },
 }));
 vi.mock('../../utils/MarkdownDisplay.js', () => ({
