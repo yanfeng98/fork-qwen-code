@@ -21,10 +21,7 @@ import { resolve } from 'path';
  */
 export default defineConfig({
   plugins: [
-    // Use the plugin with development mode settings for UMD builds
-    react({
-      jsxRuntime: 'classic', // Use classic JSX runtime for better CDN compatibility
-    }),
+    react(),
     dts({
       include: ['src'],
       outDir: 'dist',
@@ -45,11 +42,12 @@ export default defineConfig({
       },
     },
     rollupOptions: {
-      external: ['react', 'react-dom'],
+      external: ['react', 'react-dom', 'react/jsx-runtime'],
       output: {
         globals: {
           react: 'React',
           'react-dom': 'ReactDOM',
+          'react/jsx-runtime': 'jsxRuntime',
         },
         assetFileNames: 'styles.[ext]',
       },
