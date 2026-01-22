@@ -586,11 +586,21 @@ export class OpenAIContentConverter {
           return {
             type: 'input_audio' as const,
             input_audio: {
-              data: part.inlineData.data,
+              data: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`,
               format,
             },
           };
         }
+      }
+      if (mediaType === 'video') {
+        const filename = part.inlineData.displayName || 'video';
+        return {
+          type: 'file' as const,
+          file: {
+            filename,
+            file_data: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`,
+          },
+        };
       }
     }
 
@@ -623,9 +633,10 @@ export class OpenAIContentConverter {
   /**
    * Determine media type from MIME type
    */
-  private getMediaType(mimeType: string): 'image' | 'audio' | 'file' {
+  private getMediaType(mimeType: string): 'image' | 'audio' | 'video' | 'file' {
     if (mimeType.startsWith('image/')) return 'image';
     if (mimeType.startsWith('audio/')) return 'audio';
+    if (mimeType.startsWith('video/')) return 'video';
     return 'file';
   }
 

@@ -416,8 +416,75 @@ describe('OpenAIContentConverter', () => {
       expect(contentArray[0].type).toBe('text');
       expect(contentArray[0].text).toBe('Audio recorded');
       expect(contentArray[1].type).toBe('input_audio');
-      expect(contentArray[1].input_audio?.data).toBe('audiobase64data');
+      expect(contentArray[1].input_audio?.data).toBe(
+        'data:audio/wav;base64,audiobase64data',
+      );
       expect(contentArray[1].input_audio?.format).toBe('wav');
+
+      // No separate user message should be created
+      const userMessage = messages.find((message) => message.role === 'user');
+      expect(userMessage).toBeUndefined();
+    });
+
+    it('should convert video parts to tool message with embedded file', () => {
+      const request: GenerateContentParameters = {
+        model: 'models/test',
+        contents: [
+          {
+            role: 'model',
+            parts: [
+              {
+                functionCall: {
+                  id: 'call_1',
+                  name: 'Read',
+                  args: {},
+                },
+              },
+            ],
+          },
+          {
+            role: 'user',
+            parts: [
+              {
+                functionResponse: {
+                  id: 'call_1',
+                  name: 'Read',
+                  response: { output: 'Video content' },
+                  parts: [
+                    {
+                      inlineData: {
+                        mimeType: 'video/mp4',
+                        data: 'videobase64data',
+                        displayName: 'recording.mp4',
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      };
+
+      const messages = converter.convertGeminiRequestToOpenAI(request);
+
+      // Should have tool message with both text and video content
+      const toolMessage = messages.find((message) => message.role === 'tool');
+      expect(toolMessage).toBeDefined();
+      expect(Array.isArray(toolMessage?.content)).toBe(true);
+      const contentArray = toolMessage?.content as Array<{
+        type: string;
+        text?: string;
+        file?: { filename: string; file_data: string };
+      }>;
+      expect(contentArray).toHaveLength(2);
+      expect(contentArray[0].type).toBe('text');
+      expect(contentArray[0].text).toBe('Video content');
+      expect(contentArray[1].type).toBe('file');
+      expect(contentArray[1].file?.filename).toBe('recording.mp4');
+      expect(contentArray[1].file?.file_data).toBe(
+        'data:video/mp4;base64,videobase64data',
+      );
 
       // No separate user message should be created
       const userMessage = messages.find((message) => message.role === 'user');
