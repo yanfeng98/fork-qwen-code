@@ -321,7 +321,9 @@ export class AnthropicContentConverter {
   ): AnthropicContentBlockParam | null {
     if (part.inlineData?.mimeType && part.inlineData?.data) {
       if (!this.isSupportedAnthropicImageMimeType(part.inlineData.mimeType)) {
-        const displayName = part.inlineData.displayName ?? '';
+        const displayName = part.inlineData.displayName
+          ? ` (${part.inlineData.displayName})`
+          : '';
         return {
           type: 'text',
           text: `Unsupported inline media type for Anthropic: ${part.inlineData.mimeType}${displayName}.`,
@@ -343,10 +345,12 @@ export class AnthropicContentConverter {
 
     if (part.fileData?.mimeType && part.fileData?.fileUri) {
       if (part.fileData.mimeType !== 'application/pdf') {
-        const displayName = part.fileData.displayName ?? '';
+        const displayName = part.fileData.displayName
+          ? ` (${part.fileData.displayName})`
+          : '';
         return {
           type: 'text',
-          text: `Unsupported file media for Anthropic: ${part.fileData.mimeType}${displayName}`,
+          text: `Unsupported file media for Anthropic: ${part.fileData.mimeType}${displayName}.`,
         };
       }
       return {
