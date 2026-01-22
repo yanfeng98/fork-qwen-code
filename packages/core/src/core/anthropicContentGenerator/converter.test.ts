@@ -302,7 +302,7 @@ describe('AnthropicContentConverter', () => {
       });
       expect(toolResult.content[1]?.type).toBe('text');
       expect(toolResult.content[1]?.text).toContain(
-        'Unsupported inline media type for Anthropic',
+        'Unsupported inline media type',
       );
       expect(toolResult.content[1]?.text).toContain('audio/mpeg');
     });
@@ -499,7 +499,7 @@ describe('AnthropicContentConverter', () => {
       });
       expect(toolResult.content[1]?.type).toBe('text');
       expect(toolResult.content[1]?.text).toContain(
-        'Unsupported file media for Anthropic',
+        'Unsupported file media type',
       );
       expect(toolResult.content[1]?.text).toContain('application/zip');
       expect(toolResult.content[1]?.text).toContain('archive.zip');

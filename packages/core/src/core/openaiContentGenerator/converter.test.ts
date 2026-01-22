@@ -544,7 +544,7 @@ describe('OpenAIContentConverter', () => {
       );
     });
 
-    it('should convert video parts to tool message with embedded file', () => {
+    it('should convert video inlineData to tool message with embedded file', () => {
       const request: GenerateContentParameters = {
         model: 'models/test',
         contents: [
@@ -607,6 +607,182 @@ describe('OpenAIContentConverter', () => {
       // No separate user message should be created
       const userMessage = messages.find((message) => message.role === 'user');
       expect(userMessage).toBeUndefined();
+    });
+
+    it('should convert video fileData URL to tool message with embedded file', () => {
+      const request: GenerateContentParameters = {
+        model: 'models/test',
+        contents: [
+          {
+            role: 'model',
+            parts: [
+              {
+                functionCall: {
+                  id: 'call_1',
+                  name: 'Read',
+                  args: {},
+                },
+              },
+            ],
+          },
+          {
+            role: 'user',
+            parts: [
+              {
+                functionResponse: {
+                  id: 'call_1',
+                  name: 'Read',
+                  response: { output: 'Video content' },
+                  parts: [
+                    {
+                      fileData: {
+                        mimeType: 'video/mp4',
+                        fileUri: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                        displayName: 'recording.mp4',
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      };
+
+      const messages = converter.convertGeminiRequestToOpenAI(request);
+
+      const toolMessage = messages.find((message) => message.role === 'tool');
+      expect(toolMessage).toBeDefined();
+      expect(Array.isArray(toolMessage?.content)).toBe(true);
+      const contentArray = toolMessage?.content as Array<{
+        type: string;
+        text?: string;
+        file?: { filename: string; file_data: string };
+      }>;
+      expect(contentArray).toHaveLength(2);
+      expect(contentArray[0].type).toBe('text');
+      expect(contentArray[0].text).toBe('Video content');
+      expect(contentArray[1].type).toBe('file');
+      expect(contentArray[1].file?.filename).toBe('recording.mp4');
+      expect(contentArray[1].file?.file_data).toBe(
+        'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      );
+    });
+
+    it('should render unsupported inlineData file types as a text block', () => {
+      const request: GenerateContentParameters = {
+        model: 'models/test',
+        contents: [
+          {
+            role: 'model',
+            parts: [
+              {
+                functionCall: {
+                  id: 'call_1',
+                  name: 'Read',
+                  args: {},
+                },
+              },
+            ],
+          },
+          {
+            role: 'user',
+            parts: [
+              {
+                functionResponse: {
+                  id: 'call_1',
+                  name: 'Read',
+                  response: { output: 'File content' },
+                  parts: [
+                    {
+                      inlineData: {
+                        mimeType: 'application/zip',
+                        data: 'base64zipdata',
+                        displayName: 'archive.zip',
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      };
+
+      const messages = converter.convertGeminiRequestToOpenAI(request);
+
+      const toolMessage = messages.find((message) => message.role === 'tool');
+      expect(toolMessage).toBeDefined();
+      expect(Array.isArray(toolMessage?.content)).toBe(true);
+      const contentArray = toolMessage?.content as Array<{
+        type: string;
+        text?: string;
+      }>;
+      expect(contentArray).toHaveLength(2);
+      expect(contentArray[0].type).toBe('text');
+      expect(contentArray[0].text).toBe('File content');
+      expect(contentArray[1].type).toBe('text');
+      expect(contentArray[1].text).toContain('Unsupported inline media type');
+      expect(contentArray[1].text).toContain('application/zip');
+      expect(contentArray[1].text).toContain('archive.zip');
+    });
+
+    it('should render unsupported fileData types (including audio) as a text block', () => {
+      const request: GenerateContentParameters = {
+        model: 'models/test',
+        contents: [
+          {
+            role: 'model',
+            parts: [
+              {
+                functionCall: {
+                  id: 'call_1',
+                  name: 'Read',
+                  args: {},
+                },
+              },
+            ],
+          },
+          {
+            role: 'user',
+            parts: [
+              {
+                functionResponse: {
+                  id: 'call_1',
+                  name: 'Read',
+                  response: { output: 'File content' },
+                  parts: [
+                    {
+                      fileData: {
+                        mimeType: 'audio/mpeg',
+                        fileUri: 'https://example.com/audio.mp3',
+                        displayName: 'audio.mp3',
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      };
+
+      const messages = converter.convertGeminiRequestToOpenAI(request);
+
+      const toolMessage = messages.find((message) => message.role === 'tool');
+      expect(toolMessage).toBeDefined();
+      expect(Array.isArray(toolMessage?.content)).toBe(true);
+      const contentArray = toolMessage?.content as Array<{
+        type: string;
+        text?: string;
+      }>;
+      expect(contentArray).toHaveLength(2);
+      expect(contentArray[0].type).toBe('text');
+      expect(contentArray[0].text).toBe('File content');
+      expect(contentArray[1].type).toBe('text');
+      expect(contentArray[1].text).toContain('Unsupported file media type');
+      expect(contentArray[1].text).toContain('audio/mpeg');
+      expect(contentArray[1].text).toContain('audio.mp3');
     });
 
     it('should create tool message with text-only content when no media parts', () => {

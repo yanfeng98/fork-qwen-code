@@ -572,46 +572,58 @@ export class OpenAIContentConverter {
    */
   private createMediaContentPart(part: Part): OpenAIContentPart | null {
     if (part.inlineData?.mimeType && part.inlineData?.data) {
-      const mediaType = this.getMediaType(part.inlineData.mimeType);
+      const mimeType = part.inlineData.mimeType;
+      const mediaType = this.getMediaType(mimeType);
       if (mediaType === 'image') {
-        const dataUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        const dataUrl = `data:${mimeType};base64,${part.inlineData.data}`;
         return {
           type: 'image_url' as const,
           image_url: { url: dataUrl },
         };
       }
+
+      if (mimeType === 'application/pdf') {
+        const filename = part.inlineData.displayName || 'document.pdf';
+        return {
+          type: 'file' as const,
+          file: {
+            filename,
+            file_data: `data:${mimeType};base64,${part.inlineData.data}`,
+          },
+        };
+      }
+
       if (mediaType === 'audio') {
-        const format = this.getAudioFormat(part.inlineData.mimeType);
+        const format = this.getAudioFormat(mimeType);
         if (format) {
           return {
             type: 'input_audio' as const,
             input_audio: {
-              data: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`,
+              data: `data:${mimeType};base64,${part.inlineData.data}`,
               format,
             },
           };
         }
       }
+
       if (mediaType === 'video') {
         const filename = part.inlineData.displayName || 'video';
         return {
           type: 'file' as const,
           file: {
             filename,
-            file_data: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`,
+            file_data: `data:${mimeType};base64,${part.inlineData.data}`,
           },
         };
       }
-      if (mediaType === 'file') {
-        const filename = part.inlineData.displayName || 'file';
-        return {
-          type: 'file' as const,
-          file: {
-            filename,
-            file_data: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`,
-          },
-        };
-      }
+
+      const displayName = part.inlineData.displayName
+        ? ` (${part.inlineData.displayName})`
+        : '';
+      return {
+        type: 'text' as const,
+        text: `Unsupported inline media type: ${mimeType}${displayName}.`,
+      };
     }
 
     if (part.fileData?.mimeType && part.fileData?.fileUri) {
@@ -627,25 +639,33 @@ export class OpenAIContentConverter {
         };
       }
 
-      if (mediaType === 'audio') {
-        const format = this.getAudioFormat(mimeType);
-        if (format) {
-          return {
-            type: 'input_audio' as const,
-            input_audio: {
-              data: fileUri,
-              format,
-            },
-          };
-        }
+      if (mimeType === 'application/pdf') {
+        return {
+          type: 'file' as const,
+          file: {
+            filename,
+            file_data: fileUri,
+          },
+        };
       }
 
+      if (mediaType === 'video') {
+        const videoFilename = part.fileData.displayName || 'video';
+        return {
+          type: 'file' as const,
+          file: {
+            filename: videoFilename,
+            file_data: fileUri,
+          },
+        };
+      }
+
+      const displayName = part.fileData.displayName
+        ? ` (${part.fileData.displayName})`
+        : '';
       return {
-        type: 'file' as const,
-        file: {
-          filename,
-          file_data: fileUri,
-        },
+        type: 'text' as const,
+        text: `Unsupported file media type: ${mimeType}${displayName}.`,
       };
     }
 

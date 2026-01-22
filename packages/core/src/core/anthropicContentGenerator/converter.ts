@@ -351,7 +351,7 @@ export class AnthropicContentConverter {
         : '';
       return {
         type: 'text',
-        text: `Unsupported inline media type for Anthropic: ${part.inlineData.mimeType}${displayName}.`,
+        text: `Unsupported inline media type: ${part.inlineData.mimeType}${displayName}.`,
       };
     }
 
@@ -360,13 +360,6 @@ export class AnthropicContentConverter {
         ? ` (${part.fileData.displayName})`
         : '';
       const fileUri = part.fileData.fileUri;
-
-      if (!fileUri.startsWith('https://') && !fileUri.startsWith('http://')) {
-        return {
-          type: 'text',
-          text: `Unsupported file URI for Anthropic: ${part.fileData.mimeType}${displayName}.`,
-        };
-      }
 
       if (this.isSupportedAnthropicImageMimeType(part.fileData.mimeType)) {
         return {
@@ -390,7 +383,7 @@ export class AnthropicContentConverter {
 
       return {
         type: 'text',
-        text: `Unsupported file media for Anthropic: ${part.fileData.mimeType}${displayName}.`,
+        text: `Unsupported file media type: ${part.fileData.mimeType}${displayName}.`,
       };
     }
 
