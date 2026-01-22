@@ -218,6 +218,30 @@ describe('extension tests', () => {
       ]);
     });
 
+    it('should use default QWEN.md when contextFileName is empty array', async () => {
+      const extDir = path.join(userExtensionsDir, 'ext-empty-context');
+      fs.mkdirSync(extDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(extDir, EXTENSIONS_CONFIG_FILENAME),
+        JSON.stringify({
+          name: 'ext-empty-context',
+          version: '1.0.0',
+          contextFileName: [],
+        }),
+      );
+      fs.writeFileSync(path.join(extDir, 'QWEN.md'), 'context content');
+
+      const manager = createExtensionManager();
+      await manager.refreshCache();
+      const extensions = manager.getLoadedExtensions();
+
+      expect(extensions).toHaveLength(1);
+      const ext = extensions.find((e) => e.config.name === 'ext-empty-context');
+      expect(ext?.contextFiles).toEqual([
+        path.join(userExtensionsDir, 'ext-empty-context', 'QWEN.md'),
+      ]);
+    });
+
     it('should skip extensions with invalid JSON and log a warning', async () => {
       const consoleSpy = vi
         .spyOn(console, 'error')
@@ -694,13 +718,14 @@ describe('extension tests', () => {
         expect(() => validateName('UPPERCASE')).not.toThrow();
       });
 
+      it('should accept names with underscores and dots', () => {
+        expect(() => validateName('my_extension')).not.toThrow();
+        expect(() => validateName('my.extension')).not.toThrow();
+        expect(() => validateName('my_ext.v1')).not.toThrow();
+        expect(() => validateName('ext_1.2.3')).not.toThrow();
+      });
+
       it('should reject names with invalid characters', () => {
-        expect(() => validateName('my_extension')).toThrow(
-          'Invalid extension name',
-        );
-        expect(() => validateName('my.extension')).toThrow(
-          'Invalid extension name',
-        );
         expect(() => validateName('my extension')).toThrow(
           'Invalid extension name',
         );

@@ -32,6 +32,7 @@ export function extensionToOutputString(
   extension: Extension,
   extensionManager: ExtensionManager,
   workspaceDir: string,
+  inline = false,
 ): string {
   const cwd = workspaceDir;
   const userEnabled = extensionManager.isEnabled(
@@ -44,7 +45,7 @@ export function extensionToOutputString(
   );
 
   const status = workspaceEnabled ? chalk.green('✓') : chalk.red('✗');
-  let output = `${status} ${extension.config.name} (${extension.config.version})`;
+  let output = `${inline ? '' : status} ${extension.config.name} (${extension.config.version})`;
   output += `\n Path: ${extension.path}`;
   if (extension.installMetadata) {
     output += `\n Source: ${extension.installMetadata.source} (Type: ${extension.installMetadata.type})`;
