@@ -89,11 +89,15 @@ jobs:
 
       - name: 'Get the version'
         id: 'version'
+        working-directory: 'packages/vscode-ide-companion'
         run: |
+          # Get the base version from package.json regardless of scenario
+          BASE_VERSION=$(node -p "require('./package.json').version")
+
           if [[ "${IS_PREVIEW}" == "true" ]]; then
-            # Generate preview version with timestamp
+            # Generate preview version with timestamp based on actual package version
             TIMESTAMP=$(date +%Y%m%d%H%M%S)
-            PREVIEW_VERSION="0.0.0-preview.${TIMESTAMP}"
+            PREVIEW_VERSION="${BASE_VERSION}-preview.${TIMESTAMP}"
             RELEASE_TAG="preview.${TIMESTAMP}"
 
             echo "RELEASE_TAG=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
@@ -105,8 +109,8 @@ jobs:
               RELEASE_VERSION="${MANUAL_VERSION#v}" # Remove 'v' prefix if present
               RELEASE_TAG="${MANUAL_VERSION#v}" # Remove 'v' prefix if present
             else
-              RELEASE_VERSION=$(node -p "require('./package.json').version")
-              RELEASE_TAG=$(node -p "require('./package.json').version")
+              RELEASE_VERSION="${BASE_VERSION}"
+              RELEASE_TAG="${BASE_VERSION}"
             fi
 
             echo "RELEASE_TAG=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
@@ -118,17 +122,18 @@ jobs:
           MANUAL_VERSION: '${{ inputs.version }}'
 
       - name: 'Update package version (for preview releases)'
-        if: ${{ steps.vars.outputs.is_preview == 'true' }}
+        if: '${{ steps.vars.outputs.is_preview == ''true'' }}'
+        working-directory: 'packages/vscode-ide-companion'
         env:
           RELEASE_VERSION: '${{ steps.version.outputs.RELEASE_VERSION }}'
         run: |-
           # Update package.json with preview version
           npm version "${RELEASE_VERSION}" --no-git-tag-version --allow-same-version
-          npm version -w qwen-code-vscode-ide-companion "${RELEASE_VERSION}" --no-git-tag-version --allow-same-version
 
       - name: 'Run Tests'
         if: |-
           ${{ github.event.inputs.force_skip_tests != 'true' }}
+        working-directory: 'packages/vscode-ide-companion'
         run: |
           npm run test:ci
         env:
@@ -142,7 +147,7 @@ jobs:
           npm --workspace=qwen-code-vscode-ide-companion run prepackage
 
       - name: 'Package VSIX (dry run)'
-        if: ${{ steps.vars.outputs.is_dry_run == 'true' }}
+        if: '${{ steps.vars.outputs.is_dry_run == ''true'' }}'
         working-directory: 'packages/vscode-ide-companion'
         run: |-
           if [[ "${{ steps.vars.outputs.is_preview }}" == "true" ]]; then
@@ -152,7 +157,7 @@ jobs:
           fi
 
       - name: 'Upload VSIX Artifact (dry run)'
-        if: ${{ steps.vars.outputs.is_dry_run == 'true' }}
+        if: '${{ steps.vars.outputs.is_dry_run == ''true'' }}'
         uses: 'actions/upload-artifact@v4'
         with:
           name: 'qwen-code-vscode-companion-${{ steps.version.outputs.RELEASE_VERSION }}.vsix'
@@ -160,7 +165,7 @@ jobs:
           if-no-files-found: 'error'
 
       - name: 'Publish to Microsoft Marketplace'
-        if: ${{ steps.vars.outputs.is_dry_run == 'false' }}
+        if: '${{ steps.vars.outputs.is_dry_run == ''false'' }}'
         working-directory: 'packages/vscode-ide-companion'
         env:
           VSCE_PAT: '${{ secrets.VSCE_PAT }}'
@@ -173,7 +178,7 @@ jobs:
           fi
 
       - name: 'Publish to OpenVSX'
-        if: ${{ steps.vars.outputs.is_dry_run == 'false' }}
+        if: '${{ steps.vars.outputs.is_dry_run == ''false'' }}'
         working-directory: 'packages/vscode-ide-companion'
         env:
           OVSX_TOKEN: '${{ secrets.OVSX_TOKEN }}'
