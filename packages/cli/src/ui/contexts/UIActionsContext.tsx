@@ -20,6 +20,8 @@ import { type VisionSwitchOutcome } from '../components/ModelSwitchDialog.js';
 import { type OpenAICredentials } from '../components/OpenAIKeyPrompt.js';
 
 export interface UIActions {
+  openThemeDialog: () => void;
+  openEditorDialog: () => void;
   handleThemeSelect: (
     themeName: string | undefined,
     scope: SettingScope,

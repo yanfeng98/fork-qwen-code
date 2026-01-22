@@ -99,7 +99,6 @@ export interface CliArgs {
   prompt: string | undefined;
   promptInteractive: string | undefined;
   allFiles: boolean | undefined;
-  showMemoryUsage: boolean | undefined;
   yolo: boolean | undefined;
   approvalMode: string | undefined;
   telemetry: boolean | undefined;
@@ -290,11 +289,6 @@ export async function parseArguments(settings: Settings): Promise<CliArgs> {
           alias: ['a'],
           type: 'boolean',
           description: 'Include ALL files in context?',
-          default: false,
-        })
-        .option('show-memory-usage', {
-          type: 'boolean',
-          description: 'Show memory usage in status bar',
           default: false,
         })
         .option('yolo', {
@@ -499,10 +493,6 @@ export async function parseArguments(settings: Settings): Promise<CliArgs> {
           ],
           description: 'Authentication type',
         })
-        .deprecateOption(
-          'show-memory-usage',
-          'Use the "ui.showMemoryUsage" setting in settings.json instead. This flag will be removed in a future version.',
-        )
         .deprecateOption(
           'sandbox-image',
           'Use the "tools.sandbox" setting in settings.json instead. This flag will be removed in a future version.',
@@ -961,8 +951,6 @@ export async function loadCliConfig(
       ? Array.from(excludedMcpServers)
       : undefined,
     approvalMode,
-    showMemoryUsage:
-      argv.showMemoryUsage || settings.ui?.showMemoryUsage || false,
     accessibility: {
       ...settings.ui?.accessibility,
       screenReader,
