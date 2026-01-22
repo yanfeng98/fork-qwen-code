@@ -53,7 +53,10 @@ export async function cloneFromGit(
 ): Promise<void> {
   try {
     const git = simpleGit(destination);
-    let sourceUrl = installMetadata.source;
+    let sourceUrl =
+      installMetadata.type === 'marketplace' && installMetadata.marketplace
+        ? installMetadata.marketplace.marketplaceSource
+        : installMetadata.source;
     const token = getGitHubToken();
     if (token) {
       try {

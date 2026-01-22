@@ -190,7 +190,7 @@ function filterMcpConfig(original: MCPServerConfig): MCPServerConfig {
 }
 
 function getContextFileNames(config: ExtensionConfig): string[] {
-  if (!config.contextFileName) {
+  if (!config.contextFileName || config.contextFileName.length === 0) {
     return ['QWEN.md'];
   } else if (!Array.isArray(config.contextFileName)) {
     return [config.contextFileName];
@@ -1244,9 +1244,9 @@ export function hashValue(value: string): string {
 }
 
 export function validateName(name: string) {
-  if (!/^[a-zA-Z0-9-]+$/.test(name)) {
+  if (!/^[a-zA-Z0-9-_.]+$/.test(name)) {
     throw new Error(
-      `Invalid extension name: "${name}". Only letters (a-z, A-Z), numbers (0-9), and dashes (-) are allowed.`,
+      `Invalid extension name: "${name}". Only letters (a-z, A-Z), numbers (0-9), underscores (_), dots (.), and dashes (-) are allowed.`,
     );
   }
 }
