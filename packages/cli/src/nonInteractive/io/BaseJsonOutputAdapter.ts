@@ -64,6 +64,7 @@ export interface ResultOptions {
   readonly stats?: SessionMetrics;
   readonly summary?: string;
   readonly subtype?: string;
+  readonly showResult?: boolean;
 }
 
 /**

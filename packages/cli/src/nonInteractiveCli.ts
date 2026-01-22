@@ -4,11 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  Config,
-  ToolCallRequestInfo,
-  ToolResultDisplay,
-} from '@qwen-code/qwen-code-core';
+import type { Config, ToolCallRequestInfo } from '@qwen-code/qwen-code-core';
 import { isSlashCommand } from './ui/utils/commandUtils.js';
 import type { LoadedSettings } from './config/settings.js';
 import {
@@ -92,6 +88,7 @@ async function emitNonInteractiveFinalMessage(params: {
     usage,
     stats,
     summary: message,
+    showResult: config.getOutputFormat() === OutputFormat.TEXT,
   });
 }
 
@@ -127,7 +124,10 @@ export async function runNonInteractive(
 
     if (options.adapter) {
       adapter = options.adapter;
-    } else if (outputFormat === OutputFormat.JSON) {
+    } else if (
+      outputFormat === OutputFormat.JSON ||
+      outputFormat === OutputFormat.TEXT
+    ) {
       adapter = new JsonOutputAdapter(config);
     } else if (outputFormat === OutputFormat.STREAM_JSON) {
       adapter = new StreamJsonOutputAdapter(
@@ -297,24 +297,18 @@ export async function runNonInteractive(
             if (event.type === GeminiEventType.ToolCallRequest) {
               toolCallRequests.push(event.value);
             }
-          } else {
-            // Text output mode - direct stdout
-            if (event.type === GeminiEventType.Thought) {
-              process.stdout.write(event.value.description);
-            } else if (event.type === GeminiEventType.Content) {
-              process.stdout.write(event.value);
-            } else if (event.type === GeminiEventType.ToolCallRequest) {
-              toolCallRequests.push(event.value);
-            } else if (event.type === GeminiEventType.Error) {
-              // Format and output the error message for text mode
-              const errorText = parseAndFormatApiError(
-                event.value.error,
-                config.getContentGeneratorConfig()?.authType,
-              );
-              process.stderr.write(`${errorText}\n`);
-              // Throw error to exit with non-zero code
-              throw new Error(errorText);
-            }
+          }
+          if (
+            outputFormat === OutputFormat.TEXT &&
+            event.type === GeminiEventType.Error
+          ) {
+            const errorText = parseAndFormatApiError(
+              event.value.error,
+              config.getContentGeneratorConfig()?.authType,
+            );
+            process.stderr.write(`${errorText}\n`);
+            // Throw error to exit with non-zero code
+            throw new Error(errorText);
           }
         }
 
@@ -350,35 +344,13 @@ export async function runNonInteractive(
               : undefined;
             const taskToolProgressHandler = taskToolProgress?.handler;
 
-            // Create output handler for non-Task tools in text mode (for console output)
-            const nonTaskOutputHandler =
-              !isTaskTool && !adapter
-                ? (callId: string, outputChunk: ToolResultDisplay) => {
-                    // Print tool output to console in text mode
-                    if (typeof outputChunk === 'string') {
-                      process.stdout.write(outputChunk);
-                    } else if (
-                      outputChunk &&
-                      typeof outputChunk === 'object' &&
-                      'ansiOutput' in outputChunk
-                    ) {
-                      // Handle ANSI output - just print as string for now
-                      process.stdout.write(String(outputChunk.ansiOutput));
-                    }
-                  }
-                : undefined;
-
-            // Combine output handlers
-            const outputUpdateHandler =
-              taskToolProgressHandler || nonTaskOutputHandler;
-
             const toolResponse = await executeToolCall(
               config,
               finalRequestInfo,
               abortController.signal,
-              outputUpdateHandler || toolCallUpdateCallback
+              taskToolProgressHandler || toolCallUpdateCallback
                 ? {
-                    ...(outputUpdateHandler && { outputUpdateHandler }),
+                    ...(taskToolProgressHandler && { taskToolProgressHandler }),
                     ...(toolCallUpdateCallback && {
                       onToolCallsUpdate: toolCallUpdateCallback,
                     }),
@@ -431,10 +403,8 @@ export async function runNonInteractive(
               numTurns: turnCount,
               usage,
               stats,
+              showResult: outputFormat === OutputFormat.TEXT,
             });
-          } else {
-            // Text output mode - no usage needed
-            process.stdout.write('\n');
           }
           return;
         }
@@ -458,6 +428,7 @@ export async function runNonInteractive(
           errorMessage: message,
           usage,
           stats,
+          showResult: outputFormat === OutputFormat.TEXT,
         });
       }
       handleError(error, config);
