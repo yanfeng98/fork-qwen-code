@@ -223,7 +223,7 @@ description = "Test description"`;
 
       const prompt = generateMigrationPrompt(files);
 
-      expect(prompt).toContain('Found 2 command files');
+      expect(prompt).toContain('Found 2 command file(s)');
       expect(prompt).toContain('cmd1.toml');
       expect(prompt).toContain('cmd2.toml');
       expect(prompt).toContain('qwen-code migrate-commands');
@@ -234,7 +234,7 @@ description = "Test description"`;
 
       const prompt = generateMigrationPrompt(files);
 
-      expect(prompt).toContain('Found 10 command files');
+      expect(prompt).toContain('Found 10 command file(s)');
       expect(prompt).toContain('... and 7 more');
     });
 

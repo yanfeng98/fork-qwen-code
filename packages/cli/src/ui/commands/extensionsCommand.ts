@@ -495,8 +495,10 @@ export async function completeExtensions(
     name.startsWith(partialArg),
   );
 
-  if ('--all'.startsWith(partialArg) || 'all'.startsWith(partialArg)) {
-    suggestions.unshift('--all');
+  if (context.invocation?.name !== 'uninstall') {
+    if ('--all'.startsWith(partialArg) || 'all'.startsWith(partialArg)) {
+      suggestions.unshift('--all');
+    }
   }
 
   return suggestions;
