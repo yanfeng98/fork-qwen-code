@@ -6,7 +6,7 @@
 
 import type { CommandModule } from 'yargs';
 import { getErrorMessage } from '../../utils/errors.js';
-import { getExtensionManager } from './utils.js';
+import { extensionToOutputString, getExtensionManager } from './utils.js';
 import { t } from '../../i18n/index.js';
 
 export async function handleList() {
@@ -21,7 +21,7 @@ export async function handleList() {
     console.log(
       extensions
         .map((extension, _): string =>
-          extensionManager.toOutputString(extension, process.cwd()),
+          extensionToOutputString(extension, extensionManager, process.cwd()),
         )
         .join('\n\n'),
     );

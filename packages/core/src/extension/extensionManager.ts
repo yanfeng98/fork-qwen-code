@@ -36,7 +36,6 @@ import {
 } from './github.js';
 import type { LoadExtensionContext } from './variableSchema.js';
 import { Override, type AllExtensionsEnablementConfig } from './override.js';
-import chalk from 'chalk';
 import { parseMarketplaceSource } from './marketplace.js';
 import {
   isGeminiExtensionConfig,
@@ -1054,49 +1053,6 @@ export class ExtensionManager {
       telemetryConfig,
       new ExtensionUninstallEvent(extension.name, 'success'),
     );
-  }
-
-  /**
-   * Converts an extension to output string.
-   */
-  toOutputString(extension: Extension, workspaceDir?: string): string {
-    const cwd = workspaceDir ?? this.workspaceDir;
-    const userEnabled = this.isEnabled(extension.config.name, os.homedir());
-    const workspaceEnabled = this.isEnabled(extension.config.name, cwd);
-
-    const status = workspaceEnabled ? chalk.green('✓') : chalk.red('✗');
-    let output = `${status} ${extension.config.name} (${extension.config.version})`;
-    output += `\n Path: ${extension.path}`;
-    if (extension.installMetadata) {
-      output += `\n Source: ${extension.installMetadata.source} (Type: ${extension.installMetadata.type})`;
-      if (extension.installMetadata.ref) {
-        output += `\n Ref: ${extension.installMetadata.ref}`;
-      }
-      if (extension.installMetadata.releaseTag) {
-        output += `\n Release tag: ${extension.installMetadata.releaseTag}`;
-      }
-    }
-    output += `\n Enabled (User): ${userEnabled}`;
-    output += `\n Enabled (Workspace): ${workspaceEnabled}`;
-    if (extension.contextFiles.length > 0) {
-      output += `\n Context files:`;
-      extension.contextFiles.forEach((contextFile) => {
-        output += `\n  ${contextFile}`;
-      });
-    }
-    if (extension.commands && extension.commands.length > 0) {
-      output += `\n Commands:`;
-      extension.commands.forEach((command) => {
-        output += `\n  /${command}`;
-      });
-    }
-    if (extension.config.mcpServers) {
-      output += `\n MCP servers:`;
-      Object.keys(extension.config.mcpServers).forEach((key) => {
-        output += `\n  ${key}`;
-      });
-    }
-    return output;
   }
 
   async performWorkspaceExtensionMigration(

@@ -23,6 +23,7 @@ vi.mock('./utils.js', () => ({
     getLoadedExtensions: mockGetLoadedExtensions,
     toOutputString: mockToOutputString,
   }),
+  extensionToOutputString: mockToOutputString,
 }));
 
 vi.mock('../../utils/errors.js', () => ({
