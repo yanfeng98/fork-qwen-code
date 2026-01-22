@@ -192,6 +192,20 @@ export default tseslint.config(
         },
       ],
     },
+  },
+  {
+    files: ['**/*.cjs'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        module: 'readonly',
+        require: 'readonly',
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+      'no-undef': 'off',
+    },
   }, {
   files: ['packages/vscode-ide-companion/esbuild.js'],
   languageOptions: {

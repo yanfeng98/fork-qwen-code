@@ -1,6 +1,6 @@
 {
   "name": "@qwen-code/webui",
-  "version": "0.1.0",
+  "version": "0.1.0-beta.2",
   "description": "Shared UI components for Qwen Code packages",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -18,8 +18,7 @@
       "require": "./dist/components/icons/index.cjs"
     },
     "./tailwind.preset": "./tailwind.preset.cjs",
-    "./styles.css": "./dist/styles.css",
-    "./webview.css": "./dist/webview.css"
+    "./styles.css": "./dist/styles.css"
   },
   "files": [
     "dist",
@@ -28,6 +27,9 @@
   "sideEffects": [
     "**/*.css"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "dev": "vite build --watch",
     "build": "vite build",

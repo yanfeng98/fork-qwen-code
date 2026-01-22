@@ -43,7 +43,9 @@ export const extractCommandOutput = (text: string): string => {
   }
 
   // Second try: Extract from structured text format
-  const outputMatch = text.match(/Output:[ \t]*(.+?)(?=\nError:|$)/i);
+  const outputMatch = text.match(
+    /Output:[ \t]{0,20}(.{0,1000}?)(?=\nError:|$)/i,
+  );
   if (outputMatch && outputMatch[1]) {
     const output = outputMatch[1].trim();
     if (output && output !== '(none)' && output.length > 0) {

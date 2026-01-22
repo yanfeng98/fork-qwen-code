@@ -4,6 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /**
  * Default CSS variables for @qwen-code/webui
  * These provide fallback values when running outside of VSCode.

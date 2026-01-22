@@ -82,7 +82,8 @@ const parsePlanEntries = (textOutputs: string[]): PlanEntry[] => {
   const entries: PlanEntry[] = [];
 
   // Accept [ ], [x]/[X] and in-progress markers [-] or [*]
-  const todoRe = /^(?:\s*(?:[-*]|\d+[.)])\s*)?\[( |x|X|-|\*)\]\s+(.*)$/;
+  const todoRe =
+    /^(?:\s{0,10}(?:[-*]|\d{1,3}[.)])\s{0,10})?\[( |x|X|-|\*)\]\s+(.{0,500})$/;
   for (const line of lines) {
     const m = line.match(todoRe);
     if (m) {

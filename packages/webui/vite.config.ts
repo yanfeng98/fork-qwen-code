@@ -15,12 +15,16 @@ import { resolve } from 'path';
  * Build outputs:
  * - ESM: dist/index.js (primary format)
  * - CJS: dist/index.cjs (compatibility)
+ * - UMD: dist/index.umd.js (for CDN usage)
  * - TypeScript declarations: dist/index.d.ts
  * - CSS: dist/styles.css (optional styles)
  */
 export default defineConfig({
   plugins: [
-    react(),
+    // Use the plugin with development mode settings for UMD builds
+    react({
+      jsxRuntime: 'classic', // Use classic JSX runtime for better CDN compatibility
+    }),
     dts({
       include: ['src'],
       outDir: 'dist',
@@ -32,16 +36,20 @@ export default defineConfig({
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
       name: 'QwenCodeWebUI',
-      formats: ['es', 'cjs'],
-      fileName: (format) => `index.${format === 'es' ? 'js' : 'cjs'}`,
+      formats: ['es', 'cjs', 'umd'],
+      fileName: (format) => {
+        if (format === 'es') return 'index.js';
+        if (format === 'cjs') return 'index.cjs';
+        if (format === 'umd') return 'index.umd.js';
+        return 'index.js';
+      },
     },
     rollupOptions: {
-      external: ['react', 'react-dom', 'react/jsx-runtime'],
+      external: ['react', 'react-dom'],
       output: {
         globals: {
           react: 'React',
           'react-dom': 'ReactDOM',
-          'react/jsx-runtime': 'jsxRuntime',
         },
         assetFileNames: 'styles.[ext]',
       },
