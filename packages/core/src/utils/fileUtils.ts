@@ -458,27 +458,14 @@ export async function processSingleFileContent(
       }
       case 'image':
       case 'audio':
-      case 'video': {
+      case 'video':
+      case 'pdf': {
         const contentBuffer = await fs.promises.readFile(filePath);
         const base64Data = contentBuffer.toString('base64');
         return {
           llmContent: {
             inlineData: {
               data: base64Data,
-              mimeType: mime.getType(filePath) || 'application/octet-stream',
-              displayName,
-            },
-          },
-          returnDisplay: `Read ${fileType} file: ${relativePathForDisplay}`,
-        };
-      }
-      case 'pdf': {
-        const contentBuffer = await fs.promises.readFile(filePath);
-        const base64Data = contentBuffer.toString('base64');
-        return {
-          llmContent: {
-            fileData: {
-              fileUri: base64Data,
               mimeType: mime.getType(filePath) || 'application/octet-stream',
               displayName,
             },

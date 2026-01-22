@@ -320,46 +320,77 @@ export class AnthropicContentConverter {
     part: Part,
   ): AnthropicContentBlockParam | null {
     if (part.inlineData?.mimeType && part.inlineData?.data) {
-      if (!this.isSupportedAnthropicImageMimeType(part.inlineData.mimeType)) {
-        const displayName = part.inlineData.displayName
-          ? ` (${part.inlineData.displayName})`
-          : '';
+      if (this.isSupportedAnthropicImageMimeType(part.inlineData.mimeType)) {
         return {
-          type: 'text',
-          text: `Unsupported inline media type for Anthropic: ${part.inlineData.mimeType}${displayName}.`,
+          type: 'image',
+          source: {
+            type: 'base64',
+            media_type: part.inlineData.mimeType as
+              | 'image/jpeg'
+              | 'image/png'
+              | 'image/gif'
+              | 'image/webp',
+            data: part.inlineData.data,
+          },
         };
       }
+
+      if (part.inlineData.mimeType === 'application/pdf') {
+        return {
+          type: 'document',
+          source: {
+            type: 'base64',
+            media_type: 'application/pdf',
+            data: part.inlineData.data,
+          },
+        };
+      }
+
+      const displayName = part.inlineData.displayName
+        ? ` (${part.inlineData.displayName})`
+        : '';
       return {
-        type: 'image',
-        source: {
-          type: 'base64',
-          media_type: part.inlineData.mimeType as
-            | 'image/jpeg'
-            | 'image/png'
-            | 'image/gif'
-            | 'image/webp',
-          data: part.inlineData.data,
-        },
+        type: 'text',
+        text: `Unsupported inline media type for Anthropic: ${part.inlineData.mimeType}${displayName}.`,
       };
     }
 
     if (part.fileData?.mimeType && part.fileData?.fileUri) {
-      if (part.fileData.mimeType !== 'application/pdf') {
-        const displayName = part.fileData.displayName
-          ? ` (${part.fileData.displayName})`
-          : '';
+      const displayName = part.fileData.displayName
+        ? ` (${part.fileData.displayName})`
+        : '';
+      const fileUri = part.fileData.fileUri;
+
+      if (!fileUri.startsWith('https://') && !fileUri.startsWith('http://')) {
         return {
           type: 'text',
-          text: `Unsupported file media for Anthropic: ${part.fileData.mimeType}${displayName}.`,
+          text: `Unsupported file URI for Anthropic: ${part.fileData.mimeType}${displayName}.`,
         };
       }
+
+      if (this.isSupportedAnthropicImageMimeType(part.fileData.mimeType)) {
+        return {
+          type: 'image',
+          source: {
+            type: 'url',
+            url: fileUri,
+          },
+        } as unknown as AnthropicContentBlockParam;
+      }
+
+      if (part.fileData.mimeType === 'application/pdf') {
+        return {
+          type: 'document',
+          source: {
+            type: 'url',
+            url: fileUri,
+          },
+        } as unknown as AnthropicContentBlockParam;
+      }
+
       return {
-        type: 'document',
-        source: {
-          type: 'base64',
-          media_type: part.fileData.mimeType as 'application/pdf',
-          data: part.fileData.fileUri,
-        },
+        type: 'text',
+        text: `Unsupported file media for Anthropic: ${part.fileData.mimeType}${displayName}.`,
       };
     }
 

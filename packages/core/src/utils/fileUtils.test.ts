@@ -747,19 +747,18 @@ describe('fileUtils', () => {
         mockConfig,
       );
       expect(
-        (result.llmContent as { fileData: unknown }).fileData,
+        (result.llmContent as { inlineData: unknown }).inlineData,
       ).toBeDefined();
       expect(
-        (result.llmContent as { fileData: { mimeType: string } }).fileData
+        (result.llmContent as { inlineData: { mimeType: string } }).inlineData
           .mimeType,
       ).toBe('application/pdf');
       expect(
-        (result.llmContent as { fileData: { fileUri: string } }).fileData
-          .fileUri,
+        (result.llmContent as { inlineData: { data: string } }).inlineData.data,
       ).toBe(fakePdfData.toString('base64'));
       expect(
-        (result.llmContent as { fileData: { displayName?: string } }).fileData
-          .displayName,
+        (result.llmContent as { inlineData: { displayName?: string } })
+          .inlineData.displayName,
       ).toBe('document.pdf');
       expect(result.returnDisplay).toContain('Read pdf file: document.pdf');
     });

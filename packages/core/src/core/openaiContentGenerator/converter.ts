@@ -602,27 +602,49 @@ export class OpenAIContentConverter {
           },
         };
       }
+      if (mediaType === 'file') {
+        const filename = part.inlineData.displayName || 'file';
+        return {
+          type: 'file' as const,
+          file: {
+            filename,
+            file_data: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`,
+          },
+        };
+      }
     }
 
     if (part.fileData?.mimeType && part.fileData?.fileUri) {
       const filename = part.fileData.displayName || 'file';
       const fileUri = part.fileData.fileUri;
+      const mimeType = part.fileData.mimeType;
+      const mediaType = this.getMediaType(mimeType);
 
-      if (fileUri.startsWith('data:')) {
+      if (mediaType === 'image') {
         return {
-          type: 'file' as const,
-          file: {
-            filename,
-            file_data: fileUri,
-          },
+          type: 'image_url' as const,
+          image_url: { url: fileUri },
         };
+      }
+
+      if (mediaType === 'audio') {
+        const format = this.getAudioFormat(mimeType);
+        if (format) {
+          return {
+            type: 'input_audio' as const,
+            input_audio: {
+              data: fileUri,
+              format,
+            },
+          };
+        }
       }
 
       return {
         type: 'file' as const,
         file: {
           filename,
-          file_data: `data:${part.fileData.mimeType};base64,${fileUri}`,
+          file_data: fileUri,
         },
       };
     }

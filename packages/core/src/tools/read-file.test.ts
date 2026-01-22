@@ -302,8 +302,8 @@ describe('ReadFileTool', () => {
 
       const result = await invocation.execute(abortSignal);
       expect(result.llmContent).toEqual({
-        fileData: {
-          fileUri: pdfHeader.toString('base64'),
+        inlineData: {
+          data: pdfHeader.toString('base64'),
           mimeType: 'application/pdf',
           displayName: 'document.pdf',
         },

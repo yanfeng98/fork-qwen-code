@@ -307,7 +307,7 @@ describe('AnthropicContentConverter', () => {
       expect(toolResult.content[1]?.text).toContain('audio/mpeg');
     });
 
-    it('converts fileData with PDF into document block', () => {
+    it('converts inlineData with PDF into document block', () => {
       const { messages } = converter.convertGeminiRequestToAnthropic({
         model: 'models/test',
         contents: [
@@ -321,9 +321,9 @@ describe('AnthropicContentConverter', () => {
                   response: { output: 'PDF content' },
                   parts: [
                     {
-                      fileData: {
+                      inlineData: {
                         mimeType: 'application/pdf',
-                        fileUri: 'pdfbase64data',
+                        data: 'pdfbase64data',
                       },
                     },
                   ],
@@ -356,6 +356,153 @@ describe('AnthropicContentConverter', () => {
           ],
         },
       ]);
+    });
+
+    it('converts fileData with image into image url block', () => {
+      const { messages } = converter.convertGeminiRequestToAnthropic({
+        model: 'models/test',
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                functionResponse: {
+                  id: 'call-1',
+                  name: 'Read',
+                  response: { output: 'Image content' },
+                  parts: [
+                    {
+                      fileData: {
+                        mimeType: 'image/jpeg',
+                        fileUri:
+                          'https://upload.wikimedia.org/wikipedia/commons/a/a7/Camponotus_flavomarginatus_ant.jpg',
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(messages).toEqual([
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'tool_result',
+              tool_use_id: 'call-1',
+              content: [
+                { type: 'text', text: 'Image content' },
+                {
+                  type: 'image',
+                  source: {
+                    type: 'url',
+                    url: 'https://upload.wikimedia.org/wikipedia/commons/a/a7/Camponotus_flavomarginatus_ant.jpg',
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+    });
+
+    it('converts fileData with PDF into document url block', () => {
+      const { messages } = converter.convertGeminiRequestToAnthropic({
+        model: 'models/test',
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                functionResponse: {
+                  id: 'call-1',
+                  name: 'Read',
+                  response: { output: 'PDF content' },
+                  parts: [
+                    {
+                      fileData: {
+                        mimeType: 'application/pdf',
+                        fileUri:
+                          'https://assets.anthropic.com/m/1cd9d098ac3e6467/original/Claude-3-Model-Card-October-Addendum.pdf',
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(messages).toEqual([
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'tool_result',
+              tool_use_id: 'call-1',
+              content: [
+                { type: 'text', text: 'PDF content' },
+                {
+                  type: 'document',
+                  source: {
+                    type: 'url',
+                    url: 'https://assets.anthropic.com/m/1cd9d098ac3e6467/original/Claude-3-Model-Card-October-Addendum.pdf',
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+    });
+
+    it('renders unsupported fileData as a text block', () => {
+      const { messages } = converter.convertGeminiRequestToAnthropic({
+        model: 'models/test',
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                functionResponse: {
+                  id: 'call-1',
+                  name: 'Read',
+                  response: { output: 'File content' },
+                  parts: [
+                    {
+                      fileData: {
+                        mimeType: 'application/zip',
+                        fileUri: 'https://example.com/archive.zip',
+                        displayName: 'archive.zip',
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      });
+
+      const toolResult = messages[0]?.content?.[0] as {
+        type: string;
+        content: Array<{ type: string; text?: string }>;
+      };
+      expect(toolResult.type).toBe('tool_result');
+      expect(toolResult.content[0]).toEqual({
+        type: 'text',
+        text: 'File content',
+      });
+      expect(toolResult.content[1]?.type).toBe('text');
+      expect(toolResult.content[1]?.text).toContain(
+        'Unsupported file media for Anthropic',
+      );
+      expect(toolResult.content[1]?.text).toContain('application/zip');
+      expect(toolResult.content[1]?.text).toContain('archive.zip');
     });
 
     it('associates each image with its preceding functionResponse', () => {

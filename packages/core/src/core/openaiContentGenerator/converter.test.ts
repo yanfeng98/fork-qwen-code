@@ -233,7 +233,7 @@ describe('OpenAIContentConverter', () => {
       expect(userMessage).toBeUndefined();
     });
 
-    it('should convert function responses with fileData to tool message with embedded input_file', () => {
+    it('should convert function responses with fileData to tool message with embedded image_url', () => {
       const request: GenerateContentParameters = {
         model: 'models/test',
         contents: [
@@ -274,30 +274,27 @@ describe('OpenAIContentConverter', () => {
 
       const messages = converter.convertGeminiRequestToOpenAI(request);
 
-      // Should have tool message with both text and file content
+      // Should have tool message with both text and image content
       const toolMessage = messages.find((message) => message.role === 'tool');
       expect(toolMessage).toBeDefined();
       expect(Array.isArray(toolMessage?.content)).toBe(true);
       const contentArray = toolMessage?.content as Array<{
         type: string;
         text?: string;
-        file?: { filename: string; file_data: string };
+        image_url?: { url: string };
       }>;
       expect(contentArray).toHaveLength(2);
       expect(contentArray[0].type).toBe('text');
       expect(contentArray[0].text).toBe('File content');
-      expect(contentArray[1].type).toBe('file');
-      expect(contentArray[1].file?.filename).toBe('file'); // Default filename when displayName not provided
-      expect(contentArray[1].file?.file_data).toBe(
-        'data:image/jpeg;base64,base64imagedata',
-      );
+      expect(contentArray[1].type).toBe('image_url');
+      expect(contentArray[1].image_url?.url).toBe('base64imagedata');
 
       // No separate user message should be created
       const userMessage = messages.find((message) => message.role === 'user');
       expect(userMessage).toBeUndefined();
     });
 
-    it('should convert PDF fileData to tool message with embedded input_file', () => {
+    it('should convert PDF inlineData to tool message with embedded input_file', () => {
       const request: GenerateContentParameters = {
         model: 'models/test',
         contents: [
@@ -323,9 +320,9 @@ describe('OpenAIContentConverter', () => {
                   response: { output: 'PDF content' },
                   parts: [
                     {
-                      fileData: {
+                      inlineData: {
                         mimeType: 'application/pdf',
-                        fileUri: 'base64pdfdata',
+                        data: 'base64pdfdata',
                         displayName: 'document.pdf',
                       },
                     },
@@ -424,6 +421,127 @@ describe('OpenAIContentConverter', () => {
       // No separate user message should be created
       const userMessage = messages.find((message) => message.role === 'user');
       expect(userMessage).toBeUndefined();
+    });
+
+    it('should convert image fileData URL to tool message with embedded image_url', () => {
+      const request: GenerateContentParameters = {
+        model: 'models/test',
+        contents: [
+          {
+            role: 'model',
+            parts: [
+              {
+                functionCall: {
+                  id: 'call_1',
+                  name: 'Read',
+                  args: {},
+                },
+              },
+            ],
+          },
+          {
+            role: 'user',
+            parts: [
+              {
+                functionResponse: {
+                  id: 'call_1',
+                  name: 'Read',
+                  response: { output: 'Image content' },
+                  parts: [
+                    {
+                      fileData: {
+                        mimeType: 'image/jpeg',
+                        fileUri:
+                          'https://upload.wikimedia.org/wikipedia/commons/a/a7/Camponotus_flavomarginatus_ant.jpg',
+                        displayName: 'ant.jpg',
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      };
+
+      const messages = converter.convertGeminiRequestToOpenAI(request);
+
+      const toolMessage = messages.find((message) => message.role === 'tool');
+      expect(toolMessage).toBeDefined();
+      expect(Array.isArray(toolMessage?.content)).toBe(true);
+      const contentArray = toolMessage?.content as Array<{
+        type: string;
+        text?: string;
+        image_url?: { url: string };
+      }>;
+      expect(contentArray).toHaveLength(2);
+      expect(contentArray[0].type).toBe('text');
+      expect(contentArray[0].text).toBe('Image content');
+      expect(contentArray[1].type).toBe('image_url');
+      expect(contentArray[1].image_url?.url).toBe(
+        'https://upload.wikimedia.org/wikipedia/commons/a/a7/Camponotus_flavomarginatus_ant.jpg',
+      );
+    });
+
+    it('should convert PDF fileData URL to tool message with embedded file', () => {
+      const request: GenerateContentParameters = {
+        model: 'models/test',
+        contents: [
+          {
+            role: 'model',
+            parts: [
+              {
+                functionCall: {
+                  id: 'call_1',
+                  name: 'Read',
+                  args: {},
+                },
+              },
+            ],
+          },
+          {
+            role: 'user',
+            parts: [
+              {
+                functionResponse: {
+                  id: 'call_1',
+                  name: 'Read',
+                  response: { output: 'PDF content' },
+                  parts: [
+                    {
+                      fileData: {
+                        mimeType: 'application/pdf',
+                        fileUri:
+                          'https://assets.anthropic.com/m/1cd9d098ac3e6467/original/Claude-3-Model-Card-October-Addendum.pdf',
+                        displayName: 'document.pdf',
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      };
+
+      const messages = converter.convertGeminiRequestToOpenAI(request);
+
+      const toolMessage = messages.find((message) => message.role === 'tool');
+      expect(toolMessage).toBeDefined();
+      expect(Array.isArray(toolMessage?.content)).toBe(true);
+      const contentArray = toolMessage?.content as Array<{
+        type: string;
+        text?: string;
+        file?: { filename: string; file_data: string };
+      }>;
+      expect(contentArray).toHaveLength(2);
+      expect(contentArray[0].type).toBe('text');
+      expect(contentArray[0].text).toBe('PDF content');
+      expect(contentArray[1].type).toBe('file');
+      expect(contentArray[1].file?.filename).toBe('document.pdf');
+      expect(contentArray[1].file?.file_data).toBe(
+        'https://assets.anthropic.com/m/1cd9d098ac3e6467/original/Claude-3-Model-Card-October-Addendum.pdf',
+      );
     });
 
     it('should convert video parts to tool message with embedded file', () => {

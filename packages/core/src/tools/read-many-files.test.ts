@@ -436,15 +436,15 @@ describe('ReadManyFilesTool', () => {
       );
     });
 
-    it('should include PDF files as fileData parts if explicitly requested by extension', async () => {
+    it('should include PDF files as inlineData parts if explicitly requested by extension', async () => {
       createBinaryFile('important.pdf', Buffer.from('%PDF-1.4...'));
       const params = { paths: ['*.pdf'] }; // Explicitly requesting .pdf files
       const invocation = tool.build(params);
       const result = await invocation.execute(new AbortController().signal);
       expect(result.llmContent).toEqual([
         {
-          fileData: {
-            fileUri: Buffer.from('%PDF-1.4...').toString('base64'),
+          inlineData: {
+            data: Buffer.from('%PDF-1.4...').toString('base64'),
             mimeType: 'application/pdf',
             displayName: 'important.pdf',
           },
@@ -453,15 +453,15 @@ describe('ReadManyFilesTool', () => {
       ]);
     });
 
-    it('should include PDF files as fileData parts if explicitly requested by name', async () => {
+    it('should include PDF files as inlineData parts if explicitly requested by name', async () => {
       createBinaryFile('report-final.pdf', Buffer.from('%PDF-1.4...'));
       const params = { paths: ['report-final.pdf'] };
       const invocation = tool.build(params);
       const result = await invocation.execute(new AbortController().signal);
       expect(result.llmContent).toEqual([
         {
-          fileData: {
-            fileUri: Buffer.from('%PDF-1.4...').toString('base64'),
+          inlineData: {
+            data: Buffer.from('%PDF-1.4...').toString('base64'),
             mimeType: 'application/pdf',
             displayName: 'report-final.pdf',
           },
