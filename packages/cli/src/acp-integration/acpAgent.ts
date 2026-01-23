@@ -18,7 +18,6 @@ import {
   type Config,
   type ConversationRecord,
   type DeviceAuthorizationData,
-  tokenLimit,
 } from '@qwen-code/qwen-code-core';
 import type { ApprovalModeValue } from './schema.js';
 import * as acp from './acp.js';
@@ -374,12 +373,17 @@ class GeminiAgent {
     ).trim();
     const availableModels = config.getAvailableModels();
 
+    // Get the contentGeneratorConfig which contains contextWindowSize
+    // This value is either user-configured or auto-detected during config initialization
+    const contentGeneratorConfig = config.getContentGeneratorConfig();
+
     const mappedAvailableModels = availableModels.map((model) => ({
       modelId: model.id,
       name: model.label,
       description: model.description ?? null,
       _meta: {
-        contextLimit: tokenLimit(model.id),
+        // Use the contextWindowSize from config, which is always set during initialization
+        contextLimit: contentGeneratorConfig?.contextWindowSize,
       },
     }));
 
@@ -392,7 +396,7 @@ class GeminiAgent {
         name: currentModelId,
         description: null,
         _meta: {
-          contextLimit: tokenLimit(currentModelId),
+          contextLimit: contentGeneratorConfig?.contextWindowSize,
         },
       });
     }

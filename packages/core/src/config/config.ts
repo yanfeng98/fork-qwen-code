@@ -30,7 +30,6 @@ import {
   createContentGenerator,
   resolveContentGeneratorConfigWithSources,
 } from '../core/contentGenerator.js';
-import { tokenLimit } from '../core/tokenLimits.js';
 
 // Services
 import { FileDiscoveryService } from '../services/fileDiscoveryService.js';
@@ -1483,11 +1482,15 @@ export class Config {
       return Number.POSITIVE_INFINITY;
     }
 
+    const contextWindowSize =
+      this.getContentGeneratorConfig()?.contextWindowSize;
+    if (!contextWindowSize) {
+      return this.truncateToolOutputThreshold;
+    }
+
     return Math.min(
       // Estimate remaining context window in characters (1 token ~= 4 chars).
-      4 *
-        (tokenLimit(this.getModel()) -
-          uiTelemetryService.getLastPromptTokenCount()),
+      4 * (contextWindowSize - uiTelemetryService.getLastPromptTokenCount()),
       this.truncateToolOutputThreshold,
     );
   }
