@@ -30,7 +30,7 @@ import {
   TOOL_STATUS,
 } from '../../constants.js';
 import { theme } from '../../semantic-colors.js';
-import { SettingsContext } from '../../contexts/SettingsContext.js';
+import { useSettings } from '../../contexts/SettingsContext.js';
 import type { LoadedSettings } from '../../../config/settings.js';
 
 const STATIC_HEIGHT = 1;
@@ -247,7 +247,7 @@ export const ToolMessage: React.FC<ToolMessageProps> = ({
   ptyId,
   config,
 }) => {
-  const settings = React.useContext(SettingsContext);
+  const settings = useSettings();
   const isThisShellFocused =
     (name === SHELL_COMMAND_NAME || name === 'Shell') &&
     status === ToolCallStatus.Executing &&
