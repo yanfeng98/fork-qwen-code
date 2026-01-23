@@ -519,6 +519,19 @@ export default {
   'Manage extension settings.': 'Управление настройками расширений.',
   'You need to specify a command (set or list).':
     'Необходимо указать команду (set или list).',
+  // ============================================================================
+  // Plugin Choice / Marketplace
+  // ============================================================================
+  'No plugins available in this marketplace.':
+    'В этом маркетплейсе нет доступных плагинов.',
+  'Select a plugin to install from marketplace "{{name}}":':
+    'Выберите плагин для установки из маркетплейса "{{name}}":',
+  'Plugin selection cancelled.': 'Выбор плагина отменён.',
+  'Select a plugin from "{{name}}"': 'Выберите плагин из "{{name}}"',
+  'Use ↑↓ or j/k to navigate, Enter to select, Escape to cancel':
+    'Используйте ↑↓ или j/k для навигации, Enter для выбора, Escape для отмены',
+  '{{count}} more above': 'ещё {{count}} выше',
+  '{{count}} more below': 'ещё {{count}} ниже',
   'manage IDE integration': 'Управление интеграцией с IDE',
   'check status of IDE integration': 'Проверить статус интеграции с IDE',
   'install required IDE companion for {{ideName}}':

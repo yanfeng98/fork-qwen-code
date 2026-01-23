@@ -290,8 +290,8 @@ export function convertClaudeToQwenConfig(
   claudeConfig: ClaudePluginConfig,
 ): ExtensionConfig {
   // Validate required fields
-  if (!claudeConfig.name || !claudeConfig.version) {
-    throw new Error('Claude plugin config must have name and version fields');
+  if (!claudeConfig.name) {
+    throw new Error('Claude plugin config must have name field');
   }
 
   // Parse MCP servers
@@ -386,7 +386,7 @@ export async function convertClaudePluginPackage(
   }
 
   // Step 3: Load and merge plugin.json if exists (based on strict mode)
-  const strict = marketplacePlugin.strict ?? true;
+  const strict = marketplacePlugin.strict ?? false;
   let mergedConfig: ClaudePluginConfig;
 
   if (strict) {
@@ -583,7 +583,7 @@ export function mergeClaudeConfigs(
   marketplacePlugin: ClaudeMarketplacePluginConfig,
   pluginConfig?: ClaudePluginConfig,
 ): ClaudePluginConfig {
-  if (!pluginConfig && marketplacePlugin.strict !== false) {
+  if (!pluginConfig && marketplacePlugin.strict === true) {
     throw new Error(
       `Plugin ${marketplacePlugin.name} requires plugin.json (strict mode)`,
     );
