@@ -151,9 +151,9 @@ jobs:
         working-directory: 'packages/vscode-ide-companion'
         run: |-
           if [[ "${{ steps.vars.outputs.is_preview }}" == "true" ]]; then
-            vsce package --pre-release --out ../qwen-code-vscode-companion-${{ steps.version.outputs.RELEASE_VERSION }}.vsix
+            vsce package --no-dependencies --pre-release --out ../qwen-code-vscode-companion-${{ steps.version.outputs.RELEASE_VERSION }}.vsix
           else
-            vsce package --out ../qwen-code-vscode-companion-${{ steps.version.outputs.RELEASE_VERSION }}.vsix
+            vsce package --no-dependencies --out ../qwen-code-vscode-companion-${{ steps.version.outputs.RELEASE_VERSION }}.vsix
           fi
 
       - name: 'Upload VSIX Artifact (dry run)'
@@ -187,11 +187,11 @@ jobs:
           if [[ "${{ steps.vars.outputs.is_preview }}" == "true" ]]; then
             # For preview releases, publish with preview tag
             # First package the extension for preview
-            vsce package --pre-release --out ../qwen-code-vscode-companion-${{ steps.version.outputs.RELEASE_VERSION }}.vsix
+            vsce package --no-dependencies --pre-release --out ../qwen-code-vscode-companion-${{ steps.version.outputs.RELEASE_VERSION }}.vsix
             ovsx publish ../qwen-code-vscode-companion-${{ steps.version.outputs.RELEASE_VERSION }}.vsix --pat "${OVSX_TOKEN}" --pre-release
           else
             # Package and publish normally
-            vsce package --out ../qwen-code-vscode-companion-${{ steps.version.outputs.RELEASE_VERSION }}.vsix
+            vsce package --no-dependencies --out ../qwen-code-vscode-companion-${{ steps.version.outputs.RELEASE_VERSION }}.vsix
             ovsx publish ../qwen-code-vscode-companion-${{ steps.version.outputs.RELEASE_VERSION }}.vsix --pat "${OVSX_TOKEN}" --tag "${VSCODE_TAG}"
           fi
 
