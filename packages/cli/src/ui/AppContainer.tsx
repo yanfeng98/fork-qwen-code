@@ -1326,6 +1326,7 @@ export const AppContainer = (props: AppContainerProps) => {
     isFeedbackDialogOpen,
     openFeedbackDialog,
     closeFeedbackDialog,
+    temporaryCloseFeedbackDialog,
     submitFeedback,
   } = useFeedbackDialog({
     config,
@@ -1571,6 +1572,7 @@ export const AppContainer = (props: AppContainerProps) => {
       // Feedback dialog
       openFeedbackDialog,
       closeFeedbackDialog,
+      temporaryCloseFeedbackDialog,
       submitFeedback,
     }),
     [
@@ -1611,6 +1613,7 @@ export const AppContainer = (props: AppContainerProps) => {
       // Feedback dialog
       openFeedbackDialog,
       closeFeedbackDialog,
+      temporaryCloseFeedbackDialog,
       submitFeedback,
     ],
   );

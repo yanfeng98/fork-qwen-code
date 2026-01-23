@@ -315,7 +315,9 @@ export default {
   'How is Qwen doing this session? (optional)':
     'How is Qwen doing this session? (optional)',
   Bad: 'Bad',
+  Fine: 'Fine',
   Good: 'Good',
+  Dismiss: 'Dismiss',
   'Not Sure Yet': 'Not Sure Yet',
   'Any other key': 'Any other key',
   'Disable Loading Phrases': 'Disable Loading Phrases',

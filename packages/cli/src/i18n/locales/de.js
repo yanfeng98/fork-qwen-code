@@ -298,7 +298,9 @@ export default {
   'How is Qwen doing this session? (optional)':
     'Wie macht sich Qwen in dieser Sitzung? (optional)',
   Bad: 'Schlecht',
+  Fine: 'In Ordnung',
   Good: 'Gut',
+  Dismiss: 'Ignorieren',
   'Not Sure Yet': 'Noch nicht sicher',
   'Any other key': 'Beliebige andere Taste',
   'Disable Loading Phrases': 'Ladesprüche deaktivieren',
