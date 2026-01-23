@@ -15,13 +15,11 @@ import { uiTelemetryService } from '../telemetry/uiTelemetry.js';
 import { tokenLimit } from '../core/tokenLimits.js';
 import type { GeminiChat } from '../core/geminiChat.js';
 import type { Config } from '../config/config.js';
-import { getInitialChatHistory } from '../utils/environmentContext.js';
 import type { ContentGenerator } from '../core/contentGenerator.js';
 
 vi.mock('../telemetry/uiTelemetry.js');
 vi.mock('../core/tokenLimits.js');
 vi.mock('../telemetry/loggers.js');
-vi.mock('../utils/environmentContext.js');
 
 describe('findCompressSplitPoint', () => {
   it('should throw an error for non-positive numbers', () => {
@@ -123,9 +121,6 @@ describe('ChatCompressionService', () => {
 
     vi.mocked(tokenLimit).mockReturnValue(1000);
     vi.mocked(uiTelemetryService.getLastPromptTokenCount).mockReturnValue(500);
-    vi.mocked(getInitialChatHistory).mockImplementation(
-      async (_config, extraHistory) => extraHistory || [],
-    );
   });
 
   afterEach(() => {
@@ -242,6 +237,7 @@ describe('ChatCompressionService', () => {
     vi.mocked(mockChat.getHistory).mockReturnValue(history);
     vi.mocked(uiTelemetryService.getLastPromptTokenCount).mockReturnValue(800);
     vi.mocked(tokenLimit).mockReturnValue(1000);
+    // newTokenCount = 800 - (1600 - 1000) + 50 = 800 - 600 + 50 = 250 <= 800 (success)
     const mockGenerateContent = vi.fn().mockResolvedValue({
       candidates: [
         {
@@ -250,6 +246,11 @@ describe('ChatCompressionService', () => {
           },
         },
       ],
+      usageMetadata: {
+        promptTokenCount: 1600,
+        candidatesTokenCount: 50,
+        totalTokenCount: 1650,
+      },
     } as unknown as GenerateContentResponse);
     vi.mocked(mockConfig.getContentGenerator).mockReturnValue({
       generateContent: mockGenerateContent,
@@ -265,6 +266,7 @@ describe('ChatCompressionService', () => {
     );
 
     expect(result.info.compressionStatus).toBe(CompressionStatus.COMPRESSED);
+    expect(result.info.newTokenCount).toBe(250); // 800 - (1600 - 1000) + 50
     expect(result.newHistory).not.toBeNull();
     expect(result.newHistory![0].parts![0].text).toBe('Summary');
     expect(mockGenerateContent).toHaveBeenCalled();
@@ -281,6 +283,7 @@ describe('ChatCompressionService', () => {
     vi.mocked(uiTelemetryService.getLastPromptTokenCount).mockReturnValue(100);
     vi.mocked(tokenLimit).mockReturnValue(1000);
 
+    // newTokenCount = 100 - (1100 - 1000) + 50 = 100 - 100 + 50 = 50 <= 100 (success)
     const mockGenerateContent = vi.fn().mockResolvedValue({
       candidates: [
         {
@@ -289,6 +292,11 @@ describe('ChatCompressionService', () => {
           },
         },
       ],
+      usageMetadata: {
+        promptTokenCount: 1100,
+        candidatesTokenCount: 50,
+        totalTokenCount: 1150,
+      },
     } as unknown as GenerateContentResponse);
     vi.mocked(mockConfig.getContentGenerator).mockReturnValue({
       generateContent: mockGenerateContent,
@@ -316,15 +324,19 @@ describe('ChatCompressionService', () => {
     vi.mocked(uiTelemetryService.getLastPromptTokenCount).mockReturnValue(10);
     vi.mocked(tokenLimit).mockReturnValue(1000);
 
-    const longSummary = 'a'.repeat(1000); // Long summary to inflate token count
     const mockGenerateContent = vi.fn().mockResolvedValue({
       candidates: [
         {
           content: {
-            parts: [{ text: longSummary }],
+            parts: [{ text: 'Summary' }],
           },
         },
       ],
+      usageMetadata: {
+        promptTokenCount: 1,
+        candidatesTokenCount: 20,
+        totalTokenCount: 21,
+      },
     } as unknown as GenerateContentResponse);
     vi.mocked(mockConfig.getContentGenerator).mockReturnValue({
       generateContent: mockGenerateContent,
@@ -342,6 +354,48 @@ describe('ChatCompressionService', () => {
     expect(result.info.compressionStatus).toBe(
       CompressionStatus.COMPRESSION_FAILED_INFLATED_TOKEN_COUNT,
     );
+    expect(result.newHistory).toBeNull();
+  });
+
+  it('should return FAILED if usage metadata is missing', async () => {
+    const history: Content[] = [
+      { role: 'user', parts: [{ text: 'msg1' }] },
+      { role: 'model', parts: [{ text: 'msg2' }] },
+      { role: 'user', parts: [{ text: 'msg3' }] },
+      { role: 'model', parts: [{ text: 'msg4' }] },
+    ];
+    vi.mocked(mockChat.getHistory).mockReturnValue(history);
+    vi.mocked(uiTelemetryService.getLastPromptTokenCount).mockReturnValue(800);
+    vi.mocked(tokenLimit).mockReturnValue(1000);
+
+    const mockGenerateContent = vi.fn().mockResolvedValue({
+      candidates: [
+        {
+          content: {
+            parts: [{ text: 'Summary' }],
+          },
+        },
+      ],
+      // No usageMetadata -> keep original token count
+    } as unknown as GenerateContentResponse);
+    vi.mocked(mockConfig.getContentGenerator).mockReturnValue({
+      generateContent: mockGenerateContent,
+    } as unknown as ContentGenerator);
+
+    const result = await service.compress(
+      mockChat,
+      mockPromptId,
+      false,
+      mockModel,
+      mockConfig,
+      false,
+    );
+
+    expect(result.info.compressionStatus).toBe(
+      CompressionStatus.COMPRESSION_FAILED_TOKEN_COUNT_ERROR,
+    );
+    expect(result.info.originalTokenCount).toBe(800);
+    expect(result.info.newTokenCount).toBe(800);
     expect(result.newHistory).toBeNull();
   });
 

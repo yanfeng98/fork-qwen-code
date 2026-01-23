@@ -74,9 +74,6 @@ Settings are organized into categories. All settings should be placed within the
 | `ui.customThemes`                        | object           | Custom theme definitions.                                                                                                                                                                                                                                                                                                                                                                                           | `{}`        |
 | `ui.hideWindowTitle`                     | boolean          | Hide the window title bar.                                                                                                                                                                                                                                                                                                                                                                                          | `false`     |
 | `ui.hideTips`                            | boolean          | Hide helpful tips in the UI.                                                                                                                                                                                                                                                                                                                                                                                        | `false`     |
-| `ui.hideBanner`                          | boolean          | Hide the application banner.                                                                                                                                                                                                                                                                                                                                                                                        | `false`     |
-| `ui.hideFooter`                          | boolean          | Hide the footer from the UI.                                                                                                                                                                                                                                                                                                                                                                                        | `false`     |
-| `ui.showMemoryUsage`                     | boolean          | Display memory usage information in the UI.                                                                                                                                                                                                                                                                                                                                                                         | `false`     |
 | `ui.showLineNumbers`                     | boolean          | Show line numbers in code blocks in the CLI output.                                                                                                                                                                                                                                                                                                                                                                 | `true`      |
 | `ui.showCitations`                       | boolean          | Show citations for generated text in the chat.                                                                                                                                                                                                                                                                                                                                                                      | `true`      |
 | `enableWelcomeBack`                      | boolean          | Show welcome back dialog when returning to a project with conversation history. When enabled, Qwen Code will automatically detect if you're returning to a project with a previously generated project summary (`.qwen/PROJECT_SUMMARY.md`) and show a dialog allowing you to continue your previous conversation or start fresh. This feature integrates with the `/summary` command and quit confirmation dialog. | `true`      |
@@ -137,43 +134,7 @@ Settings are organized into categories. All settings should be placed within the
 
 **contextWindowSize:**
 
-The `contextWindowSize` field allows you to manually override the automatic context window size detection. This is useful when you want to:
-
-- **Optimize performance**: Limit context size to improve response speed
-- **Control costs**: Reduce token usage to lower API call costs
-- **Handle specific requirements**: Set a custom limit when automatic detection doesn't match your needs
-- **Testing scenarios**: Use smaller context windows in test environments
-
-**Values:**
-
-- `-1` (default): Use automatic detection based on the model's capabilities
-- Positive number: Manually specify the context window size in tokens (e.g., `128000` for 128k tokens)
-
-**Example with contextWindowSize:**
-
-```json
-{
-  "model": {
-    "generationConfig": {
-      "contextWindowSize": 128000 // Override to 128k tokens
-    }
-  }
-}
-```
-
-Or use `-1` for automatic detection:
-
-```json
-{
-  "model": {
-    "generationConfig": {
-      "contextWindowSize": -1 // Auto-detect based on model (default)
-    }
-  }
-}
-```
-
-**Priority:** User-configured `contextWindowSize` > Automatic detection > Default value
+Overrides the default context window size for the selected model. Qwen Code determines the context window using built-in defaults based on model name matching, with a constant fallback value. Use this setting when a provider's effective context limit differs from Qwen Code's default. This value defines the model's assumed maximum context capacity, not a per-request token limit.
 
 The `customHeaders` field allows you to add custom HTTP headers to all API requests. This is useful for request tracing, monitoring, API gateway routing, or when different models require different headers. If `customHeaders` is defined in `modelProviders[].generationConfig.customHeaders`, it will be used directly; otherwise, headers from `model.generationConfig.customHeaders` will be used. No merging occurs between the two levels.
 
@@ -314,8 +275,6 @@ If you are experiencing performance issues with file searching (e.g., with `@` c
 | `tools.enableToolOutputTruncation`   | boolean           | Enable truncation of large tool outputs.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | `true`      | Requires restart: Yes                                                                                                                                                                                                                                |
 | `tools.truncateToolOutputThreshold`  | number            | Truncate tool output if it is larger than this many characters. Applies to Shell, Grep, Glob, ReadFile and ReadManyFiles tools.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | `25000`     | Requires restart: Yes                                                                                                                                                                                                                                |
 | `tools.truncateToolOutputLines`      | number            | Maximum lines or entries kept when truncating tool output. Applies to Shell, Grep, Glob, ReadFile and ReadManyFiles tools.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | `1000`      | Requires restart: Yes                                                                                                                                                                                                                                |
-| `tools.autoAccept`                   | boolean           | Controls whether the CLI automatically accepts and executes tool calls that are considered safe (e.g., read-only operations) without explicit user confirmation. If set to `true`, the CLI will bypass the confirmation prompt for tools deemed safe.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | `false`     |                                                                                                                                                                                                                                                      |
-| `tools.experimental.skills`          | boolean           | Enable experimental Agent Skills feature                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | `false`     |                                                                                                                                                                                                                                                      |
 
 #### mcp
 
@@ -351,6 +310,12 @@ If you are experiencing performance issues with file searching (e.g., with `@` c
 > [!note]
 >
 > **Note about advanced.tavilyApiKey:** This is a legacy configuration format. For Qwen OAuth users, DashScope provider is automatically available without any configuration. For other authentication types, configure Tavily or Google providers using the new `webSearch` configuration format.
+
+#### experimental
+
+| Setting               | Type    | Description                      | Default |
+| --------------------- | ------- | -------------------------------- | ------- |
+| `experimental.skills` | boolean | Enable experimental Agent Skills | `false` |
 
 #### mcpServers
 
@@ -397,7 +362,6 @@ Here is an example of a `settings.json` file with the nested structure, new as o
   },
   "ui": {
     "theme": "GitHub",
-    "hideBanner": true,
     "hideTips": false,
     "customWittyPhrases": [
       "You forget a thousand things every day. Make sure this is one of 'em",

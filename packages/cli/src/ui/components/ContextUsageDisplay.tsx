@@ -19,17 +19,21 @@ export const ContextUsageDisplay = ({
   terminalWidth: number;
   config: Config;
 }) => {
+  if (promptTokenCount === 0) {
+    return null;
+  }
+
   const contentGeneratorConfig = config.getContentGeneratorConfig();
   const contextLimit = tokenLimit(model, 'input', contentGeneratorConfig);
   const percentage = promptTokenCount / contextLimit;
-  const percentageLeft = ((1 - percentage) * 100).toFixed(0);
+  const percentageUsed = (percentage * 100).toFixed(1);
 
-  const label = terminalWidth < 100 ? '%' : '% context left';
+  const label = terminalWidth < 100 ? '% used' : '% context used';
 
   return (
     <Text color={theme.text.secondary}>
-      ({percentageLeft}
-      {label})
+      {percentageUsed}
+      {label}
     </Text>
   );
 };
