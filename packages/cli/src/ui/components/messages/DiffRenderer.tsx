@@ -85,7 +85,7 @@ interface DiffRendererProps {
   filename?: string;
   tabWidth?: number;
   availableTerminalHeight?: number;
-  terminalWidth: number;
+  contentWidth: number;
   theme?: Theme;
   settings?: LoadedSettings;
 }
@@ -97,7 +97,7 @@ export const DiffRenderer: React.FC<DiffRendererProps> = ({
   filename,
   tabWidth = DEFAULT_TAB_WIDTH,
   availableTerminalHeight,
-  terminalWidth,
+  contentWidth,
   theme,
   settings,
 }) => {
@@ -158,7 +158,7 @@ export const DiffRenderer: React.FC<DiffRendererProps> = ({
       addedContent,
       language,
       availableTerminalHeight,
-      terminalWidth,
+      contentWidth,
       theme,
       settings,
     );
@@ -168,7 +168,7 @@ export const DiffRenderer: React.FC<DiffRendererProps> = ({
       filename,
       tabWidth,
       availableTerminalHeight,
-      terminalWidth,
+      contentWidth,
       settings,
     );
   }
@@ -181,7 +181,7 @@ const renderDiffContent = (
   filename: string | undefined,
   tabWidth = DEFAULT_TAB_WIDTH,
   availableTerminalHeight: number | undefined,
-  terminalWidth: number,
+  contentWidth: number,
   settings?: LoadedSettings,
 ) => {
   // 1. Normalize whitespace (replace tabs with spaces) *before* further processing
@@ -246,7 +246,7 @@ const renderDiffContent = (
   return (
     <MaxSizedBox
       maxHeight={availableTerminalHeight}
-      maxWidth={terminalWidth}
+      maxWidth={contentWidth}
       key={key}
     >
       {displayableLines.reduce<React.ReactNode[]>((acc, line, index) => {
@@ -268,7 +268,7 @@ const renderDiffContent = (
           acc.push(
             <Box key={`gap-${index}`}>
               <Text wrap="truncate" color={semanticTheme.text.secondary}>
-                {'═'.repeat(terminalWidth)}
+                {'═'.repeat(contentWidth)}
               </Text>
             </Box>,
           );

@@ -188,7 +188,7 @@ const StringResultRenderer: React.FC<{
           text={displayData}
           isPending={false}
           availableTerminalHeight={availableHeight}
-          terminalWidth={childWidth}
+          contentWidth={childWidth}
         />
       </Box>
     );
@@ -218,14 +218,14 @@ const DiffResultRenderer: React.FC<{
     diffContent={data.fileDiff}
     filename={data.fileName}
     availableTerminalHeight={availableHeight}
-    terminalWidth={childWidth}
+    contentWidth={childWidth}
     settings={settings}
   />
 );
 
 export interface ToolMessageProps extends IndividualToolCallDisplay {
   availableTerminalHeight?: number;
-  terminalWidth: number;
+  contentWidth: number;
   emphasis?: TextEmphasis;
   renderOutputAsMarkdown?: boolean;
   activeShellPtyId?: number | null;
@@ -239,7 +239,7 @@ export const ToolMessage: React.FC<ToolMessageProps> = ({
   resultDisplay,
   status,
   availableTerminalHeight,
-  terminalWidth,
+  contentWidth,
   emphasis = 'medium',
   renderOutputAsMarkdown = true,
   activeShellPtyId,
@@ -296,6 +296,7 @@ export const ToolMessage: React.FC<ToolMessageProps> = ({
         MIN_LINES_SHOWN + 1, // enforce minimum lines shown
       )
     : undefined;
+  const innerWidth = contentWidth - STATUS_INDICATOR_WIDTH;
 
   // Long tool call response in MarkdownDisplay doesn't respect availableTerminalHeight properly,
   // we're forcing it to not render as markdown when the response is too long, it will fallback
@@ -303,8 +304,6 @@ export const ToolMessage: React.FC<ToolMessageProps> = ({
   if (availableHeight) {
     renderOutputAsMarkdown = false;
   }
-
-  const childWidth = terminalWidth - 3; // account for padding.
 
   // Use the custom hook to determine the display type
   const displayRenderer = useResultDisplayRenderer(resultDisplay);
@@ -338,14 +337,14 @@ export const ToolMessage: React.FC<ToolMessageProps> = ({
               <PlanResultRenderer
                 data={displayRenderer.data}
                 availableHeight={availableHeight}
-                childWidth={childWidth}
+                childWidth={innerWidth}
               />
             )}
             {displayRenderer.type === 'task' && config && (
               <SubagentExecutionRenderer
                 data={displayRenderer.data}
                 availableHeight={availableHeight}
-                childWidth={childWidth}
+                childWidth={innerWidth}
                 config={config}
               />
             )}
@@ -353,7 +352,7 @@ export const ToolMessage: React.FC<ToolMessageProps> = ({
               <DiffResultRenderer
                 data={displayRenderer.data}
                 availableHeight={availableHeight}
-                childWidth={childWidth}
+                childWidth={innerWidth}
                 settings={settings}
               />
             )}
@@ -368,7 +367,7 @@ export const ToolMessage: React.FC<ToolMessageProps> = ({
                 data={displayRenderer.data}
                 renderAsMarkdown={renderOutputAsMarkdown}
                 availableHeight={availableHeight}
-                childWidth={childWidth}
+                childWidth={innerWidth}
               />
             )}
           </Box>
