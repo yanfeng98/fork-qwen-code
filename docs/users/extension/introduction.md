@@ -34,10 +34,20 @@ You can install an extension using `qwen extensions install` from multiple sourc
 
 #### From Claude Code Marketplace
 
-Qwen Code also supports plugins from the [Claude Code Marketplace](https://claudemarketplaces.com/). Choose a marketplace and install a plugin from one marketplace through the format:
+Qwen Code also supports plugins from the [Claude Code Marketplace](https://claudemarketplaces.com/). Install from a marketplace and choose a plugin:
 
 ```bash
-qwen extensions install <marketplace-name | marketplace-url>:<plugin-name>
+qwen extensions install <marketplace-name>
+# or
+qwen extensions install <marketplace-github-url>
+```
+
+If you want to install a specific pulgin, you can use the format with plugin name:
+
+```bash
+qwen extensions install <marketplace-name>:<plugin-name>
+# or
+qwen extensions install <marketplace-github-url>:<plugin-name>
 ```
 
 For example, to install the `prompts.chat` plugin from the [f/awesome-chatgpt-prompts](https://claudemarketplaces.com/plugins/f-awesome-chatgpt-prompts) marketplace:
@@ -74,7 +84,9 @@ This command opens the respective marketplace in your default browser, allowing 
 Qwen Code fully supports extensions from the [Gemini CLI Extensions Gallery](https://geminicli.com/extensions/). Simply install them using the git URL:
 
 ```bash
-qwen extensions install <gemini-cli-extension-url>
+qwen extensions install <gemini-cli-extension-github-url>
+# or
+qwen extensions install <owner>/<repo>
 ```
 
 Gemini extensions are automatically converted to Qwen Code format during installation:

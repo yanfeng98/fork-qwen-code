@@ -709,6 +709,12 @@ async function resolvePluginSource(
       throw new Error(`Plugin source not found at ${sourcePath}`);
     }
 
+    // If source path equals marketplace dir (source is '.' or ''),
+    // return marketplaceDir directly to avoid copying to subdirectory of self
+    if (path.resolve(sourcePath) === path.resolve(marketplaceDir)) {
+      return marketplaceDir;
+    }
+
     // Copy to plugin directory
     await fs.promises.cp(sourcePath, pluginDir, { recursive: true });
     return pluginDir;
