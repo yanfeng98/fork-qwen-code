@@ -97,6 +97,7 @@ export const Footer: React.FC = () => {
             promptTokenCount={promptTokenCount}
             model={model}
             terminalWidth={terminalWidth}
+            config={config}
           />
         </Text>
       ),
@@ -134,6 +135,7 @@ export const Footer: React.FC = () => {
             {node}
           </Box>
         ))}
+      </Box>
     </Box>
   );
 };
