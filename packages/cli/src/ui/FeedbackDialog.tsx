@@ -6,16 +6,16 @@ import { useUIState } from './contexts/UIStateContext.js';
 import { useKeypress } from './hooks/useKeypress.js';
 
 export const FEEDBACK_OPTIONS = {
-  BAD: 1,
-  FINE: 2,
-  GOOD: 3,
+  GOOD: 1,
+  BAD: 2,
+  FINE: 3,
   DISMISS: 0,
 } as const;
 
 const FEEDBACK_OPTION_KEYS = {
-  [FEEDBACK_OPTIONS.BAD]: '1',
-  [FEEDBACK_OPTIONS.FINE]: '2',
-  [FEEDBACK_OPTIONS.GOOD]: '3',
+  [FEEDBACK_OPTIONS.GOOD]: '1',
+  [FEEDBACK_OPTIONS.BAD]: '2',
+  [FEEDBACK_OPTIONS.FINE]: '3',
   [FEEDBACK_OPTIONS.DISMISS]: '0',
 } as const;
 
@@ -51,6 +51,11 @@ export const FeedbackDialog: React.FC = () => {
         <Text bold>{t('How is Qwen doing this session? (optional)')}</Text>
       </Box>
       <Box marginTop={1}>
+        <Text color="cyan">
+          {FEEDBACK_OPTION_KEYS[FEEDBACK_OPTIONS.GOOD]}:{' '}
+        </Text>
+        <Text>{t('Good')}</Text>
+        <Text> </Text>
         <Text color="cyan">{FEEDBACK_OPTION_KEYS[FEEDBACK_OPTIONS.BAD]}: </Text>
         <Text>{t('Bad')}</Text>
         <Text> </Text>
@@ -58,11 +63,6 @@ export const FeedbackDialog: React.FC = () => {
           {FEEDBACK_OPTION_KEYS[FEEDBACK_OPTIONS.FINE]}:{' '}
         </Text>
         <Text>{t('Fine')}</Text>
-        <Text> </Text>
-        <Text color="cyan">
-          {FEEDBACK_OPTION_KEYS[FEEDBACK_OPTIONS.GOOD]}:{' '}
-        </Text>
-        <Text>{t('Good')}</Text>
         <Text> </Text>
         <Text color="cyan">
           {FEEDBACK_OPTION_KEYS[FEEDBACK_OPTIONS.DISMISS]}:{' '}

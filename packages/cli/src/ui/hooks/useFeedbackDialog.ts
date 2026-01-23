@@ -116,9 +116,9 @@ export const useFeedbackDialog = ({
 
   const submitFeedback = useCallback(
     (rating: number) => {
-      // Only create and log feedback event for ratings 1-3 (BAD, FINE, GOOD)
+      // Only create and log feedback event for ratings 1-3 (GOOD, BAD, FINE)
       // Rating 0 (DISMISS) should not trigger any telemetry
-      if (rating >= FEEDBACK_OPTIONS.BAD && rating <= FEEDBACK_OPTIONS.GOOD) {
+      if (rating >= FEEDBACK_OPTIONS.GOOD && rating <= FEEDBACK_OPTIONS.FINE) {
         const feedbackEvent = new UserFeedbackEvent(
           sessionStats.sessionId,
           rating as UserFeedbackRating,
@@ -127,14 +127,14 @@ export const useFeedbackDialog = ({
         );
 
         logUserFeedback(config, feedbackEvent);
-
-        // Record the timestamp when feedback dialog is submitted
-        settings.setValue(
-          SettingScope.User,
-          'ui.feedbackLastShownTimestamp',
-          Date.now(),
-        );
       }
+
+      // Record the timestamp when feedback dialog is submitted
+      settings.setValue(
+        SettingScope.User,
+        'ui.feedbackLastShownTimestamp',
+        Date.now(),
+      );
 
       closeFeedbackDialog();
     },
