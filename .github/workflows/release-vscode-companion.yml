@@ -119,15 +119,6 @@ jobs:
           IS_PREVIEW: '${{ steps.vars.outputs.is_preview }}'
           MANUAL_VERSION: '${{ inputs.version }}'
 
-      - name: 'Update package version (for preview releases)'
-        if: '${{ steps.vars.outputs.is_preview == ''true'' }}'
-        working-directory: 'packages/vscode-ide-companion'
-        env:
-          RELEASE_VERSION: '${{ steps.version.outputs.RELEASE_VERSION }}'
-        run: |-
-          # Update package.json with preview version
-          npm version "${RELEASE_VERSION}" --no-git-tag-version --allow-same-version
-
       - name: 'Run Tests'
         if: |-
           ${{ github.event.inputs.force_skip_tests != 'true' }}
@@ -152,9 +143,10 @@ jobs:
             universal: false
           # macOS 15 (x64): use macos-latest-large
           # Endpoint Badge: macos-latest-large, macos-15-large, or macos-15-intel
-          - os: 'macos-latest-large'
-            target: 'darwin-x64'
-            universal: false
+          # TODO: Uncomment when billing is resolved
+          # - os: 'macos-latest-large'
+          #   target: 'darwin-x64'
+          #   universal: false
           # macOS 15 Arm64: use macos-latest
           # Endpoint Badge: macos-latest, macos-15, or macos-15-xlarge
           - os: 'macos-latest'
@@ -196,14 +188,17 @@ jobs:
         run: |-
           npm install -g @vscode/vsce
 
-      - name: 'Update package version (for preview releases)'
-        if: '${{ needs.prepare.outputs.is_preview == ''true'' }}'
-        working-directory: 'packages/vscode-ide-companion'
+      - name: 'Update package version'
         env:
           RELEASE_VERSION: '${{ needs.prepare.outputs.release_version }}'
         shell: 'bash'
         run: |-
-          npm version "${RELEASE_VERSION}" --no-git-tag-version --allow-same-version
+          npm run release:version -- "${RELEASE_VERSION}"
+
+      - name: 'Build and Bundle'
+        run: |-
+          npm run build
+          npm run bundle
 
       - name: 'Prepare VSCode Extension'
         env:
@@ -341,7 +336,9 @@ jobs:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
           RELEASE_VERSION: '${{ needs.prepare.outputs.release_version }}'
           DETAILS_URL: '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+          GH_REPO: '${{ github.repository }}'
         run: |-
           gh issue create \
+            --repo "${GH_REPO}" \
             --title "VSCode IDE Companion Release Failed for ${RELEASE_VERSION} on $(date +'%Y-%m-%d')" \
             --body "The VSCode IDE Companion release workflow failed. See the full run for details: ${DETAILS_URL}"
