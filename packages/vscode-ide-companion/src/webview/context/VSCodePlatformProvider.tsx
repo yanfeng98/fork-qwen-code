@@ -163,5 +163,9 @@ export const VSCodePlatformProvider: FC<VSCodePlatformProviderProps> = ({
     ],
   );
 
-  return <PlatformProvider value={platformValue}>{children}</PlatformProvider>;
+  return (
+    <PlatformProvider value={platformValue}>
+      {children as React.ReactNode}
+    </PlatformProvider>
+  );
 };
