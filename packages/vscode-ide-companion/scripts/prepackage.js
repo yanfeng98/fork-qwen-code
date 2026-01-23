@@ -78,21 +78,31 @@ function main() {
     },
   );
 
+  const isUniversalBuild = process.env.UNIVERSAL_BUILD === 'true';
+
   console.log(
     '[prepackage] Installing production deps into extension dist/qwen-cli...',
   );
-  run(
-    npm,
-    [
-      '--prefix',
-      bundledCliDir,
-      'install',
-      '--omit=dev',
-      '--no-audit',
-      '--no-fund',
-    ],
-    { cwd: bundledCliDir },
-  );
+
+  const installArgs = [
+    '--prefix',
+    bundledCliDir,
+    'install',
+    '--omit=dev',
+    '--no-audit',
+    '--no-fund',
+  ];
+
+  // For universal build, exclude optional dependencies (node-pty native binaries)
+  // This ensures the universal VSIX works on all platforms using child_process fallback
+  if (isUniversalBuild) {
+    installArgs.push('--omit=optional');
+    console.log(
+      '[prepackage] Universal build: excluding optional dependencies (node-pty)',
+    );
+  }
+
+  run(npm, installArgs, { cwd: bundledCliDir });
 }
 
 main();
