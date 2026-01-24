@@ -141,12 +141,11 @@ jobs:
           - os: 'ubuntu-latest'
             target: 'linux-x64'
             universal: false
-          # macOS 15 (x64): use macos-latest-large
+          # macOS 15 (x64): use macos-15-intel
           # Endpoint Badge: macos-latest-large, macos-15-large, or macos-15-intel
-          # TODO: Uncomment when billing is resolved
-          # - os: 'macos-latest-large'
-          #   target: 'darwin-x64'
-          #   universal: false
+          - os: 'macos-15-intel'
+            target: 'darwin-x64'
+            universal: false
           # macOS 15 Arm64: use macos-latest
           # Endpoint Badge: macos-latest, macos-15, or macos-15-xlarge
           - os: 'macos-latest'
@@ -198,6 +197,7 @@ jobs:
       - name: 'Prepare VSCode Extension'
         env:
           UNIVERSAL_BUILD: '${{ matrix.universal }}'
+          VSCODE_TARGET: '${{ matrix.target }}'
         run: |
           # Build and stage the extension + bundled CLI
           npm --workspace=qwen-code-vscode-ide-companion run prepackage
