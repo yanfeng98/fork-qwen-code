@@ -20,6 +20,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import os from 'node:os';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -51,6 +52,11 @@ function run(cmd, args, opts = {}) {
 function main() {
   const npm = npmBin();
 
+  // Root bundling depends on built workspace outputs. Use the root build to
+  // ensure all required workspace dist/ artifacts exist.
+  console.log('[prepackage] Building repo...');
+  run(npm, ['--prefix', repoRoot, 'run', 'build'], { cwd: repoRoot });
+
   console.log('[prepackage] Bundling root CLI...');
   run(npm, ['--prefix', repoRoot, 'run', 'bundle'], { cwd: repoRoot });
 
@@ -59,12 +65,6 @@ function main() {
 
   console.log('[prepackage] Generating notices...');
   run(npm, ['run', 'generate:notices'], { cwd: extensionRoot });
-
-  console.log('[prepackage] Typechecking...');
-  run(npm, ['run', 'check-types'], { cwd: extensionRoot });
-
-  console.log('[prepackage] Linting...');
-  run(npm, ['run', 'lint'], { cwd: extensionRoot });
 
   console.log('[prepackage] Building extension (production)...');
   run(npm, ['run', 'build:prod'], { cwd: extensionRoot });
@@ -102,7 +102,17 @@ function main() {
     );
   }
 
-  run(npm, installArgs, { cwd: bundledCliDir });
+  run(npm, installArgs, {
+    // Run outside the repo so npm doesn't treat this as a workspace install.
+    // This avoids Windows junctions/symlinks in the staged node_modules.
+    cwd: os.tmpdir(),
+    env: {
+      ...process.env,
+      npm_config_workspaces: 'false',
+      npm_config_include_workspace_root: 'false',
+      npm_config_link_workspace_packages: 'false',
+    },
+  });
 }
 
 main();

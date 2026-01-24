@@ -195,11 +195,6 @@ jobs:
         run: |-
           npm run release:version -- "${RELEASE_VERSION}"
 
-      - name: 'Build and Bundle'
-        run: |-
-          npm run build
-          npm run bundle
-
       - name: 'Prepare VSCode Extension'
         env:
           UNIVERSAL_BUILD: '${{ matrix.universal }}'
