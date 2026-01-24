@@ -110,9 +110,6 @@ const ITEM_REQUIRED_OPERATIONS = new Set<LspOperation>([
 /** Operations that require filePath and range for code actions. */
 const RANGE_REQUIRED_OPERATIONS = new Set<LspOperation>(['codeActions']);
 
-/** Operations that don't require specific parameters. */
-const NO_PARAM_OPERATIONS = new Set<LspOperation>(['workspaceDiagnostics']);
-
 class LspToolInvocation extends BaseToolInvocation<LspToolParams, ToolResult> {
   constructor(
     private readonly config: Config,
@@ -708,11 +705,15 @@ class LspToolInvocation extends BaseToolInvocation<LspToolParams, ToolResult> {
 
     for (const fileDiag of fileDiagnostics) {
       const fileLabel = this.formatUriForDisplay(fileDiag.uri, workspaceRoot);
-      const serverSuffix = fileDiag.serverName ? ` [${fileDiag.serverName}]` : '';
+      const serverSuffix = fileDiag.serverName
+        ? ` [${fileDiag.serverName}]`
+        : '';
       lines.push(`\n${fileLabel}${serverSuffix}:`);
 
       for (const diag of fileDiag.diagnostics) {
-        const severity = diag.severity ? `[${diag.severity.toUpperCase()}]` : '';
+        const severity = diag.severity
+          ? `[${diag.severity.toUpperCase()}]`
+          : '';
         const position = `${diag.range.start.line + 1}:${diag.range.start.character + 1}`;
         const code = diag.code ? ` (${diag.code})` : '';
         lines.push(`  ${severity} ${position}${code}: ${diag.message}`);
@@ -739,8 +740,14 @@ class LspToolInvocation extends BaseToolInvocation<LspToolParams, ToolResult> {
     // Build range from params
     const startLine = Math.max(0, (this.params.line ?? 1) - 1);
     const startChar = Math.max(0, (this.params.character ?? 1) - 1);
-    const endLine = Math.max(0, (this.params.endLine ?? this.params.line ?? 1) - 1);
-    const endChar = Math.max(0, (this.params.endCharacter ?? this.params.character ?? 1) - 1);
+    const endLine = Math.max(
+      0,
+      (this.params.endLine ?? this.params.line ?? 1) - 1,
+    );
+    const endChar = Math.max(
+      0,
+      (this.params.endCharacter ?? this.params.character ?? 1) - 1,
+    );
 
     const range: LspRange = {
       start: { line: startLine, character: startChar },
@@ -788,7 +795,10 @@ class LspToolInvocation extends BaseToolInvocation<LspToolParams, ToolResult> {
 
     const fileLabel = this.formatUriForDisplay(uri, workspaceRoot);
     const heading = `Code actions at ${fileLabel}:${startLine + 1}:${startChar + 1}:`;
-    const jsonSection = this.formatJsonSection('Code actions (JSON)', actions.slice(0, limit));
+    const jsonSection = this.formatJsonSection(
+      'Code actions (JSON)',
+      actions.slice(0, limit),
+    );
     return {
       llmContent: [heading, ...lines].join('\n') + jsonSection,
       returnDisplay: lines.join('\n'),
@@ -1081,7 +1091,8 @@ export class LspTool extends BaseDeclarativeTool<LspToolParams, ToolResult> {
           codeActionKinds: {
             type: 'array',
             items: { type: 'string' },
-            description: 'Filter code actions by kind (quickfix, refactor, etc.).',
+            description:
+              'Filter code actions by kind (quickfix, refactor, etc.).',
           },
         },
         required: ['operation'],

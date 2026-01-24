@@ -15,16 +15,13 @@ import type {
   LspLocation,
   LspDiagnostic,
 } from '@qwen-code/qwen-code-core';
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-import { pathToFileURL } from 'node:url';
 
 /**
  * Mock LSP server responses for integration testing.
  * This simulates real LSP server behavior without requiring an actual server.
  */
 const MOCK_LSP_RESPONSES = {
-  'initialize': {
+  initialize: {
     capabilities: {
       textDocumentSync: 1,
       completionProvider: {},
@@ -72,7 +69,8 @@ const MOCK_LSP_RESPONSES = {
   'textDocument/hover': {
     contents: {
       kind: 'markdown',
-      value: '```typescript\nfunction testFunc(): void\n```\n\nA test function.',
+      value:
+        '```typescript\nfunction testFunc(): void\n```\n\nA test function.',
     },
     range: {
       start: { line: 10, character: 0 },
@@ -305,7 +303,8 @@ const MOCK_LSP_RESPONSES = {
                 start: { line: 0, character: 0 },
                 end: { line: 5, character: 0 },
               },
-              newText: "import { Component } from 'react';\nimport { helper } from './utils';\n",
+              newText:
+                "import { Component } from 'react';\nimport { helper } from './utils';\n",
             },
           ],
         },
@@ -473,7 +472,7 @@ describe('NativeLspService Integration Tests', () => {
     it('should detect TypeScript/JavaScript in workspace', async () => {
       await lspService.discoverAndPrepare();
       const status = lspService.getStatus();
-      
+
       // Should have detected TypeScript based on mock file discovery
       // The exact server name depends on built-in presets
       expect(status.size).toBeGreaterThanOrEqual(0);
@@ -494,7 +493,7 @@ describe('NativeLspService Integration Tests', () => {
 
       await restrictedService.discoverAndPrepare();
       const status = restrictedService.getStatus();
-      
+
       // Only allowed servers should be READY
       const readyServers = Array.from(status.entries())
         .filter(([, state]) => state === 'READY')
@@ -519,7 +518,7 @@ describe('NativeLspService Integration Tests', () => {
 
       await restrictedService.discoverAndPrepare();
       const status = restrictedService.getStatus();
-      
+
       // pylsp should not be present or should be FAILED
       const pylspStatus = status.get('pylsp');
       expect(pylspStatus !== 'READY').toBe(true);
@@ -613,7 +612,7 @@ describe('NativeLspService Integration Tests', () => {
     it('should format code actions correctly', () => {
       const response = MOCK_LSP_RESPONSES['textDocument/codeAction'];
       expect(response).toHaveLength(2);
-      
+
       const quickfix = response[0];
       expect(quickfix.title).toContain('import');
       expect(quickfix.kind).toBe('quickfix');
@@ -653,9 +652,9 @@ describe('NativeLspService Integration Tests', () => {
   describe('Code Action Context', () => {
     it('should support filtering by code action kind', () => {
       const kinds = ['quickfix', 'refactor', 'source.organizeImports'];
-      const filteredActions = MOCK_LSP_RESPONSES['textDocument/codeAction'].filter(
-        (action) => kinds.includes(action.kind),
-      );
+      const filteredActions = MOCK_LSP_RESPONSES[
+        'textDocument/codeAction'
+      ].filter((action) => kinds.includes(action.kind));
       expect(filteredActions).toHaveLength(2);
     });
 
@@ -671,14 +670,15 @@ describe('NativeLspService Integration Tests', () => {
     it('should structure workspace edits correctly', () => {
       const codeAction = MOCK_LSP_RESPONSES['textDocument/codeAction'][0];
       const edit = codeAction.edit;
-      
+
       expect(edit).toHaveProperty('changes');
       expect(edit?.changes).toBeDefined();
-      
-      const uri = Object.keys(edit?.changes ?? {})[0];
+
+      const changes = edit?.changes as Record<string, unknown[]>;
+      const uri = Object.keys(changes ?? {})[0];
       expect(uri).toContain('app.tsx');
-      
-      const edits = edit?.changes?.[uri];
+
+      const edits = changes?.[uri];
       expect(edits).toHaveLength(1);
       expect(edits?.[0]).toHaveProperty('range');
       expect(edits?.[0]).toHaveProperty('newText');
@@ -733,7 +733,7 @@ describe('NativeLspService Integration Tests', () => {
   describe('Security Controls', () => {
     it('should respect trust requirements', async () => {
       mockConfig.setTrusted(false);
-      
+
       const strictService = new NativeLspService(
         mockConfig as unknown as CoreConfig,
         mockWorkspace as unknown as WorkspaceContext,
@@ -747,14 +747,14 @@ describe('NativeLspService Integration Tests', () => {
 
       await strictService.discoverAndPrepare();
       const status = strictService.getStatus();
-      
+
       // No servers should be discovered in untrusted workspace
       expect(status.size).toBe(0);
     });
 
     it('should allow operations in trusted workspace', async () => {
       mockConfig.setTrusted(true);
-      
+
       await lspService.discoverAndPrepare();
       // Service should be ready to accept operations (even if no real server)
       expect(lspService).toBeDefined();

@@ -323,13 +323,19 @@ export class LspConnectionFactory {
     timeoutMs = 10000,
   ): Promise<LspConnection> {
     return new Promise((resolve, reject) => {
-      const socketOptions = options.path
-        ? { path: options.path }
-        : { host: options.host ?? '127.0.0.1', port: options.port };
+      let socketOptions: { path: string } | { host: string; port: number };
 
-      if (!('path' in socketOptions) && !socketOptions.port) {
-        reject(new Error('Socket transport requires port or path'));
-        return;
+      if (options.path) {
+        socketOptions = { path: options.path };
+      } else {
+        if (!options.port) {
+          reject(new Error('Socket transport requires port or path'));
+          return;
+        }
+        socketOptions = {
+          host: options.host ?? '127.0.0.1',
+          port: options.port,
+        };
       }
 
       const socket = net.createConnection(socketOptions);

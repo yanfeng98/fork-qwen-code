@@ -776,10 +776,7 @@ export class NativeLspService {
       } catch (error) {
         // Fall back to cached diagnostics from publishDiagnostics notifications
         // This is handled by the notification handler if implemented
-        console.warn(
-          `LSP textDocument/diagnostic failed for ${name}:`,
-          error,
-        );
+        console.warn(`LSP textDocument/diagnostic failed for ${name}:`, error);
       }
     }
 
@@ -833,10 +830,7 @@ export class NativeLspService {
           }
         }
       } catch (error) {
-        console.warn(
-          `LSP workspace/diagnostic failed for ${name}:`,
-          error,
-        );
+        console.warn(`LSP workspace/diagnostic failed for ${name}:`, error);
       }
 
       if (results.length >= limit) {
@@ -872,7 +866,7 @@ export class NativeLspService {
         await this.warmupTypescriptServer(handle);
 
         // Convert context diagnostics to LSP format
-        const lspDiagnostics = context.diagnostics.map((d) =>
+        const lspDiagnostics = context.diagnostics.map((d: LspDiagnostic) =>
           this.denormalizeDiagnostic(d),
         );
 
@@ -911,10 +905,7 @@ export class NativeLspService {
           return actions.slice(0, limit);
         }
       } catch (error) {
-        console.warn(
-          `LSP textDocument/codeAction failed for ${name}:`,
-          error,
-        );
+        console.warn(`LSP textDocument/codeAction failed for ${name}:`, error);
       }
     }
 
@@ -926,20 +917,23 @@ export class NativeLspService {
    */
   async applyWorkspaceEdit(
     edit: LspWorkspaceEdit,
-    serverName?: string,
+    _serverName?: string,
   ): Promise<boolean> {
     // Apply edits locally - this doesn't go through LSP server
     // Instead, it applies the edits to the file system
     try {
       if (edit.changes) {
         for (const [uri, edits] of Object.entries(edit.changes)) {
-          await this.applyTextEdits(uri, edits);
+          await this.applyTextEdits(uri, edits as LspTextEdit[]);
         }
       }
 
       if (edit.documentChanges) {
         for (const docChange of edit.documentChanges) {
-          await this.applyTextEdits(docChange.textDocument.uri, docChange.edits);
+          await this.applyTextEdits(
+            docChange.textDocument.uri,
+            docChange.edits,
+          );
         }
       }
 
@@ -1201,7 +1195,11 @@ export class NativeLspService {
     const itemObj = item as Record<string, unknown>;
 
     // Check if this is a Command instead of CodeAction
-    if (itemObj['command'] && typeof itemObj['title'] === 'string' && !itemObj['kind']) {
+    if (
+      itemObj['command'] &&
+      typeof itemObj['title'] === 'string' &&
+      !itemObj['kind']
+    ) {
       // This is a raw Command, wrap it
       return {
         title: itemObj['title'] as string,
@@ -1259,9 +1257,7 @@ export class NativeLspService {
   /**
    * 规范化工作区编辑
    */
-  private normalizeWorkspaceEdit(
-    edit: unknown,
-  ): LspWorkspaceEdit | null {
+  private normalizeWorkspaceEdit(edit: unknown): LspWorkspaceEdit | null {
     if (!edit || typeof edit !== 'object') {
       return null;
     }
@@ -1335,9 +1331,10 @@ export class NativeLspService {
   /**
    * 规范化文本文档编辑
    */
-  private normalizeTextDocumentEdit(
-    docEdit: unknown,
-  ): { textDocument: { uri: string; version?: number | null }; edits: LspTextEdit[] } | null {
+  private normalizeTextDocumentEdit(docEdit: unknown): {
+    textDocument: { uri: string; version?: number | null };
+    edits: LspTextEdit[];
+  } | null {
     if (!docEdit || typeof docEdit !== 'object') {
       return null;
     }
