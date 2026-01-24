@@ -20,7 +20,6 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import os from 'node:os';
 import fs from 'node:fs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -230,9 +229,7 @@ function main() {
   }
 
   run(npm, installArgs, {
-    // Run outside the repo so npm doesn't treat this as a workspace install.
-    // This avoids Windows junctions/symlinks in the staged node_modules.
-    cwd: os.tmpdir(),
+    cwd: bundledCliDir,
     env: {
       ...process.env,
       npm_config_workspaces: 'false',
