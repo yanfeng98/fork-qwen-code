@@ -252,9 +252,8 @@ export class OAuthUtils {
         if (authServerMetadata) {
           const config = this.metadataToOAuthConfig(authServerMetadata);
           if (authServerMetadata.registration_endpoint) {
-            console.log(
-              'Dynamic client registration is supported at:',
-              authServerMetadata.registration_endpoint,
+            debugLogger.debug(
+              `Dynamic client registration is supported at: ${authServerMetadata.registration_endpoint}`,
             );
           }
           return config;
@@ -269,9 +268,8 @@ export class OAuthUtils {
       if (authServerMetadata) {
         const config = this.metadataToOAuthConfig(authServerMetadata);
         if (authServerMetadata.registration_endpoint) {
-          console.log(
-            'Dynamic client registration is supported at:',
-            authServerMetadata.registration_endpoint,
+          debugLogger.debug(
+            `Dynamic client registration is supported at: ${authServerMetadata.registration_endpoint}`,
           );
         }
         return config;

@@ -268,7 +268,7 @@ export class MCPOAuthProvider {
 
       server.on('error', reject);
       server.listen(OAUTH_REDIRECT_PORT, () => {
-        console.log(
+        debugLogger.debug(
           `OAuth callback server listening on port ${OAUTH_REDIRECT_PORT}`,
         );
       });
@@ -327,7 +327,7 @@ export class MCPOAuthProvider {
           OAuthUtils.buildResourceParameter(mcpServerUrl),
         );
       } catch (error) {
-        console.warn(
+        debugLogger.warn(
           `Could not add resource parameter: ${getErrorMessage(error)}`,
         );
       }
@@ -385,7 +385,7 @@ export class MCPOAuthProvider {
           OAuthUtils.buildResourceParameter(resourceUrl),
         );
       } catch (error) {
-        console.warn(
+        debugLogger.warn(
           `Could not add resource parameter: ${getErrorMessage(error)}`,
         );
       }
@@ -427,7 +427,7 @@ export class MCPOAuthProvider {
       !contentType.includes('application/json') &&
       !contentType.includes('application/x-www-form-urlencoded')
     ) {
-      console.warn(
+      debugLogger.warn(
         `Token endpoint returned unexpected content-type: ${contentType}. ` +
           `Expected application/json or application/x-www-form-urlencoded. ` +
           `Will attempt to parse response.`,
@@ -507,7 +507,7 @@ export class MCPOAuthProvider {
           OAuthUtils.buildResourceParameter(mcpServerUrl),
         );
       } catch (error) {
-        console.warn(
+        debugLogger.warn(
           `Could not add resource parameter: ${getErrorMessage(error)}`,
         );
       }
@@ -549,7 +549,7 @@ export class MCPOAuthProvider {
       !contentType.includes('application/json') &&
       !contentType.includes('application/x-www-form-urlencoded')
     ) {
-      console.warn(
+      debugLogger.warn(
         `Token refresh endpoint returned unexpected content-type: ${contentType}. ` +
           `Expected application/json or application/x-www-form-urlencoded. ` +
           `Will attempt to parse response.`,
@@ -602,12 +602,12 @@ export class MCPOAuthProvider {
     mcpServerUrl?: string,
     events?: EventEmitter,
   ): Promise<OAuthToken> {
-    // Helper function to display messages through handler or fallback to console.log
+    // Helper function to display messages through handler or fallback to debugLogger
     const displayMessage = (message: string) => {
       if (events) {
         events.emit(OAUTH_DISPLAY_MESSAGE_EVENT, message);
       } else {
-        console.log(message);
+        debugLogger.info(message);
       }
     };
 
@@ -761,9 +761,8 @@ ${authUrl}
     try {
       await openBrowserSecurely(authUrl);
     } catch (error) {
-      console.warn(
-        'Failed to open browser automatically:',
-        getErrorMessage(error),
+      debugLogger.warn(
+        `Failed to open browser automatically: ${getErrorMessage(error)}`,
       );
     }
 
@@ -822,12 +821,12 @@ ${authUrl}
           `✓ Token verification successful (fingerprint: ${tokenFingerprint})`,
         );
       } else {
-        console.error(
+        debugLogger.error(
           'Token verification failed: token not found or invalid after save',
         );
       }
     } catch (saveError) {
-      console.error(`Failed to save token: ${getErrorMessage(saveError)}`);
+      debugLogger.error(`Failed to save token: ${getErrorMessage(saveError)}`);
       throw saveError;
     }
 
@@ -867,7 +866,9 @@ ${authUrl}
     // Try to refresh if we have a refresh token
     if (token.refreshToken && config.clientId && credentials.tokenUrl) {
       try {
-        console.log(`Refreshing expired token for MCP server: ${serverName}`);
+        debugLogger.info(
+          `Refreshing expired token for MCP server: ${serverName}`,
+        );
 
         const newTokenResponse = await this.refreshAccessToken(
           config,
@@ -898,7 +899,7 @@ ${authUrl}
 
         return newToken.accessToken;
       } catch (error) {
-        console.error(`Failed to refresh token: ${getErrorMessage(error)}`);
+        debugLogger.error(`Failed to refresh token: ${getErrorMessage(error)}`);
         // Remove invalid token
         await this.tokenStorage.deleteCredentials(serverName);
       }

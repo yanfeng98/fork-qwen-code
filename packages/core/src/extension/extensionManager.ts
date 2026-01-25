@@ -66,6 +66,9 @@ import { stat } from 'node:fs/promises';
 import { loadSkillsFromDir } from '../skills/skill-load.js';
 import { convertClaudePluginPackage } from './claude-converter.js';
 import { loadSubagentFromDir } from '../subagents/subagent-manager.js';
+import { createDebugLogger } from '../utils/debugLogger.js';
+
+const debugLogger = createDebugLogger('EXTENSIONS');
 
 // ============================================================================
 // Types and Interfaces
@@ -230,7 +233,7 @@ async function loadCommandsFromDir(dir: string): Promise<string[]> {
     const isEnoent = (error as NodeJS.ErrnoException).code === 'ENOENT';
     const isAbortError = error instanceof Error && error.name === 'AbortError';
     if (!isEnoent && !isAbortError) {
-      console.error(`Error loading commands from ${dir}:`, error);
+      debugLogger.error(`Error loading commands from ${dir}:`, error);
     }
     return [];
   }
@@ -323,7 +326,7 @@ export class ExtensionManager {
           (ext) => ext.config.name.toLowerCase() === name.toLowerCase(),
         )
       ) {
-        console.error(`Extension not found: ${name}`);
+        debugLogger.error(`Extension not found: ${name}`);
       }
     }
   }
@@ -479,7 +482,7 @@ export class ExtensionManager {
       ) {
         return {};
       }
-      console.error('Error reading extension enablement config:', error);
+      debugLogger.error('Error reading extension enablement config:', error);
       return {};
     }
   }
@@ -634,7 +637,7 @@ export class ExtensionManager {
 
       return extension;
     } catch (e) {
-      console.error(
+      debugLogger.warn(
         `Warning: Skipping extension in ${effectiveExtensionPath}: ${getErrorMessage(
           e,
         )}`,
@@ -1157,7 +1160,7 @@ export class ExtensionManager {
         updatedVersion,
       };
     } catch (e) {
-      console.error(
+      debugLogger.error(
         `Error updating extension, rolling back. ${getErrorMessage(e)}`,
       );
       callback(extension.name, ExtensionUpdateState.ERROR);

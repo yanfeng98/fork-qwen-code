@@ -276,7 +276,10 @@ export class QwenOAuth2Client implements IQwenOAuth2Client {
       const credentials = await this.sharedManager.getValidCredentials(this);
       return { token: credentials.access_token };
     } catch (error) {
-      console.warn('Failed to get access token from shared manager:', error);
+      debugLogger.warn(
+        'Failed to get access token from shared manager:',
+        error,
+      );
 
       // Don't use fallback to local credentials to prevent race conditions
       // All token management should go through SharedTokenManager for consistency
@@ -891,7 +894,6 @@ async function authWithQwenDeviceFlow(
           eventType: 'error' | 'rate_limit' = 'error',
         ): AuthResult => {
           emitAuthProgress(eventType, message);
-          console.error('\n' + message);
           return { success: false, reason, message };
         };
 
@@ -932,7 +934,6 @@ async function authWithQwenDeviceFlow(
 
     const timeoutMessage = 'Authorization timeout, please restart the process.';
     emitAuthProgress('timeout', timeoutMessage);
-    console.error('\n' + timeoutMessage);
     return { success: false, reason: 'timeout', message: timeoutMessage };
   } catch (error: unknown) {
     const fullErrorMessage = formatFetchErrorForUser(error, {
@@ -941,7 +942,6 @@ async function authWithQwenDeviceFlow(
     const message = `Device authorization flow failed: ${fullErrorMessage}`;
 
     emitAuthProgress('error', message);
-    console.error(message);
     return { success: false, reason: 'error', message };
   } finally {
     // Clean up event listener
@@ -993,7 +993,10 @@ export async function clearQwenCredentials(): Promise<void> {
       return;
     }
     // Log other errors but don't throw - clearing credentials should be non-critical
-    console.warn('Warning: Failed to clear cached Qwen credentials:', error);
+    debugLogger.warn(
+      'Warning: Failed to clear cached Qwen credentials:',
+      error,
+    );
   } finally {
     // Also clear SharedTokenManager in-memory cache to prevent stale credentials
     // from being reused within the same process after the file is removed.

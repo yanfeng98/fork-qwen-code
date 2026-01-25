@@ -445,7 +445,9 @@ export class SharedTokenManager {
         error instanceof Error &&
         error.message.includes('Invalid credentials')
       ) {
-        console.warn(`Failed to validate credentials file: ${error.message}`);
+        debugLogger.warn(
+          `Failed to validate credentials file: ${error.message}`,
+        );
       }
       // Clear credentials but preserve other cache state
       this.memoryCache.credentials = null;
@@ -485,7 +487,7 @@ export class SharedTokenManager {
       const lockAcquisitionTime = Date.now() - startTime;
       if (lockAcquisitionTime > 5000) {
         // 5 seconds warning threshold
-        console.warn(
+        debugLogger.warn(
           `Token refresh lock acquisition took ${lockAcquisitionTime}ms`,
         );
       }
@@ -511,7 +513,9 @@ export class SharedTokenManager {
       const totalOperationTime = Date.now() - startTime;
       if (totalOperationTime > 10000) {
         // 10 seconds warning threshold
-        console.warn(`Token refresh operation took ${totalOperationTime}ms`);
+        debugLogger.warn(
+          `Token refresh operation took ${totalOperationTime}ms`,
+        );
       }
 
       if (!response || isErrorResponse(response)) {
@@ -728,13 +732,13 @@ export class SharedTokenManager {
                 await fs.rename(lockPath, tempPath);
                 // Clean up the temporary file
                 await fs.unlink(tempPath);
-                console.warn(
+                debugLogger.warn(
                   `Removed stale lock file: ${lockPath} (age: ${lockAge}ms)`,
                 );
                 continue; // Retry lock acquisition immediately
               } catch (renameError) {
                 // Lock might have been removed by another process, continue trying
-                console.warn(
+                debugLogger.warn(
                   `Failed to remove stale lock file ${lockPath}: ${renameError instanceof Error ? renameError.message : String(renameError)}`,
                 );
                 // Continue - the lock might have been removed by another process
@@ -742,7 +746,7 @@ export class SharedTokenManager {
             }
           } catch (statError) {
             // Can't stat lock file, it might have been removed, continue trying
-            console.warn(
+            debugLogger.warn(
               `Failed to stat lock file ${lockPath}: ${statError instanceof Error ? statError.message : String(statError)}`,
             );
           }
@@ -779,7 +783,7 @@ export class SharedTokenManager {
       // Lock file might already be removed by another process or timeout cleanup
       // This is not an error condition, but log for debugging
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
-        console.warn(
+        debugLogger.warn(
           `Failed to release lock file ${lockPath}: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
