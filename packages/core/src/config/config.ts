@@ -107,6 +107,7 @@ import {
 } from '../services/sessionService.js';
 import { randomUUID } from 'node:crypto';
 import { loadServerHierarchicalMemory } from '../utils/memoryDiscovery.js';
+import { createDebugLogger, type DebugLogger } from '../utils/debugLogger.js';
 
 import {
   ModelsConfig,
@@ -403,6 +404,7 @@ export interface ConfigInitializeOptions {
 export class Config {
   private sessionId: string;
   private sessionData?: ResumedSessionData;
+  private debugLogger: DebugLogger;
   private toolRegistry!: ToolRegistry;
   private promptRegistry!: PromptRegistry;
   private subagentManager!: SubagentManager;
@@ -511,6 +513,7 @@ export class Config {
   constructor(params: ConfigParameters) {
     this.sessionId = params.sessionId ?? randomUUID();
     this.sessionData = params.sessionData;
+    this.debugLogger = createDebugLogger(this);
     this.embeddingModel = params.embeddingModel ?? DEFAULT_QWEN_EMBEDDING_MODEL;
     this.fileSystemService = new StandardFileSystemService();
     this.sandbox = params.sandbox;
@@ -808,6 +811,10 @@ export class Config {
     return this.sessionId;
   }
 
+  getDebugLogger(): DebugLogger {
+    return this.debugLogger;
+  }
+
   /**
    * Releases resources owned by the config instance.
    */
@@ -824,6 +831,7 @@ export class Config {
   ): string {
     this.sessionId = sessionId ?? randomUUID();
     this.sessionData = sessionData;
+    this.debugLogger = createDebugLogger(this);
     this.chatRecordingService = this.chatRecordingEnabled
       ? new ChatRecordingService(this)
       : undefined;

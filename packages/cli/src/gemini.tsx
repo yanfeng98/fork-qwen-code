@@ -4,8 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Config } from '@qwen-code/qwen-code-core';
-import { InputFormat, logUserPrompt } from '@qwen-code/qwen-code-core';
+import {
+  InputFormat,
+  isDebugLoggingDegraded,
+  logUserPrompt,
+  Storage,
+  type Config,
+} from '@qwen-code/qwen-code-core';
 import { render } from 'ink';
 import dns from 'node:dns';
 import os from 'node:os';
@@ -417,6 +422,19 @@ export async function main() {
         initializationResult!,
       );
       return;
+    }
+
+    // Print debug mode notice to stderr for non-interactive mode
+    if (config.getDebugMode()) {
+      console.error('Debug mode enabled');
+      console.error(
+        `Logging to: ${Storage.getDebugLogPath(config.getSessionId())}`,
+      );
+      if (isDebugLoggingDegraded()) {
+        console.error(
+          'Warning: Debug logging is degraded (write failures occurred)',
+        );
+      }
     }
 
     // For non-stream-json mode, initialize config here
