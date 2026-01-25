@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 Google LLC
+ * Copyright 2025 Qwen Team
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -476,52 +476,6 @@ describe('NativeLspService Integration Tests', () => {
       // Should have detected TypeScript based on mock file discovery
       // The exact server name depends on built-in presets
       expect(status.size).toBeGreaterThanOrEqual(0);
-    });
-
-    it('should respect allowed servers list', async () => {
-      const restrictedService = new NativeLspService(
-        mockConfig as unknown as CoreConfig,
-        mockWorkspace as unknown as WorkspaceContext,
-        eventEmitter,
-        mockFileDiscovery as unknown as FileDiscoveryService,
-        mockIdeStore as unknown as IdeContextStore,
-        {
-          workspaceRoot: mockWorkspace.rootPath,
-          allowedServers: ['typescript-language-server'],
-        },
-      );
-
-      await restrictedService.discoverAndPrepare();
-      const status = restrictedService.getStatus();
-
-      // Only allowed servers should be READY
-      const readyServers = Array.from(status.entries())
-        .filter(([, state]) => state === 'READY')
-        .map(([name]) => name);
-      for (const name of readyServers) {
-        expect(['typescript-language-server']).toContain(name);
-      }
-    });
-
-    it('should respect excluded servers list', async () => {
-      const restrictedService = new NativeLspService(
-        mockConfig as unknown as CoreConfig,
-        mockWorkspace as unknown as WorkspaceContext,
-        eventEmitter,
-        mockFileDiscovery as unknown as FileDiscoveryService,
-        mockIdeStore as unknown as IdeContextStore,
-        {
-          workspaceRoot: mockWorkspace.rootPath,
-          excludedServers: ['pylsp'],
-        },
-      );
-
-      await restrictedService.discoverAndPrepare();
-      const status = restrictedService.getStatus();
-
-      // pylsp should not be present or should be FAILED
-      const pylspStatus = status.get('pylsp');
-      expect(pylspStatus !== 'READY').toBe(true);
     });
   });
 

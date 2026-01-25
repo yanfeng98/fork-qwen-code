@@ -247,7 +247,6 @@ export async function main() {
         argv,
         undefined,
         [],
-        { startLsp: false },
       );
 
       if (!settings.merged.security?.auth?.useExternal) {

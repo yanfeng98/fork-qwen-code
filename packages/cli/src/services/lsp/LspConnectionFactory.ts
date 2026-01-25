@@ -1,5 +1,13 @@
+/**
+ * @license
+ * Copyright 2025 Qwen Team
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import * as cp from 'node:child_process';
 import * as net from 'node:net';
+import { DEFAULT_LSP_REQUEST_TIMEOUT_MS } from './constants.js';
+import type { JsonRpcMessage } from './LspTypes.js';
 
 interface PendingRequest {
   resolve: (value: unknown) => void;
@@ -88,7 +96,7 @@ class JsonRpcConnection {
       const timer = setTimeout(() => {
         this.pendingRequests.delete(id);
         reject(new Error(`LSP request timeout: ${method}`));
-      }, 15000);
+      }, DEFAULT_LSP_REQUEST_TIMEOUT_MS);
 
       this.pendingRequests.set(id, { resolve, reject, timer });
     });
@@ -232,19 +240,6 @@ interface SocketConnectionOptions {
   host?: string;
   port?: number;
   path?: string;
-}
-
-interface JsonRpcMessage {
-  jsonrpc: string;
-  id?: number | string;
-  method?: string;
-  params?: unknown;
-  result?: unknown;
-  error?: {
-    code: number;
-    message: string;
-    data?: unknown;
-  };
 }
 
 export class LspConnectionFactory {

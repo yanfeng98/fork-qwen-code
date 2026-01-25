@@ -15,55 +15,61 @@ LSP support in Qwen Code works by connecting to language servers that understand
 
 ## Quick Start
 
-LSP is enabled by default in Qwen Code. For most common languages, Qwen Code will automatically detect and start the appropriate language server if it's installed on your system.
+LSP is an experimental feature in Qwen Code. To enable it, use the `--experimental-lsp` command line flag:
+
+```bash
+qwen --experimental-lsp
+```
+
+For most common languages, Qwen Code will automatically detect and start the appropriate language server if it's installed on your system.
 
 ### Prerequisites
 
 You need to have the language server for your programming language installed:
 
-| Language | Language Server | Install Command |
-|----------|----------------|-----------------|
-| TypeScript/JavaScript | typescript-language-server | `npm install -g typescript-language-server typescript` |
-| Python | pylsp | `pip install python-lsp-server` |
-| Go | gopls | `go install golang.org/x/tools/gopls@latest` |
-| Rust | rust-analyzer | [Installation guide](https://rust-analyzer.github.io/manual.html#installation) |
+| Language              | Language Server            | Install Command                                                                |
+| --------------------- | -------------------------- | ------------------------------------------------------------------------------ |
+| TypeScript/JavaScript | typescript-language-server | `npm install -g typescript-language-server typescript`                         |
+| Python                | pylsp                      | `pip install python-lsp-server`                                                |
+| Go                    | gopls                      | `go install golang.org/x/tools/gopls@latest`                                   |
+| Rust                  | rust-analyzer              | [Installation guide](https://rust-analyzer.github.io/manual.html#installation) |
 
 ## Configuration
 
-### Settings
+### .lsp.json File
 
-You can configure LSP behavior in your `settings.json`:
+You can configure language servers using a `.lsp.json` file in your project root. This follows the [Claude Code plugin LSP configuration format](https://code.claude.com/docs/en/plugins-reference#lsp-servers).
+
+**Basic format:**
 
 ```json
 {
-  "lsp": {
-    "enabled": true,
-    "autoDetect": true,
-    "serverTimeout": 10000,
-    "allowed": [],
-    "excluded": []
+  "typescript": {
+    "command": "typescript-language-server",
+    "args": ["--stdio"],
+    "extensionToLanguage": {
+      ".ts": "typescript",
+      ".tsx": "typescriptreact",
+      ".js": "javascript",
+      ".jsx": "javascriptreact"
+    }
   }
 }
 ```
 
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
-| `lsp.enabled` | boolean | `true` | Enable/disable LSP support |
-| `lsp.autoDetect` | boolean | `true` | Automatically detect and start language servers |
-| `lsp.serverTimeout` | number | `10000` | Server startup timeout in milliseconds |
-| `lsp.allowed` | string[] | `[]` | Allow only these servers (empty = allow all) |
-| `lsp.excluded` | string[] | `[]` | Exclude these servers from starting |
-
-### Custom Language Servers
-
-You can configure custom language servers using a `.lsp.json` file in your project root:
+**Extended format with `languageServers` wrapper:**
 
 ```json
 {
   "languageServers": {
-    "my-custom-lsp": {
-      "languages": ["mylang"],
-      "command": "my-lsp-server",
+    "typescript-language-server": {
+      "languages": [
+        "typescript",
+        "javascript",
+        "typescriptreact",
+        "javascriptreact"
+      ],
+      "command": "typescript-language-server",
       "args": ["--stdio"],
       "transport": "stdio",
       "initializationOptions": {},
@@ -73,40 +79,45 @@ You can configure custom language servers using a `.lsp.json` file in your proje
 }
 ```
 
-#### Configuration Options
+### Configuration Options
 
-| Option | Type | Required | Description |
-|--------|------|----------|-------------|
-| `languages` | string[] | Yes | Languages this server handles |
-| `command` | string | Yes* | Command to start the server |
-| `args` | string[] | No | Command line arguments |
-| `transport` | string | No | Transport type: `stdio` (default), `tcp`, or `socket` |
-| `env` | object | No | Environment variables |
-| `initializationOptions` | object | No | LSP initialization options |
-| `settings` | object | No | Server settings |
-| `workspaceFolder` | string | No | Override workspace folder |
-| `startupTimeout` | number | No | Startup timeout in ms |
-| `shutdownTimeout` | number | No | Shutdown timeout in ms |
-| `restartOnCrash` | boolean | No | Auto-restart on crash |
-| `maxRestarts` | number | No | Maximum restart attempts |
-| `trustRequired` | boolean | No | Require trusted workspace |
+#### Required Fields
 
-*Required for `stdio` transport
+| Option                | Type   | Description                                       |
+| --------------------- | ------ | ------------------------------------------------- |
+| `command`             | string | Command to start the LSP server (must be in PATH) |
+| `extensionToLanguage` | object | Maps file extensions to language identifiers      |
 
-#### TCP/Socket Transport
+#### Optional Fields
+
+| Option                  | Type     | Default   | Description                                            |
+| ----------------------- | -------- | --------- | ------------------------------------------------------ |
+| `args`                  | string[] | `[]`      | Command line arguments                                 |
+| `transport`             | string   | `"stdio"` | Transport type: `stdio` or `socket`                    |
+| `env`                   | object   | -         | Environment variables                                  |
+| `initializationOptions` | object   | -         | LSP initialization options                             |
+| `settings`              | object   | -         | Server settings via `workspace/didChangeConfiguration` |
+| `workspaceFolder`       | string   | -         | Override workspace folder                              |
+| `startupTimeout`        | number   | `10000`   | Startup timeout in milliseconds                        |
+| `shutdownTimeout`       | number   | `5000`    | Shutdown timeout in milliseconds                       |
+| `restartOnCrash`        | boolean  | `false`   | Auto-restart on crash                                  |
+| `maxRestarts`           | number   | `3`       | Maximum restart attempts                               |
+| `trustRequired`         | boolean  | `true`    | Require trusted workspace                              |
+
+### TCP/Socket Transport
 
 For servers that use TCP or Unix socket transport:
 
 ```json
 {
-  "languageServers": {
-    "remote-lsp": {
-      "languages": ["custom"],
-      "transport": "tcp",
-      "socket": {
-        "host": "127.0.0.1",
-        "port": 9999
-      }
+  "remote-lsp": {
+    "transport": "tcp",
+    "socket": {
+      "host": "127.0.0.1",
+      "port": 9999
+    },
+    "extensionToLanguage": {
+      ".custom": "custom"
     }
   }
 }
@@ -119,6 +130,7 @@ Qwen Code exposes LSP functionality through the unified `lsp` tool. Here are the
 ### Code Navigation
 
 #### Go to Definition
+
 Find where a symbol is defined.
 
 ```
@@ -130,6 +142,7 @@ Parameters:
 ```
 
 #### Find References
+
 Find all references to a symbol.
 
 ```
@@ -142,6 +155,7 @@ Parameters:
 ```
 
 #### Go to Implementation
+
 Find implementations of an interface or abstract method.
 
 ```
@@ -155,6 +169,7 @@ Parameters:
 ### Symbol Information
 
 #### Hover
+
 Get documentation and type information for a symbol.
 
 ```
@@ -166,6 +181,7 @@ Parameters:
 ```
 
 #### Document Symbols
+
 Get all symbols in a document.
 
 ```
@@ -175,6 +191,7 @@ Parameters:
 ```
 
 #### Workspace Symbol Search
+
 Search for symbols across the workspace.
 
 ```
@@ -187,6 +204,7 @@ Parameters:
 ### Call Hierarchy
 
 #### Prepare Call Hierarchy
+
 Get the call hierarchy item at a position.
 
 ```
@@ -198,6 +216,7 @@ Parameters:
 ```
 
 #### Incoming Calls
+
 Find all functions that call the given function.
 
 ```
@@ -207,6 +226,7 @@ Parameters:
 ```
 
 #### Outgoing Calls
+
 Find all functions called by the given function.
 
 ```
@@ -218,6 +238,7 @@ Parameters:
 ### Diagnostics
 
 #### File Diagnostics
+
 Get diagnostic messages (errors, warnings) for a file.
 
 ```
@@ -227,6 +248,7 @@ Parameters:
 ```
 
 #### Workspace Diagnostics
+
 Get all diagnostic messages across the workspace.
 
 ```
@@ -238,6 +260,7 @@ Parameters:
 ### Code Actions
 
 #### Get Code Actions
+
 Get available code actions (quick fixes, refactorings) at a location.
 
 ```
@@ -253,6 +276,7 @@ Parameters:
 ```
 
 Code action kinds:
+
 - `quickfix` - Quick fixes for errors/warnings
 - `refactor` - Refactoring operations
 - `refactor.extract` - Extract to function/variable
@@ -268,19 +292,23 @@ LSP servers are only started in trusted workspaces by default. This is because l
 ### Trust Controls
 
 - **Trusted Workspace**: LSP servers start automatically
-- **Untrusted Workspace**: LSP servers won't start unless `trustRequired: false`
+- **Untrusted Workspace**: LSP servers won't start unless `trustRequired: false` is set in the server configuration
 
 To mark a workspace as trusted, use the `/trust` command or configure trusted folders in settings.
 
-### Server Allowlists
+### Per-Server Trust Override
 
-You can restrict which servers are allowed to run:
+You can override trust requirements for specific servers in their configuration:
 
 ```json
 {
-  "lsp": {
-    "allowed": ["typescript-language-server", "gopls"],
-    "excluded": ["untrusted-server"]
+  "safe-server": {
+    "command": "safe-language-server",
+    "args": ["--stdio"],
+    "trustRequired": false,
+    "extensionToLanguage": {
+      ".safe": "safe"
+    }
   }
 }
 ```
@@ -293,12 +321,12 @@ You can restrict which servers are allowed to run:
 2. **Check the PATH**: Ensure the server binary is in your system PATH
 3. **Check workspace trust**: The workspace must be trusted for LSP
 4. **Check logs**: Look for error messages in the console output
+5. **Verify --experimental-lsp flag**: Make sure you're using the flag when starting Qwen Code
 
 ### Slow Performance
 
 1. **Large projects**: Consider excluding `node_modules` and other large directories
-2. **Server timeout**: Increase `lsp.serverTimeout` for slow servers
-3. **Multiple servers**: Exclude unused language servers
+2. **Server timeout**: Increase `startupTimeout` in server configuration for slow servers
 
 ### No Results
 
@@ -311,39 +339,40 @@ You can restrict which servers are allowed to run:
 Enable debug logging to see LSP communication:
 
 ```bash
-DEBUG=lsp* qwen
+DEBUG=lsp* qwen --experimental-lsp
 ```
 
 Or check the LSP debugging guide at `packages/cli/LSP_DEBUGGING_GUIDE.md`.
 
 ## Claude Code Compatibility
 
-Qwen Code supports Claude Code-style `.lsp.json` configuration files. If you're migrating from Claude Code, your existing LSP configuration should work with minimal changes.
+Qwen Code supports Claude Code-style `.lsp.json` configuration files as defined in the [Claude Code plugins reference](https://code.claude.com/docs/en/plugins-reference#lsp-servers). If you're migrating from Claude Code, your existing LSP configuration should work with minimal changes.
 
-### Legacy Format
+### Configuration Format
 
-The legacy format (used by earlier versions) is still supported but deprecated:
+The recommended format follows Claude Code's specification:
 
 ```json
 {
-  "typescript": {
-    "command": "typescript-language-server",
-    "args": ["--stdio"],
-    "transport": "stdio"
+  "go": {
+    "command": "gopls",
+    "args": ["serve"],
+    "extensionToLanguage": {
+      ".go": "go"
+    }
   }
 }
 ```
 
-We recommend migrating to the new `languageServers` format:
+The `languageServers` wrapper format is also supported:
 
 ```json
 {
   "languageServers": {
-    "typescript-language-server": {
-      "languages": ["typescript", "javascript"],
-      "command": "typescript-language-server",
-      "args": ["--stdio"],
-      "transport": "stdio"
+    "gopls": {
+      "languages": ["go"],
+      "command": "gopls",
+      "args": ["serve"]
     }
   }
 }
@@ -352,11 +381,19 @@ We recommend migrating to the new `languageServers` format:
 ## Best Practices
 
 1. **Install language servers globally**: This ensures they're available in all projects
-2. **Use project-specific settings**: Configure server options per project when needed
+2. **Use project-specific settings**: Configure server options per project when needed via `.lsp.json`
 3. **Keep servers updated**: Update your language servers regularly for best results
 4. **Trust wisely**: Only trust workspaces from trusted sources
 
 ## FAQ
+
+### Q: How do I enable LSP?
+
+Use the `--experimental-lsp` flag when starting Qwen Code:
+
+```bash
+qwen --experimental-lsp
+```
 
 ### Q: How do I know which language servers are running?
 
@@ -369,15 +406,3 @@ Yes, but only one will be used for each operation. The first server that returns
 ### Q: Does LSP work in sandbox mode?
 
 LSP servers run outside the sandbox to access your code. They're subject to workspace trust controls.
-
-### Q: How do I disable LSP for a specific project?
-
-Add to your project's `.qwen/settings.json`:
-
-```json
-{
-  "lsp": {
-    "enabled": false
-  }
-}
-```

@@ -17,25 +17,41 @@ DEBUG_MODE=true qwen [你的命令]
 
 ## 2. LSP 配置选项
 
-LSP 功能通过设置系统配置，包含以下选项：
+LSP 功能通过 `--experimental-lsp` 命令行参数启用。服务器配置通过以下方式定义：
 
-- `lsp.enabled`: 启用/禁用原生 LSP 客户端（默认为 `false`）
-- `lsp.allowed`: 允许的 LSP 服务器名称白名单
-- `lsp.excluded`: 排除的 LSP 服务器名称黑名单
+- `.lsp.json` 文件：在项目根目录创建配置文件
+- `lsp.languageServers`：在 `settings.json` 中内联配置
 
-在 settings.json 中的示例配置：
+### 在 settings.json 中的示例配置
 
 ```json
 {
   "lsp": {
-    "enabled": true,
-    "allowed": ["typescript-language-server", "pylsp"],
-    "excluded": ["gopls"]
+    "languageServers": {
+      "typescript-language-server": {
+        "languages": ["typescript", "javascript"],
+        "command": "typescript-language-server",
+        "args": ["--stdio"]
+      }
+    }
   }
 }
 ```
 
-也可以在 `settings.json` 中配置 `lsp.languageServers`，格式与 `.lsp.json` 一致。
+### 在 .lsp.json 中的示例配置
+
+```json
+{
+  "typescript": {
+    "command": "typescript-language-server",
+    "args": ["--stdio"],
+    "extensionToLanguage": {
+      ".ts": "typescript",
+      ".tsx": "typescriptreact"
+    }
+  }
+}
+```
 
 ## 3. NativeLspService 调试功能
 

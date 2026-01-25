@@ -600,42 +600,17 @@ describe('loadCliConfig', () => {
   it('should initialize native LSP service when enabled', async () => {
     process.argv = ['node', 'script.js', '--experimental-lsp'];
     const argv = await parseArguments({} as Settings);
-    const settings: Settings = {
-      lsp: {
-        allowed: ['typescript-language-server'],
-        excluded: ['pylsp'],
-      },
-    };
+    const settings: Settings = {};
 
     const config = await loadCliConfig(settings, argv);
 
     // LSP is enabled via --experimental-lsp flag
     expect(config.isLspEnabled()).toBe(true);
-    expect(config.getLspAllowed()).toEqual(['typescript-language-server']);
-    expect(config.getLspExcluded()).toEqual(['pylsp']);
     expect(nativeLspServiceMock).toHaveBeenCalledTimes(1);
     const lspInstance = getLastLspInstance();
     expect(lspInstance).toBeDefined();
     expect(lspInstance?.discoverAndPrepare).toHaveBeenCalledTimes(1);
     expect(lspInstance?.start).toHaveBeenCalledTimes(1);
-
-    const options = nativeLspServiceMock.mock.calls[0][5];
-    expect(options?.allowedServers).toEqual(['typescript-language-server']);
-    expect(options?.excludedServers).toEqual(['pylsp']);
-  });
-
-  it('should skip native LSP startup when startLsp option is false', async () => {
-    process.argv = ['node', 'script.js', '--experimental-lsp'];
-    const argv = await parseArguments({} as Settings);
-    const settings: Settings = {};
-
-    const config = await loadCliConfig(settings, argv, undefined, undefined, {
-      startLsp: false,
-    });
-
-    expect(config.isLspEnabled()).toBe(true);
-    expect(nativeLspServiceMock).not.toHaveBeenCalled();
-    expect(getLastLspInstance()).toBeUndefined();
   });
 
   describe('Proxy configuration', () => {

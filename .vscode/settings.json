@@ -13,10 +13,5 @@
   "[javascript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "vitest.disableWorkspaceWarning": true,
-  "lsp": {
-    "enabled": true,
-    "allowed": ["typescript-language-server"],
-    "excluded": ["gopls"]
-  }
+  "vitest.disableWorkspaceWarning": true
 }

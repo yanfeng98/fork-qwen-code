@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 Google LLC
+ * Copyright 2025 Qwen Team
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -98,7 +98,11 @@ export interface LspCallHierarchyOutgoingCall {
 /**
  * Diagnostic severity levels from LSP specification.
  */
-export type LspDiagnosticSeverity = 'error' | 'warning' | 'information' | 'hint';
+export type LspDiagnosticSeverity =
+  | 'error'
+  | 'warning'
+  | 'information'
+  | 'hint';
 
 /**
  * A diagnostic message from a language server.
@@ -326,10 +330,7 @@ export interface LspClient {
   /**
    * Get diagnostics for a specific document.
    */
-  diagnostics(
-    uri: string,
-    serverName?: string,
-  ): Promise<LspDiagnostic[]>;
+  diagnostics(uri: string, serverName?: string): Promise<LspDiagnostic[]>;
 
   /**
    * Get diagnostics for all open documents in the workspace.

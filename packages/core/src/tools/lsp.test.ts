@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 Google LLC
+ * Copyright 2025 Qwen Team
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -1163,11 +1163,11 @@ describe('LspTool', () => {
         // Should include at least these definitions
         expect(definitionNames).toEqual(
           expect.arrayContaining([
-          'LspCallHierarchyItem',
-          'LspDiagnostic',
-          'LspPosition',
-          'LspRange',
-        ]),
+            'LspCallHierarchyItem',
+            'LspDiagnostic',
+            'LspPosition',
+            'LspRange',
+          ]),
         );
       });
     });

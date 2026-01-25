@@ -967,59 +967,6 @@ const SETTINGS_SCHEMA = {
       },
     },
   },
-  lsp: {
-    type: 'object',
-    label: 'LSP',
-    category: 'LSP',
-    requiresRestart: true,
-    default: {},
-    description:
-      'Settings for the native Language Server Protocol integration. Enable with --experimental-lsp flag.',
-    showInDialog: false,
-    properties: {
-      enabled: {
-        type: 'boolean',
-        label: 'Enable LSP',
-        category: 'LSP',
-        requiresRestart: true,
-        default: false,
-        description:
-          'Enable the native LSP client. Prefer using --experimental-lsp command line flag instead.',
-        showInDialog: false,
-      },
-      allowed: {
-        type: 'array',
-        label: 'Allow LSP Servers',
-        category: 'LSP',
-        requiresRestart: true,
-        default: undefined as string[] | undefined,
-        description:
-          'Optional allowlist of LSP server names. If set, only matching servers will start.',
-        showInDialog: false,
-      },
-      excluded: {
-        type: 'array',
-        label: 'Exclude LSP Servers',
-        category: 'LSP',
-        requiresRestart: true,
-        default: undefined as string[] | undefined,
-        description:
-          'Optional blocklist of LSP server names that should not start.',
-        showInDialog: false,
-      },
-      languageServers: {
-        type: 'object',
-        label: 'LSP Language Servers',
-        category: 'LSP',
-        requiresRestart: true,
-        default: {} as Record<string, unknown>,
-        description:
-          'Inline LSP server configuration (same format as .lsp.json).',
-        showInDialog: false,
-        mergeStrategy: MergeStrategy.SHALLOW_MERGE,
-      },
-    },
-  },
   useSmartEdit: {
     type: 'boolean',
     label: 'Use Smart Edit',

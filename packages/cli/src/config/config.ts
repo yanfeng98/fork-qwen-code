@@ -151,14 +151,6 @@ export interface CliArgs {
   channel: string | undefined;
 }
 
-export interface LoadCliConfigOptions {
-  /**
-   * Whether to start the native LSP service during config load.
-   * Disable when doing preflight runs (e.g., sandbox preparation).
-   */
-  startLsp?: boolean;
-}
-
 class NativeLspClient implements LspClient {
   constructor(private readonly service: NativeLspService) {}
 
@@ -819,7 +811,6 @@ export async function loadCliConfig(
   argv: CliArgs,
   cwd: string = process.cwd(),
   overrideExtensions?: string[],
-  options: LoadCliConfigOptions = {},
 ): Promise<Config> {
   const debugMode = isDebugMode(argv);
 
@@ -877,9 +868,6 @@ export async function loadCliConfig(
 
   // LSP configuration: enabled only via --experimental-lsp flag
   const lspEnabled = argv.experimentalLsp === true;
-  const lspAllowed = settings.lsp?.allowed ?? settings.mcp?.allowed;
-  const lspExcluded = settings.lsp?.excluded ?? settings.mcp?.excluded;
-  const lspLanguageServers = settings.lsp?.languageServers;
   let lspClient: LspClient | undefined;
   const question = argv.promptInteractive || argv.prompt || '';
   const inputFormat: InputFormat =
@@ -1186,13 +1174,10 @@ export async function loadCliConfig(
       argv.chatRecording ?? settings.general?.chatRecording ?? true,
     lsp: {
       enabled: lspEnabled,
-      allowed: lspAllowed,
-      excluded: lspExcluded,
     },
   });
 
-  const shouldStartLsp = options.startLsp ?? true;
-  if (shouldStartLsp && lspEnabled) {
+  if (lspEnabled) {
     try {
       const lspService = new NativeLspService(
         config,
@@ -1201,10 +1186,7 @@ export async function loadCliConfig(
         fileService,
         ideContextStore,
         {
-          allowedServers: lspAllowed,
-          excludedServers: lspExcluded,
           requireTrustedWorkspace: folderTrust,
-          inlineServerConfigs: lspLanguageServers,
         },
       );
 

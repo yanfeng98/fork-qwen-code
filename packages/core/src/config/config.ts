@@ -61,9 +61,6 @@ import { ToolRegistry } from '../tools/tool-registry.js';
 import { WebFetchTool } from '../tools/web-fetch.js';
 import { WebSearchTool } from '../tools/web-search/index.js';
 import { WriteFileTool } from '../tools/write-file.js';
-import { LspWorkspaceSymbolTool } from '../tools/lsp-workspace-symbol.js';
-import { LspGoToDefinitionTool } from '../tools/lsp-go-to-definition.js';
-import { LspFindReferencesTool } from '../tools/lsp-find-references.js';
 import { LspTool } from '../tools/lsp.js';
 import type { LspClient } from '../lsp/types.js';
 
@@ -296,8 +293,6 @@ export interface ConfigParameters {
   mcpServers?: Record<string, MCPServerConfig>;
   lsp?: {
     enabled?: boolean;
-    allowed?: string[];
-    excluded?: string[];
   };
   lspClient?: LspClient;
   userMemory?: string;
@@ -444,8 +439,6 @@ export class Config {
   private readonly mcpServerCommand: string | undefined;
   private mcpServers: Record<string, MCPServerConfig> | undefined;
   private readonly lspEnabled: boolean;
-  private readonly lspAllowed?: string[];
-  private readonly lspExcluded?: string[];
   private lspClient?: LspClient;
   private readonly allowedMcpServers?: string[];
   private readonly excludedMcpServers?: string[];
@@ -551,8 +544,6 @@ export class Config {
     this.mcpServerCommand = params.mcpServerCommand;
     this.mcpServers = params.mcpServers;
     this.lspEnabled = params.lsp?.enabled ?? false;
-    this.lspAllowed = params.lsp?.allowed?.filter(Boolean);
-    this.lspExcluded = params.lsp?.excluded?.filter(Boolean);
     this.lspClient = params.lspClient;
     this.allowedMcpServers = params.allowedMcpServers;
     this.excludedMcpServers = params.excludedMcpServers;
@@ -1120,14 +1111,6 @@ export class Config {
     return this.lspEnabled;
   }
 
-  getLspAllowed(): string[] | undefined {
-    return this.lspAllowed;
-  }
-
-  getLspExcluded(): string[] | undefined {
-    return this.lspExcluded;
-  }
-
   getLspClient(): LspClient | undefined {
     return this.lspClient;
   }
@@ -1690,12 +1673,8 @@ export class Config {
       registerCoreTool(WebSearchTool, this);
     }
     if (this.isLspEnabled() && this.getLspClient()) {
-      // Register the unified LSP tool (recommended)
+      // Register the unified LSP tool
       registerCoreTool(LspTool, this);
-      // Keep legacy tools for backward compatibility
-      registerCoreTool(LspGoToDefinitionTool, this);
-      registerCoreTool(LspFindReferencesTool, this);
-      registerCoreTool(LspWorkspaceSymbolTool, this);
     }
 
     await registry.discoverAllTools();
