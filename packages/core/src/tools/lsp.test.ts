@@ -951,6 +951,9 @@ describe('LspTool', () => {
         'prepareCallHierarchy',
         'incomingCalls',
         'outgoingCalls',
+        'diagnostics',
+        'workspaceDiagnostics',
+        'codeActions',
       ];
       expect(schema.properties?.operation?.enum).toEqual(expectedOperations);
     });
@@ -986,7 +989,14 @@ describe('LspTool', () => {
       const properties = Object.keys(schema.properties ?? {});
 
       // Our extensions beyond Claude Code
-      const extensionProperties = ['serverName', 'limit'];
+      const extensionProperties = [
+        'serverName',
+        'limit',
+        'endLine',
+        'endCharacter',
+        'diagnostics',
+        'codeActionKinds',
+      ];
 
       // All properties should be either core or documented extensions
       const knownProperties = [
