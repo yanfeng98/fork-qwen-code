@@ -143,7 +143,13 @@ export class LspServerManager {
     }
   }
 
-  private isTypescriptServer(handle: LspServerHandle): boolean {
+  /**
+   * Check if the given handle is a TypeScript language server.
+   *
+   * @param handle - The LSP server handle
+   * @returns true if it's a TypeScript server
+   */
+  isTypescriptServer(handle: LspServerHandle): boolean {
     return (
       handle.config.name.includes('typescript') ||
       (handle.config.command?.includes('typescript') ?? false)

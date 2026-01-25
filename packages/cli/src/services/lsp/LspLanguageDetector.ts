@@ -1,4 +1,10 @@
 /**
+ * @license
+ * Copyright 2025 Qwen Team
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/**
  * LSP Language Detector
  *
  * Detects programming languages in a workspace by analyzing file extensions

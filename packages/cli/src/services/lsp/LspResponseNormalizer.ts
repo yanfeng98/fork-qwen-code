@@ -1,4 +1,10 @@
 /**
+ * @license
+ * Copyright 2025 Qwen Team
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/**
  * LSP Response Normalizer
  *
  * Converts raw LSP protocol responses to normalized internal types.

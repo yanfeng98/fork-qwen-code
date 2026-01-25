@@ -45,6 +45,7 @@ import { getCliVersion } from '../utils/version.js';
 import { loadSandboxConfig } from './sandboxConfig.js';
 import { appEvents } from '../utils/events.js';
 import { mcpCommand } from '../commands/mcp.js';
+import { NativeLspClient } from '../services/lsp/NativeLspClient.js';
 import { NativeLspService } from '../services/lsp/NativeLspService.js';
 
 import { isWorkspaceTrusted } from './trustedFolders.js';
@@ -149,134 +150,6 @@ export interface CliArgs {
   excludeTools: string[] | undefined;
   authType: string | undefined;
   channel: string | undefined;
-}
-
-class NativeLspClient implements LspClient {
-  constructor(private readonly service: NativeLspService) {}
-
-  workspaceSymbols(query: string, limit?: number) {
-    return this.service.workspaceSymbols(query, limit);
-  }
-
-  definitions(
-    location: Parameters<NativeLspService['definitions']>[0],
-    serverName?: string,
-    limit?: number,
-  ) {
-    return this.service.definitions(location, serverName, limit);
-  }
-
-  references(
-    location: Parameters<NativeLspService['references']>[0],
-    serverName?: string,
-    includeDeclaration?: boolean,
-    limit?: number,
-  ) {
-    return this.service.references(
-      location,
-      serverName,
-      includeDeclaration,
-      limit,
-    );
-  }
-
-  /**
-   * Get hover information (documentation, type info) for a symbol.
-   */
-  hover(
-    location: Parameters<NativeLspService['hover']>[0],
-    serverName?: string,
-  ) {
-    return this.service.hover(location, serverName);
-  }
-
-  /**
-   * Get all symbols in a document.
-   */
-  documentSymbols(uri: string, serverName?: string, limit?: number) {
-    return this.service.documentSymbols(uri, serverName, limit);
-  }
-
-  /**
-   * Find implementations of an interface or abstract method.
-   */
-  implementations(
-    location: Parameters<NativeLspService['implementations']>[0],
-    serverName?: string,
-    limit?: number,
-  ) {
-    return this.service.implementations(location, serverName, limit);
-  }
-
-  /**
-   * Prepare call hierarchy item at a position (functions/methods).
-   */
-  prepareCallHierarchy(
-    location: Parameters<NativeLspService['prepareCallHierarchy']>[0],
-    serverName?: string,
-    limit?: number,
-  ) {
-    return this.service.prepareCallHierarchy(location, serverName, limit);
-  }
-
-  /**
-   * Find all functions/methods that call the given function.
-   */
-  incomingCalls(
-    item: Parameters<NativeLspService['incomingCalls']>[0],
-    serverName?: string,
-    limit?: number,
-  ) {
-    return this.service.incomingCalls(item, serverName, limit);
-  }
-
-  /**
-   * Find all functions/methods called by the given function.
-   */
-  outgoingCalls(
-    item: Parameters<NativeLspService['outgoingCalls']>[0],
-    serverName?: string,
-    limit?: number,
-  ) {
-    return this.service.outgoingCalls(item, serverName, limit);
-  }
-
-  /**
-   * Get diagnostics for a specific document.
-   */
-  diagnostics(uri: string, serverName?: string) {
-    return this.service.diagnostics(uri, serverName);
-  }
-
-  /**
-   * Get diagnostics for all open documents in the workspace.
-   */
-  workspaceDiagnostics(serverName?: string, limit?: number) {
-    return this.service.workspaceDiagnostics(serverName, limit);
-  }
-
-  /**
-   * Get code actions available at a specific location.
-   */
-  codeActions(
-    uri: string,
-    range: Parameters<NativeLspService['codeActions']>[1],
-    context: Parameters<NativeLspService['codeActions']>[2],
-    serverName?: string,
-    limit?: number,
-  ) {
-    return this.service.codeActions(uri, range, context, serverName, limit);
-  }
-
-  /**
-   * Apply a workspace edit (from code action or other sources).
-   */
-  applyWorkspaceEdit(
-    edit: Parameters<NativeLspService['applyWorkspaceEdit']>[0],
-    serverName?: string,
-  ) {
-    return this.service.applyWorkspaceEdit(edit, serverName);
-  }
 }
 
 function normalizeOutputFormat(

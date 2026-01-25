@@ -14,39 +14,28 @@ import type {
 } from './LspTypes.js';
 
 export class LspConfigLoader {
-  private warnedLegacyConfig = false;
-
   constructor(private readonly workspaceRoot: string) {}
 
   /**
-   * Load user .lsp.json configuration
+   * Load user .lsp.json configuration.
+   * Supports two official formats:
+   * 1. Basic format: { "language": { "command": "...", "extensionToLanguage": {...} } }
+   * 2. LanguageServers format: { "languageServers": { "server-name": { "languages": [...], ... } } }
    */
   async loadUserConfigs(): Promise<LspServerConfig[]> {
-    const configs: LspServerConfig[] = [];
-    const sources: Array<{ origin: string; data: unknown }> = [];
-
     const lspConfigPath = path.join(this.workspaceRoot, '.lsp.json');
-    if (fs.existsSync(lspConfigPath)) {
-      try {
-        const configContent = fs.readFileSync(lspConfigPath, 'utf-8');
-        sources.push({
-          origin: lspConfigPath,
-          data: JSON.parse(configContent),
-        });
-      } catch (error) {
-        console.warn('Failed to load user .lsp.json config:', error);
-      }
+    if (!fs.existsSync(lspConfigPath)) {
+      return [];
     }
 
-    for (const source of sources) {
-      const parsed = this.parseConfigSource(source.data, source.origin);
-      if (parsed.usedLegacyFormat && parsed.configs.length > 0) {
-        this.warnLegacyConfig(source.origin);
-      }
-      configs.push(...parsed.configs);
+    try {
+      const configContent = fs.readFileSync(lspConfigPath, 'utf-8');
+      const data = JSON.parse(configContent);
+      return this.parseConfigSource(data, lspConfigPath);
+    } catch (error) {
+      console.warn('Failed to load user .lsp.json config:', error);
+      return [];
     }
-
-    return configs;
   }
 
   /**
@@ -164,40 +153,43 @@ export class LspConfigLoader {
     return presets;
   }
 
+  /**
+   * Parse configuration source and extract server configs.
+   * Detects format based on presence of 'languageServers' key.
+   */
   private parseConfigSource(
     source: unknown,
     origin: string,
-  ): { configs: LspServerConfig[]; usedLegacyFormat: boolean } {
+  ): LspServerConfig[] {
     if (!this.isRecord(source)) {
-      return { configs: [], usedLegacyFormat: false };
+      return [];
     }
 
     const configs: LspServerConfig[] = [];
-    let serverMap: Record<string, unknown> = source;
-    let usedLegacyFormat = false;
 
-    if (this.isRecord(source['languageServers'])) {
-      serverMap = source['languageServers'] as Record<string, unknown>;
-    } else if (this.isNewFormatServerMap(source)) {
-      serverMap = source;
-    } else {
-      usedLegacyFormat = true;
-    }
+    // Determine format: languageServers wrapper vs basic format
+    const hasLanguageServersWrapper = this.isRecord(source['languageServers']);
+    const serverMap = hasLanguageServersWrapper
+      ? (source['languageServers'] as Record<string, unknown>)
+      : source;
 
     for (const [key, spec] of Object.entries(serverMap)) {
       if (!this.isRecord(spec)) {
         continue;
       }
 
-      const languagesValue = spec['languages'];
-      const languages = usedLegacyFormat
-        ? [key]
-        : (this.normalizeStringArray(languagesValue) ??
-          (typeof languagesValue === 'string' ? [languagesValue] : []));
+      // In basic format: key is language name, server name comes from command
+      // In languageServers format: key is server name, languages come from 'languages' array
+      const isBasicFormat = !hasLanguageServersWrapper && !spec['languages'];
 
-      const name = usedLegacyFormat
+      const languages = isBasicFormat
+        ? [key]
+        : (this.normalizeStringArray(spec['languages']) ??
+          (typeof spec['languages'] === 'string' ? [spec['languages']] : []));
+
+      const name = isBasicFormat
         ? typeof spec['command'] === 'string'
-          ? (spec['command'] as string)
+          ? spec['command']
           : key
         : key;
 
@@ -207,7 +199,7 @@ export class LspConfigLoader {
       }
     }
 
-    return { configs, usedLegacyFormat };
+    return configs;
   }
 
   private buildServerConfig(
@@ -280,37 +272,6 @@ export class LspConfigLoader {
       trustRequired,
       socket,
     };
-  }
-
-  private isNewFormatServerMap(value: Record<string, unknown>): boolean {
-    return Object.values(value).some(
-      (entry) => this.isRecord(entry) && this.isNewFormatServerSpec(entry),
-    );
-  }
-
-  private isNewFormatServerSpec(value: Record<string, unknown>): boolean {
-    return (
-      Array.isArray(value['languages']) ||
-      this.isRecord(value['extensionToLanguage']) ||
-      this.isRecord(value['settings']) ||
-      value['workspaceFolder'] !== undefined ||
-      value['startupTimeout'] !== undefined ||
-      value['shutdownTimeout'] !== undefined ||
-      value['restartOnCrash'] !== undefined ||
-      value['maxRestarts'] !== undefined ||
-      this.isRecord(value['env']) ||
-      value['socket'] !== undefined
-    );
-  }
-
-  private warnLegacyConfig(origin: string): void {
-    if (this.warnedLegacyConfig) {
-      return;
-    }
-    console.warn(
-      `Legacy LSP config detected in ${origin}. Please migrate to the languageServers format.`,
-    );
-    this.warnedLegacyConfig = true;
   }
 
   private isRecord(value: unknown): value is Record<string, unknown> {

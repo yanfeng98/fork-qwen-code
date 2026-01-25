@@ -34,6 +34,7 @@ import type {
   LspServerHandle,
   LspServerStatus,
   NativeLspServiceOptions,
+  LspConnectionInterface,
 } from './LspTypes.js';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
@@ -132,6 +133,29 @@ export class NativeLspService {
   }
 
   /**
+   * Get ready server handles filtered by optional server name.
+   * Each handle is guaranteed to have a valid connection.
+   *
+   * @param serverName - Optional server name to filter by
+   * @returns Array of [serverName, handle] tuples with active connections
+   */
+  private getReadyHandles(
+    serverName?: string,
+  ): Array<[string, LspServerHandle & { connection: LspConnectionInterface }]> {
+    return Array.from(this.serverManager.getHandles().entries()).filter(
+      (
+        entry,
+      ): entry is [
+        string,
+        LspServerHandle & { connection: LspConnectionInterface },
+      ] =>
+        entry[1].status === 'READY' &&
+        entry[1].connection !== undefined &&
+        (!serverName || entry[0] === serverName),
+    );
+  }
+
+  /**
    * Workspace symbol search across all ready LSP servers.
    */
   async workspaceSymbols(
@@ -152,7 +176,7 @@ export class NativeLspService {
           query,
         });
         if (
-          this.isTypescriptServer(handle) &&
+          this.serverManager.isTypescriptServer(handle) &&
           this.isNoProjectErrorResponse(response)
         ) {
           await this.serverManager.warmupTypescriptServer(handle, true);
@@ -191,19 +215,9 @@ export class NativeLspService {
     serverName?: string,
     limit = 50,
   ): Promise<LspDefinition[]> {
-    const handles = Array.from(
-      this.serverManager.getHandles().entries(),
-    ).filter(
-      ([name, handle]) =>
-        handle.status === 'READY' &&
-        handle.connection &&
-        (!serverName || name === serverName),
-    );
+    const handles = this.getReadyHandles(serverName);
 
     for (const [name, handle] of handles) {
-      if (!handle.connection) {
-        continue;
-      }
       try {
         await this.serverManager.warmupTypescriptServer(handle);
         const response = await handle.connection.request(
@@ -248,19 +262,9 @@ export class NativeLspService {
     includeDeclaration = false,
     limit = 200,
   ): Promise<LspReference[]> {
-    const handles = Array.from(
-      this.serverManager.getHandles().entries(),
-    ).filter(
-      ([name, handle]) =>
-        handle.status === 'READY' &&
-        handle.connection &&
-        (!serverName || name === serverName),
-    );
+    const handles = this.getReadyHandles(serverName);
 
     for (const [name, handle] of handles) {
-      if (!handle.connection) {
-        continue;
-      }
       try {
         await this.serverManager.warmupTypescriptServer(handle);
         const response = await handle.connection.request(
@@ -302,19 +306,9 @@ export class NativeLspService {
     location: LspLocation,
     serverName?: string,
   ): Promise<LspHoverResult | null> {
-    const handles = Array.from(
-      this.serverManager.getHandles().entries(),
-    ).filter(
-      ([name, handle]) =>
-        handle.status === 'READY' &&
-        handle.connection &&
-        (!serverName || name === serverName),
-    );
+    const handles = this.getReadyHandles(serverName);
 
     for (const [name, handle] of handles) {
-      if (!handle.connection) {
-        continue;
-      }
       try {
         await this.serverManager.warmupTypescriptServer(handle);
         const response = await handle.connection.request('textDocument/hover', {
@@ -341,19 +335,9 @@ export class NativeLspService {
     serverName?: string,
     limit = 200,
   ): Promise<LspSymbolInformation[]> {
-    const handles = Array.from(
-      this.serverManager.getHandles().entries(),
-    ).filter(
-      ([name, handle]) =>
-        handle.status === 'READY' &&
-        handle.connection &&
-        (!serverName || name === serverName),
-    );
+    const handles = this.getReadyHandles(serverName);
 
     for (const [name, handle] of handles) {
-      if (!handle.connection) {
-        continue;
-      }
       try {
         await this.serverManager.warmupTypescriptServer(handle);
         const response = await handle.connection.request(
@@ -414,19 +398,9 @@ export class NativeLspService {
     serverName?: string,
     limit = 50,
   ): Promise<LspDefinition[]> {
-    const handles = Array.from(
-      this.serverManager.getHandles().entries(),
-    ).filter(
-      ([name, handle]) =>
-        handle.status === 'READY' &&
-        handle.connection &&
-        (!serverName || name === serverName),
-    );
+    const handles = this.getReadyHandles(serverName);
 
     for (const [name, handle] of handles) {
-      if (!handle.connection) {
-        continue;
-      }
       try {
         await this.serverManager.warmupTypescriptServer(handle);
         const response = await handle.connection.request(
@@ -476,19 +450,9 @@ export class NativeLspService {
     serverName?: string,
     limit = 50,
   ): Promise<LspCallHierarchyItem[]> {
-    const handles = Array.from(
-      this.serverManager.getHandles().entries(),
-    ).filter(
-      ([name, handle]) =>
-        handle.status === 'READY' &&
-        handle.connection &&
-        (!serverName || name === serverName),
-    );
+    const handles = this.getReadyHandles(serverName);
 
     for (const [name, handle] of handles) {
-      if (!handle.connection) {
-        continue;
-      }
       try {
         await this.serverManager.warmupTypescriptServer(handle);
         const response = await handle.connection.request(
@@ -539,19 +503,9 @@ export class NativeLspService {
     limit = 50,
   ): Promise<LspCallHierarchyIncomingCall[]> {
     const targetServer = serverName ?? item.serverName;
-    const handles = Array.from(
-      this.serverManager.getHandles().entries(),
-    ).filter(
-      ([name, handle]) =>
-        handle.status === 'READY' &&
-        handle.connection &&
-        (!targetServer || name === targetServer),
-    );
+    const handles = this.getReadyHandles(targetServer);
 
     for (const [name, handle] of handles) {
-      if (!handle.connection) {
-        continue;
-      }
       try {
         await this.serverManager.warmupTypescriptServer(handle);
         const response = await handle.connection.request(
@@ -596,19 +550,9 @@ export class NativeLspService {
     limit = 50,
   ): Promise<LspCallHierarchyOutgoingCall[]> {
     const targetServer = serverName ?? item.serverName;
-    const handles = Array.from(
-      this.serverManager.getHandles().entries(),
-    ).filter(
-      ([name, handle]) =>
-        handle.status === 'READY' &&
-        handle.connection &&
-        (!targetServer || name === targetServer),
-    );
+    const handles = this.getReadyHandles(targetServer);
 
     for (const [name, handle] of handles) {
-      if (!handle.connection) {
-        continue;
-      }
       try {
         await this.serverManager.warmupTypescriptServer(handle);
         const response = await handle.connection.request(
@@ -651,21 +595,10 @@ export class NativeLspService {
     uri: string,
     serverName?: string,
   ): Promise<LspDiagnostic[]> {
-    const handles = Array.from(
-      this.serverManager.getHandles().entries(),
-    ).filter(
-      ([name, handle]) =>
-        handle.status === 'READY' &&
-        handle.connection &&
-        (!serverName || name === serverName),
-    );
-
+    const handles = this.getReadyHandles(serverName);
     const allDiagnostics: LspDiagnostic[] = [];
 
     for (const [name, handle] of handles) {
-      if (!handle.connection) {
-        continue;
-      }
       try {
         await this.serverManager.warmupTypescriptServer(handle);
 
@@ -709,21 +642,10 @@ export class NativeLspService {
     serverName?: string,
     limit = 100,
   ): Promise<LspFileDiagnostics[]> {
-    const handles = Array.from(
-      this.serverManager.getHandles().entries(),
-    ).filter(
-      ([name, handle]) =>
-        handle.status === 'READY' &&
-        handle.connection &&
-        (!serverName || name === serverName),
-    );
-
+    const handles = this.getReadyHandles(serverName);
     const results: LspFileDiagnostics[] = [];
 
     for (const [name, handle] of handles) {
-      if (!handle.connection) {
-        continue;
-      }
       try {
         await this.serverManager.warmupTypescriptServer(handle);
 
@@ -775,19 +697,9 @@ export class NativeLspService {
     serverName?: string,
     limit = 20,
   ): Promise<LspCodeAction[]> {
-    const handles = Array.from(
-      this.serverManager.getHandles().entries(),
-    ).filter(
-      ([name, handle]) =>
-        handle.status === 'READY' &&
-        handle.connection &&
-        (!serverName || name === serverName),
-    );
+    const handles = this.getReadyHandles(serverName);
 
     for (const [name, handle] of handles) {
-      if (!handle.connection) {
-        continue;
-      }
       try {
         await this.serverManager.warmupTypescriptServer(handle);
 
@@ -928,13 +840,6 @@ export class NativeLspService {
 
     // Write back to file
     fs.writeFileSync(filePath, lines.join('\n'), 'utf-8');
-  }
-
-  private isTypescriptServer(handle: LspServerHandle): boolean {
-    return (
-      handle.config.name.includes('typescript') ||
-      (handle.config.command?.includes('typescript') ?? false)
-    );
   }
 
   private isNoProjectErrorResponse(response: unknown): boolean {
