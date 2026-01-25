@@ -25,7 +25,6 @@ export const ToolNames = {
   WEB_FETCH: 'web_fetch',
   WEB_SEARCH: 'web_search',
   LS: 'list_directory',
-  /** Unified LSP tool supporting all LSP operations. */
   LSP: 'lsp',
 } as const;
 
@@ -50,7 +49,6 @@ export const ToolDisplayNames = {
   WEB_FETCH: 'WebFetch',
   WEB_SEARCH: 'WebSearch',
   LS: 'ListFiles',
-  /** Unified LSP tool display name. */
   LSP: 'Lsp',
 } as const;
 
@@ -60,9 +58,6 @@ export const ToolDisplayNames = {
 export const ToolNamesMigration = {
   search_file_content: ToolNames.GREP, // Legacy name from grep tool
   replace: ToolNames.EDIT, // Legacy name from edit tool
-  // Legacy LSP tools now use unified LSP tool with operation parameter
-  go_to_definition: ToolNames.LSP,
-  find_references: ToolNames.LSP,
 } as const;
 
 // Migration from old tool display names to new tool display names
