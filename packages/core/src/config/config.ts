@@ -107,7 +107,11 @@ import {
 } from '../services/sessionService.js';
 import { randomUUID } from 'node:crypto';
 import { loadServerHierarchicalMemory } from '../utils/memoryDiscovery.js';
-import { createDebugLogger, type DebugLogger } from '../utils/debugLogger.js';
+import {
+  createDebugLogger,
+  setDebugLogSession,
+  type DebugLogger,
+} from '../utils/debugLogger.js';
 
 import {
   ModelsConfig,
@@ -513,7 +517,8 @@ export class Config {
   constructor(params: ConfigParameters) {
     this.sessionId = params.sessionId ?? randomUUID();
     this.sessionData = params.sessionData;
-    this.debugLogger = createDebugLogger(this);
+    setDebugLogSession(this);
+    this.debugLogger = createDebugLogger();
     this.embeddingModel = params.embeddingModel ?? DEFAULT_QWEN_EMBEDDING_MODEL;
     this.fileSystemService = new StandardFileSystemService();
     this.sandbox = params.sandbox;
@@ -713,7 +718,6 @@ export class Config {
       this.shouldLoadMemoryFromIncludeDirectories()
         ? this.getWorkspaceContext().getDirectories()
         : [],
-      this.getDebugMode(),
       this.getFileService(),
       this.getExtensionContextFilePaths(),
       this.getFolderTrust(),
@@ -831,7 +835,8 @@ export class Config {
   ): string {
     this.sessionId = sessionId ?? randomUUID();
     this.sessionData = sessionData;
-    this.debugLogger = createDebugLogger(this);
+    setDebugLogSession(this);
+    this.debugLogger = createDebugLogger();
     this.chatRecordingService = this.chatRecordingEnabled
       ? new ChatRecordingService(this)
       : undefined;
@@ -1654,7 +1659,7 @@ export class Config {
     }
 
     await registry.discoverAllTools();
-    console.debug('ToolRegistry created', registry.getAllToolNames());
+    this.debugLogger.debug('ToolRegistry created', registry.getAllToolNames());
     return registry;
   }
 }

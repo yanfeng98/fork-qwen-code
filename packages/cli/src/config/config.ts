@@ -47,16 +47,6 @@ import { mcpCommand } from '../commands/mcp.js';
 import { isWorkspaceTrusted } from './trustedFolders.js';
 import { buildWebSearchConfig } from './webSearch.js';
 
-// Simple console logger for now - replace with actual logger if available
-const logger = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  debug: (...args: any[]) => console.debug('[DEBUG]', ...args),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  warn: (...args: any[]) => console.warn('[WARN]', ...args),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  error: (...args: any[]) => console.error('[ERROR]', ...args),
-};
-
 const VALID_APPROVAL_MODE_VALUES = [
   'plan',
   'default',
@@ -626,7 +616,6 @@ export async function parseArguments(settings: Settings): Promise<CliArgs> {
 export async function loadHierarchicalGeminiMemory(
   currentWorkingDirectory: string,
   includeDirectoriesToReadGemini: readonly string[] = [],
-  debugMode: boolean,
   fileService: FileDiscoveryService,
   extensionContextFilePaths: string[] = [],
   folderTrust: boolean,
@@ -641,17 +630,10 @@ export async function loadHierarchicalGeminiMemory(
   // function to signal that it should skip the workspace search.
   const effectiveCwd = isHomeDirectory ? '' : currentWorkingDirectory;
 
-  if (debugMode) {
-    logger.debug(
-      `CLI: Delegating hierarchical memory load to server for CWD: ${currentWorkingDirectory} (memoryImportFormat: ${memoryImportFormat})`,
-    );
-  }
-
   // Directly call the server function with the corrected path.
   return loadServerHierarchicalMemory(
     effectiveCwd,
     includeDirectoriesToReadGemini,
-    debugMode,
     fileService,
     extensionContextFilePaths,
     folderTrust,
@@ -698,11 +680,7 @@ export async function loadCliConfig(
     'output-language.md',
   );
   if (fs.existsSync(outputLanguageFilePath)) {
-    if (debugMode) {
-      logger.debug(
-        `Found output-language.md, adding to context files: ${outputLanguageFilePath}`,
-      );
-    }
+    // output-language.md found - will be added to context files
   } else {
     outputLanguageFilePath = undefined;
   }
@@ -749,7 +727,7 @@ export async function loadCliConfig(
     approvalMode !== ApprovalMode.DEFAULT &&
     approvalMode !== ApprovalMode.PLAN
   ) {
-    logger.warn(
+    console.warn(
       `Approval mode overridden to "default" because the current folder is not trusted.`,
     );
     approvalMode = ApprovalMode.DEFAULT;

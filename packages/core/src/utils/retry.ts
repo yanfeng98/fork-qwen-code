@@ -10,6 +10,9 @@ import {
   isQwenQuotaExceededError,
   isQwenThrottlingError,
 } from './quotaErrorDetection.js';
+import { createDebugLogger } from './debugLogger.js';
+
+const debugLogger = createDebugLogger('RETRY');
 
 export interface HttpError extends Error {
   status?: number;
@@ -141,7 +144,7 @@ export async function retryWithBackoff<T>(
         consecutive429Count = 0;
       }
 
-      console.debug('consecutive429Count', consecutive429Count);
+      debugLogger.debug('consecutive429Count', consecutive429Count);
 
       // Check if we've exhausted retries or shouldn't retry
       if (attempt >= maxAttempts || !shouldRetryOnError(error as Error)) {

@@ -17,6 +17,9 @@ import {
   isErrorResponse,
   CredentialsClearRequiredError,
 } from './qwenOAuth2.js';
+import { createDebugLogger } from '../utils/debugLogger.js';
+
+const debugLogger = createDebugLogger('QWEN_OAUTH');
 
 // File System Configuration
 const QWEN_DIR = '.qwen';
@@ -549,7 +552,7 @@ export class SharedTokenManager {
     } catch (error) {
       // Handle credentials clear required error (400 status from refresh)
       if (error instanceof CredentialsClearRequiredError) {
-        console.debug(
+        debugLogger.debug(
           'SharedTokenManager: Clearing memory cache due to credentials clear requirement',
         );
         // Clear memory cache when credentials need to be cleared

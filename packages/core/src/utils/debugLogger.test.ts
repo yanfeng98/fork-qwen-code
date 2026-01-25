@@ -9,6 +9,7 @@ import {
   createDebugLogger,
   isDebugLoggingDegraded,
   resetDebugLoggingState,
+  setDebugLogSession,
   type DebugLogSession,
 } from './debugLogger.js';
 import { promises as fs } from 'node:fs';
@@ -31,20 +32,31 @@ describe('debugLogger', () => {
     getSessionId: () => 'test-session-123',
   };
 
+  const previousDebugLogFileEnv = process.env['QWEN_DEBUG_LOG_FILE'];
+
   beforeEach(() => {
+    process.env['QWEN_DEBUG_LOG_FILE'] = '1';
     vi.clearAllMocks();
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-01-24T10:30:00.000Z'));
     resetDebugLoggingState();
+    setDebugLogSession(mockSession);
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    setDebugLogSession(null);
+    if (previousDebugLogFileEnv === undefined) {
+      delete process.env['QWEN_DEBUG_LOG_FILE'];
+    } else {
+      process.env['QWEN_DEBUG_LOG_FILE'] = previousDebugLogFileEnv;
+    }
   });
 
   describe('createDebugLogger', () => {
-    it('returns no-op logger when session is null', () => {
-      const logger = createDebugLogger(null);
+    it('returns no-op logger when session is unset', () => {
+      setDebugLogSession(null);
+      const logger = createDebugLogger();
       // Should not throw
       logger.debug('test');
       logger.info('test');
@@ -53,14 +65,8 @@ describe('debugLogger', () => {
       expect(fs.appendFile).not.toHaveBeenCalled();
     });
 
-    it('returns no-op logger when session is undefined', () => {
-      const logger = createDebugLogger(undefined);
-      logger.debug('test');
-      expect(fs.appendFile).not.toHaveBeenCalled();
-    });
-
     it('writes debug log with correct format', async () => {
-      const logger = createDebugLogger(mockSession);
+      const logger = createDebugLogger();
       logger.debug('Hello world');
 
       await vi.runAllTimersAsync();
@@ -76,7 +82,7 @@ describe('debugLogger', () => {
     });
 
     it('writes log with tag when provided', async () => {
-      const logger = createDebugLogger(mockSession, 'STARTUP');
+      const logger = createDebugLogger('STARTUP');
       logger.info('Server started');
 
       await vi.runAllTimersAsync();
@@ -89,7 +95,7 @@ describe('debugLogger', () => {
     });
 
     it('writes different log levels correctly', async () => {
-      const logger = createDebugLogger(mockSession);
+      const logger = createDebugLogger();
 
       logger.debug('debug message');
       logger.info('info message');
@@ -106,7 +112,7 @@ describe('debugLogger', () => {
     });
 
     it('formats multiple arguments', async () => {
-      const logger = createDebugLogger(mockSession);
+      const logger = createDebugLogger();
       logger.debug('Count:', 42, 'items');
 
       await vi.runAllTimersAsync();
@@ -119,7 +125,7 @@ describe('debugLogger', () => {
     });
 
     it('formats Error objects with stack trace', async () => {
-      const logger = createDebugLogger(mockSession);
+      const logger = createDebugLogger();
       const error = new Error('Something went wrong');
       logger.error('Failed:', error);
 
@@ -131,7 +137,7 @@ describe('debugLogger', () => {
     });
 
     it('formats objects using util.inspect', async () => {
-      const logger = createDebugLogger(mockSession);
+      const logger = createDebugLogger();
       logger.debug('Data:', { foo: 'bar', count: 123 });
 
       await vi.runAllTimersAsync();
@@ -150,7 +156,7 @@ describe('debugLogger', () => {
     it('returns true when mkdir fails', async () => {
       vi.mocked(fs.mkdir).mockRejectedValueOnce(new Error('Permission denied'));
 
-      const logger = createDebugLogger(mockSession);
+      const logger = createDebugLogger();
       logger.debug('test');
 
       await vi.runAllTimersAsync();
@@ -161,7 +167,7 @@ describe('debugLogger', () => {
     it('returns true when appendFile fails', async () => {
       vi.mocked(fs.appendFile).mockRejectedValueOnce(new Error('Disk full'));
 
-      const logger = createDebugLogger(mockSession);
+      const logger = createDebugLogger();
       logger.debug('test');
 
       await vi.runAllTimersAsync();
@@ -174,7 +180,7 @@ describe('debugLogger', () => {
         new Error('Temporary error'),
       );
 
-      const logger = createDebugLogger(mockSession);
+      const logger = createDebugLogger();
       logger.debug('first write fails');
       await vi.runAllTimersAsync();
 
@@ -194,7 +200,7 @@ describe('debugLogger', () => {
     it('resets the degraded state', async () => {
       vi.mocked(fs.appendFile).mockRejectedValueOnce(new Error('Disk full'));
 
-      const logger = createDebugLogger(mockSession);
+      const logger = createDebugLogger();
       logger.debug('test');
       await vi.runAllTimersAsync();
 

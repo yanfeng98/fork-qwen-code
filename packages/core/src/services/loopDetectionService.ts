@@ -431,7 +431,7 @@ export class LoopDetectionService {
       });
     } catch (e) {
       // Do nothing, treat it as a non-loop.
-      this.config.getDebugMode() ? console.error(e) : console.debug(e);
+      this.config.getDebugLogger().error(e);
       return false;
     }
 

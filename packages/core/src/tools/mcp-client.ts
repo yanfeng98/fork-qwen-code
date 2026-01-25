@@ -38,6 +38,7 @@ import { MCPOAuthTokenStorage } from '../mcp/oauth-token-storage.js';
 import { OAuthUtils } from '../mcp/oauth-utils.js';
 import type { PromptRegistry } from '../prompts/prompt-registry.js';
 import { getErrorMessage } from '../utils/errors.js';
+import { createDebugLogger } from '../utils/debugLogger.js';
 import type {
   Unsubscribe,
   WorkspaceContext,
@@ -53,6 +54,8 @@ export type SendSdkMcpMessage = (
 ) => Promise<JSONRPCMessage>;
 
 export const MCP_DEFAULT_TIMEOUT_MSEC = 10 * 60 * 1000; // default to 10 minutes
+
+const debugLogger = createDebugLogger('MCP');
 
 export type DiscoveredMCPPrompt = Prompt & {
   serverName: string;
@@ -910,7 +913,7 @@ export async function connectToMcpServer(
             }
           }
         } catch (fetchError) {
-          console.debug(
+          debugLogger.debug(
             `Failed to fetch www-authenticate header: ${getErrorMessage(
               fetchError,
             )}`,
@@ -1360,7 +1363,7 @@ export async function createTransport(
     if (debugMode) {
       transport.stderr!.on('data', (data) => {
         const stderrStr = data.toString().trim();
-        console.debug(`[DEBUG] [MCP STDERR (${mcpServerName})]: `, stderrStr);
+        debugLogger.debug(`MCP STDERR (${mcpServerName}):`, stderrStr);
       });
     }
     return transport;

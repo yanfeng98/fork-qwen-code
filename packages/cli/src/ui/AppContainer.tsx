@@ -584,10 +584,13 @@ export const AppContainer = (props: AppContainerProps) => {
     [visionSwitchResolver],
   );
 
-  // onDebugMessage should log to console, not update footer debugMessage
-  const onDebugMessage = useCallback((message: string) => {
-    console.debug(message);
-  }, []);
+  // onDebugMessage should log to debug logfile, not update footer debugMessage
+  const onDebugMessage = useCallback(
+    (message: string) => {
+      config.getDebugLogger().debug(message);
+    },
+    [config],
+  );
 
   const performMemoryRefresh = useCallback(async () => {
     historyManager.addItem(
@@ -603,7 +606,6 @@ export const AppContainer = (props: AppContainerProps) => {
         settings.merged.context?.loadMemoryFromIncludeDirectories
           ? config.getWorkspaceContext().getDirectories()
           : [],
-        config.getDebugMode(),
         config.getFileService(),
         config.getExtensionContextFilePaths(),
         config.isTrustedFolder(),

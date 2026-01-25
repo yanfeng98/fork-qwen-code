@@ -467,7 +467,7 @@ export async function runNonInteractive(
       process.removeListener('SIGINT', shutdownHandler);
       process.removeListener('SIGTERM', shutdownHandler);
       if (isTelemetrySdkInitialized()) {
-        await shutdownTelemetry(config);
+        await shutdownTelemetry();
       }
     }
   });
