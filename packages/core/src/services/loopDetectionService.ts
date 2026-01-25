@@ -23,6 +23,9 @@ import {
   isFunctionResponse,
 } from '../utils/messageInspectors.js';
 import { DEFAULT_QWEN_MODEL } from '../config/models.js';
+import { createDebugLogger } from '../utils/debugLogger.js';
+
+const debugLogger = createDebugLogger('LOOP_DETECTION');
 
 const TOOL_CALL_LOOP_THRESHOLD = 5;
 const CONTENT_LOOP_THRESHOLD = 10;
@@ -438,7 +441,7 @@ export class LoopDetectionService {
     if (typeof result['confidence'] === 'number') {
       if (result['confidence'] > 0.9) {
         if (typeof result['reasoning'] === 'string' && result['reasoning']) {
-          console.warn(result['reasoning']);
+          debugLogger.warn(result['reasoning']);
         }
         logLoopDetected(
           this.config,

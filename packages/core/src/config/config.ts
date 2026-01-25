@@ -1584,10 +1584,9 @@ export class Config {
 
       if (!toolName) {
         // Log warning and skip this tool instead of crashing
-        console.warn(
-          `[Config] Skipping tool registration: ${className} is missing static Name property. ` +
-            `Tools must define a static Name property to be registered. ` +
-            `Location: config.ts:registerCoreTool`,
+        this.debugLogger.warn(
+          `Skipping tool registration: ${className} is missing static Name property. ` +
+            `Tools must define a static Name property to be registered.`,
         );
         return;
       }
@@ -1596,8 +1595,8 @@ export class Config {
         try {
           registry.registerTool(new ToolClass(...args));
         } catch (error) {
-          console.error(
-            `[Config] Failed to register tool ${className} (${toolName}):`,
+          this.debugLogger.error(
+            `Failed to register tool ${className} (${toolName}):`,
             error,
           );
           throw error; // Re-throw after logging context
