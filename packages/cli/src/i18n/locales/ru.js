@@ -319,7 +319,9 @@ export default {
   'How is Qwen doing this session? (optional)':
     'Как дела у Qwen в этой сессии? (необязательно)',
   Bad: 'Плохо',
+  Fine: 'Нормально',
   Good: 'Хорошо',
+  Dismiss: 'Отклонить',
   'Not Sure Yet': 'Пока не уверен',
   'Any other key': 'Любая другая клавиша',
   'Disable Loading Phrases': 'Отключить фразы при загрузке',
