@@ -27,13 +27,11 @@ export const Footer: React.FC = () => {
   const { vimEnabled, vimMode } = useVimMode();
 
   const {
-    model,
     errorCount,
     showErrorDetails,
     promptTokenCount,
     showAutoAcceptIndicator,
   } = {
-    model: config.getModel(),
     errorCount: uiState.errorCount,
     showErrorDetails: uiState.showErrorDetails,
     promptTokenCount: uiState.sessionStats.lastPromptTokenCount,
@@ -61,7 +59,7 @@ export const Footer: React.FC = () => {
   // Memoize contextWindowSize to avoid recalculating on every render
   const contextWindowSize = useMemo(
     () => config.getContentGeneratorConfig()?.contextWindowSize,
-    [config]
+    [config],
   );
 
   // Left section should show exactly ONE thing at any time, in priority order.
