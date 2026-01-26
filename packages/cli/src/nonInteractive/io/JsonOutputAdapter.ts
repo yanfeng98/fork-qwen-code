@@ -67,7 +67,7 @@ export class JsonOutputAdapter
     );
     this.messages.push(resultMessage);
 
-    if (options.showResult) {
+    if (this.config.getOutputFormat() === 'text') {
       if (resultMessage.is_error) {
         process.stderr.write(`${resultMessage.error?.message || ''}`);
       } else {

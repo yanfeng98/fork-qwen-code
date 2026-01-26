@@ -49,18 +49,11 @@ import {
 async function emitNonInteractiveFinalMessage(params: {
   message: string;
   isError: boolean;
-  adapter?: JsonOutputAdapterInterface;
+  adapter: JsonOutputAdapterInterface;
   config: Config;
   startTimeMs: number;
 }): Promise<void> {
   const { message, isError, adapter, config } = params;
-
-  if (!adapter) {
-    // Text output mode: write directly to stdout/stderr
-    const target = isError ? process.stderr : process.stdout;
-    target.write(`${message}\n`);
-    return;
-  }
 
   // JSON output mode: emit assistant message and result
   // (systemMessage should already be emitted by caller)
@@ -88,7 +81,6 @@ async function emitNonInteractiveFinalMessage(params: {
     usage,
     stats,
     summary: message,
-    showResult: config.getOutputFormat() === OutputFormat.TEXT,
   });
 }
 
@@ -119,21 +111,18 @@ export async function runNonInteractive(
 ): Promise<void> {
   return promptIdContext.run(prompt_id, async () => {
     // Create output adapter based on format
-    let adapter: JsonOutputAdapterInterface | undefined;
+    let adapter: JsonOutputAdapterInterface;
     const outputFormat = config.getOutputFormat();
 
     if (options.adapter) {
       adapter = options.adapter;
-    } else if (
-      outputFormat === OutputFormat.JSON ||
-      outputFormat === OutputFormat.TEXT
-    ) {
-      adapter = new JsonOutputAdapter(config);
     } else if (outputFormat === OutputFormat.STREAM_JSON) {
       adapter = new StreamJsonOutputAdapter(
         config,
         config.getIncludePartialMessages(),
       );
+    } else {
+      adapter = new JsonOutputAdapter(config);
     }
 
     // Get readonly values once at the start
@@ -169,14 +158,12 @@ export async function runNonInteractive(
       process.on('SIGTERM', shutdownHandler);
 
       // Emit systemMessage first (always the first message in JSON mode)
-      if (adapter) {
-        const systemMessage = await buildSystemMessage(
-          config,
-          sessionId,
-          permissionMode,
-        );
-        adapter.emitMessage(systemMessage);
-      }
+      const systemMessage = await buildSystemMessage(
+        config,
+        sessionId,
+        permissionMode,
+      );
+      adapter.emitMessage(systemMessage);
 
       let initialPartList: PartListUnion | null = extractPartsFromUserMessage(
         options.userMessage,
@@ -282,21 +269,16 @@ export async function runNonInteractive(
         isFirstTurn = false;
 
         // Start assistant message for this turn
-        if (adapter) {
-          adapter.startAssistantMessage();
-        }
+        adapter.startAssistantMessage();
 
         for await (const event of responseStream) {
           if (abortController.signal.aborted) {
             handleCancellationError(config);
           }
-
-          if (adapter) {
-            // Use adapter for all event processing
-            adapter.processEvent(event);
-            if (event.type === GeminiEventType.ToolCallRequest) {
-              toolCallRequests.push(event.value);
-            }
+          // Use adapter for all event processing
+          adapter.processEvent(event);
+          if (event.type === GeminiEventType.ToolCallRequest) {
+            toolCallRequests.push(event.value);
           }
           if (
             outputFormat === OutputFormat.TEXT &&
@@ -313,9 +295,7 @@ export async function runNonInteractive(
         }
 
         // Finalize assistant message
-        if (adapter) {
-          adapter.finalizeAssistantMessage();
-        }
+        adapter.finalizeAssistantMessage();
         totalApiDurationMs += Date.now() - apiStartTime;
 
         if (toolCallRequests.length > 0) {
@@ -377,9 +357,7 @@ export async function runNonInteractive(
               );
             }
 
-            if (adapter) {
-              adapter.emitToolResult(finalRequestInfo, toolResponse);
-            }
+            adapter.emitToolResult(finalRequestInfo, toolResponse);
 
             if (toolResponse.responseParts) {
               toolResponseParts.push(...toolResponse.responseParts);
@@ -387,50 +365,43 @@ export async function runNonInteractive(
           }
           currentMessages = [{ role: 'user', parts: toolResponseParts }];
         } else {
-          // For JSON and STREAM_JSON modes, compute usage from metrics
-          if (adapter) {
-            const metrics = uiTelemetryService.getMetrics();
-            const usage = computeUsageFromMetrics(metrics);
-            // Get stats for JSON format output
-            const stats =
-              outputFormat === OutputFormat.JSON
-                ? uiTelemetryService.getMetrics()
-                : undefined;
-            adapter.emitResult({
-              isError: false,
-              durationMs: Date.now() - startTime,
-              apiDurationMs: totalApiDurationMs,
-              numTurns: turnCount,
-              usage,
-              stats,
-              showResult: outputFormat === OutputFormat.TEXT,
-            });
-          }
+          const metrics = uiTelemetryService.getMetrics();
+          const usage = computeUsageFromMetrics(metrics);
+          // Get stats for JSON format output
+          const stats =
+            outputFormat === OutputFormat.JSON
+              ? uiTelemetryService.getMetrics()
+              : undefined;
+          adapter.emitResult({
+            isError: false,
+            durationMs: Date.now() - startTime,
+            apiDurationMs: totalApiDurationMs,
+            numTurns: turnCount,
+            usage,
+            stats,
+          });
           return;
         }
       }
     } catch (error) {
       // For JSON and STREAM_JSON modes, compute usage from metrics
       const message = error instanceof Error ? error.message : String(error);
-      if (adapter) {
-        const metrics = uiTelemetryService.getMetrics();
-        const usage = computeUsageFromMetrics(metrics);
-        // Get stats for JSON format output
-        const stats =
-          outputFormat === OutputFormat.JSON
-            ? uiTelemetryService.getMetrics()
-            : undefined;
-        adapter.emitResult({
-          isError: true,
-          durationMs: Date.now() - startTime,
-          apiDurationMs: totalApiDurationMs,
-          numTurns: turnCount,
-          errorMessage: message,
-          usage,
-          stats,
-          showResult: outputFormat === OutputFormat.TEXT,
-        });
-      }
+      const metrics = uiTelemetryService.getMetrics();
+      const usage = computeUsageFromMetrics(metrics);
+      // Get stats for JSON format output
+      const stats =
+        outputFormat === OutputFormat.JSON
+          ? uiTelemetryService.getMetrics()
+          : undefined;
+      adapter.emitResult({
+        isError: true,
+        durationMs: Date.now() - startTime,
+        apiDurationMs: totalApiDurationMs,
+        numTurns: turnCount,
+        errorMessage: message,
+        usage,
+        stats,
+      });
       handleError(error, config);
     } finally {
       process.stdout.removeListener('error', stdoutErrorHandler);
