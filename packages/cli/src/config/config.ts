@@ -961,7 +961,7 @@ export async function loadCliConfig(
     targetDir: cwd,
     includeDirectories,
     loadMemoryFromIncludeDirectories:
-      settings.context?.loadMemoryFromIncludeDirectories || false,
+      settings.context?.loadFromIncludeDirectories || false,
     importFormat: settings.context?.importFormat || 'tree',
     debugMode,
     question,
