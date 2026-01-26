@@ -15,7 +15,6 @@ export * from './schema.js';
 import type { WritableStream, ReadableStream } from 'node:stream/web';
 
 const debugLogger = createDebugLogger('ACP_PROTOCOL');
-
 export class AgentSideConnection implements Client {
   #connection: Connection;
 
@@ -223,8 +222,16 @@ class Connection {
         const trimmedLine = line.trim();
 
         if (trimmedLine) {
-          const message = JSON.parse(trimmedLine);
-          this.#processMessage(message);
+          try {
+            const message = JSON.parse(trimmedLine);
+            this.#processMessage(message);
+          } catch (error) {
+            debugLogger.error('ACP parse error for inbound message.', {
+              code: ACP_ERROR_CODES.PARSE_ERROR,
+              line: trimmedLine,
+              error,
+            });
+          }
         }
       }
     }
@@ -261,13 +268,23 @@ class Connection {
       return { result: result ?? null };
     } catch (error: unknown) {
       if (error instanceof RequestError) {
+        debugLogger.debug('ACP handler returned request error.', {
+          method,
+          code: error.code,
+          message: error.message,
+          details: error.data?.details,
+        });
         return error.toResult();
       }
 
       if (error instanceof z.ZodError) {
-        return RequestError.invalidParams(
-          JSON.stringify(error.format(), undefined, 2),
-        ).toResult();
+        const formattedDetails = JSON.stringify(error.format(), undefined, 2);
+        debugLogger.debug('ACP handler validation error.', {
+          method,
+          code: ACP_ERROR_CODES.INVALID_PARAMS,
+          details: formattedDetails,
+        });
+        return RequestError.invalidParams(formattedDetails).toResult();
       }
 
       let errorName;
@@ -289,6 +306,11 @@ class Connection {
         return RequestError.authRequired(details).toResult();
       }
 
+      debugLogger.error(
+        'ACP handler failed with internal error.',
+        { method, errorName, details },
+        error,
+      );
       return RequestError.internalError(details).toResult();
     }
   }
@@ -299,7 +321,14 @@ class Connection {
       if ('result' in response) {
         pendingResponse.resolve(response.result);
       } else if ('error' in response) {
-        pendingResponse.reject(response.error);
+        const { error } = response;
+        debugLogger.warn('ACP response error received.', {
+          id: response.id,
+          code: error.code,
+          message: error.message,
+          data: error.data,
+        });
+        pendingResponse.reject(error);
       }
       this.#pendingResponses.delete(response.id);
     }
