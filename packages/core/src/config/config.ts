@@ -712,7 +712,7 @@ export class Config {
       this.getDebugMode(),
       this.getFileService(),
       this.getExtensionContextFilePaths(),
-      this.getFolderTrust(),
+      this.isTrustedFolder(),
       this.getImportFormat(),
     );
     this.setUserMemory(memoryContent);
