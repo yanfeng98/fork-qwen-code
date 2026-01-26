@@ -381,7 +381,7 @@ class GeminiAgent {
       _meta: {
         // Each model should have its own context window size based on its capabilities
         // Use tokenLimit to get the model-specific context window size
-        contextLimit: tokenLimit(model.id, 'input'),
+        contextLimit: tokenLimit(model.id),
       },
     }));
 
@@ -395,7 +395,7 @@ class GeminiAgent {
         description: null,
         _meta: {
           // Get context window size specific to the current model
-          contextLimit: tokenLimit(currentModelId, 'input'),
+          contextLimit: tokenLimit(currentModelId),
         },
       });
     }
