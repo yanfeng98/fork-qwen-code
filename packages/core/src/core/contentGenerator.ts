@@ -30,7 +30,6 @@ import {
   StrictMissingModelIdError,
 } from '../models/modelConfigErrors.js';
 import { PROVIDER_SOURCED_FIELDS } from '../models/modelsConfig.js';
-import { tokenLimit, DEFAULT_TOKEN_LIMIT } from './tokenLimits.js';
 
 /**
  * Interface abstracting the core functionalities for generating content and counting tokens.
@@ -172,31 +171,6 @@ export function resolveContentGeneratorConfigWithSources(
     if (generationConfig && field in generationConfig && !sources[field]) {
       setSource(sources, field, seedOrUnknown(field));
     }
-  }
-
-  // Initialize contextWindowSize if not set by user
-  // This ensures contextWindowSize is always available as a model-bound property
-  if (newContentGeneratorConfig.contextWindowSize === undefined) {
-    if (newContentGeneratorConfig.model) {
-      newContentGeneratorConfig.contextWindowSize = tokenLimit(
-        newContentGeneratorConfig.model,
-        'input',
-      );
-      setSource(sources, 'contextWindowSize', {
-        kind: 'computed',
-        detail: 'auto-detected from model',
-      });
-    } else {
-      // Fallback to default when model is not available
-      newContentGeneratorConfig.contextWindowSize = DEFAULT_TOKEN_LIMIT;
-      setSource(sources, 'contextWindowSize', {
-        kind: 'computed',
-        detail: 'default fallback',
-      });
-    }
-  } else {
-    // User explicitly set contextWindowSize
-    setSource(sources, 'contextWindowSize', seedOrUnknown('contextWindowSize'));
   }
 
   // Validate required fields based on authType. This does not perform any
