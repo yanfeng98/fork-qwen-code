@@ -7,11 +7,14 @@
 /* ACP defines a schema for a simple (experimental) JSON-RPC protocol that allows GUI applications to interact with agents. */
 
 import { z } from 'zod';
+import { createDebugLogger } from '@qwen-code/qwen-code-core';
 import * as schema from './schema.js';
 import { ACP_ERROR_CODES } from './errorCodes.js';
 export * from './schema.js';
 
 import type { WritableStream, ReadableStream } from 'node:stream/web';
+
+const debugLogger = createDebugLogger('ACP_PROTOCOL');
 
 export class AgentSideConnection implements Client {
   #connection: Connection;
@@ -328,7 +331,7 @@ class Connection {
       })
       .catch((error) => {
         // Continue processing writes on error
-        console.error('ACP write error:', error);
+        debugLogger.error('ACP write error:', error);
       });
     return this.#writeQueue;
   }

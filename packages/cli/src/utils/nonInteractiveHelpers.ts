@@ -211,12 +211,10 @@ async function loadSlashCommandNames(
     // Extract command names and sort
     return commands.map((cmd) => cmd.name).sort();
   } catch (error) {
-    if (config.getDebugMode()) {
-      console.error(
-        '[buildSystemMessage] Failed to load slash commands:',
-        error,
-      );
-    }
+    debugLogger.error(
+      '[buildSystemMessage] Failed to load slash commands:',
+      error,
+    );
     return [];
   } finally {
     controller.abort();
@@ -272,9 +270,7 @@ export async function buildSystemMessage(
     const subagents = await subagentManager.listSubagents();
     agentNames = subagents.map((subagent) => subagent.name);
   } catch (error) {
-    if (config.getDebugMode()) {
-      console.error('[buildSystemMessage] Failed to load subagents:', error);
-    }
+    debugLogger.error('[buildSystemMessage] Failed to load subagents:', error);
   }
 
   const systemMessage: CLISystemMessage = {

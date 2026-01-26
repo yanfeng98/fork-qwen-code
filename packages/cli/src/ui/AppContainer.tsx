@@ -34,6 +34,7 @@ import {
   type IdeContext,
   IdeClient,
   ideContextStore,
+  createDebugLogger,
   getErrorMessage,
   getAllGeminiMdFilenames,
   ShellExecutionService,
@@ -63,6 +64,7 @@ import ansiEscapes from 'ansi-escapes';
 import * as fs from 'node:fs';
 import { basename } from 'node:path';
 import { computeWindowTitle } from '../utils/windowTitle.js';
+import { clearScreen } from '../utils/stdioHelpers.js';
 import { useTextBuffer } from './components/shared/text-buffer.js';
 import { useLogger } from './hooks/useLogger.js';
 import { useGeminiStream } from './hooks/useGeminiStream.js';
@@ -110,6 +112,7 @@ import {
 } from '../commands/extensions/consent.js';
 
 const CTRL_EXIT_PROMPT_DURATION_MS = 1000;
+const debugLogger = createDebugLogger('APP_CONTAINER');
 
 function isToolExecuting(pendingHistoryItems: HistoryItemWithoutId[]) {
   return pendingHistoryItems.some((item) => {
@@ -627,14 +630,12 @@ export const AppContainer = (props: AppContainerProps) => {
         },
         Date.now(),
       );
-      if (config.getDebugMode()) {
-        console.log(
-          `[DEBUG] Refreshed memory content in config: ${memoryContent.substring(
-            0,
-            200,
-          )}...`,
-        );
-      }
+      debugLogger.debug(
+        `[DEBUG] Refreshed memory content in config: ${memoryContent.substring(
+          0,
+          200,
+        )}...`,
+      );
     } catch (error) {
       const errorMessage = getErrorMessage(error);
       historyManager.addItem(
@@ -644,7 +645,7 @@ export const AppContainer = (props: AppContainerProps) => {
         },
         Date.now(),
       );
-      console.error('Error refreshing memory:', error);
+      debugLogger.error('Error refreshing memory:', error);
     }
   }, [config, historyManager, settings.merged]);
 
@@ -749,7 +750,7 @@ export const AppContainer = (props: AppContainerProps) => {
   const handleClearScreen = useCallback(() => {
     historyManager.clearItems();
     clearConsoleMessagesState();
-    console.clear();
+    clearScreen();
     refreshStatic();
   }, [historyManager, clearConsoleMessagesState, refreshStatic]);
 
@@ -1159,7 +1160,7 @@ export const AppContainer = (props: AppContainerProps) => {
     (key: Key) => {
       // Debug log keystrokes if enabled
       if (settings.merged.general?.debugKeystrokeLogging) {
-        console.log('[DEBUG] Keystroke:', JSON.stringify(key));
+        debugLogger.debug('[DEBUG] Keystroke:', JSON.stringify(key));
       }
 
       if (keyMatchers[Command.QUIT](key)) {

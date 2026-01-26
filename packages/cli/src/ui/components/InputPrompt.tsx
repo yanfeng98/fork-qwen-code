@@ -22,7 +22,7 @@ import { useKeypress } from '../hooks/useKeypress.js';
 import { keyMatchers, Command } from '../keyMatchers.js';
 import type { CommandContext, SlashCommand } from '../commands/types.js';
 import type { Config } from '@qwen-code/qwen-code-core';
-import { ApprovalMode } from '@qwen-code/qwen-code-core';
+import { ApprovalMode, createDebugLogger } from '@qwen-code/qwen-code-core';
 import {
   parseInputForHighlighting,
   buildSegmentsForVisualSlice,
@@ -38,6 +38,8 @@ import { SCREEN_READER_USER_PREFIX } from '../textConstants.js';
 import { useShellFocusState } from '../contexts/ShellFocusContext.js';
 import { useUIState } from '../contexts/UIStateContext.js';
 import { FEEDBACK_DIALOG_KEYS } from '../FeedbackDialog.js';
+
+const debugLogger = createDebugLogger('INPUT_PROMPT');
 export interface InputPromptProps {
   buffer: TextBuffer;
   onSubmit: (value: string) => void;
@@ -299,7 +301,7 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
         }
       }
     } catch (error) {
-      console.error('Error handling clipboard image:', error);
+      debugLogger.error('Error handling clipboard image:', error);
     }
   }, [buffer, config]);
 

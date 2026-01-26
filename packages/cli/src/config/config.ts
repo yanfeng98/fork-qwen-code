@@ -46,6 +46,7 @@ import { mcpCommand } from '../commands/mcp.js';
 
 import { isWorkspaceTrusted } from './trustedFolders.js';
 import { buildWebSearchConfig } from './webSearch.js';
+import { writeStderrLine } from '../utils/stdioHelpers.js';
 
 const VALID_APPROVAL_MODE_VALUES = [
   'plan',
@@ -501,7 +502,7 @@ export async function parseArguments(settings: Settings): Promise<CliArgs> {
         )
         // Ensure validation flows through .fail() for clean UX
         .fail((msg: string, err: Error | undefined, yargs: Argv) => {
-          console.error(msg || err?.message || 'Unknown error');
+          writeStderrLine(msg || err?.message || 'Unknown error');
           yargs.showHelp();
           process.exit(1);
         })
@@ -593,7 +594,7 @@ export async function parseArguments(settings: Settings): Promise<CliArgs> {
 
   // Handle deprecated --experimental-acp flag
   if (result['experimentalAcp']) {
-    console.warn(
+    writeStderrLine(
       '\x1b[33m⚠ Warning: --experimental-acp is deprecated and will be removed in a future release. Please use --acp instead.\x1b[0m',
     );
     // Map experimental-acp to acp if acp is not explicitly set
@@ -727,7 +728,7 @@ export async function loadCliConfig(
     approvalMode !== ApprovalMode.DEFAULT &&
     approvalMode !== ApprovalMode.PLAN
   ) {
-    console.warn(
+    writeStderrLine(
       `Approval mode overridden to "default" because the current folder is not trusted.`,
     );
     approvalMode = ApprovalMode.DEFAULT;
@@ -894,7 +895,7 @@ export async function loadCliConfig(
       sessionData = await sessionService.loadSession(argv.resume);
       if (!sessionData) {
         const message = `No saved session found with ID ${argv.resume}. Run \`qwen --resume\` without an ID to choose from existing sessions.`;
-        console.log(message);
+        writeStderrLine(message);
         process.exit(1);
       }
     }
