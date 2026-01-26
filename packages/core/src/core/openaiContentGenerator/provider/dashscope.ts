@@ -8,7 +8,6 @@ import {
   DEFAULT_MAX_RETRIES,
   DEFAULT_DASHSCOPE_BASE_URL,
 } from '../constants.js';
-// tokenLimit import removed - now using contentGeneratorConfig.maxOutputTokens
 import type {
   OpenAICompatibleProvider,
   DashScopeRequestMetadata,
@@ -116,10 +115,7 @@ export class DashScopeOpenAICompatibleProvider
 
     // Apply output token limits based on model capabilities
     // This ensures max_tokens doesn't exceed the model's maximum output limit
-    const requestWithTokenLimits = this.applyOutputTokenLimit(
-      request,
-      request.model,
-    );
+    const requestWithTokenLimits = this.applyOutputTokenLimit(request);
 
     if (this.isVisionModel(request.model)) {
       return {
@@ -320,12 +316,10 @@ export class DashScopeOpenAICompatibleProvider
    * token limit. Only modifies max_tokens when already present in the request.
    *
    * @param request - The chat completion request parameters
-   * @param model - The model name to get the output token limit for
    * @returns The request with max_tokens adjusted to respect the model's limits (if present)
    */
   private applyOutputTokenLimit<T extends { max_tokens?: number | null }>(
     request: T,
-    _model: string,
   ): T {
     const currentMaxTokens = request.max_tokens;
 

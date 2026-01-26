@@ -15,6 +15,7 @@ import {
   qwenOAuth2Events,
   MCPServerConfig,
   SessionService,
+  tokenLimit,
   type Config,
   type ConversationRecord,
   type DeviceAuthorizationData,
@@ -373,17 +374,14 @@ class GeminiAgent {
     ).trim();
     const availableModels = config.getAvailableModels();
 
-    // Get the contentGeneratorConfig which contains contextWindowSize
-    // This value is either user-configured or auto-detected during config initialization
-    const contentGeneratorConfig = config.getContentGeneratorConfig();
-
     const mappedAvailableModels = availableModels.map((model) => ({
       modelId: model.id,
       name: model.label,
       description: model.description ?? null,
       _meta: {
-        // Use the contextWindowSize from config, which is always set during initialization
-        contextLimit: contentGeneratorConfig?.contextWindowSize,
+        // Each model should have its own context window size based on its capabilities
+        // Use tokenLimit to get the model-specific context window size
+        contextLimit: tokenLimit(model.id, 'input'),
       },
     }));
 
@@ -396,7 +394,8 @@ class GeminiAgent {
         name: currentModelId,
         description: null,
         _meta: {
-          contextLimit: contentGeneratorConfig?.contextWindowSize,
+          // Get context window size specific to the current model
+          contextLimit: tokenLimit(currentModelId, 'input'),
         },
       });
     }
