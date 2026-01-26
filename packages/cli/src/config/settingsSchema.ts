@@ -217,6 +217,7 @@ const SETTINGS_SCHEMA = {
           { value: 'zh', label: '中文 (Chinese)' },
           { value: 'ru', label: 'Русский (Russian)' },
           { value: 'de', label: 'Deutsch (German)' },
+          { value: 'ja', label: '日本語 (Japanese)' },
         ],
       },
       outputLanguage: {
