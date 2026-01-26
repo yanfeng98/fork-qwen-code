@@ -30,7 +30,11 @@ import {
   StrictMissingModelIdError,
 } from '../models/modelConfigErrors.js';
 import { PROVIDER_SOURCED_FIELDS } from '../models/modelsConfig.js';
-import { tokenLimit } from './tokenLimits.js';
+import {
+  tokenLimit,
+  DEFAULT_TOKEN_LIMIT,
+  DEFAULT_OUTPUT_TOKEN_LIMIT,
+} from './tokenLimits.js';
 
 /**
  * Interface abstracting the core functionalities for generating content and counting tokens.
@@ -179,38 +183,50 @@ export function resolveContentGeneratorConfigWithSources(
 
   // Initialize contextWindowSize if not set by user
   // This ensures contextWindowSize is always available as a model-bound property
-  if (
-    newContentGeneratorConfig.contextWindowSize === undefined &&
-    newContentGeneratorConfig.model
-  ) {
-    newContentGeneratorConfig.contextWindowSize = tokenLimit(
-      newContentGeneratorConfig.model,
-      'input',
-    );
-    setSource(sources, 'contextWindowSize', {
-      kind: 'computed',
-      detail: 'auto-detected from model',
-    });
-  } else if (newContentGeneratorConfig.contextWindowSize !== undefined) {
+  if (newContentGeneratorConfig.contextWindowSize === undefined) {
+    if (newContentGeneratorConfig.model) {
+      newContentGeneratorConfig.contextWindowSize = tokenLimit(
+        newContentGeneratorConfig.model,
+        'input',
+      );
+      setSource(sources, 'contextWindowSize', {
+        kind: 'computed',
+        detail: 'auto-detected from model',
+      });
+    } else {
+      // Fallback to default when model is not available
+      newContentGeneratorConfig.contextWindowSize = DEFAULT_TOKEN_LIMIT;
+      setSource(sources, 'contextWindowSize', {
+        kind: 'computed',
+        detail: 'default fallback',
+      });
+    }
+  } else {
     // User explicitly set contextWindowSize
     setSource(sources, 'contextWindowSize', seedOrUnknown('contextWindowSize'));
   }
 
   // Initialize maxOutputTokens if not set by user
   // This ensures maxOutputTokens is always available as a model-bound property
-  if (
-    newContentGeneratorConfig.maxOutputTokens === undefined &&
-    newContentGeneratorConfig.model
-  ) {
-    newContentGeneratorConfig.maxOutputTokens = tokenLimit(
-      newContentGeneratorConfig.model,
-      'output',
-    );
-    setSource(sources, 'maxOutputTokens', {
-      kind: 'computed',
-      detail: 'auto-detected from model',
-    });
-  } else if (newContentGeneratorConfig.maxOutputTokens !== undefined) {
+  if (newContentGeneratorConfig.maxOutputTokens === undefined) {
+    if (newContentGeneratorConfig.model) {
+      newContentGeneratorConfig.maxOutputTokens = tokenLimit(
+        newContentGeneratorConfig.model,
+        'output',
+      );
+      setSource(sources, 'maxOutputTokens', {
+        kind: 'computed',
+        detail: 'auto-detected from model',
+      });
+    } else {
+      // Fallback to default when model is not available
+      newContentGeneratorConfig.maxOutputTokens = DEFAULT_OUTPUT_TOKEN_LIMIT;
+      setSource(sources, 'maxOutputTokens', {
+        kind: 'computed',
+        detail: 'default fallback',
+      });
+    }
+  } else {
     // User explicitly set maxOutputTokens
     setSource(sources, 'maxOutputTokens', seedOrUnknown('maxOutputTokens'));
   }

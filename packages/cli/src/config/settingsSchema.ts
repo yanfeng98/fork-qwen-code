@@ -69,7 +69,6 @@ export interface SettingDefinition {
   default: SettingsValue;
   description?: string;
   parentKey?: string;
-  childKey?: string;
   key?: string;
   properties?: SettingsSchema;
   showInDialog?: boolean;
@@ -603,7 +602,6 @@ const SETTINGS_SCHEMA = {
             default: undefined as number | undefined,
             description: 'Request timeout in milliseconds.',
             parentKey: 'generationConfig',
-            childKey: 'timeout',
             showInDialog: false,
           },
           maxRetries: {
@@ -614,7 +612,6 @@ const SETTINGS_SCHEMA = {
             default: undefined as number | undefined,
             description: 'Maximum number of retries for failed requests.',
             parentKey: 'generationConfig',
-            childKey: 'maxRetries',
             showInDialog: false,
           },
           disableCacheControl: {
@@ -625,7 +622,6 @@ const SETTINGS_SCHEMA = {
             default: false,
             description: 'Disable cache control for DashScope providers.',
             parentKey: 'generationConfig',
-            childKey: 'disableCacheControl',
             showInDialog: false,
           },
           schemaCompliance: {
@@ -637,7 +633,6 @@ const SETTINGS_SCHEMA = {
             description:
               'The compliance mode for tool schemas sent to the model. Use "openapi_30" for strict OpenAPI 3.0 compatibility (e.g., for Gemini).',
             parentKey: 'generationConfig',
-            childKey: 'schemaCompliance',
             showInDialog: false,
             options: [
               { value: 'auto', label: 'Auto (Default)' },
@@ -653,7 +648,6 @@ const SETTINGS_SCHEMA = {
             description:
               "Overrides the default context window size for the selected model. Use this setting when a provider's effective context limit differs from Qwen Code's default. This value defines the model's assumed maximum context capacity, not a per-request token limit.",
             parentKey: 'generationConfig',
-            childKey: 'contextWindowSize',
             showInDialog: false,
           },
         },

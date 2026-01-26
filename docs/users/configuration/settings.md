@@ -101,7 +101,7 @@ Settings are organized into categories. All settings should be placed within the
 | `model.name`                                       | string  | The Qwen model to use for conversations.                                                                                                                                                                                                                                                                                                                               | `undefined` |
 | `model.maxSessionTurns`                            | number  | Maximum number of user/model/tool turns to keep in a session. -1 means unlimited.                                                                                                                                                                                                                                                                                      | `-1`        |
 | `model.summarizeToolOutput`                        | object  | Enables or disables the summarization of tool output. You can specify the token budget for the summarization using the `tokenBudget` setting. Note: Currently only the `run_shell_command` tool is supported. For example `{"run_shell_command": {"tokenBudget": 2000}}`                                                                                               | `undefined` |
-| `model.generationConfig`                           | object  | Advanced overrides passed to the underlying content generator. Supports request controls such as `timeout`, `maxRetries`, `disableCacheControl`, and `customHeaders` (custom HTTP headers for API requests), along with fine-tuning knobs under `samplingParams` (for example `temperature`, `top_p`, `max_tokens`). Leave unset to rely on provider defaults.         | `undefined` |
+| `model.generationConfig`                           | object  | Advanced overrides passed to the underlying content generator. Supports request controls such as `timeout`, `maxRetries`, `disableCacheControl`, `contextWindowSize` (override model's context window size), `maxOutputTokens` (override model's maximum output tokens), and `customHeaders` (custom HTTP headers for API requests), along with fine-tuning knobs under `samplingParams` (for example `temperature`, `top_p`, `max_tokens`). Leave unset to rely on provider defaults. | `undefined` |
 | `model.chatCompression.contextPercentageThreshold` | number  | Sets the threshold for chat history compression as a percentage of the model's total token limit. This is a value between 0 and 1 that applies to both automatic compression and the manual `/compress` command. For example, a value of `0.6` will trigger compression when the chat history exceeds 60% of the token limit. Use `0` to disable compression entirely. | `0.7`       |
 | `model.skipNextSpeakerCheck`                       | boolean | Skip the next speaker check.                                                                                                                                                                                                                                                                                                                                           | `false`     |
 | `model.skipLoopDetection`                          | boolean | Disables loop detection checks. Loop detection prevents infinite loops in AI responses but can generate false positives that interrupt legitimate workflows. Enable this option if you experience frequent false positive loop detection interruptions.                                                                                                                | `false`     |
@@ -118,6 +118,7 @@ Settings are organized into categories. All settings should be placed within the
       "timeout": 60000,
       "disableCacheControl": false,
       "contextWindowSize": 128000,
+      "maxOutputTokens": 8192,
       "customHeaders": {
         "X-Request-ID": "req-123",
         "X-User-ID": "user-456"
@@ -136,7 +137,13 @@ Settings are organized into categories. All settings should be placed within the
 
 Overrides the default context window size for the selected model. Qwen Code determines the context window using built-in defaults based on model name matching, with a constant fallback value. Use this setting when a provider's effective context limit differs from Qwen Code's default. This value defines the model's assumed maximum context capacity, not a per-request token limit.
 
-The `customHeaders` field allows you to add custom HTTP headers to all API requests. This is useful for request tracing, monitoring, API gateway routing, or when different models require different headers. If `customHeaders` is defined in `modelProviders[].generationConfig.customHeaders`, it will be used directly; otherwise, headers from `model.generationConfig.customHeaders` will be used. No merging occurs between the two levels.
+**maxOutputTokens:**
+
+Overrides the default maximum output tokens for the selected model. Qwen Code determines the maximum output tokens using built-in defaults based on model name matching, with a constant fallback value of 8,192 tokens. Use this setting when a provider's effective output limit differs from Qwen Code's default. This value defines the maximum number of tokens the model can generate in a single response.
+
+**customHeaders:**
+
+Allows you to add custom HTTP headers to all API requests. This is useful for request tracing, monitoring, API gateway routing, or when different models require different headers. If `customHeaders` is defined in `modelProviders[].generationConfig.customHeaders`, it will be used directly; otherwise, headers from `model.generationConfig.customHeaders` will be used. No merging occurs between the two levels.
 
 **model.openAILoggingDir examples:**
 

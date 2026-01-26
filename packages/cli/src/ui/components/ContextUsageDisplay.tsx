@@ -6,26 +6,22 @@
 
 import { Text } from 'ink';
 import { theme } from '../semantic-colors.js';
-import { DEFAULT_TOKEN_LIMIT, type Config } from '@qwen-code/qwen-code-core';
+import { DEFAULT_TOKEN_LIMIT } from '@qwen-code/qwen-code-core';
 
 export const ContextUsageDisplay = ({
   promptTokenCount,
-  model: _model,
   terminalWidth,
-  config,
+  contextWindowSize,
 }: {
   promptTokenCount: number;
-  model: string;
   terminalWidth: number;
-  config: Config;
+  contextWindowSize?: number;
 }) => {
   if (promptTokenCount === 0) {
     return null;
   }
 
-  const contextLimit =
-    config.getContentGeneratorConfig()?.contextWindowSize ??
-    DEFAULT_TOKEN_LIMIT;
+  const contextLimit = contextWindowSize ?? DEFAULT_TOKEN_LIMIT;
   const percentage = promptTokenCount / contextLimit;
   const percentageUsed = (percentage * 100).toFixed(1);
 

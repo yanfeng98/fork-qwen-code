@@ -5,6 +5,7 @@
  */
 
 import type React from 'react';
+import { useMemo } from 'react';
 import { Box, Text } from 'ink';
 import { theme } from '../semantic-colors.js';
 import { ConsoleSummaryDisplay } from './ConsoleSummaryDisplay.js';
@@ -57,6 +58,12 @@ export const Footer: React.FC = () => {
   // Check if debug mode is enabled
   const debugMode = config.getDebugMode();
 
+  // Memoize contextWindowSize to avoid recalculating on every render
+  const contextWindowSize = useMemo(
+    () => config.getContentGeneratorConfig()?.contextWindowSize,
+    [config]
+  );
+
   // Left section should show exactly ONE thing at any time, in priority order.
   const leftContent = uiState.ctrlCPressedOnce ? (
     <Text color={theme.status.warning}>{t('Press Ctrl+C again to exit.')}</Text>
@@ -95,9 +102,8 @@ export const Footer: React.FC = () => {
         <Text color={theme.text.accent}>
           <ContextUsageDisplay
             promptTokenCount={promptTokenCount}
-            model={model}
             terminalWidth={terminalWidth}
-            config={config}
+            contextWindowSize={contextWindowSize}
           />
         </Text>
       ),
