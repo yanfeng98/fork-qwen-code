@@ -239,8 +239,12 @@ export async function parseInstallSource(
     };
 
     // Try to fetch marketplace config from GitHub
-    const [owner, repoName] = repo.split('/');
-    marketplaceConfig = await fetchGitHubMarketplaceConfig(owner, repoName);
+    try {
+      const [owner, repoName] = repo.split('/');
+      marketplaceConfig = await fetchGitHubMarketplaceConfig(owner, repoName);
+    } catch {
+      // Not a valid GitHub URL or failed to fetch, continue without marketplace config
+    }
   } else {
     // Local path
     try {

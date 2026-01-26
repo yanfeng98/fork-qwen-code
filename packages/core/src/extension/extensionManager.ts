@@ -690,7 +690,7 @@ export class ExtensionManager {
 
       if (!config.name) {
         throw new Error(
-          `Invalid configuration in ${configFilePath}: missing "name"}`,
+          `Invalid configuration in ${configFilePath}: missing "name"`,
         );
       }
       validateName(config.name);

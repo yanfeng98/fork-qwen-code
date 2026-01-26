@@ -2,7 +2,7 @@
 
 Qwen Code extensions package prompts, MCP servers, subagents, skills and custom commands into a familiar and user-friendly format. With extensions, you can expand the capabilities of Qwen Code and share those capabilities with others. They are designed to be easily installable and shareable.
 
-Extensions and plugins from [Gemini CLI Extensions Gallery](https://geminicli.com/extensions/) and [Claude Code Marketplace](https://claudemarketplaces.com/) can be directly installed into Qwen Code.This cross-platform compatibility gives you access to a rich ecosystem of extensions and plugins, dramatically expanding Qwen Code's capabilities without requiring extension authors to maintain separate versions.
+Extensions and plugins from [Gemini CLI Extensions Gallery](https://geminicli.com/extensions/) and [Claude Code Marketplace](https://claudemarketplaces.com/) can be directly installed into Qwen Code. This cross-platform compatibility gives you access to a rich ecosystem of extensions and plugins, dramatically expanding Qwen Code's capabilities without requiring extension authors to maintain separate versions.
 
 ## Extension management
 
@@ -42,7 +42,7 @@ qwen extensions install <marketplace-name>
 qwen extensions install <marketplace-github-url>
 ```
 
-If you want to install a specific pulgin, you can use the format with plugin name:
+If you want to install a specific plugin, you can use the format with plugin name:
 
 ```bash
 qwen extensions install <marketplace-name>:<plugin-name>
