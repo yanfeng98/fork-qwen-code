@@ -22,6 +22,7 @@ vi.mock('../../i18n/index.js', () => ({
       ru: 'Russian',
       de: 'German',
       ja: 'Japanese',
+      pt: 'Portuguese',
     };
     return map[locale] || 'English';
   }),
@@ -73,6 +74,7 @@ vi.mock('@qwen-code/qwen-code-core', async (importOriginal) => {
 
 // Import modules after mocking
 import * as i18n from '../../i18n/index.js';
+import { SUPPORTED_LANGUAGES } from '../../i18n/languages.js';
 import { languageCommand } from './languageCommand.js';
 import { initializeLlmOutputLanguage } from '../../utils/languageUtils.js';
 
@@ -566,11 +568,9 @@ describe('languageCommand', () => {
 
     it('should have nested language subcommands', () => {
       const nestedNames = uiSubcommand?.subCommands?.map((c) => c.name);
-      expect(nestedNames).toContain('zh-CN');
-      expect(nestedNames).toContain('en-US');
-      expect(nestedNames).toContain('ru-RU');
-      expect(nestedNames).toContain('de-DE');
-      expect(nestedNames).toContain('ja-JP');
+      for (const lang of SUPPORTED_LANGUAGES) {
+        expect(nestedNames).toContain(lang.id);
+      }
     });
 
     it('should have action that sets language', async () => {
@@ -828,6 +828,19 @@ describe('languageCommand', () => {
       expect(fs.writeFileSync).toHaveBeenCalledWith(
         expect.stringContaining('output-language.md'),
         expect.stringContaining('Japanese'),
+        'utf-8',
+      );
+    });
+
+    it('should detect Portuguese locale and create Portuguese rule file', () => {
+      vi.mocked(fs.existsSync).mockReturnValue(false);
+      vi.mocked(i18n.detectSystemLanguage).mockReturnValue('pt');
+
+      initializeLlmOutputLanguage();
+
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        expect.stringContaining('output-language.md'),
+        expect.stringContaining('Portuguese'),
         'utf-8',
       );
     });

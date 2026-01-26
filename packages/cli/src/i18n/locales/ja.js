@@ -369,8 +369,8 @@ export default {
   'Terminal "{{terminal}}" is not supported yet.':
     'ターミナル "{{terminal}}" はまだサポートされていません',
   // Commands - Language
-  'Invalid language. Available: en-US, zh-CN':
-    '無効な言語です。使用可能: en-US, zh-CN, ru-RU, de-DE, ja-JP',
+  'Invalid language. Available: {{options}}':
+    '無効な言語です。使用可能: {{options}}',
   'Language subcommands do not accept additional arguments.':
     '言語サブコマンドは追加の引数を受け付けません',
   'Current UI language: {{lang}}': '現在のUI言語: {{lang}}',
@@ -378,12 +378,12 @@ export default {
   'LLM output language not set': 'LLM出力言語が設定されていません',
   'Set UI language': 'UI言語を設定',
   'Set LLM output language': 'LLM出力言語を設定',
-  'Usage: /language ui [zh-CN|en-US]':
-    '使い方: /language ui [zh-CN|en-US|ru-RU|de-DE|ja-JP]',
+  'Usage: /language ui [{{options}}]': '使い方: /language ui [{{options}}]',
   'Usage: /language output <language>': '使い方: /language output <言語>',
   'Example: /language output 中文': '例: /language output 中文',
   'Example: /language output English': '例: /language output English',
   'Example: /language output 日本語': '例: /language output 日本語',
+  'Example: /language output Português': '例: /language output Português',
   'UI language changed to {{lang}}': 'UI言語を {{lang}} に変更しました',
   'LLM output language rule file generated at {{path}}':
     'LLM出力言語ルールファイルを {{path}} に生成しました',
@@ -397,17 +397,7 @@ export default {
   'To request additional UI language packs, please open an issue on GitHub.':
     '追加のUI言語パックをリクエストするには、GitHub で Issue を作成してください',
   'Available options:': '使用可能なオプション:',
-  '  - zh-CN: Simplified Chinese': '  - zh-CN: 簡体字中国語',
-  '  - en-US: English': '  - en-US: 英語',
-  '  - ru-RU: Russian': '  - ru-RU: ロシア語',
-  '  - de-DE: German': '  - de-DE: ドイツ語',
-  '  - ja-JP: Japanese': '  - ja-JP: 日本語',
-  'Set UI language to Simplified Chinese (zh-CN)':
-    'UI言語を簡体字中国語(zh-CN)に設定',
-  'Set UI language to English (en-US)': 'UI言語を英語(en-US)に設定',
-  'Set UI language to Russian (ru-RU)': 'UI言語をロシア語(ru-RU)に設定',
-  'Set UI language to German (de-DE)': 'UI言語をドイツ語(de-DE)に設定',
-  'Set UI language to Japanese (ja-JP)': 'UI言語を日本語(ja-JP)に設定',
+  'Set UI language to {{name}}': 'UI言語を {{name}} に設定',
   // Approval Mode
   'Approval Mode': '承認モード',
   'Current approval mode: {{mode}}': '現在の承認モード: {{mode}}',
