@@ -332,7 +332,9 @@ export class DashScopeOpenAICompatibleProvider
     // This value is either user-configured or auto-detected during config initialization
     const modelLimit = this.contentGeneratorConfig?.maxOutputTokens;
     if (!modelLimit) {
-      return request; // No limit configured, return unchanged
+      // No limit configured or config not initialized yet
+      // In this case, we don't modify max_tokens and let the API handle it
+      return request;
     }
 
     // If max_tokens exceeds the model limit, cap it to the model's limit
