@@ -16,6 +16,7 @@ import type {
   ChatCompletionToolWithCache,
 } from './types.js';
 import { buildRuntimeFetchOptions } from '../../../utils/runtimeFetchOptions.js';
+import { tokenLimit } from '../../tokenLimits.js';
 
 export class DashScopeOpenAICompatibleProvider
   implements OpenAICompatibleProvider
@@ -318,9 +319,9 @@ export class DashScopeOpenAICompatibleProvider
    * @param request - The chat completion request parameters
    * @returns The request with max_tokens adjusted to respect the model's limits (if present)
    */
-  private applyOutputTokenLimit<T extends { max_tokens?: number | null }>(
-    request: T,
-  ): T {
+  private applyOutputTokenLimit<
+    T extends { max_tokens?: number | null; model: string },
+  >(request: T): T {
     const currentMaxTokens = request.max_tokens;
 
     // Only process if max_tokens is already present in the request
@@ -328,14 +329,9 @@ export class DashScopeOpenAICompatibleProvider
       return request; // No max_tokens parameter, return unchanged
     }
 
-    // Get output token limit from config
-    // This value is either user-configured or auto-detected during config initialization
-    const modelLimit = this.contentGeneratorConfig?.maxOutputTokens;
-    if (!modelLimit) {
-      // No limit configured or config not initialized yet
-      // In this case, we don't modify max_tokens and let the API handle it
-      return request;
-    }
+    // Dynamically calculate output token limit using tokenLimit function
+    // This ensures we always use the latest model-specific limits without relying on user configuration
+    const modelLimit = tokenLimit(request.model, 'output');
 
     // If max_tokens exceeds the model limit, cap it to the model's limit
     if (currentMaxTokens > modelLimit) {

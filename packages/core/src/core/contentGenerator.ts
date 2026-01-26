@@ -30,11 +30,7 @@ import {
   StrictMissingModelIdError,
 } from '../models/modelConfigErrors.js';
 import { PROVIDER_SOURCED_FIELDS } from '../models/modelsConfig.js';
-import {
-  tokenLimit,
-  DEFAULT_TOKEN_LIMIT,
-  DEFAULT_OUTPUT_TOKEN_LIMIT,
-} from './tokenLimits.js';
+import { tokenLimit, DEFAULT_TOKEN_LIMIT } from './tokenLimits.js';
 
 /**
  * Interface abstracting the core functionalities for generating content and counting tokens.
@@ -99,9 +95,6 @@ export type ContentGeneratorConfig = {
   // Context window size override. If set to a positive number, it will override
   // the automatic detection. Leave undefined to use automatic detection.
   contextWindowSize?: number;
-  // Maximum output tokens override. If set to a positive number, it will override
-  // the automatic detection. Leave undefined to use automatic detection.
-  maxOutputTokens?: number;
   // Custom HTTP headers to be sent with requests
   customHeaders?: Record<string, string>;
 };
@@ -204,31 +197,6 @@ export function resolveContentGeneratorConfigWithSources(
   } else {
     // User explicitly set contextWindowSize
     setSource(sources, 'contextWindowSize', seedOrUnknown('contextWindowSize'));
-  }
-
-  // Initialize maxOutputTokens if not set by user
-  // This ensures maxOutputTokens is always available as a model-bound property
-  if (newContentGeneratorConfig.maxOutputTokens === undefined) {
-    if (newContentGeneratorConfig.model) {
-      newContentGeneratorConfig.maxOutputTokens = tokenLimit(
-        newContentGeneratorConfig.model,
-        'output',
-      );
-      setSource(sources, 'maxOutputTokens', {
-        kind: 'computed',
-        detail: 'auto-detected from model',
-      });
-    } else {
-      // Fallback to default when model is not available
-      newContentGeneratorConfig.maxOutputTokens = DEFAULT_OUTPUT_TOKEN_LIMIT;
-      setSource(sources, 'maxOutputTokens', {
-        kind: 'computed',
-        detail: 'default fallback',
-      });
-    }
-  } else {
-    // User explicitly set maxOutputTokens
-    setSource(sources, 'maxOutputTokens', seedOrUnknown('maxOutputTokens'));
   }
 
   // Validate required fields based on authType. This does not perform any

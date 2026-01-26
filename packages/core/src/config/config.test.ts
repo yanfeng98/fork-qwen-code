@@ -1356,7 +1356,7 @@ describe('Model Switching and Config Updates', () => {
     vi.clearAllMocks();
   });
 
-  it('should update contextWindowSize and maxOutputTokens when switching models with hot-update', async () => {
+  it('should update contextWindowSize when switching models with hot-update', async () => {
     const config = new Config(baseParams);
 
     // Initialize with first model
@@ -1365,7 +1365,6 @@ describe('Model Switching and Config Updates', () => {
       ['authType']: AuthType.QWEN_OAUTH,
       ['apiKey']: 'test-key',
       ['contextWindowSize']: 1_000_000,
-      ['maxOutputTokens']: 8_192,
       ['samplingParams']: { temperature: 0.7 },
       ['disableCacheControl']: false,
     };
@@ -1375,7 +1374,6 @@ describe('Model Switching and Config Updates', () => {
       sources: {
         model: { kind: 'settings' },
         contextWindowSize: { kind: 'computed', detail: 'auto' },
-        maxOutputTokens: { kind: 'computed', detail: 'auto' },
       },
     });
 
@@ -1385,7 +1383,6 @@ describe('Model Switching and Config Updates', () => {
     const contentGenConfig = config.getContentGeneratorConfig();
     expect(contentGenConfig['model']).toBe('qwen3-coder-plus');
     expect(contentGenConfig['contextWindowSize']).toBe(1_000_000);
-    expect(contentGenConfig['maxOutputTokens']).toBe(8_192);
 
     // Switch to a different model with different token limits
     const newConfig: ContentGeneratorConfig = {
@@ -1393,7 +1390,6 @@ describe('Model Switching and Config Updates', () => {
       ['authType']: AuthType.QWEN_OAUTH,
       ['apiKey']: 'test-key',
       ['contextWindowSize']: 128_000,
-      ['maxOutputTokens']: 4_096,
       ['samplingParams']: { temperature: 0.8 },
       ['disableCacheControl']: true,
     };
@@ -1403,7 +1399,6 @@ describe('Model Switching and Config Updates', () => {
       sources: {
         model: { kind: 'programmatic', detail: 'user' },
         contextWindowSize: { kind: 'computed', detail: 'auto' },
-        maxOutputTokens: { kind: 'computed', detail: 'auto' },
         samplingParams: { kind: 'settings' },
         disableCacheControl: { kind: 'settings' },
       },
@@ -1423,7 +1418,6 @@ describe('Model Switching and Config Updates', () => {
     const updatedConfig = config.getContentGeneratorConfig();
     expect(updatedConfig['model']).toBe('qwen-max');
     expect(updatedConfig['contextWindowSize']).toBe(128_000);
-    expect(updatedConfig['maxOutputTokens']).toBe(4_096);
     expect(updatedConfig['samplingParams']?.temperature).toBe(0.8);
     expect(updatedConfig['disableCacheControl']).toBe(true);
 
@@ -1433,8 +1427,6 @@ describe('Model Switching and Config Updates', () => {
     expect(sources['model']?.detail).toBe('user');
     expect(sources['contextWindowSize']?.kind).toBe('computed');
     expect(sources['contextWindowSize']?.detail).toBe('auto');
-    expect(sources['maxOutputTokens']?.kind).toBe('computed');
-    expect(sources['maxOutputTokens']?.detail).toBe('auto');
     expect(sources['samplingParams']?.kind).toBe('settings');
     expect(sources['disableCacheControl']?.kind).toBe('settings');
   });
@@ -1448,7 +1440,6 @@ describe('Model Switching and Config Updates', () => {
       ['authType']: AuthType.QWEN_OAUTH,
       ['apiKey']: 'test-key',
       ['contextWindowSize']: 1_000_000,
-      ['maxOutputTokens']: 8_192,
     };
 
     vi.mocked(resolveContentGeneratorConfigWithSources).mockReturnValue({
@@ -1464,7 +1455,6 @@ describe('Model Switching and Config Updates', () => {
       ['authType']: AuthType.USE_GEMINI,
       ['apiKey']: 'gemini-key',
       ['contextWindowSize']: 32_000,
-      ['maxOutputTokens']: 2_048,
     };
 
     vi.mocked(resolveContentGeneratorConfigWithSources).mockReturnValue({
@@ -1493,7 +1483,7 @@ describe('Model Switching and Config Updates', () => {
     expect(refreshAuthSpy).toHaveBeenCalledWith(AuthType.USE_GEMINI);
   });
 
-  it('should handle model switch when contextWindowSize and maxOutputTokens are undefined', async () => {
+  it('should handle model switch when contextWindowSize is undefined', async () => {
     const config = new Config(baseParams);
 
     // Initialize with config that has undefined token limits
@@ -1502,7 +1492,6 @@ describe('Model Switching and Config Updates', () => {
       ['authType']: AuthType.QWEN_OAUTH,
       ['apiKey']: 'test-key',
       ['contextWindowSize']: undefined,
-      ['maxOutputTokens']: undefined,
     };
 
     vi.mocked(resolveContentGeneratorConfigWithSources).mockReturnValue({
@@ -1518,7 +1507,6 @@ describe('Model Switching and Config Updates', () => {
       ['authType']: AuthType.QWEN_OAUTH,
       ['apiKey']: 'test-key',
       ['contextWindowSize']: 128_000,
-      ['maxOutputTokens']: 4_096,
     };
 
     vi.mocked(resolveContentGeneratorConfigWithSources).mockReturnValue({
@@ -1538,6 +1526,5 @@ describe('Model Switching and Config Updates', () => {
     // Verify limits are now defined
     const updatedConfig = config.getContentGeneratorConfig();
     expect(updatedConfig['contextWindowSize']).toBe(128_000);
-    expect(updatedConfig['maxOutputTokens']).toBe(4_096);
   });
 });
