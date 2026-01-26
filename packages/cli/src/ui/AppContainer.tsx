@@ -623,7 +623,7 @@ export const AppContainer = (props: AppContainerProps) => {
     try {
       const { memoryContent, fileCount } = await loadHierarchicalGeminiMemory(
         process.cwd(),
-        settings.merged.context?.loadMemoryFromIncludeDirectories
+        settings.merged.context?.loadFromIncludeDirectories
           ? config.getWorkspaceContext().getDirectories()
           : [],
         config.getDebugMode(),
