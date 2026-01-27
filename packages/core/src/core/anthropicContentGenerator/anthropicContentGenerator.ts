@@ -29,6 +29,7 @@ import { RequestTokenEstimator } from '../../utils/request-tokenizer/index.js';
 import { safeJsonParse } from '../../utils/safeJsonParse.js';
 import { AnthropicContentConverter } from './converter.js';
 import { buildRuntimeFetchOptions } from '../../utils/runtimeFetchOptions.js';
+import { DEFAULT_TIMEOUT } from '../openaiContentGenerator/constants.js';
 
 type StreamingBlockState = {
   type: string;
@@ -65,7 +66,7 @@ export class AnthropicContentGenerator implements ContentGenerator {
     this.client = new Anthropic({
       apiKey: contentGeneratorConfig.apiKey,
       baseURL,
-      timeout: contentGeneratorConfig.timeout,
+      timeout: contentGeneratorConfig.timeout || DEFAULT_TIMEOUT,
       maxRetries: contentGeneratorConfig.maxRetries,
       defaultHeaders,
       ...runtimeOptions,

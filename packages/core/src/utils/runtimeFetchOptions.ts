@@ -77,10 +77,10 @@ export function buildRuntimeFetchOptions(
 ): OpenAIRuntimeFetchOptions | AnthropicRuntimeFetchOptions {
   const runtime = detectRuntime();
 
-  // Always disable bodyTimeout (set to 0) to let SDK's timeout parameter
-  // control the total request time. bodyTimeout only monitors intervals between
-  // data chunks, not the total request time, so we disable it to ensure user-configured
-  // timeout works as expected for both streaming and non-streaming requests.
+  // Always disable undici timeouts (set to 0) to let SDK's timeout parameter
+  // control the total request time. bodyTimeout monitors intervals between data
+  // chunks, headersTimeout waits for response headers, so we disable both to
+  // ensure user-configured timeouts work as expected for long-running requests.
 
   switch (runtime) {
     case 'bun': {
@@ -114,7 +114,7 @@ export function buildRuntimeFetchOptions(
 
     case 'node': {
       // Node.js: Use ProxyAgent when proxy is configured, otherwise Agent.
-      // bodyTimeout is always 0 (disabled) to let SDK timeout control the request.
+      // undici timeouts are disabled to let SDK timeout control the request.
       try {
         const dispatcher = createDispatcher(proxyUrl);
         if (sdkType === 'openai') {
@@ -164,10 +164,12 @@ function createDispatcher(proxyUrl?: string): Dispatcher {
   if (proxyUrl) {
     return new ProxyAgent({
       uri: proxyUrl,
+      headersTimeout: 0,
       bodyTimeout: 0,
     });
   }
   return new Agent({
+    headersTimeout: 0,
     bodyTimeout: 0,
   });
 }
