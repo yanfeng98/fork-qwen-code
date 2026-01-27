@@ -380,10 +380,10 @@ class GeminiAgent {
     const allConfiguredModels = config.getAllConfiguredModels();
 
     const baseCurrentModelId = parseAcpBaseModelId(rawCurrentModelId);
-    const currentModelId =
-      currentAuthType && baseCurrentModelId
-        ? formatAcpModelId(baseCurrentModelId, currentAuthType)
-        : baseCurrentModelId;
+    const currentModelId = this.formatCurrentModelId(
+      baseCurrentModelId,
+      currentAuthType,
+    );
 
     const availableModels = allConfiguredModels;
 
@@ -396,26 +396,20 @@ class GeminiAgent {
       },
     }));
 
-    if (
-      currentModelId &&
-      !mappedAvailableModels.some((model) => model.modelId === currentModelId)
-    ) {
-      const currentContextWindowSize =
-        config.getContentGeneratorConfig()?.contextWindowSize ??
-        tokenLimit(currentModelId);
-      mappedAvailableModels.unshift({
-        modelId: currentModelId,
-        name: currentModelId,
-        description: null,
-        _meta: {
-          contextLimit: currentContextWindowSize,
-        },
-      });
-    }
-
     return {
       currentModelId,
       availableModels: mappedAvailableModels,
     };
+  }
+
+  private formatCurrentModelId(
+    baseModelId: string,
+    authType?: AuthType,
+  ): string {
+    if (!baseModelId) {
+      return baseModelId;
+    }
+
+    return authType ? formatAcpModelId(baseModelId, authType) : baseModelId;
   }
 }

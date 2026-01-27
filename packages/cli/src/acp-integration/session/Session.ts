@@ -371,7 +371,9 @@ export class Session implements SessionContext {
     const selectedAuthType = parsed.authType ?? previousAuthType;
 
     if (!selectedAuthType) {
-      throw acp.RequestError.invalidParams('authType cannot be determined');
+      throw acp.RequestError.invalidParams(
+        `authType cannot be determined for modelId "${parsed.modelId}"`,
+      );
     }
 
     await this.config.switchModel(
