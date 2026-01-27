@@ -24,6 +24,7 @@ import type {
   LspSymbolInformation,
   LspTextEdit,
   LspWorkspaceEdit,
+  Extension,
 } from '@qwen-code/qwen-code-core';
 import type { EventEmitter } from 'events';
 import { LspConfigLoader } from './LspConfigLoader.js';
@@ -98,17 +99,33 @@ export class NativeLspService {
 
     // Detect languages in workspace
     const userConfigs = await this.configLoader.loadUserConfigs();
+    const extensionConfigs = await this.configLoader.loadExtensionConfigs(
+      this.getActiveExtensions(),
+    );
     const extensionOverrides =
-      this.configLoader.collectExtensionToLanguageOverrides(userConfigs);
+      this.configLoader.collectExtensionToLanguageOverrides([
+        ...extensionConfigs,
+        ...userConfigs,
+      ]);
     const detectedLanguages =
       await this.languageDetector.detectLanguages(extensionOverrides);
 
-    // Merge configs: built-in presets + user .lsp.json + optional cclsp compatibility
+    // Merge configs: built-in presets + extension LSP configs + user .lsp.json
     const serverConfigs = this.configLoader.mergeConfigs(
       detectedLanguages,
+      extensionConfigs,
       userConfigs,
     );
     this.serverManager.setServerConfigs(serverConfigs);
+  }
+
+  private getActiveExtensions(): Extension[] {
+    const configWithExtensions = this.config as unknown as {
+      getActiveExtensions?: () => Extension[];
+    };
+    return typeof configWithExtensions.getActiveExtensions === 'function'
+      ? configWithExtensions.getActiveExtensions()
+      : [];
   }
 
   /**

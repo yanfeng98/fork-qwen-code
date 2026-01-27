@@ -7,6 +7,11 @@
 import * as fs from 'node:fs';
 import * as path from 'path';
 import { pathToFileURL } from 'url';
+import {
+  recursivelyHydrateStrings,
+  type Extension,
+  type JsonValue,
+} from '@qwen-code/qwen-code-core';
 import type {
   LspInitializationOptions,
   LspServerConfig,
@@ -18,9 +23,7 @@ export class LspConfigLoader {
 
   /**
    * Load user .lsp.json configuration.
-   * Supports two official formats:
-   * 1. Basic format: { "language": { "command": "...", "extensionToLanguage": {...} } }
-   * 2. LanguageServers format: { "languageServers": { "server-name": { "languages": [...], ... } } }
+   * Supports basic format: { "language": { "command": "...", "extensionToLanguage": {...} } }
    */
   async loadUserConfigs(): Promise<LspServerConfig[]> {
     const lspConfigPath = path.join(this.workspaceRoot, '.lsp.json');
@@ -39,10 +42,76 @@ export class LspConfigLoader {
   }
 
   /**
-   * Merge configs: built-in presets + user configs + compatibility layer
+   * Load LSP configurations declared by extensions (Claude plugins).
+   */
+  async loadExtensionConfigs(extensions: Extension[]): Promise<LspServerConfig[]> {
+    const configs: LspServerConfig[] = [];
+
+    for (const extension of extensions) {
+      const lspServers = extension.config?.lspServers;
+      if (!lspServers) {
+        continue;
+      }
+
+      const originBase = `extension ${extension.name}`;
+      if (typeof lspServers === 'string') {
+        const configPath = this.resolveExtensionConfigPath(
+          extension.path,
+          lspServers,
+        );
+        if (!fs.existsSync(configPath)) {
+          console.warn(
+            `LSP config not found for ${originBase}: ${configPath}`,
+          );
+          continue;
+        }
+
+        try {
+          const configContent = fs.readFileSync(configPath, 'utf-8');
+          const data = JSON.parse(configContent) as JsonValue;
+          const hydrated = this.hydrateExtensionLspConfig(
+            data,
+            extension.path,
+          );
+          configs.push(
+            ...this.parseConfigSource(
+              hydrated,
+              `${originBase} (${configPath})`,
+            ),
+          );
+        } catch (error) {
+          console.warn(
+            `Failed to load extension LSP config from ${configPath}:`,
+            error,
+          );
+        }
+      } else if (this.isRecord(lspServers)) {
+        const hydrated = this.hydrateExtensionLspConfig(
+          lspServers as JsonValue,
+          extension.path,
+        );
+        configs.push(
+          ...this.parseConfigSource(
+            hydrated,
+            `${originBase} (lspServers)`,
+          ),
+        );
+      } else {
+        console.warn(
+          `LSP config for ${originBase} must be an object or a JSON file path.`,
+        );
+      }
+    }
+
+    return configs;
+  }
+
+  /**
+   * Merge configs: built-in presets + extension configs + user configs
    */
   mergeConfigs(
     detectedLanguages: string[],
+    extensionConfigs: LspServerConfig[],
     userConfigs: LspServerConfig[],
   ): LspServerConfig[] {
     // Built-in preset configurations
@@ -51,17 +120,22 @@ export class LspConfigLoader {
     // Merge configs, user configs take priority
     const mergedConfigs = [...presets];
 
-    for (const userConfig of userConfigs) {
-      // Find if there's a preset with the same name, if so replace it
-      const existingIndex = mergedConfigs.findIndex(
-        (c) => c.name === userConfig.name,
-      );
-      if (existingIndex !== -1) {
-        mergedConfigs[existingIndex] = userConfig;
-      } else {
-        mergedConfigs.push(userConfig);
+    const applyConfigs = (configs: LspServerConfig[]) => {
+      for (const config of configs) {
+        // Find if there's a preset with the same name, if so replace it
+        const existingIndex = mergedConfigs.findIndex(
+          (c) => c.name === config.name,
+        );
+        if (existingIndex !== -1) {
+          mergedConfigs[existingIndex] = config;
+        } else {
+          mergedConfigs.push(config);
+        }
       }
-    }
+    };
+
+    applyConfigs(extensionConfigs);
+    applyConfigs(userConfigs);
 
     return mergedConfigs;
   }
@@ -155,7 +229,7 @@ export class LspConfigLoader {
 
   /**
    * Parse configuration source and extract server configs.
-   * Detects format based on presence of 'languageServers' key.
+   * Expects basic format keyed by language identifier.
    */
   private parseConfigSource(
     source: unknown,
@@ -167,31 +241,15 @@ export class LspConfigLoader {
 
     const configs: LspServerConfig[] = [];
 
-    // Determine format: languageServers wrapper vs basic format
-    const hasLanguageServersWrapper = this.isRecord(source['languageServers']);
-    const serverMap = hasLanguageServersWrapper
-      ? (source['languageServers'] as Record<string, unknown>)
-      : source;
-
-    for (const [key, spec] of Object.entries(serverMap)) {
+    for (const [key, spec] of Object.entries(source)) {
       if (!this.isRecord(spec)) {
         continue;
       }
 
-      // In basic format: key is language name, server name comes from command
-      // In languageServers format: key is server name, languages come from 'languages' array
-      const isBasicFormat = !hasLanguageServersWrapper && !spec['languages'];
-
-      const languages = isBasicFormat
-        ? [key]
-        : (this.normalizeStringArray(spec['languages']) ??
-          (typeof spec['languages'] === 'string' ? [spec['languages']] : []));
-
-      const name = isBasicFormat
-        ? typeof spec['command'] === 'string'
-          ? spec['command']
-          : key
-        : key;
+      // In basic format: key is language name, server name comes from command.
+      const languages = [key];
+      const name =
+        typeof spec['command'] === 'string' ? (spec['command'] as string) : key;
 
       const config = this.buildServerConfig(name, languages, spec, origin);
       if (config) {
@@ -200,6 +258,28 @@ export class LspConfigLoader {
     }
 
     return configs;
+  }
+
+  private resolveExtensionConfigPath(
+    extensionPath: string,
+    configPath: string,
+  ): string {
+    return path.isAbsolute(configPath)
+      ? path.resolve(configPath)
+      : path.resolve(extensionPath, configPath);
+  }
+
+  private hydrateExtensionLspConfig(
+    source: JsonValue,
+    extensionPath: string,
+  ): JsonValue {
+    return recursivelyHydrateStrings(source, {
+      extensionPath,
+      CLAUDE_PLUGIN_ROOT: extensionPath,
+      workspacePath: this.workspaceRoot,
+      '/': path.sep,
+      pathSeparator: path.sep,
+    });
   }
 
   private buildServerConfig(

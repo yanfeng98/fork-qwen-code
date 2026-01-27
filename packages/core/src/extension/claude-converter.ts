@@ -39,7 +39,7 @@ export interface ClaudePluginConfig {
   hooks?: string;
   mcpServers?: string | Record<string, MCPServerConfig>;
   outputStyles?: string | string[];
-  lspServers?: string;
+  lspServers?: string | Record<string, unknown>;
 }
 
 /**
@@ -318,17 +318,12 @@ export function convertClaudeToQwenConfig(
       `[Claude Converter] Output styles are not yet supported in ${claudeConfig.name}`,
     );
   }
-  if (claudeConfig.lspServers) {
-    console.warn(
-      `[Claude Converter] LSP servers are not yet supported in ${claudeConfig.name}`,
-    );
-  }
-
   // Direct field mapping - commands, skills, agents will be collected as folders
   return {
     name: claudeConfig.name,
     version: claudeConfig.version,
     mcpServers,
+    lspServers: claudeConfig.lspServers,
   };
 }
 

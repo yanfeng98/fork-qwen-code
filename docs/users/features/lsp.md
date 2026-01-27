@@ -38,7 +38,7 @@ You need to have the language server for your programming language installed:
 
 ### .lsp.json File
 
-You can configure language servers using a `.lsp.json` file in your project root. This follows the [Claude Code plugin LSP configuration format](https://code.claude.com/docs/en/plugins-reference#lsp-servers).
+You can configure language servers using a `.lsp.json` file in your project root. This uses the language-keyed format described in the [Claude Code plugin LSP configuration reference](https://code.claude.com/docs/en/plugins-reference#lsp-servers).
 
 **Basic format:**
 
@@ -52,28 +52,6 @@ You can configure language servers using a `.lsp.json` file in your project root
       ".tsx": "typescriptreact",
       ".js": "javascript",
       ".jsx": "javascriptreact"
-    }
-  }
-}
-```
-
-**Extended format with `languageServers` wrapper:**
-
-```json
-{
-  "languageServers": {
-    "typescript-language-server": {
-      "languages": [
-        "typescript",
-        "javascript",
-        "typescriptreact",
-        "javascriptreact"
-      ],
-      "command": "typescript-language-server",
-      "args": ["--stdio"],
-      "transport": "stdio",
-      "initializationOptions": {},
-      "settings": {}
     }
   }
 }
@@ -346,7 +324,7 @@ Or check the LSP debugging guide at `packages/cli/LSP_DEBUGGING_GUIDE.md`.
 
 ## Claude Code Compatibility
 
-Qwen Code supports Claude Code-style `.lsp.json` configuration files as defined in the [Claude Code plugins reference](https://code.claude.com/docs/en/plugins-reference#lsp-servers). If you're migrating from Claude Code, your existing LSP configuration should work with minimal changes.
+Qwen Code supports Claude Code-style `.lsp.json` configuration files in the language-keyed format defined in the [Claude Code plugins reference](https://code.claude.com/docs/en/plugins-reference#lsp-servers). If you're migrating from Claude Code, use the language-as-key layout in your configuration.
 
 ### Configuration Format
 
@@ -364,19 +342,7 @@ The recommended format follows Claude Code's specification:
 }
 ```
 
-The `languageServers` wrapper format is also supported:
-
-```json
-{
-  "languageServers": {
-    "gopls": {
-      "languages": ["go"],
-      "command": "gopls",
-      "args": ["serve"]
-    }
-  }
-}
-```
+Claude Code LSP plugins can also supply `lspServers` in `plugin.json` (or a referenced `.lsp.json`). Qwen Code loads those configs when the extension is enabled, and they must use the same language-keyed format.
 
 ## Best Practices
 
