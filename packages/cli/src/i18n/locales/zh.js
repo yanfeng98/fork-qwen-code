@@ -469,6 +469,17 @@ export default {
   'Either an extension name or --all must be provided':
     '必须提供扩展名称或 --all',
   'Lists installed extensions.': '列出已安装的扩展。',
+  'Path:': '路径：',
+  'Source:': '来源：',
+  'Type:': '类型：',
+  'Ref:': '引用：',
+  'Release tag:': '发布标签：',
+  'Enabled (User):': '已启用（用户）：',
+  'Enabled (Workspace):': '已启用（工作区）：',
+  'Context files:': '上下文文件：',
+  'Skills:': '技能：',
+  'Agents:': '代理：',
+  'MCP servers:': 'MCP 服务器：',
   'Link extension failed to install.': '链接扩展安装失败。',
   'Extension "{{name}}" linked successfully and enabled.':
     '扩展 "{{name}}" 链接成功并已启用。',

@@ -496,6 +496,17 @@ export default {
   'Either an extension name or --all must be provided':
     'Необходимо указать имя расширения или --all',
   'Lists installed extensions.': 'Показывает установленные расширения.',
+  'Path:': 'Путь:',
+  'Source:': 'Источник:',
+  'Type:': 'Тип:',
+  'Ref:': 'Ссылка:',
+  'Release tag:': 'Тег релиза:',
+  'Enabled (User):': 'Включено (Пользователь):',
+  'Enabled (Workspace):': 'Включено (Рабочее пространство):',
+  'Context files:': 'Контекстные файлы:',
+  'Skills:': 'Навыки:',
+  'Agents:': 'Агенты:',
+  'MCP servers:': 'MCP-серверы:',
   'Link extension failed to install.':
     'Не удалось установить связанное расширение.',
   'Extension "{{name}}" linked successfully and enabled.':

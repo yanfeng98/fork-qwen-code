@@ -480,6 +480,17 @@ export default {
   'Either an extension name or --all must be provided':
     'Entweder ein Erweiterungsname oder --all muss angegeben werden',
   'Lists installed extensions.': 'Listet installierte Erweiterungen auf.',
+  'Path:': 'Pfad:',
+  'Source:': 'Quelle:',
+  'Type:': 'Typ:',
+  'Ref:': 'Ref:',
+  'Release tag:': 'Release-Tag:',
+  'Enabled (User):': 'Aktiviert (Benutzer):',
+  'Enabled (Workspace):': 'Aktiviert (Arbeitsbereich):',
+  'Context files:': 'Kontextdateien:',
+  'Skills:': 'Skills:',
+  'Agents:': 'Agents:',
+  'MCP servers:': 'MCP-Server:',
   'Link extension failed to install.':
     'Verknüpfte Erweiterung konnte nicht installiert werden.',
   'Extension "{{name}}" linked successfully and enabled.':
