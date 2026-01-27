@@ -580,8 +580,8 @@ export default {
   // ============================================================================
   // Команды - Язык
   // ============================================================================
-  'Invalid language. Available: en-US, zh-CN':
-    'Неверный язык. Доступны: en-US, zh-CN, ru-RU',
+  'Invalid language. Available: {{options}}':
+    'Недопустимый язык. Доступны: {{options}}',
   'Language subcommands do not accept additional arguments.':
     'Подкоманды языка не принимают дополнительных аргументов.',
   'Current UI language: {{lang}}': 'Текущий язык интерфейса: {{lang}}',
@@ -589,13 +589,14 @@ export default {
   'LLM output language not set': 'Язык вывода LLM не установлен',
   'Set UI language': 'Установка языка интерфейса',
   'Set LLM output language': 'Установка языка вывода LLM',
-  'Usage: /language ui [zh-CN|en-US]':
-    'Использование: /language ui [zh-CN|en-US|ru-RU]',
+  'Usage: /language ui [{{options}}]':
+    'Использование: /language ui [{{options}}]',
   'Usage: /language output <language>':
     'Использование: /language output <language>',
   'Example: /language output 中文': 'Пример: /language output 中文',
   'Example: /language output English': 'Пример: /language output English',
   'Example: /language output 日本語': 'Пример: /language output 日本語',
+  'Example: /language output Português': 'Пример: /language output Português',
   'UI language changed to {{lang}}': 'Язык интерфейса изменен на {{lang}}',
   'LLM output language set to {{lang}}':
     'Язык вывода LLM установлен на {{lang}}',
@@ -611,12 +612,7 @@ export default {
   'To request additional UI language packs, please open an issue on GitHub.':
     'Для запроса дополнительных языковых пакетов интерфейса, пожалуйста, создайте обращение на GitHub.',
   'Available options:': 'Доступные варианты:',
-  '  - zh-CN: Simplified Chinese': ' - zh-CN: Упрощенный китайский',
-  '  - en-US: English': ' - en-US: Английский',
-  'Set UI language to Simplified Chinese (zh-CN)':
-    'Установить язык интерфейса на упрощенный китайский (zh-CN)',
-  'Set UI language to English (en-US)':
-    'Установить язык интерфейса на английский (en-US)',
+  'Set UI language to {{name}}': 'Установить язык интерфейса на {{name}}',
 
   // ============================================================================
   // Команды - Режим подтверждения
