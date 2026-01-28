@@ -108,7 +108,7 @@ export { Tooltip } from './components/ui/Tooltip';
 export type { TooltipProps } from './components/ui/Tooltip';
 
 // Permission components
-export { default as PermissionDrawer } from './components/PermissionDrawer';
+export { PermissionDrawer } from './components/PermissionDrawer';
 export type {
   PermissionDrawerProps,
   PermissionOption,
