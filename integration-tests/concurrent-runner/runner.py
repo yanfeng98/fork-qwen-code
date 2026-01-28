@@ -61,6 +61,7 @@ class RunConfig:
     worktree_base: Path = field(default_factory=lambda: Path.home() / ".qwen" / "worktrees")
     outputs_dir: Path = field(default_factory=lambda: Path("./outputs"))
     results_file: Path = field(default_factory=lambda: Path("./results.json"))
+    branch: Optional[str] = None  # Git branch to checkout (uses default if not set)
 
 
 @dataclass
@@ -187,17 +188,26 @@ class GitWorktreeManager:
 
         self.console.print(f"[green]✓ Git repository initialized[/green]")
 
-    async def create(self, source_repo: Path, worktree_dir: Path) -> Path:
+    async def create(self, source_repo: Path, worktree_dir: Path, branch: Optional[str] = None) -> Path:
         """Create a new git worktree from the source repository."""
         worktree_dir.parent.mkdir(parents=True, exist_ok=True)
 
-        cmd = ["git", "worktree", "add", str(worktree_dir), "HEAD"]
+        # Build worktree command
+        if branch:
+            # Create a unique branch for this worktree based on the specified branch
+            worktree_branch = f"{branch}-{worktree_dir.name}"
+            cmd = ["git", "worktree", "add", "-b", worktree_branch, str(worktree_dir), branch]
+            self.console.print(f"[dim]Git: Creating worktree with branch '{worktree_branch}' from '{branch}'...[/dim]")
+        else:
+            # Create worktree from HEAD (default branch)
+            cmd = ["git", "worktree", "add", str(worktree_dir)]
+
         self.console.print(f"[dim]Git: {' '.join(cmd)}[/dim]")
         result = await self._run_command(cmd, cwd=source_repo)
-        
+
         if result.returncode != 0:
             raise RuntimeError(f"Failed to create worktree: {result.stderr}")
-        
+
         return worktree_dir
 
     async def initialize(self, worktree_dir: Path) -> None:
@@ -607,6 +617,7 @@ def load_config(config_path: Path) -> RunConfig:
         worktree_base=Path(data.get("worktree_base", "~/.qwen/worktrees")).expanduser(),
         outputs_dir=Path(data.get("outputs_dir", "./outputs")),
         results_file=Path(data.get("results_file", "./results.json")),
+        branch=data.get("branch"),
     )
 
 
@@ -625,7 +636,7 @@ async def execute_single_run(
         # Step 1: Create worktree
         await tracker.update_status(run.run_id, RunStatus.PREPARING)
         worktree_dir = config.worktree_base / f"run-{run.run_id}"
-        await worktree_manager.create(config.source_repo, worktree_dir)
+        await worktree_manager.create(config.source_repo, worktree_dir, config.branch)
         run.worktree_path = str(worktree_dir)
         run.started_at = datetime.now().isoformat()
         

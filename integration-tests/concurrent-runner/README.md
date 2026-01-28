@@ -50,16 +50,17 @@ Create a JSON configuration file (see `config.example.json`):
 
 ### Configuration Options
 
-| Option          | Type   | Default           | Description                      |
-| --------------- | ------ | ----------------- | -------------------------------- |
-| `concurrency`   | int    | 4                 | Maximum parallel executions      |
-| `yolo`          | bool   | true              | Auto-approve all actions         |
-| `source_repo`   | string | .                 | Source git repository path       |
-| `worktree_base` | string | ~/.qwen/worktrees | Base directory for git worktrees |
-| `outputs_dir`   | string | ./outputs         | Directory for captured output    |
-| `results_file`  | string | ./results.json    | JSON file for run tracking       |
-| `tasks`         | array  | []                | List of task definitions         |
-| `models`        | array  | []                | List of model identifiers        |
+| Option          | Type   | Default           | Description                                   |
+| --------------- | ------ | ----------------- | --------------------------------------------- |
+| `concurrency`   | int    | 4                 | Maximum parallel executions                   |
+| `yolo`          | bool   | true              | Auto-approve all actions                      |
+| `source_repo`   | string | .                 | Source git repository path                    |
+| `branch`        | string | null              | Git branch to checkout (uses default if null) |
+| `worktree_base` | string | ~/.qwen/worktrees | Base directory for git worktrees              |
+| `outputs_dir`   | string | ./outputs         | Directory for captured output                 |
+| `results_file`  | string | ./results.json    | JSON file for run tracking                    |
+| `tasks`         | array  | []                | List of task definitions                      |
+| `models`        | array  | []                | List of model identifiers                     |
 
 ### Task Definition
 

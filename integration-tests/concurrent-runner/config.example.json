@@ -2,6 +2,7 @@
   "concurrency": 3,
   "yolo": true,
   "source_repo": ".",
+  "branch": "main",
   "worktree_base": "~/.qwen/worktrees",
   "outputs_dir": "./outputs",
   "results_file": "./results.json",
