@@ -23,6 +23,7 @@ import {
   UpdatedPlanToolCall,
   ShellToolCall,
   ReadToolCall,
+  WebFetchToolCall,
   shouldShowToolCall,
 } from '../toolcalls/index.js';
 import type { ToolCallData as BaseToolCallData } from '../toolcalls/index.js';
@@ -172,6 +173,12 @@ function getToolCallComponent(kind: string) {
     case 'think':
     case 'thinking':
       return ThinkToolCall;
+    case 'fetch':
+    case 'web_fetch':
+    case 'webfetch':
+    case 'web_search':
+    case 'websearch':
+      return WebFetchToolCall;
     default:
       return GenericToolCall;
   }
