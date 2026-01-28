@@ -5,6 +5,7 @@
   "worktree_base": "~/.qwen/worktrees",
   "outputs_dir": "./examples/test-run",
   "results_file": "./examples/test-run/results.json",
+  "keep_worktree": false,
   "tasks": [
     {
       "id": "task-1",

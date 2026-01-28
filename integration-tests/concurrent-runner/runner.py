@@ -35,7 +35,6 @@ class RunStatus(Enum):
     """Execution status for a single run."""
     QUEUED = "queued"
     PREPARING = "preparing"
-    INITIALIZING = "initializing"
     RUNNING = "running"
     SUCCEEDED = "succeeded"
     FAILED = "failed"
@@ -62,6 +61,7 @@ class RunConfig:
     outputs_dir: Path = field(default_factory=lambda: Path("./outputs"))
     results_file: Path = field(default_factory=lambda: Path("./results.json"))
     branch: Optional[str] = None  # Git branch to checkout (uses default if not set)
+    keep_worktree: bool = False  # If true, don't remove git worktree after run
 
 
 @dataclass
@@ -213,27 +213,6 @@ class GitWorktreeManager:
 
         return worktree_dir
 
-    async def initialize(self, worktree_dir: Path) -> None:
-        """Initialize the worktree by running npm install and npm run build."""
-        # npm install
-        self.console.print(f"[dim]Running npm install in {worktree_dir.name}...[/dim]")
-        install_result = await self._run_command(
-            ["npm", "install"], 
-            cwd=worktree_dir,
-            timeout=300
-        )
-        if install_result.returncode != 0:
-            raise RuntimeError(f"npm install failed: {install_result.stderr}")
-        
-        # npm run build
-        self.console.print(f"[dim]Running npm run build in {worktree_dir.name}...[/dim]")
-        build_result = await self._run_command(
-            ["npm", "run", "build"],
-            cwd=worktree_dir,
-            timeout=300
-        )
-        if build_result.returncode != 0:
-            raise RuntimeError(f"npm run build failed: {build_result.stderr}")
 
     async def remove(self, worktree_dir: Path) -> None:
         """Remove a git worktree."""
@@ -423,7 +402,7 @@ class StatusTracker:
 
     def get_active_runs(self) -> List[RunRecord]:
         """Get currently active runs."""
-        active_statuses = {RunStatus.PREPARING, RunStatus.INITIALIZING, RunStatus.RUNNING}
+        active_statuses = {RunStatus.PREPARING, RunStatus.RUNNING}
         return [r for r in self._runs.values() if r.status in active_statuses]
 
 
@@ -724,16 +703,12 @@ async def execute_single_run(
         run.worktree_path = str(worktree_dir)
         run.started_at = datetime.now().isoformat()
         
-        # Step 2: Initialize (npm install + build)
-        await tracker.update_status(run.run_id, RunStatus.INITIALIZING)
-        await worktree_manager.initialize(worktree_dir)
-        
-        # Step 3: Run CLI
+        # Step 2: Run CLI
         await tracker.update_status(run.run_id, RunStatus.RUNNING)
         output_dir = config.outputs_dir / run.run_id
         await qwen_runner.run(run, worktree_dir, output_dir)
         
-        # Step 4: Success
+        # Step 3: Success
         run.ended_at = datetime.now().isoformat()
         await tracker.update_status(
             run.run_id, 
@@ -754,7 +729,7 @@ async def execute_single_run(
         console.print(f"[red]✗[/red] {run.task_name} / {run.model}: {e}")
 
     finally:
-        # Step 5: Capture git diff (before cleanup)
+        # Step 4: Capture git diff (before cleanup)
         output_dir = config.outputs_dir / run.run_id
         output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -770,7 +745,7 @@ async def execute_single_run(
             except Exception as e:
                 console.print(f"[yellow]Warning: Failed to capture diff: {e}[/yellow]")
 
-        # Step 6: Collect session log (before cleanup)
+        # Step 5: Collect session log (before cleanup)
         if worktree_dir:
             try:
                 result = await worktree_manager.collect_session_log(worktree_dir, output_dir)
@@ -793,7 +768,10 @@ async def execute_single_run(
 
         # Step 7: Cleanup
         if worktree_dir:
-            await worktree_manager.remove(worktree_dir)
+            if config.keep_worktree:
+                console.print(f"[dim]Keeping worktree: {worktree_dir}[/dim]")
+            else:
+                await worktree_manager.remove(worktree_dir)
 
 
 async def run_all(config: RunConfig, console: Console) -> ExecutionState:
