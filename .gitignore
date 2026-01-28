@@ -66,3 +66,6 @@ docs-site/content
 
 # python cache
 __pycache__/
+
+integration-tests/concurrent-runner/output/
+integration-tests/concurrent-runner/task-*

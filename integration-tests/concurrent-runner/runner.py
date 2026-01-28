@@ -9,6 +9,7 @@ the Qwen CLI in parallel with status tracking and output capture.
 from __future__ import annotations
 
 import argparse
+import html
 import asyncio
 import json
 import os
@@ -93,6 +94,7 @@ class RunRecord:
     prompt_results: List[PromptResult] = field(default_factory=list)
     diff_file: Optional[str] = None  # Path to git diff output
     session_log_file: Optional[str] = None  # Path to session log (chat recording)
+    session_html_file: Optional[str] = None  # Path to rendered chat HTML
     session_id: Optional[str] = None  # Session ID (UUID from chat recording)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -111,6 +113,7 @@ class RunRecord:
             "error_message": self.error_message,
             "diff_file": self.diff_file,
             "session_log_file": self.session_log_file,
+            "session_html_file": self.session_html_file,
             "session_id": self.session_id,
             "prompt_results": [
                 {
@@ -142,6 +145,7 @@ class RunRecord:
             error_message=data.get("error_message"),
             diff_file=data.get("diff_file"),
             session_log_file=data.get("session_log_file"),
+            session_html_file=data.get("session_html_file"),
             session_id=data.get("session_id"),
         )
 
@@ -248,7 +252,7 @@ class GitWorktreeManager:
 
         return result.stdout
 
-    async def collect_session_log(self, worktree_dir: Path, output_dir: Path) -> Optional[Tuple[Path, str]]:
+    async def collect_session_log(self, worktree_dir: Path, output_dir: Path) -> Optional[Tuple[Path, str, Path]]:
         """Collect the session log file from the worktree's chat recording.
 
         Session logs are stored at:
@@ -257,7 +261,7 @@ class GitWorktreeManager:
         Where projectId is the sanitized worktree path.
 
         Returns:
-            Tuple of (output_path, session_id) or None if not found.
+            Tuple of (output_path, session_id, rendered_html_path) or None if not found.
         """
         import re
 
@@ -293,6 +297,8 @@ class GitWorktreeManager:
         # Read the original file, modify cwd field, and write to output
         # cwd should be the actual current working dir (where runner is executed)
         actual_cwd = str(Path.cwd())
+        messages = []
+        start_time = None
         async with aiofiles.open(session_log, 'r') as src, aiofiles.open(output_log, 'w') as dst:
             async for line in src:
                 line = line.strip()
@@ -300,6 +306,9 @@ class GitWorktreeManager:
                     try:
                         record = json.loads(line)
                         record['cwd'] = actual_cwd
+                        messages.append(record)
+                        if not start_time and 'time' in record:
+                            start_time = record['time']
                         await dst.write(json.dumps(record, ensure_ascii=False) + '\n')
                     except json.JSONDecodeError:
                         # If line is not valid JSON, write it as-is
@@ -307,7 +316,38 @@ class GitWorktreeManager:
 
         self.console.print(f"[dim]Session log copied: {session_log.name}[/dim]")
 
-        return output_log, session_id
+        # Generate rendered HTML
+        rendered_html_path = chats_output_dir / f"{session_id}.html"
+        try:
+            template_path = Path(__file__).parent / "render-chat-temp.html"
+            if template_path.exists():
+                async with aiofiles.open(template_path, 'r') as f:
+                    template_content = await f.read()
+                
+                chat_data = {
+                    "sessionId": session_id,
+                    "startTime": start_time or datetime.now().isoformat(),
+                    "messages": messages
+                }
+                
+                # Simple string replacement for injection
+                # The template has <script id="chat-data" type="application/json"></script>
+                placeholder = '<script id="chat-data" type="application/json">'
+                json_str = json.dumps(chat_data, ensure_ascii=False, indent=2)
+                # Escape </script> to prevent breaking the HTML script tag
+                json_str = json_str.replace('</script>', '<\\/script>')
+                injection = f'{placeholder}\n{json_str}\n'
+                rendered_content = template_content.replace(placeholder, injection)
+                
+                async with aiofiles.open(rendered_html_path, 'w') as f:
+                    await f.write(rendered_content)
+                self.console.print(f"[dim]Rendered chat HTML saved: {rendered_html_path.name}[/dim]")
+            else:
+                self.console.print(f"[yellow]Warning: Chat template not found at {template_path}[/yellow]")
+        except Exception as e:
+            self.console.print(f"[yellow]Warning: Failed to render chat HTML: {e}[/yellow]")
+
+        return output_log, session_id, rendered_html_path
 
     async def _run_command(
         self,
@@ -372,18 +412,164 @@ class StatusTracker:
                 await self._persist()
 
     async def _persist(self) -> None:
-        """Persist current state to JSON file."""
+        """Persist current state to JSON file and generate HTML report."""
         data = {
             "updated_at": datetime.now().isoformat(),
             "runs": [run.to_dict() for run in self._runs.values()],
         }
         
-        # Write atomically
+        # Write JSON atomically
         temp_file = self.results_file.with_suffix('.tmp')
         async with aiofiles.open(temp_file, 'w') as f:
             await f.write(json.dumps(data, indent=2))
         
         temp_file.replace(self.results_file)
+
+        # Generate HTML report
+        await self._generate_html(data)
+
+    async def _generate_html(self, data: Dict[str, Any]) -> None:
+        """Generate a beautiful HTML report."""
+        html_file = self.results_file.with_name("index.html")
+        
+        # Calculate summary
+        total = len(data["runs"])
+        succeeded = sum(1 for r in data["runs"] if r["status"] == "succeeded")
+        failed = sum(1 for r in data["runs"] if r["status"] == "failed")
+        running = sum(1 for r in data["runs"] if r["status"] in ["preparing", "running"])
+        
+        # Build rows
+        rows = []
+        for run in sorted(data["runs"], key=lambda x: x.get("started_at") or "", reverse=True):
+            status = run["status"]
+            status_class = f"status-{status}"
+            
+            # Links
+            links = []
+            
+            # Output Directory
+            if run.get("output_dir"):
+                # Make path absolute for local viewing
+                abs_output_dir = os.path.abspath(run["output_dir"])
+                links.append(f'<a href="file://{abs_output_dir}">Outputs</a>')
+            
+            # Diff File
+            if run.get("diff_file"):
+                abs_diff_file = os.path.abspath(run["diff_file"])
+                links.append(f'<a href="file://{abs_diff_file}">Diff</a>')
+                
+            # Session Log
+            if run.get("session_html_file"):
+                abs_session_html = os.path.abspath(run["session_html_file"])
+                links.append(f'<a href="file://{abs_session_html}">Chat</a>')
+            elif run.get("session_log_file"):
+                abs_session_log = os.path.abspath(run["session_log_file"])
+                links.append(f'<a href="file://{abs_session_log}">Chat (Raw)</a>')
+
+            # Worktree
+            if run.get("worktree_path"):
+                abs_worktree = os.path.abspath(run["worktree_path"])
+                links.append(f'<a href="file://{abs_worktree}">Worktree</a>')
+
+            # Prompt results (stdout/stderr)
+            prompt_links = []
+            for i, p in enumerate(run.get("prompt_results", []), 1):
+                p_links = []
+                if p.get("stdout_file"):
+                    p_links.append(f'<a href="file://{os.path.abspath(p["stdout_file"])}">out</a>')
+                if p.get("stderr_file"):
+                    p_links.append(f'<a href="file://{os.path.abspath(p["stderr_file"])}">err</a>')
+                
+                if p_links:
+                    prompt_links.append(f'P{i}: {"|".join(p_links)}')
+
+            links_html = " | ".join(links)
+            prompts_html = "<br>".join(prompt_links)
+            
+            duration = "N/A"
+            if run.get("started_at") and run.get("ended_at"):
+                try:
+                    start = datetime.fromisoformat(run["started_at"])
+                    end = datetime.fromisoformat(run["ended_at"])
+                    duration = f"{(end - start).total_seconds():.1f}s"
+                except: pass
+
+            error_msg = f'<div class="error-msg">{html.escape(run["error_message"])}</div>' if run.get("error_message") else ""
+
+            rows.append(f"""
+                <tr>
+                    <td><code>{run["run_id"]}</code></td>
+                    <td>{html.escape(run["task_name"])}</td>
+                    <td>{html.escape(run["model"])}</td>
+                    <td><span class="status-pill {status_class}">{status}</span></td>
+                    <td>{duration}</td>
+                    <td class="links">{links_html}</td>
+                    <td class="links">{prompts_html}</td>
+                    <td>{error_msg}</td>
+                </tr>
+            """)
+
+        html_content = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Qwen Runner Report</title>
+    <style>
+        body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 1200px; margin: 0 auto; padding: 20px; background: #f5f7f9; }}
+        h1 {{ color: #1a202c; }}
+        .summary {{ display: flex; gap: 20px; margin-bottom: 30px; }}
+        .summary-card {{ background: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); flex: 1; }}
+        .summary-card h3 {{ margin: 0; font-size: 14px; text-transform: uppercase; color: #718096; }}
+        .summary-card .value {{ font-size: 24px; font-weight: bold; margin-top: 5px; }}
+        table {{ width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }}
+        th, td {{ padding: 12px 15px; text-align: left; border-bottom: 1px solid #e2e8f0; }}
+        th {{ background: #edf2f7; font-weight: 600; color: #4a5568; }}
+        tr:hover {{ background: #f7fafc; }}
+        .status-pill {{ padding: 4px 8px; border-radius: 9999px; font-size: 12px; font-weight: 500; text-transform: uppercase; }}
+        .status-succeeded {{ background: #c6f6d5; color: #22543d; }}
+        .status-failed {{ background: #fed7d7; color: #822727; }}
+        .status-running {{ background: #bee3f8; color: #2a4365; }}
+        .status-preparing {{ background: #e9d8fd; color: #44337a; }}
+        .status-queued {{ background: #edf2f7; color: #4a5568; }}
+        .links a {{ color: #3182ce; text-decoration: none; font-size: 13px; }}
+        .links a:hover {{ text-decoration: underline; }}
+        .error-msg {{ color: #e53e3e; font-size: 12px; margin-top: 4px; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }}
+        code {{ background: #f1f5f9; padding: 2px 4px; border-radius: 4px; font-family: monospace; font-size: 12px; }}
+    </style>
+</head>
+<body>
+    <h1>Qwen Runner Execution Report</h1>
+    <div class="summary">
+        <div class="summary-card"><h3>Total</h3><div class="value">{total}</div></div>
+        <div class="summary-card"><h3 style="color: #38a169;">Succeeded</h3><div class="value" style="color: #38a169;">{succeeded}</div></div>
+        <div class="summary-card"><h3 style="color: #e53e3e;">Failed</h3><div class="value" style="color: #e53e3e;">{failed}</div></div>
+        <div class="summary-card"><h3 style="color: #3182ce;">Running</h3><div class="value" style="color: #3182ce;">{running}</div></div>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Task</th>
+                <th>Model</th>
+                <th>Status</th>
+                <th>Duration</th>
+                <th>Logs & Artifacts</th>
+                <th>Prompts</th>
+                <th>Error</th>
+            </tr>
+        </thead>
+        <tbody>
+            {"".join(rows)}
+        </tbody>
+    </table>
+    <div style="margin-top: 20px; color: #718096; font-size: 12px; text-align: right;">
+        Updated at: {data["updated_at"]}
+    </div>
+</body>
+</html>"""
+
+        async with aiofiles.open(html_file, 'w') as f:
+            await f.write(html_content)
 
     def get_state(self) -> ExecutionState:
         """Get current execution state."""
@@ -752,8 +938,9 @@ async def execute_single_run(
             try:
                 result = await worktree_manager.collect_session_log(worktree_dir, output_dir)
                 if result:
-                    session_log, session_id = result
+                    session_log, session_id, session_html = result
                     run.session_log_file = str(session_log)
+                    run.session_html_file = str(session_html)
                     run.session_id = session_id
                     console.print(f"[dim]Session log saved: {session_log.name} (ID: {session_id})[/dim]")
             except Exception as e:
@@ -765,6 +952,7 @@ async def execute_single_run(
             run.status,
             diff_file=run.diff_file,
             session_log_file=run.session_log_file,
+            session_html_file=run.session_html_file,
             session_id=run.session_id,
         )
 
