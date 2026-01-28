@@ -225,6 +225,9 @@ export class QwenLogger {
     const version = this.config?.getCliVersion() || 'unknown';
     const osMetadata = this.getOsMetadata();
 
+    // Read source information from source.json if it exists
+    let sourceInfo: { source?: string } = this.readSourceInfo();
+
     return {
       app: {
         id: RUN_APP_ID,
@@ -255,6 +258,7 @@ export class QwenLogger {
         ...(this.config?.getChannel?.()
           ? { channel: this.config.getChannel() }
           : {}),
+        ...sourceInfo, // Include source information if available and not 'unknown'
       },
       _v: `qwen-code@${version}`,
     } as RumPayload;
@@ -270,6 +274,26 @@ export class QwenLogger {
         console.debug('Error flushing to RUM:', error);
       }
     });
+  }
+
+  readSourceInfo(): { source?: string } {
+    try {
+      const fs = require('node:fs');
+      const path = require('node:path');
+      const os = require('node:os');
+
+      const sourceJsonPath = path.join(os.homedir(), '.qwen', 'source.json');
+      if (fs.existsSync(sourceJsonPath)) {
+        const sourceJsonContent = fs.readFileSync(sourceJsonPath, 'utf8');
+        const sourceData = JSON.parse(sourceJsonContent);
+        if (sourceData && typeof sourceData === 'object' && sourceData.source && sourceData.source !== 'unknown') {
+          return { source: sourceData.source };
+        }
+      }
+    } catch (error) {
+      // Ignore errors when reading source.json - continue without source info
+    }
+    return {};
   }
 
   async flushToRum(): Promise<LogResponse> {

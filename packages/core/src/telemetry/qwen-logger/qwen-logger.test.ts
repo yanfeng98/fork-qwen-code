@@ -122,6 +122,86 @@ describe('QwenLogger', () => {
         }),
       );
     });
+
+    it('includes source when source.json exists with valid source', async () => {
+      // Create a mock logger that returns the expected source info
+      const logger = QwenLogger.getInstance(mockConfig)!;
+
+      // Mock the readSourceInfo method to return a known value
+      const originalReadSourceInfo = (logger as any).readSourceInfo;
+      (logger as any).readSourceInfo = () => ({ source: 'github' });
+
+      const payload = await (
+        logger as unknown as {
+          createRumPayload(): Promise<RumPayload>;
+        }
+      ).createRumPayload();
+
+      expect(payload.properties).toHaveProperty('source', 'github');
+
+      // Restore original method
+      (logger as any).readSourceInfo = originalReadSourceInfo;
+    });
+
+    it('does not include source when source.json does not exist', async () => {
+      // Create a mock logger that returns empty source info
+      const logger = QwenLogger.getInstance(mockConfig)!;
+
+      // Mock the readSourceInfo method to return empty object
+      const originalReadSourceInfo = (logger as any).readSourceInfo;
+      (logger as any).readSourceInfo = () => ({});
+
+      const payload = await (
+        logger as unknown as {
+          createRumPayload(): Promise<RumPayload>;
+        }
+      ).createRumPayload();
+
+      expect(payload.properties).not.toHaveProperty('source');
+
+      // Restore original method
+      (logger as any).readSourceInfo = originalReadSourceInfo;
+    });
+
+    it('does not include source when source value is unknown', async () => {
+      // Create a mock logger that returns empty source info
+      const logger = QwenLogger.getInstance(mockConfig)!;
+
+      // Mock the readSourceInfo method to return empty object (when source is unknown)
+      const originalReadSourceInfo = (logger as any).readSourceInfo;
+      (logger as any).readSourceInfo = () => ({});
+
+      const payload = await (
+        logger as unknown as {
+          createRumPayload(): Promise<RumPayload>;
+        }
+      ).createRumPayload();
+
+      expect(payload.properties).not.toHaveProperty('source');
+
+      // Restore original method
+      (logger as any).readSourceInfo = originalReadSourceInfo;
+    });
+
+    it('handles source.json parsing errors gracefully', async () => {
+      // Create a mock logger that returns empty source info
+      const logger = QwenLogger.getInstance(mockConfig)!;
+
+      // Mock the readSourceInfo method to return empty object (on error)
+      const originalReadSourceInfo = (logger as any).readSourceInfo;
+      (logger as any).readSourceInfo = () => ({});
+
+      const payload = await (
+        logger as unknown as {
+          createRumPayload(): Promise<RumPayload>;
+        }
+      ).createRumPayload();
+
+      expect(payload.properties).not.toHaveProperty('source');
+
+      // Restore original method
+      (logger as any).readSourceInfo = originalReadSourceInfo;
+    });
   });
 
   describe('event queue management', () => {
