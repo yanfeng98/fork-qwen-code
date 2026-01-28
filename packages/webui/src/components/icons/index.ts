@@ -17,6 +17,7 @@ export {
 // Navigation icons
 export {
   ChevronDownIcon,
+  ChevronIcon,
   PlusIcon,
   PlusSmallIcon,
   ArrowUpIcon,

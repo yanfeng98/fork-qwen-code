@@ -37,6 +37,68 @@ export const ChevronDownIcon: FC<IconProps> = ({
 );
 
 /**
+ * ChevronIcon 属性接口
+ */
+interface ChevronIconProps extends IconProps {
+  /** 箭头方向: 'up' | 'down' | 'left' | 'right' */
+  direction?: 'up' | 'down' | 'left' | 'right';
+}
+
+/**
+ * 获取旋转角度
+ * @param direction - 箭头方向
+ * @returns 旋转角度（度）
+ */
+const getRotation = (direction: 'up' | 'down' | 'left' | 'right'): number => {
+  switch (direction) {
+    case 'up':
+      return 180;
+    case 'down':
+      return 0;
+    case 'left':
+      return 90;
+    case 'right':
+      return -90;
+    default:
+      return 0;
+  }
+};
+
+/**
+ * Chevron icon (12x12) - 可配置方向的箭头图标
+ * 用于展开/收起等交互场景
+ */
+export const ChevronIcon: FC<ChevronIconProps> = ({
+  size = 12,
+  className,
+  direction = 'down',
+  style,
+  ...props
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 12 12"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    width={size}
+    height={size}
+    className={className}
+    aria-hidden="true"
+    style={{
+      ...style,
+      transform: `rotate(${getRotation(direction)}deg)`,
+      transition: 'transform 0.15s ease-in-out',
+    }}
+    {...props}
+  >
+    <path d="M3 4.5L6 7.5L9 4.5" />
+  </svg>
+);
+
+/**
  * Plus icon (20x20)
  * Used for new session button
  */

@@ -5,37 +5,79 @@
  */
 
 import type { FC } from 'react';
+import { useState } from 'react';
 import { MessageContent } from './MessageContent.js';
+import { ChevronIcon } from '../icons/index.js';
+import './ThinkingMessage.css';
 
+/**
+ * ThinkingMessage 组件的属性接口
+ */
 export interface ThinkingMessageProps {
+  /** 思考内容 */
   content: string;
+  /** 消息时间戳 */
   timestamp: number;
+  /** 文件点击回调 */
   onFileClick?: (path: string) => void;
+  /** 是否默认展开，默认为 false */
+  defaultExpanded?: boolean;
+  /** 状态: 'loading' 表示正在思考, 'default' 表示思考完成 */
+  status?: 'loading' | 'default';
 }
 
+/**
+ * ThinkingMessage - 可折叠的思考消息组件
+ *
+ * 显示 LLM 的思考过程，默认收起状态，点击可展开查看详细内容。
+ * 样式参考 Claude Code 的 thinking 消息设计：
+ * - 收起状态：灰色圆点 + "Thinking" + 向下箭头
+ * - 展开状态：实心圆点 + "Thinking" + 向上箭头 + 思考内容
+ * - 与其他消息项对齐，有 status icon 和连接线
+ */
 export const ThinkingMessage: FC<ThinkingMessageProps> = ({
   content,
   timestamp: _timestamp,
   onFileClick,
-}) => (
-  <div className="qwen-message thinking-message flex gap-0 items-start text-left py-2 flex-col relative opacity-80 italic pl-6 animate-[fadeIn_0.2s_ease-in]">
+  defaultExpanded = false,
+  status = 'default',
+}) => {
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+
+  const handleToggle = () => {
+    setIsExpanded(!isExpanded);
+  };
+
+  return (
     <div
-      className="inline-block my-1 relative whitespace-pre-wrap rounded-md max-w-full overflow-x-auto overflow-y-hidden select-text leading-[1.5]"
-      style={{
-        backgroundColor:
-          'var(--app-list-hover-background, rgba(100, 100, 255, 0.1))',
-        border: '1px solid rgba(100, 100, 255, 0.3)',
-        borderRadius: 'var(--corner-radius-medium)',
-        padding: 'var(--app-spacing-medium)',
-        color: 'var(--app-primary-foreground)',
-      }}
+      className={`qwen-message message-item thinking-message thinking-status-${status}`}
     >
-      <span className="inline-flex items-center gap-1 mr-2" aria-hidden="true">
-        <span className="inline-block w-1.5 h-1.5 bg-[var(--app-secondary-foreground)] rounded-full opacity-60 animate-[typingPulse_1.4s_infinite_ease-in-out] [animation-delay:0s]"></span>
-        <span className="inline-block w-1.5 h-1.5 bg-[var(--app-secondary-foreground)] rounded-full opacity-60 animate-[typingPulse_1.4s_infinite_ease-in-out] [animation-delay:0.2s]"></span>
-        <span className="inline-block w-1.5 h-1.5 bg-[var(--app-secondary-foreground)] rounded-full opacity-60 animate-[typingPulse_1.4s_infinite_ease-in-out] [animation-delay:0.4s]"></span>
-      </span>
-      <MessageContent content={content} onFileClick={onFileClick} />
+      <div className="thinking-content-wrapper">
+        {/* 可点击的标题栏 */}
+        <button
+          type="button"
+          onClick={handleToggle}
+          className="thinking-toggle-btn"
+          aria-expanded={isExpanded}
+          aria-label={isExpanded ? 'Collapse thinking' : 'Expand thinking'}
+        >
+          {/* Thinking 文字 */}
+          <span className="thinking-label">Thinking</span>
+          {/* 展开/收起箭头 */}
+          <ChevronIcon
+            size={12}
+            direction={isExpanded ? 'up' : 'down'}
+            className="thinking-chevron"
+          />
+        </button>
+
+        {/* 展开时显示的思考内容 */}
+        {isExpanded && (
+          <div className="thinking-content">
+            <MessageContent content={content} onFileClick={onFileClick} />
+          </div>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};
