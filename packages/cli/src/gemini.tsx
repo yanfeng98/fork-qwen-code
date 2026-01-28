@@ -53,6 +53,7 @@ import { getCliVersion } from './utils/version.js';
 import { computeWindowTitle } from './utils/windowTitle.js';
 import { validateNonInteractiveAuth } from './validateNonInterActiveAuth.js';
 import { showResumeSessionPicker } from './ui/components/StandaloneSessionPicker.js';
+import { initializeLlmOutputLanguage } from './utils/languageUtils.js';
 
 export function validateDnsResolutionOrder(
   order: string | undefined,
@@ -327,6 +328,10 @@ export async function main() {
   // We are now past the logic handling potentially launching a child process
   // to run Gemini CLI. It is now safe to perform expensive initialization that
   // may have side effects.
+
+  // Initialize output language file before config loads to ensure it's included in context
+  initializeLlmOutputLanguage(settings.merged.general?.outputLanguage);
+
   {
     const config = await loadCliConfig(
       settings.merged,
