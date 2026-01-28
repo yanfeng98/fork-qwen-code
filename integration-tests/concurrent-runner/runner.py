@@ -588,7 +588,7 @@ class QwenRunner:
             self.console.print(f"[dim]Command: {' '.join(cmd)}[/dim]")
 
             # Prepare output files for this prompt
-            stdout_file = outputs_subdir / f"output-{prompt_index}.json"
+            stdout_file = outputs_subdir / f"stdout-{prompt_index}.txt"
             stderr_file = outputs_subdir / f"stderr-{prompt_index}.txt"
 
             # Run the CLI
@@ -654,9 +654,6 @@ class QwenRunner:
         # Add yolo if enabled
         if self.config.yolo:
             cmd.append("--yolo")
-
-        # Use JSON output format
-        cmd.extend(["--output-format", "json"])
 
         # Always enable OpenAI logging to run-specific logs directory
         cmd.append("--openai-logging")
