@@ -3,8 +3,8 @@
   "yolo": true,
   "source_repo": "/Users/andy/workspace/projects/qwen-code/integration-tests/concurrent-runner/examples/toy-project",
   "worktree_base": "~/.qwen/worktrees",
-  "outputs_dir": "./examples/outputs",
-  "results_file": "./examples/results.json",
+  "outputs_dir": "./examples/test-run",
+  "results_file": "./examples/test-run/results.json",
   "tasks": [
     {
       "id": "task-1",

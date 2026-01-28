@@ -575,6 +575,10 @@ class QwenRunner:
         run_logs_dir.mkdir(parents=True, exist_ok=True)
         run.logs_dir = str(run_logs_dir)
 
+        # Create outputs subdirectory for cleaner structure
+        outputs_subdir = output_dir / "outputs"
+        outputs_subdir.mkdir(parents=True, exist_ok=True)
+
         # Run each prompt sequentially
         for prompt_index, prompt_text in enumerate(task.prompts, start=1):
             self.console.print(f"[blue]Executing prompt {prompt_index}/{len(task.prompts)}...[/blue]")
@@ -584,8 +588,8 @@ class QwenRunner:
             self.console.print(f"[dim]Command: {' '.join(cmd)}[/dim]")
 
             # Prepare output files for this prompt
-            stdout_file = output_dir / f"stdout-{prompt_index}.txt"
-            stderr_file = output_dir / f"stderr-{prompt_index}.txt"
+            stdout_file = outputs_subdir / f"output-{prompt_index}.json"
+            stderr_file = outputs_subdir / f"stderr-{prompt_index}.txt"
 
             # Run the CLI
             env = os.environ.copy()
@@ -650,6 +654,9 @@ class QwenRunner:
         # Add yolo if enabled
         if self.config.yolo:
             cmd.append("--yolo")
+
+        # Use JSON output format
+        cmd.extend(["--output-format", "json"])
 
         # Always enable OpenAI logging to run-specific logs directory
         cmd.append("--openai-logging")
