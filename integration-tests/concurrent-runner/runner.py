@@ -572,11 +572,12 @@ class QwenRunner:
 
             # Run the CLI
             env = os.environ.copy()
-            env["QWEN_CODE_ROOT"] = str(worktree_dir)
+            worktree_dir_resolved = worktree_dir.resolve()
+            env["QWEN_CODE_ROOT"] = str(worktree_dir_resolved)
 
             proc = await asyncio.create_subprocess_exec(
                 *cmd,
-                cwd=worktree_dir,
+                cwd=worktree_dir_resolved,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 env=env,
@@ -681,6 +682,7 @@ def load_config(config_path: Path) -> RunConfig:
         outputs_dir=Path(data.get("outputs_dir", "./outputs")),
         results_file=Path(data.get("results_file", "./results.json")),
         branch=data.get("branch"),
+        keep_worktree=data.get("keep_worktree", False),
     )
 
 
