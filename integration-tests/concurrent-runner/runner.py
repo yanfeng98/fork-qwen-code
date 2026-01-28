@@ -20,7 +20,7 @@ from dataclasses import dataclass, field, asdict
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Tuple
 
 from rich.console import Console
 from rich.live import Live
@@ -90,9 +90,10 @@ class RunRecord:
     ended_at: Optional[str] = None
     exit_code: Optional[int] = None
     error_message: Optional[str] = None
-    stdout_file: Optional[str] = None  # Deprecated: kept for backwards compatibility
-    stderr_file: Optional[str] = None  # Deprecated: kept for backwards compatibility
     prompt_results: List[PromptResult] = field(default_factory=list)
+    diff_file: Optional[str] = None  # Path to git diff output
+    session_log_file: Optional[str] = None  # Path to session log (chat recording)
+    session_id: Optional[str] = None  # Session ID (UUID from chat recording)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -108,8 +109,9 @@ class RunRecord:
             "ended_at": self.ended_at,
             "exit_code": self.exit_code,
             "error_message": self.error_message,
-            "stdout_file": self.stdout_file,
-            "stderr_file": self.stderr_file,
+            "diff_file": self.diff_file,
+            "session_log_file": self.session_log_file,
+            "session_id": self.session_id,
             "prompt_results": [
                 {
                     "prompt_index": r.prompt_index,
@@ -138,8 +140,9 @@ class RunRecord:
             ended_at=data.get("ended_at"),
             exit_code=data.get("exit_code"),
             error_message=data.get("error_message"),
-            stdout_file=data.get("stdout_file"),
-            stderr_file=data.get("stderr_file"),
+            diff_file=data.get("diff_file"),
+            session_log_file=data.get("session_log_file"),
+            session_id=data.get("session_id"),
         )
 
 
@@ -250,9 +253,86 @@ class GitWorktreeManager:
             except Exception:
                 pass
 
+    async def get_diff(self, worktree_dir: Path) -> str:
+        """Get git diff showing all changes in the worktree."""
+        self.console.print(f"[dim]Capturing git diff from {worktree_dir.name}...[/dim]")
+
+        # First, stage all changes (including untracked files) so we can get a complete diff
+        await self._run_command(["git", "add", "-A"], cwd=worktree_dir)
+
+        # Get the diff (staged changes)
+        result = await self._run_command(["git", "diff", "--cached", "--no-color"], cwd=worktree_dir)
+
+        if result.returncode != 0:
+            self.console.print(f"[yellow]Warning: Failed to get diff: {result.stderr}[/yellow]")
+            return ""
+
+        return result.stdout
+
+    async def collect_session_log(self, worktree_dir: Path, output_dir: Path) -> Optional[Tuple[Path, str]]:
+        """Collect the session log file from the worktree's chat recording.
+
+        Session logs are stored at:
+        ~/.qwen/projects/{projectId}/chats/{sessionId}.jsonl
+
+        Where projectId is the sanitized worktree path.
+
+        Returns:
+            Tuple of (output_path, session_id) or None if not found.
+        """
+        import re
+
+        # Compute projectId by sanitizing the worktree path (same as storage.ts)
+        project_id = re.sub(r'[^a-zA-Z0-9]', '-', str(worktree_dir))
+
+        # Build the chats directory path
+        qwen_dir = Path.home() / ".qwen"
+        chats_dir = qwen_dir / "projects" / project_id / "chats"
+
+        if not chats_dir.exists():
+            self.console.print(f"[dim]No chats directory found at {chats_dir}[/dim]")
+            return None
+
+        # Find all .jsonl files in the chats directory
+        jsonl_files = list(chats_dir.glob("*.jsonl"))
+        if not jsonl_files:
+            self.console.print(f"[dim]No session log files found in {chats_dir}[/dim]")
+            return None
+
+        # Get the most recently modified file (the one just created)
+        session_log = max(jsonl_files, key=lambda f: f.stat().st_mtime)
+
+        # Extract session ID from filename (remove .jsonl extension)
+        session_id = session_log.stem
+
+        # Copy to output directory with original filename (preserves session ID)
+        # Place in 'chats' subdir to match the actual session log structure
+        chats_output_dir = output_dir / "chats"
+        chats_output_dir.mkdir(parents=True, exist_ok=True)
+        output_log = chats_output_dir / session_log.name
+
+        # Read the original file, modify cwd field, and write to output
+        # cwd should be the actual current working dir (where runner is executed)
+        actual_cwd = str(Path.cwd())
+        async with aiofiles.open(session_log, 'r') as src, aiofiles.open(output_log, 'w') as dst:
+            async for line in src:
+                line = line.strip()
+                if line:
+                    try:
+                        record = json.loads(line)
+                        record['cwd'] = actual_cwd
+                        await dst.write(json.dumps(record, ensure_ascii=False) + '\n')
+                    except json.JSONDecodeError:
+                        # If line is not valid JSON, write it as-is
+                        await dst.write(line + '\n')
+
+        self.console.print(f"[dim]Session log copied: {session_log.name}[/dim]")
+
+        return output_log, session_id
+
     async def _run_command(
-        self, 
-        cmd: List[str], 
+        self,
+        cmd: List[str],
         cwd: Optional[Path] = None,
         timeout: int = 60
     ) -> subprocess.CompletedProcess:
@@ -491,7 +571,7 @@ class QwenRunner:
             raise ValueError(f"No prompts found for task {run.task_id}")
 
         # Setup logs directory
-        run_logs_dir = (output_dir / "logs").resolve()
+        run_logs_dir = (output_dir / "openai-logs").resolve()
         run_logs_dir.mkdir(parents=True, exist_ok=True)
         run.logs_dir = str(run_logs_dir)
 
@@ -668,9 +748,46 @@ async def execute_single_run(
             ended_at=run.ended_at,
         )
         console.print(f"[red]✗[/red] {run.task_name} / {run.model}: {e}")
-    
+
     finally:
-        # Step 5: Cleanup
+        # Step 5: Capture git diff (before cleanup)
+        output_dir = config.outputs_dir / run.run_id
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        if worktree_dir and worktree_dir.exists():
+            try:
+                diff_content = await worktree_manager.get_diff(worktree_dir)
+                if diff_content.strip():
+                    diff_file = output_dir / "diff.patch"
+                    async with aiofiles.open(diff_file, 'w') as f:
+                        await f.write(diff_content)
+                    run.diff_file = str(diff_file)
+                    console.print(f"[dim]Diff saved to {diff_file}[/dim]")
+            except Exception as e:
+                console.print(f"[yellow]Warning: Failed to capture diff: {e}[/yellow]")
+
+        # Step 6: Collect session log (before cleanup)
+        if worktree_dir:
+            try:
+                result = await worktree_manager.collect_session_log(worktree_dir, output_dir)
+                if result:
+                    session_log, session_id = result
+                    run.session_log_file = str(session_log)
+                    run.session_id = session_id
+                    console.print(f"[dim]Session log saved: {session_log.name} (ID: {session_id})[/dim]")
+            except Exception as e:
+                console.print(f"[yellow]Warning: Failed to collect session log: {e}[/yellow]")
+
+        # Update tracker with all captured files
+        await tracker.update_status(
+            run.run_id,
+            run.status,
+            diff_file=run.diff_file,
+            session_log_file=run.session_log_file,
+            session_id=run.session_id,
+        )
+
+        # Step 7: Cleanup
         if worktree_dir:
             await worktree_manager.remove(worktree_dir)
 

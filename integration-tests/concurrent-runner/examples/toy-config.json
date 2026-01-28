@@ -15,12 +15,12 @@
     },
     {
       "id": "task-2",
-      "name": "AGI Prediction",
+      "name": "File Writer",
       "prompts": [
-        "Use shell tool to get current date",
-        "Predict how many dates left until we have AGI (artificial general intelligence)"
+        "Use shell tool to get current date.",
+        "Create a new file called 'counter.txt' with numbers 1 to 10, each on a new line."
       ]
     }
   ],
-  "models": ["qwen3-coder-plus", "kimi-k2.5"]
+  "models": ["qwen3-coder-plus", "claude-sonnet-4-20250514"]
 }
