@@ -5,7 +5,7 @@
  */
 
 import type { FC } from 'react';
-import { MessageContent } from './MessageContent.js';
+import { CollapsibleFileContent } from './CollapsibleFileContent.js';
 
 export interface FileContext {
   fileName: string;
@@ -59,7 +59,7 @@ export const UserMessage: FC<UserMessageProps> = ({
           color: 'var(--app-primary-foreground)',
         }}
       >
-        <MessageContent
+        <CollapsibleFileContent
           content={content}
           onFileClick={onFileClick}
           enableFileLinks={false}

@@ -78,6 +78,14 @@ export type {
   AssistantMessageProps,
   AssistantMessageStatus,
 } from './components/messages/Assistant/AssistantMessage';
+export {
+  CollapsibleFileContent,
+  parseContentWithFileReferences,
+} from './components/messages/CollapsibleFileContent';
+export type {
+  CollapsibleFileContentProps,
+  ContentSegment,
+} from './components/messages/CollapsibleFileContent';
 
 // ChatViewer - standalone chat display component
 export {

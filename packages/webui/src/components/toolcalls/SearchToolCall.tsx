@@ -6,7 +6,7 @@
  * Search tool call component - specialized for search operations
  */
 
-import type { FC } from 'react';
+import { useState, type FC } from 'react';
 import {
   safeTitle,
   groupContent,
@@ -15,6 +15,38 @@ import {
 } from './shared/index.js';
 import type { BaseToolCallProps, ContainerStatus } from './shared/index.js';
 import { FileLink } from '../layout/FileLink.js';
+
+/**
+ * Collapsible output component for search results
+ * Shows a summary line that can be expanded to show full content
+ */
+const CollapsibleOutput: FC<{
+  /** Summary text to show when collapsed (e.g., "21 lines of output") */
+  summary: string;
+  /** Content to show when expanded */
+  children: React.ReactNode;
+  /** Whether to start expanded (default: false) */
+  defaultExpanded?: boolean;
+}> = ({ summary, children, defaultExpanded = false }) => {
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+
+  return (
+    <div className="flex flex-col">
+      <div
+        className="inline-flex text-[var(--app-secondary-foreground)] text-[0.85em] opacity-70 mt-[2px] mb-[2px] flex-row items-start w-full gap-1 cursor-pointer hover:opacity-100 transition-opacity"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <span className="flex-shrink-0 relative top-[-0.1em]">⎿</span>
+        <span className="flex-shrink-0">{summary}</span>
+      </div>
+      {isExpanded && (
+        <div className="ml-4 mt-1 text-[var(--app-secondary-foreground)] text-[0.85em]">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+};
 
 /**
  * Row component for search card layout
@@ -116,28 +148,8 @@ export const SearchToolCall: FC<BaseToolCallProps> = ({
 
   // Success case with results: show search query + file list
   if (locations && locations.length > 0) {
-    // Multiple results use card layout
-    if (locations.length > 1) {
-      return (
-        <ToolCallContainer
-          label={displayLabel}
-          labelSuffix={queryText}
-          status={containerStatus}
-          isFirst={isFirst}
-          isLast={isLast}
-        >
-          <SearchCardContent>
-            <SearchRow label={displayLabel}>
-              <div className="font-mono">{queryText}</div>
-            </SearchRow>
-            <SearchRow label={`Found (${locations.length})`}>
-              <LocationsListLocal locations={locations} />
-            </SearchRow>
-          </SearchCardContent>
-        </ToolCallContainer>
-      );
-    }
-    // Single result - compact format
+    // Use collapsible output for multiple results
+    const summaryText = `${locations.length} ${locations.length === 1 ? 'file' : 'files'} found`;
     return (
       <ToolCallContainer
         label={displayLabel}
@@ -146,13 +158,22 @@ export const SearchToolCall: FC<BaseToolCallProps> = ({
         isFirst={isFirst}
         isLast={isLast}
       >
-        <LocationsListLocal locations={locations} />
+        <CollapsibleOutput summary={summaryText}>
+          <LocationsListLocal locations={locations} />
+        </CollapsibleOutput>
       </ToolCallContainer>
     );
   }
 
-  // Show content text if available
+  // Show content text if available (e.g., grep output with content)
   if (textOutputs.length > 0) {
+    // Count total lines in output
+    const totalLines = textOutputs.reduce(
+      (acc, text) => acc + text.split('\n').length,
+      0,
+    );
+    const summaryText = `${totalLines} ${totalLines === 1 ? 'line' : 'lines'} of output`;
+
     return (
       <ToolCallContainer
         label={displayLabel}
@@ -161,17 +182,13 @@ export const SearchToolCall: FC<BaseToolCallProps> = ({
         isFirst={isFirst}
         isLast={isLast}
       >
-        <div className="flex flex-col">
-          {textOutputs.map((text: string, index: number) => (
-            <div
-              key={index}
-              className="inline-flex text-[var(--app-secondary-foreground)] text-[0.85em] opacity-70 mt-[2px] mb-[2px] flex-row items-start w-full gap-1"
-            >
-              <span className="flex-shrink-0 relative top-[-0.1em]">⎿</span>
-              <span className="flex-shrink-0 w-full">{text}</span>
-            </div>
-          ))}
-        </div>
+        <CollapsibleOutput summary={summaryText}>
+          <div className="flex flex-col gap-1 font-mono text-[0.85em] whitespace-pre-wrap break-all">
+            {textOutputs.map((text: string, index: number) => (
+              <div key={index}>{text}</div>
+            ))}
+          </div>
+        </CollapsibleOutput>
       </ToolCallContainer>
     );
   }
