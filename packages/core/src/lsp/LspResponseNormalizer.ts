@@ -27,7 +27,7 @@ import type {
   LspSymbolInformation,
   LspTextEdit,
   LspWorkspaceEdit,
-} from '@qwen-code/qwen-code-core';
+} from './types.js';
 import {
   CODE_ACTION_KIND_LABELS,
   DIAGNOSTIC_SEVERITY_LABELS,

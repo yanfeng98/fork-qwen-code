@@ -13,12 +13,12 @@ import {
   WriteFileTool,
   DEFAULT_QWEN_MODEL,
   OutputFormat,
+  NativeLspService,
 } from '@qwen-code/qwen-code-core';
 import { loadCliConfig, parseArguments, type CliArgs } from './config.js';
 import type { Settings } from './settings.js';
 import * as ServerConfig from '@qwen-code/qwen-code-core';
 import { isWorkspaceTrusted } from './trustedFolders.js';
-import { NativeLspService } from '../services/lsp/NativeLspService.js';
 
 const createNativeLspServiceInstance = () => ({
   discoverAndPrepare: vi.fn(),
@@ -37,26 +37,6 @@ const createNativeLspServiceInstance = () => ({
   codeActions: vi.fn().mockResolvedValue([]),
   applyWorkspaceEdit: vi.fn().mockResolvedValue(false),
 });
-
-vi.mock('../services/lsp/NativeLspService.js', () => ({
-  NativeLspService: vi.fn().mockImplementation(() => ({
-    discoverAndPrepare: vi.fn(),
-    start: vi.fn(),
-    definitions: vi.fn().mockResolvedValue([]),
-    references: vi.fn().mockResolvedValue([]),
-    workspaceSymbols: vi.fn().mockResolvedValue([]),
-    hover: vi.fn().mockResolvedValue(null),
-    documentSymbols: vi.fn().mockResolvedValue([]),
-    implementations: vi.fn().mockResolvedValue([]),
-    prepareCallHierarchy: vi.fn().mockResolvedValue([]),
-    incomingCalls: vi.fn().mockResolvedValue([]),
-    outgoingCalls: vi.fn().mockResolvedValue([]),
-    diagnostics: vi.fn().mockResolvedValue([]),
-    workspaceDiagnostics: vi.fn().mockResolvedValue([]),
-    codeActions: vi.fn().mockResolvedValue([]),
-    applyWorkspaceEdit: vi.fn().mockResolvedValue(false),
-  })),
-}));
 
 vi.mock('./trustedFolders.js', () => ({
   isWorkspaceTrusted: vi
@@ -129,6 +109,9 @@ vi.mock('@qwen-code/qwen-code-core', async (importOriginal) => {
   const actualServer = await importOriginal<typeof ServerConfig>();
   return {
     ...actualServer,
+    NativeLspService: vi
+      .fn()
+      .mockImplementation(() => createNativeLspServiceInstance()),
     IdeClient: {
       getInstance: vi.fn().mockResolvedValue({
         getConnectionStatus: vi.fn(),

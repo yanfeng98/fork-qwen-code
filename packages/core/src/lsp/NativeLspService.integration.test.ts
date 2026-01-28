@@ -7,14 +7,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { EventEmitter } from 'events';
 import { NativeLspService } from './NativeLspService.js';
-import type {
-  Config as CoreConfig,
-  WorkspaceContext,
-  FileDiscoveryService,
-  IdeContextStore,
-  LspLocation,
-  LspDiagnostic,
-} from '@qwen-code/qwen-code-core';
+import type { Config as CoreConfig } from '../config/config.js';
+import type { FileDiscoveryService } from '../services/fileDiscoveryService.js';
+import type { IdeContextStore } from '../ide/ideContext.js';
+import type { WorkspaceContext } from '../utils/workspaceContext.js';
+import type { LspDiagnostic, LspLocation } from './types.js';
 
 /**
  * Mock LSP server responses for integration testing.

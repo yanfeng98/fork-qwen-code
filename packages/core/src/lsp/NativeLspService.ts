@@ -4,11 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { Config as CoreConfig } from '../config/config.js';
+import type { Extension } from '../extension/extensionManager.js';
+import type { IdeContextStore } from '../ide/ideContext.js';
+import type { FileDiscoveryService } from '../services/fileDiscoveryService.js';
+import type { WorkspaceContext } from '../utils/workspaceContext.js';
 import type {
-  Config as CoreConfig,
-  WorkspaceContext,
-  FileDiscoveryService,
-  IdeContextStore,
   LspCallHierarchyIncomingCall,
   LspCallHierarchyItem,
   LspCallHierarchyOutgoingCall,
@@ -24,19 +25,18 @@ import type {
   LspSymbolInformation,
   LspTextEdit,
   LspWorkspaceEdit,
-  Extension,
-} from '@qwen-code/qwen-code-core';
+} from './types.js';
 import type { EventEmitter } from 'events';
 import { LspConfigLoader } from './LspConfigLoader.js';
 import { LspLanguageDetector } from './LspLanguageDetector.js';
 import { LspResponseNormalizer } from './LspResponseNormalizer.js';
 import { LspServerManager } from './LspServerManager.js';
 import type {
+  LspConnectionInterface,
   LspServerHandle,
   LspServerStatus,
   NativeLspServiceOptions,
-  LspConnectionInterface,
-} from './LspTypes.js';
+} from './types.js';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import * as fs from 'node:fs';

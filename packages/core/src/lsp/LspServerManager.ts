@@ -4,11 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  Config as CoreConfig,
-  WorkspaceContext,
-  FileDiscoveryService,
-} from '@qwen-code/qwen-code-core';
+import type { Config as CoreConfig } from '../config/config.js';
+import type { FileDiscoveryService } from '../services/fileDiscoveryService.js';
+import type { WorkspaceContext } from '../utils/workspaceContext.js';
 import { spawn, type ChildProcess } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'path';
@@ -29,7 +27,7 @@ import type {
   LspServerHandle,
   LspServerStatus,
   LspSocketOptions,
-} from './LspTypes.js';
+} from './types.js';
 
 export interface LspServerManagerOptions {
   requireTrustedWorkspace: boolean;

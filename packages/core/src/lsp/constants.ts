@@ -4,10 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {
-  LspCodeActionKind,
-  LspDiagnosticSeverity,
-} from '@qwen-code/qwen-code-core';
+import type { LspCodeActionKind, LspDiagnosticSeverity } from './types.js';
 
 // ============================================================================
 // Timeout Constants

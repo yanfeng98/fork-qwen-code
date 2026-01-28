@@ -9,14 +9,14 @@ import * as path from 'path';
 import { pathToFileURL } from 'url';
 import {
   recursivelyHydrateStrings,
-  type Extension,
   type JsonValue,
-} from '@qwen-code/qwen-code-core';
+} from '../extension/variables.js';
+import type { Extension } from '../extension/extensionManager.js';
 import type {
   LspInitializationOptions,
   LspServerConfig,
   LspSocketOptions,
-} from './LspTypes.js';
+} from './types.js';
 
 export class LspConfigLoader {
   constructor(private readonly workspaceRoot: string) {}
@@ -44,7 +44,9 @@ export class LspConfigLoader {
   /**
    * Load LSP configurations declared by extensions (Claude plugins).
    */
-  async loadExtensionConfigs(extensions: Extension[]): Promise<LspServerConfig[]> {
+  async loadExtensionConfigs(
+    extensions: Extension[],
+  ): Promise<LspServerConfig[]> {
     const configs: LspServerConfig[] = [];
 
     for (const extension of extensions) {
@@ -60,19 +62,14 @@ export class LspConfigLoader {
           lspServers,
         );
         if (!fs.existsSync(configPath)) {
-          console.warn(
-            `LSP config not found for ${originBase}: ${configPath}`,
-          );
+          console.warn(`LSP config not found for ${originBase}: ${configPath}`);
           continue;
         }
 
         try {
           const configContent = fs.readFileSync(configPath, 'utf-8');
           const data = JSON.parse(configContent) as JsonValue;
-          const hydrated = this.hydrateExtensionLspConfig(
-            data,
-            extension.path,
-          );
+          const hydrated = this.hydrateExtensionLspConfig(data, extension.path);
           configs.push(
             ...this.parseConfigSource(
               hydrated,
@@ -91,10 +88,7 @@ export class LspConfigLoader {
           extension.path,
         );
         configs.push(
-          ...this.parseConfigSource(
-            hydrated,
-            `${originBase} (lspServers)`,
-          ),
+          ...this.parseConfigSource(hydrated, `${originBase} (lspServers)`),
         );
       } else {
         console.warn(

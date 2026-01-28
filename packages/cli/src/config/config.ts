@@ -27,6 +27,8 @@ import {
   EditTool,
   ShellTool,
   WriteFileTool,
+  NativeLspClient,
+  NativeLspService,
 } from '@qwen-code/qwen-code-core';
 import { extensionsCommand } from '../commands/extensions.js';
 import type { Settings } from './settings.js';
@@ -45,8 +47,6 @@ import { getCliVersion } from '../utils/version.js';
 import { loadSandboxConfig } from './sandboxConfig.js';
 import { appEvents } from '../utils/events.js';
 import { mcpCommand } from '../commands/mcp.js';
-import { NativeLspClient } from '../services/lsp/NativeLspClient.js';
-import { NativeLspService } from '../services/lsp/NativeLspService.js';
 
 import { isWorkspaceTrusted } from './trustedFolders.js';
 import { buildWebSearchConfig } from './webSearch.js';
@@ -729,9 +729,7 @@ export async function loadCliConfig(
 
   await loadHierarchicalGeminiMemory(
     cwd,
-    settings.context?.loadMemoryFromIncludeDirectories
-      ? includeDirectories
-      : [],
+    settings.context?.loadFromIncludeDirectories ? includeDirectories : [],
     debugMode,
     fileService,
     extensionContextFilePaths,

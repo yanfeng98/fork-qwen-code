@@ -9,7 +9,7 @@
  * by delegating all calls to NativeLspService.
  *
  * This class bridges the gap between the generic LspClient interface (defined in core)
- * and the CLI-specific NativeLspService implementation.
+ * and the NativeLspService implementation.
  */
 
 import type {
@@ -28,7 +28,7 @@ import type {
   LspReference,
   LspSymbolInformation,
   LspWorkspaceEdit,
-} from '@qwen-code/qwen-code-core';
+} from './types.js';
 
 import type { NativeLspService } from './NativeLspService.js';
 

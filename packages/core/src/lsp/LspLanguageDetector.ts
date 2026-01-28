@@ -14,10 +14,8 @@
 import * as fs from 'node:fs';
 import * as path from 'path';
 import { globSync } from 'glob';
-import type {
-  WorkspaceContext,
-  FileDiscoveryService,
-} from '@qwen-code/qwen-code-core';
+import type { FileDiscoveryService } from '../services/fileDiscoveryService.js';
+import type { WorkspaceContext } from '../utils/workspaceContext.js';
 
 /**
  * Extension to language ID mapping

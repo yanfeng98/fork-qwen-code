@@ -7,7 +7,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import mock from 'mock-fs';
 import { LspConfigLoader } from './LspConfigLoader.js';
-import type { Extension } from '@qwen-code/qwen-code-core';
+import type { Extension } from '../extension/extensionManager.js';
 
 describe('LspConfigLoader extension configs', () => {
   const workspaceRoot = '/workspace';
@@ -20,9 +20,15 @@ describe('LspConfigLoader extension configs', () => {
   it('loads inline lspServers config from extension', async () => {
     const loader = new LspConfigLoader(workspaceRoot);
     const extension = {
+      id: 'ts-plugin',
       name: 'ts-plugin',
+      version: '1.0.0',
+      isActive: true,
       path: extensionPath,
+      contextFiles: [],
       config: {
+        name: 'ts-plugin',
+        version: '1.0.0',
         lspServers: {
           typescript: {
             command: 'typescript-language-server',
@@ -63,9 +69,15 @@ describe('LspConfigLoader extension configs', () => {
 
     const loader = new LspConfigLoader(workspaceRoot);
     const extension = {
+      id: 'ts-plugin',
       name: 'ts-plugin',
+      version: '1.0.0',
+      isActive: true,
       path: extensionPath,
+      contextFiles: [],
       config: {
+        name: 'ts-plugin',
+        version: '1.0.0',
         lspServers: './.lsp.json',
       },
     } as Extension;
@@ -73,6 +85,6 @@ describe('LspConfigLoader extension configs', () => {
     const configs = await loader.loadExtensionConfigs([extension]);
 
     expect(configs).toHaveLength(1);
-    expect(configs[0]?.env?.EXT_ROOT).toBe(extensionPath);
+    expect(configs[0]?.env?.['EXT_ROOT']).toBe(extensionPath);
   });
 });

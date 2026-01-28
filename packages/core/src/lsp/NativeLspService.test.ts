@@ -4,14 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { describe, beforeEach, expect, test } from 'vitest';
 import { NativeLspService } from './NativeLspService.js';
 import { EventEmitter } from 'events';
-import type {
-  Config as CoreConfig,
-  WorkspaceContext,
-  FileDiscoveryService,
-  IdeContextStore,
-} from '@qwen-code/qwen-code-core';
+import type { Config as CoreConfig } from '../config/config.js';
+import type { FileDiscoveryService } from '../services/fileDiscoveryService.js';
+import type { IdeContextStore } from '../ide/ideContext.js';
+import type { WorkspaceContext } from '../utils/workspaceContext.js';
 
 // 模拟依赖项
 class MockConfig {
