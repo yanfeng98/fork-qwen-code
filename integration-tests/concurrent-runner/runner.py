@@ -64,6 +64,17 @@ class RunConfig:
 
 
 @dataclass
+class PromptResult:
+    """Result of a single prompt execution."""
+    prompt_index: int
+    prompt_text: str
+    stdout_file: str
+    stderr_file: str
+    exit_code: int
+    status: str  # "succeeded" or "failed"
+
+
+@dataclass
 class RunRecord:
     """Record of a single task/model execution."""
     run_id: str
@@ -78,8 +89,9 @@ class RunRecord:
     ended_at: Optional[str] = None
     exit_code: Optional[int] = None
     error_message: Optional[str] = None
-    stdout_file: Optional[str] = None
-    stderr_file: Optional[str] = None
+    stdout_file: Optional[str] = None  # Deprecated: kept for backwards compatibility
+    stderr_file: Optional[str] = None  # Deprecated: kept for backwards compatibility
+    prompt_results: List[PromptResult] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -97,6 +109,17 @@ class RunRecord:
             "error_message": self.error_message,
             "stdout_file": self.stdout_file,
             "stderr_file": self.stderr_file,
+            "prompt_results": [
+                {
+                    "prompt_index": r.prompt_index,
+                    "prompt_text": r.prompt_text,
+                    "stdout_file": r.stdout_file,
+                    "stderr_file": r.stderr_file,
+                    "exit_code": r.exit_code,
+                    "status": r.status,
+                }
+                for r in self.prompt_results
+            ],
         }
 
     @classmethod
@@ -135,6 +158,34 @@ class GitWorktreeManager:
     def __init__(self, console: Console, source_repo: Path):
         self.console = console
         self.source_repo = source_repo
+
+    async def ensure_git_repo(self) -> None:
+        """Ensure the source repository is a valid git repo, initialize if not."""
+        git_dir = self.source_repo / ".git"
+        if git_dir.exists():
+            return
+
+        self.console.print(f"[yellow]Source repo is not a git repository. Initializing...[/yellow]")
+
+        # git init
+        result = await self._run_command(["git", "init"], cwd=self.source_repo)
+        if result.returncode != 0:
+            raise RuntimeError(f"Failed to initialize git repo: {result.stderr}")
+
+        # git add .
+        result = await self._run_command(["git", "add", "."], cwd=self.source_repo)
+        if result.returncode != 0:
+            raise RuntimeError(f"Failed to stage files: {result.stderr}")
+
+        # git commit
+        result = await self._run_command(
+            ["git", "commit", "-m", "Initial commit"],
+            cwd=self.source_repo
+        )
+        if result.returncode != 0:
+            raise RuntimeError(f"Failed to create initial commit: {result.stderr}")
+
+        self.console.print(f"[green]✓ Git repository initialized[/green]")
 
     async def create(self, source_repo: Path, worktree_dir: Path) -> Path:
         """Create a new git worktree from the source repository."""
@@ -420,62 +471,87 @@ class QwenRunner:
         worktree_dir: Path,
         output_dir: Path,
     ) -> None:
-        """Execute the Qwen CLI and capture output."""
+        """Execute the Qwen CLI for each prompt sequentially."""
         output_dir.mkdir(parents=True, exist_ok=True)
         run.output_dir = str(output_dir)
 
-        # Build command (needs output_dir set for logs)
-        cmd = self._build_command(run)
-        self.console.print(f"[blue]Executing qwen CLI...[/blue]")
-        self.console.print(f"[dim]Command: {' '.join(cmd)}[/dim]")
+        # Get the task and its prompts
+        task = next((t for t in self.config.tasks if t.id == run.task_id), None)
+        if not task or not task.prompts:
+            raise ValueError(f"No prompts found for task {run.task_id}")
 
-        # Prepare output files
-        stdout_file = output_dir / "stdout.txt"
-        stderr_file = output_dir / "stderr.txt"
+        # Setup logs directory
+        run_logs_dir = (output_dir / "logs").resolve()
+        run_logs_dir.mkdir(parents=True, exist_ok=True)
+        run.logs_dir = str(run_logs_dir)
 
-        run.stdout_file = str(stdout_file)
-        run.stderr_file = str(stderr_file)
+        # Run each prompt sequentially
+        for prompt_index, prompt_text in enumerate(task.prompts, start=1):
+            self.console.print(f"[blue]Executing prompt {prompt_index}/{len(task.prompts)}...[/blue]")
 
-        # Run the CLI
-        env = os.environ.copy()
-        env["QWEN_CODE_ROOT"] = str(worktree_dir)
-        
-        proc = await asyncio.create_subprocess_exec(
-            *cmd,
-            cwd=worktree_dir,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-            env=env,
-        )
+            # Build command for this prompt
+            cmd = self._build_command(run, prompt_text, prompt_index > 1)
+            self.console.print(f"[dim]Command: {' '.join(cmd)}[/dim]")
 
-        # Capture output
-        stdout_data = []
-        stderr_data = []
+            # Prepare output files for this prompt
+            stdout_file = output_dir / f"stdout-{prompt_index}.txt"
+            stderr_file = output_dir / f"stderr-{prompt_index}.txt"
 
-        async def read_stream(stream, data_list, file_path):
-            async with aiofiles.open(file_path, 'w') as f:
-                while True:
-                    line = await stream.readline()
-                    if not line:
-                        break
-                    decoded = line.decode()
-                    data_list.append(decoded)
-                    await f.write(decoded)
-                    await f.flush()
+            # Run the CLI
+            env = os.environ.copy()
+            env["QWEN_CODE_ROOT"] = str(worktree_dir)
 
-        await asyncio.gather(
-            read_stream(proc.stdout, stdout_data, stdout_file),
-            read_stream(proc.stderr, stderr_data, stderr_file),
-        )
+            proc = await asyncio.create_subprocess_exec(
+                *cmd,
+                cwd=worktree_dir,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                env=env,
+            )
 
-        returncode = await proc.wait()
-        run.exit_code = returncode
+            # Capture output
+            async def read_stream(stream, file_path):
+                async with aiofiles.open(file_path, 'w') as f:
+                    while True:
+                        line = await stream.readline()
+                        if not line:
+                            break
+                        decoded = line.decode()
+                        await f.write(decoded)
+                        await f.flush()
 
-        if returncode != 0:
-            raise RuntimeError(f"CLI exited with code {returncode}")
+            await asyncio.gather(
+                read_stream(proc.stdout, stdout_file),
+                read_stream(proc.stderr, stderr_file),
+            )
 
-    def _build_command(self, run: RunRecord) -> List[str]:
-        """Build the qwen CLI command."""
+            returncode = await proc.wait()
+
+            # Record result for this prompt
+            prompt_result = PromptResult(
+                prompt_index=prompt_index,
+                prompt_text=prompt_text,
+                stdout_file=str(stdout_file),
+                stderr_file=str(stderr_file),
+                exit_code=returncode,
+                status="succeeded" if returncode == 0 else "failed",
+            )
+            run.prompt_results.append(prompt_result)
+
+            # Stop on failure
+            if returncode != 0:
+                run.exit_code = returncode
+                raise RuntimeError(f"Prompt {prompt_index} failed with exit code {returncode}")
+
+        # All prompts succeeded
+        run.exit_code = 0
+        # Set legacy stdout/stderr files to first prompt's files for backwards compatibility
+        if run.prompt_results:
+            run.stdout_file = run.prompt_results[0].stdout_file
+            run.stderr_file = run.prompt_results[0].stderr_file
+
+    def _build_command(self, run: RunRecord, prompt_text: str, use_continue: bool = False) -> List[str]:
+        """Build the qwen CLI command for a single prompt."""
         cmd = ["qwen"]
 
         # Add model
@@ -487,16 +563,14 @@ class QwenRunner:
 
         # Always enable OpenAI logging to run-specific logs directory
         cmd.append("--openai-logging")
-        run_logs_dir = (Path(run.output_dir) / "logs").resolve()
-        run_logs_dir.mkdir(parents=True, exist_ok=True)
-        cmd.extend(["--openai-logging-dir", str(run_logs_dir)])
-        run.logs_dir = str(run_logs_dir)
+        cmd.extend(["--openai-logging-dir", run.logs_dir])
 
-        # Get the task prompts
-        task = next((t for t in self.config.tasks if t.id == run.task_id), None)
-        if task:
-            prompt_text = "\n\n".join(task.prompts)
-            cmd.extend(["--prompt", prompt_text])
+        # Add --continue flag for follow-up prompts (to pick up chat history)
+        if use_continue:
+            cmd.append("--continue")
+
+        # Add the prompt
+        cmd.extend(["--prompt", prompt_text])
 
         return cmd
 
@@ -605,6 +679,7 @@ async def run_all(config: RunConfig, console: Console) -> ExecutionState:
     await tracker.initialize(runs)
     
     worktree_manager = GitWorktreeManager(console, config.source_repo)
+    await worktree_manager.ensure_git_repo()
     qwen_runner = QwenRunner(config, console)
     display = ProgressDisplay(console)
 
