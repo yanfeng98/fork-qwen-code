@@ -1,0 +1,26 @@
+{
+  "concurrency": 2,
+  "yolo": true,
+  "source_repo": "/Users/andy/workspace/projects/qwen-code/integration-tests/concurrent-runner/examples/toy-project",
+  "worktree_base": "~/.qwen/worktrees",
+  "outputs_dir": "./examples/outputs",
+  "results_file": "./examples/results.json",
+  "tasks": [
+    {
+      "id": "task-1",
+      "name": "Rabbit Counting",
+      "prompts": [
+        "Suppose we have 3 rabbits and 4 carrots. How many animals are there?"
+      ]
+    },
+    {
+      "id": "task-2",
+      "name": "AGI Prediction",
+      "prompts": [
+        "Use shell tool to get current date",
+        "Predict how many dates left until we have AGI (artificial general intelligence)"
+      ]
+    }
+  ],
+  "models": ["qwen3-coder-plus", "kimi-k2.5"]
+}
