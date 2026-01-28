@@ -19,6 +19,7 @@ import {
   UpdatedPlanToolCall,
   ShellToolCall,
   ReadToolCall,
+  WebFetchToolCall,
 } from '@qwen-code/webui';
 import type { BaseToolCallProps } from '@qwen-code/webui';
 
@@ -60,6 +61,13 @@ export const getToolCallComponent = (kind: string): FC<BaseToolCallProps> => {
     case 'think':
     case 'thinking':
       return ThinkToolCall;
+
+    case 'fetch':
+    case 'web_fetch':
+    case 'webfetch':
+    case 'web_search':
+    case 'websearch':
+      return WebFetchToolCall;
 
     default:
       // Fallback to generic component
