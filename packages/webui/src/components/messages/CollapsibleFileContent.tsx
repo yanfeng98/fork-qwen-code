@@ -120,7 +120,10 @@ const CollapsibleFileReference: FC<CollapsibleFileReferenceProps> = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
-  const lineCount = useMemo(() => segment.content.split('\n').length, [segment.content]);
+  const lineCount = useMemo(
+    () => segment.content.split('\n').length,
+    [segment.content],
+  );
 
   const handleToggle = () => {
     setIsExpanded(!isExpanded);
