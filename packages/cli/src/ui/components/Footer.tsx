@@ -5,7 +5,6 @@
  */
 
 import type React from 'react';
-import { useMemo } from 'react';
 import { Box, Text } from 'ink';
 import { theme } from '../semantic-colors.js';
 import { ConsoleSummaryDisplay } from './ConsoleSummaryDisplay.js';
@@ -56,11 +55,8 @@ export const Footer: React.FC = () => {
   // Check if debug mode is enabled
   const debugMode = config.getDebugMode();
 
-  // Memoize contextWindowSize to avoid recalculating on every render
-  const contextWindowSize = useMemo(
-    () => config.getContentGeneratorConfig()?.contextWindowSize,
-    [config],
-  );
+  const contextWindowSize =
+    config.getContentGeneratorConfig()?.contextWindowSize;
 
   // Left section should show exactly ONE thing at any time, in priority order.
   const leftContent = uiState.ctrlCPressedOnce ? (
@@ -93,7 +89,7 @@ export const Footer: React.FC = () => {
       node: <Text color={theme.status.warning}>Debug Mode</Text>,
     });
   }
-  if (promptTokenCount > 0) {
+  if (promptTokenCount > 0 && contextWindowSize) {
     rightItems.push({
       key: 'context',
       node: (

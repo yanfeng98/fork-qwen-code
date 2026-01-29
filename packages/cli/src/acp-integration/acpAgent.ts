@@ -379,9 +379,7 @@ class GeminiAgent {
       name: model.label,
       description: model.description ?? null,
       _meta: {
-        // Each model should have its own context window size based on its capabilities
-        // Use tokenLimit to get the model-specific context window size
-        contextLimit: tokenLimit(model.id),
+        contextLimit: model.contextWindowSize ?? tokenLimit(model.id),
       },
     }));
 
@@ -389,13 +387,15 @@ class GeminiAgent {
       currentModelId &&
       !mappedAvailableModels.some((model) => model.modelId === currentModelId)
     ) {
+      const currentContextWindowSize =
+        config.getContentGeneratorConfig()?.contextWindowSize ??
+        tokenLimit(currentModelId);
       mappedAvailableModels.unshift({
         modelId: currentModelId,
         name: currentModelId,
         description: null,
         _meta: {
-          // Get context window size specific to the current model
-          contextLimit: tokenLimit(currentModelId),
+          contextLimit: currentContextWindowSize,
         },
       });
     }

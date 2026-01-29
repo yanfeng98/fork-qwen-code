@@ -6,7 +6,6 @@
 
 import { Text } from 'ink';
 import { theme } from '../semantic-colors.js';
-import { DEFAULT_TOKEN_LIMIT } from '@qwen-code/qwen-code-core';
 
 export const ContextUsageDisplay = ({
   promptTokenCount,
@@ -15,14 +14,13 @@ export const ContextUsageDisplay = ({
 }: {
   promptTokenCount: number;
   terminalWidth: number;
-  contextWindowSize?: number;
+  contextWindowSize: number;
 }) => {
   if (promptTokenCount === 0) {
     return null;
   }
 
-  const contextLimit = contextWindowSize ?? DEFAULT_TOKEN_LIMIT;
-  const percentage = promptTokenCount / contextLimit;
+  const percentage = promptTokenCount / contextWindowSize;
   const percentageUsed = (percentage * 100).toFixed(1);
 
   const label = terminalWidth < 100 ? '% used' : '% context used';

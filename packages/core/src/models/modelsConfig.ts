@@ -242,6 +242,11 @@ export class ModelsConfig {
         kind: 'programmatic',
         detail: metadata?.reason || 'setModel',
       };
+
+      // Notify Config to update contentGeneratorConfig
+      if (this.onModelChange) {
+        await this.onModelChange(AuthType.QWEN_OAUTH, false);
+      }
       return;
     }
 
@@ -578,12 +583,16 @@ export class ModelsConfig {
       detail: 'generationConfig.reasoning',
     };
 
-    // Apply contextWindowSize with fallback logic
-    // Priority: user config > model auto-detection
-    // Note: User-set contextWindowSize is already in _generationConfig and its source
-    // is already tracked in resolveContentGeneratorConfigWithSources
-    if (this._generationConfig.contextWindowSize === undefined) {
-      // Auto-detect from model if not explicitly set by user
+    // Context window size: use provider value if set, otherwise auto-detect from model
+    if (gc.contextWindowSize !== undefined) {
+      this._generationConfig.contextWindowSize = gc.contextWindowSize;
+      this.generationConfigSources['contextWindowSize'] = {
+        kind: 'modelProviders',
+        authType: model.authType,
+        modelId: model.id,
+        detail: 'generationConfig.contextWindowSize',
+      };
+    } else {
       this._generationConfig.contextWindowSize = tokenLimit(model.id, 'input');
       this.generationConfigSources['contextWindowSize'] = {
         kind: 'computed',

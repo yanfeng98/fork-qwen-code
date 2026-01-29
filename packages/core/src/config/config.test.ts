@@ -189,13 +189,8 @@ vi.mock('../ide/ide-client.js', () => ({
 }));
 
 import { BaseLlmClient } from '../core/baseLlmClient.js';
-import { tokenLimit } from '../core/tokenLimits.js';
-import { uiTelemetryService } from '../telemetry/index.js';
 
 vi.mock('../core/baseLlmClient.js');
-vi.mock('../core/tokenLimits.js', () => ({
-  tokenLimit: vi.fn(),
-}));
 
 describe('Server Config (config.ts)', () => {
   const MODEL = 'qwen3-coder-plus';
@@ -1036,29 +1031,8 @@ describe('Server Config (config.ts)', () => {
   });
 
   describe('getTruncateToolOutputThreshold', () => {
-    beforeEach(() => {
-      vi.clearAllMocks();
-    });
-
-    it('should return the calculated threshold when it is smaller than the default', () => {
+    it('should return the default threshold', () => {
       const config = new Config(baseParams);
-      vi.mocked(tokenLimit).mockReturnValue(8000);
-      vi.mocked(uiTelemetryService.getLastPromptTokenCount).mockReturnValue(
-        2000,
-      );
-      // 4 * (8000 - 2000) = 4 * 6000 = 24000
-      // default is 25_000
-      expect(config.getTruncateToolOutputThreshold()).toBe(25000);
-    });
-
-    it('should return the default threshold when the calculated value is larger', () => {
-      const config = new Config(baseParams);
-      vi.mocked(tokenLimit).mockReturnValue(2_000_000);
-      vi.mocked(uiTelemetryService.getLastPromptTokenCount).mockReturnValue(
-        500_000,
-      );
-      // 4 * (2_000_000 - 500_000) = 4 * 1_500_000 = 6_000_000
-      // default is 25_000
       expect(config.getTruncateToolOutputThreshold()).toBe(25_000);
     });
 
@@ -1068,21 +1042,18 @@ describe('Server Config (config.ts)', () => {
         truncateToolOutputThreshold: 50000,
       };
       const config = new Config(customParams);
-      vi.mocked(tokenLimit).mockReturnValue(8000);
-      vi.mocked(uiTelemetryService.getLastPromptTokenCount).mockReturnValue(
-        2000,
-      );
-      // 4 * (8000 - 2000) = 4 * 6000 = 24000
-      // custom threshold is 50000
       expect(config.getTruncateToolOutputThreshold()).toBe(50000);
+    });
 
-      vi.mocked(tokenLimit).mockReturnValue(32000);
-      vi.mocked(uiTelemetryService.getLastPromptTokenCount).mockReturnValue(
-        1000,
+    it('should return infinity when truncation is disabled', () => {
+      const customParams = {
+        ...baseParams,
+        enableToolOutputTruncation: false,
+      };
+      const config = new Config(customParams);
+      expect(config.getTruncateToolOutputThreshold()).toBe(
+        Number.POSITIVE_INFINITY,
       );
-      // 4 * (32000 - 1000) = 124000
-      // custom threshold is 50000
-      expect(config.getTruncateToolOutputThreshold()).toBe(50000);
     });
   });
 });

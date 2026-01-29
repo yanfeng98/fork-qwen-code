@@ -79,7 +79,6 @@ import {
   RipgrepFallbackEvent,
   StartSessionEvent,
   type TelemetryTarget,
-  uiTelemetryService,
 } from '../telemetry/index.js';
 import {
   ExtensionManager,
@@ -1513,17 +1512,7 @@ export class Config {
       return Number.POSITIVE_INFINITY;
     }
 
-    const contextWindowSize =
-      this.getContentGeneratorConfig()?.contextWindowSize;
-    if (!contextWindowSize) {
-      return this.truncateToolOutputThreshold;
-    }
-
-    return Math.min(
-      // Estimate remaining context window in characters (1 token ~= 4 chars).
-      4 * (contextWindowSize - uiTelemetryService.getLastPromptTokenCount()),
-      this.truncateToolOutputThreshold,
-    );
+    return this.truncateToolOutputThreshold;
   }
 
   getTruncateToolOutputLines(): number {
