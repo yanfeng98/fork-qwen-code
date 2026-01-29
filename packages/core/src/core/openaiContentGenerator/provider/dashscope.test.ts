@@ -47,7 +47,7 @@ describe('DashScopeOpenAICompatibleProvider', () => {
     vi.clearAllMocks();
     const mockedBuildRuntimeFetchOptions =
       buildRuntimeFetchOptions as unknown as MockedFunction<
-        (sdkType: 'openai') => OpenAIRuntimeFetchOptions
+        (sdkType: 'openai', proxyUrl?: string) => OpenAIRuntimeFetchOptions
       >;
     mockedBuildRuntimeFetchOptions.mockReturnValue(undefined);
 
@@ -68,6 +68,7 @@ describe('DashScopeOpenAICompatibleProvider', () => {
       getContentGeneratorConfig: vi.fn().mockReturnValue({
         disableCacheControl: false,
       }),
+      getProxy: vi.fn().mockReturnValue(undefined),
     } as unknown as Config;
 
     provider = new DashScopeOpenAICompatibleProvider(
@@ -623,7 +624,7 @@ describe('DashScopeOpenAICompatibleProvider', () => {
       });
     });
 
-    it('should add empty text item with cache control if last item is not text for streaming requests', () => {
+    it('should add cache control to last item even if not text for streaming requests', () => {
       const requestWithNonTextLast: OpenAI.Chat.ChatCompletionCreateParams = {
         model: 'qwen-max',
         stream: true, // This will trigger cache control on last message
@@ -648,12 +649,12 @@ describe('DashScopeOpenAICompatibleProvider', () => {
 
       const content = result.messages[0]
         .content as OpenAI.Chat.ChatCompletionContentPart[];
-      expect(content).toHaveLength(3);
+      expect(content).toHaveLength(2);
 
-      // Should add empty text item with cache control
-      expect(content[2]).toEqual({
-        type: 'text',
-        text: '',
+      // Cache control should be added to the last item (image)
+      expect(content[1]).toEqual({
+        type: 'image_url',
+        image_url: { url: 'https://example.com/image.jpg' },
         cache_control: { type: 'ephemeral' },
       });
     });
@@ -724,13 +725,8 @@ describe('DashScopeOpenAICompatibleProvider', () => {
 
       const content = result.messages[0]
         .content as OpenAI.Chat.ChatCompletionContentPart[];
-      expect(content).toEqual([
-        {
-          type: 'text',
-          text: '',
-          cache_control: { type: 'ephemeral' },
-        },
-      ]);
+      // Empty content array should remain empty
+      expect(content).toEqual([]);
     });
   });
 
@@ -927,6 +923,72 @@ describe('DashScopeOpenAICompatibleProvider', () => {
 
       expect(result.max_tokens).toBe(65536); // Should be limited to model's output limit (64K)
       expect(result.stream).toBe(true); // Streaming should be preserved
+    });
+
+    it('should merge extra_body into the request', () => {
+      const providerWithExtraBody = new DashScopeOpenAICompatibleProvider(
+        {
+          ...mockContentGeneratorConfig,
+          extra_body: {
+            custom_param: 'custom_value',
+            nested: { key: 'value' },
+          },
+        },
+        mockCliConfig,
+      );
+
+      const request: OpenAI.Chat.ChatCompletionCreateParams = {
+        model: 'qwen3-coder-plus',
+        messages: [{ role: 'user', content: 'Hello' }],
+      };
+
+      const result = providerWithExtraBody.buildRequest(
+        request,
+        'test-prompt-id',
+      );
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((result as any).custom_param).toBe('custom_value');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((result as any).nested).toEqual({ key: 'value' });
+    });
+
+    it('should merge extra_body into vision model requests', () => {
+      const providerWithExtraBody = new DashScopeOpenAICompatibleProvider(
+        {
+          ...mockContentGeneratorConfig,
+          extra_body: {
+            custom_param: 'custom_value',
+          },
+        },
+        mockCliConfig,
+      );
+
+      const request: OpenAI.Chat.ChatCompletionCreateParams = {
+        model: 'qwen-vl-max',
+        messages: [{ role: 'user', content: 'Hello' }],
+      };
+
+      const result = providerWithExtraBody.buildRequest(
+        request,
+        'test-prompt-id',
+      );
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((result as any).custom_param).toBe('custom_value');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((result as any).vl_high_resolution_images).toBe(true);
+    });
+
+    it('should not include extra_body when not configured', () => {
+      const request: OpenAI.Chat.ChatCompletionCreateParams = {
+        model: 'qwen3-coder-plus',
+        messages: [{ role: 'user', content: 'Hello' }],
+      };
+
+      const result = provider.buildRequest(request, 'test-prompt-id');
+
+      expect(result).not.toHaveProperty('custom_param');
     });
   });
 });

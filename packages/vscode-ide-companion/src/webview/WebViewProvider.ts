@@ -8,6 +8,7 @@ import * as vscode from 'vscode';
 import { QwenAgentManager } from '../services/qwenAgentManager.js';
 import { ConversationStore } from '../services/conversationStore.js';
 import type { AcpPermissionRequest } from '../types/acpTypes.js';
+import type { PermissionResponseMessage } from '../types/webviewMessageTypes.js';
 import { PanelManager } from '../webview/PanelManager.js';
 import { MessageHandler } from '../webview/MessageHandler.js';
 import { WebViewContent } from '../webview/WebViewContent.js';
@@ -132,6 +133,34 @@ export class WebViewProvider {
       });
     });
 
+    // Surface model changes (from ACP current_model_update or set_model response)
+    this.agentManager.onModelChanged((model) => {
+      this.sendMessageToWebView({
+        type: 'modelChanged',
+        data: { model },
+      });
+    });
+
+    // Surface available commands (from ACP available_commands_update)
+    this.agentManager.onAvailableCommands((commands) => {
+      this.sendMessageToWebView({
+        type: 'availableCommands',
+        data: { commands },
+      });
+    });
+
+    // Surface available models (from session/new response)
+    this.agentManager.onAvailableModels((models) => {
+      console.log(
+        '[WebViewProvider] onAvailableModels received, sending to webview:',
+        models,
+      );
+      this.sendMessageToWebView({
+        type: 'availableModels',
+        data: { models },
+      });
+    });
+
     // Setup end-turn handler from ACP stopReason notifications
     this.agentManager.onEndTurn((reason) => {
       // Ensure WebView exits streaming state even if no explicit streamEnd was emitted elsewhere
@@ -251,10 +280,7 @@ export class WebViewProvider {
               }
             }
           };
-          const handler = (message: {
-            type: string;
-            data: { optionId: string };
-          }) => {
+          const handler = (message: PermissionResponseMessage) => {
             if (message.type !== 'permissionResponse') {
               return;
             }
@@ -270,6 +296,16 @@ export class WebViewProvider {
               optionId.toLowerCase().includes('reject');
 
             if (isCancel) {
+              // Close any open qwen-diff editors first
+              try {
+                void vscode.commands.executeCommand('qwen.diff.closeAll');
+              } catch (err) {
+                console.warn(
+                  '[WebViewProvider] Failed to close diffs after reject:',
+                  err,
+                );
+              }
+
               // Fire and forget – do not block the ACP resolve
               (async () => {
                 try {
@@ -296,7 +332,6 @@ export class WebViewProvider {
                   const title =
                     (request.toolCall as { title?: string } | undefined)
                       ?.title || '';
-                  // Normalize kind for UI – fall back to 'execute'
                   let kind = ((
                     request.toolCall as { kind?: string } | undefined
                   )?.kind || 'execute') as string;
@@ -319,7 +354,6 @@ export class WebViewProvider {
                       title,
                       kind,
                       status: 'failed',
-                      // Best-effort pass-through (used by UI hints)
                       rawInput: (request.toolCall as { rawInput?: unknown })
                         ?.rawInput,
                       locations: (

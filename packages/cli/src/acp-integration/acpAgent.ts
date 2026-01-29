@@ -290,7 +290,7 @@ class GeminiAgent {
   }
 
   private async ensureAuthenticated(config: Config): Promise<void> {
-    const selectedType = this.settings.merged.security?.auth?.selectedType;
+    const selectedType = config.getModelsConfig().getCurrentAuthType();
     if (!selectedType) {
       throw acp.RequestError.authRequired(
         'Use Qwen Code CLI to authenticate first.',

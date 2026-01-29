@@ -96,6 +96,8 @@ export type ContentGeneratorConfig = {
   contextWindowSize?: number;
   // Custom HTTP headers to be sent with requests
   customHeaders?: Record<string, string>;
+  // Extra body parameters to be merged into the request body
+  extra_body?: Record<string, unknown>;
 };
 
 // Keep the public ContentGeneratorConfigSources API, but reuse the generic
