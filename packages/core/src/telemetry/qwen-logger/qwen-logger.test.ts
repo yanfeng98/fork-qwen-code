@@ -124,83 +124,113 @@ describe('QwenLogger', () => {
     });
 
     it('includes source when source.json exists with valid source', async () => {
-      // Create a mock logger that returns the expected source info
+      // Mock fs.existsSync and fs.readFileSync to simulate source.json file
+      const fs = await import('node:fs');
+      const path = await import('node:path');
+      const os = await import('node:os');
+
+      const existsSyncSpy = vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+      const readFileSyncSpy = vi
+        .spyOn(fs, 'readFileSync')
+        .mockReturnValue('{"source":"github"}');
+      const joinSpy = vi
+        .spyOn(path, 'join')
+        .mockReturnValue('/test/.qwen/source.json');
+      const homedirSpy = vi.spyOn(os, 'homedir').mockReturnValue('/test');
+
       const logger = QwenLogger.getInstance(mockConfig)!;
 
-      // Mock the readSourceInfo method to return a known value
-      const originalReadSourceInfo = (logger as any).readSourceInfo;
-      (logger as any).readSourceInfo = () => ({ source: 'github' });
-
+      // Access private method via bracket notation
       const payload = await (
-        logger as unknown as {
-          createRumPayload(): Promise<RumPayload>;
-        }
+        logger as unknown as { createRumPayload(): Promise<RumPayload> }
       ).createRumPayload();
 
-      expect(payload.properties).toHaveProperty('source', 'github');
+      expect(payload.app).toHaveProperty('channel', 'github');
 
-      // Restore original method
-      (logger as any).readSourceInfo = originalReadSourceInfo;
+      // Restore mocks
+      existsSyncSpy.mockRestore();
+      readFileSyncSpy.mockRestore();
+      joinSpy.mockRestore();
+      homedirSpy.mockRestore();
     });
-
     it('does not include source when source.json does not exist', async () => {
-      // Create a mock logger that returns empty source info
+      // Mock fs.existsSync to return false
+      const fs = await import('node:fs');
+      const existsSyncSpy = vi.spyOn(fs, 'existsSync').mockReturnValue(false);
+
       const logger = QwenLogger.getInstance(mockConfig)!;
 
-      // Mock the readSourceInfo method to return empty object
-      const originalReadSourceInfo = (logger as any).readSourceInfo;
-      (logger as any).readSourceInfo = () => ({});
-
+      // Access private method via bracket notation
       const payload = await (
-        logger as unknown as {
-          createRumPayload(): Promise<RumPayload>;
-        }
+        logger as unknown as { createRumPayload(): Promise<RumPayload> }
       ).createRumPayload();
 
-      expect(payload.properties).not.toHaveProperty('source');
+      expect(payload.app.channel).toBeUndefined();
 
-      // Restore original method
-      (logger as any).readSourceInfo = originalReadSourceInfo;
+      // Restore mocks
+      existsSyncSpy.mockRestore();
     });
-
     it('does not include source when source value is unknown', async () => {
-      // Create a mock logger that returns empty source info
+      // Mock fs to return source.json with 'unknown' value
+      const fs = await import('node:fs');
+      const path = await import('node:path');
+      const os = await import('node:os');
+
+      const existsSyncSpy = vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+      const readFileSyncSpy = vi
+        .spyOn(fs, 'readFileSync')
+        .mockReturnValue('{"source":"unknown"}');
+      const joinSpy = vi
+        .spyOn(path, 'join')
+        .mockReturnValue('/test/.qwen/source.json');
+      const homedirSpy = vi.spyOn(os, 'homedir').mockReturnValue('/test');
+
       const logger = QwenLogger.getInstance(mockConfig)!;
 
-      // Mock the readSourceInfo method to return empty object (when source is unknown)
-      const originalReadSourceInfo = (logger as any).readSourceInfo;
-      (logger as any).readSourceInfo = () => ({});
-
+      // Access private method via bracket notation
       const payload = await (
-        logger as unknown as {
-          createRumPayload(): Promise<RumPayload>;
-        }
+        logger as unknown as { createRumPayload(): Promise<RumPayload> }
       ).createRumPayload();
 
-      expect(payload.properties).not.toHaveProperty('source');
+      expect(payload.app.channel).toBeUndefined();
 
-      // Restore original method
-      (logger as any).readSourceInfo = originalReadSourceInfo;
+      // Restore mocks
+      existsSyncSpy.mockRestore();
+      readFileSyncSpy.mockRestore();
+      joinSpy.mockRestore();
+      homedirSpy.mockRestore();
     });
-
     it('handles source.json parsing errors gracefully', async () => {
-      // Create a mock logger that returns empty source info
+      // Mock fs to throw an error when reading source.json
+      const fs = await import('node:fs');
+      const path = await import('node:path');
+      const os = await import('node:os');
+
+      const existsSyncSpy = vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+      const readFileSyncSpy = vi
+        .spyOn(fs, 'readFileSync')
+        .mockImplementation(() => {
+          throw new Error('File read error');
+        });
+      const joinSpy = vi
+        .spyOn(path, 'join')
+        .mockReturnValue('/test/.qwen/source.json');
+      const homedirSpy = vi.spyOn(os, 'homedir').mockReturnValue('/test');
+
       const logger = QwenLogger.getInstance(mockConfig)!;
 
-      // Mock the readSourceInfo method to return empty object (on error)
-      const originalReadSourceInfo = (logger as any).readSourceInfo;
-      (logger as any).readSourceInfo = () => ({});
-
+      // Access private method via bracket notation
       const payload = await (
-        logger as unknown as {
-          createRumPayload(): Promise<RumPayload>;
-        }
+        logger as unknown as { createRumPayload(): Promise<RumPayload> }
       ).createRumPayload();
 
-      expect(payload.properties).not.toHaveProperty('source');
+      expect(payload.app.channel).toBeUndefined();
 
-      // Restore original method
-      (logger as any).readSourceInfo = originalReadSourceInfo;
+      // Restore mocks
+      existsSyncSpy.mockRestore();
+      readFileSyncSpy.mockRestore();
+      joinSpy.mockRestore();
+      homedirSpy.mockRestore();
     });
   });
 

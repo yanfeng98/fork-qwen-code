@@ -7,6 +7,8 @@
 import { Buffer } from 'buffer';
 import * as https from 'https';
 import * as os from 'node:os';
+import fs from 'node:fs';
+import path from 'node:path';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 
 import type {
@@ -226,14 +228,14 @@ export class QwenLogger {
     const osMetadata = this.getOsMetadata();
 
     // Read source information from source.json if it exists
-    let sourceInfo: { source?: string } = this.readSourceInfo();
-
+    const source = this.readSourceInfo();
     return {
       app: {
         id: RUN_APP_ID,
         env: process.env['DEBUG'] ? 'dev' : 'prod',
         version: version || 'unknown',
         type: 'cli',
+        channel: source || undefined,
       },
       user: {
         id: this.userId,
@@ -258,7 +260,6 @@ export class QwenLogger {
         ...(this.config?.getChannel?.()
           ? { channel: this.config.getChannel() }
           : {}),
-        ...sourceInfo, // Include source information if available and not 'unknown'
       },
       _v: `qwen-code@${version}`,
     } as RumPayload;
@@ -276,24 +277,25 @@ export class QwenLogger {
     });
   }
 
-  readSourceInfo(): { source?: string } {
+  readSourceInfo(): string {
     try {
-      const fs = require('node:fs');
-      const path = require('node:path');
-      const os = require('node:os');
-
       const sourceJsonPath = path.join(os.homedir(), '.qwen', 'source.json');
       if (fs.existsSync(sourceJsonPath)) {
         const sourceJsonContent = fs.readFileSync(sourceJsonPath, 'utf8');
         const sourceData = JSON.parse(sourceJsonContent);
-        if (sourceData && typeof sourceData === 'object' && sourceData.source && sourceData.source !== 'unknown') {
-          return { source: sourceData.source };
+        if (
+          sourceData &&
+          typeof sourceData === 'object' &&
+          sourceData.source &&
+          sourceData.source !== 'unknown'
+        ) {
+          return sourceData.source;
         }
       }
-    } catch (error) {
+    } catch (_error) {
       // Ignore errors when reading source.json - continue without source info
     }
-    return {};
+    return '';
   }
 
   async flushToRum(): Promise<LogResponse> {
