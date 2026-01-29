@@ -124,6 +124,8 @@ export class DashScopeOpenAICompatibleProvider
       request.model,
     );
 
+    const extraBody = this.contentGeneratorConfig.extra_body;
+
     if (this.isVisionModel(request.model)) {
       return {
         ...requestWithTokenLimits,
@@ -132,6 +134,7 @@ export class DashScopeOpenAICompatibleProvider
         ...(this.buildMetadata(userPromptId) || {}),
         /* @ts-expect-error dashscope exclusive */
         vl_high_resolution_images: true,
+        ...(extraBody ? extraBody : {}),
       } as OpenAI.Chat.ChatCompletionCreateParams;
     }
 
@@ -140,6 +143,7 @@ export class DashScopeOpenAICompatibleProvider
       messages,
       ...(tools ? { tools } : {}),
       ...(this.buildMetadata(userPromptId) || {}),
+      ...(extraBody ? extraBody : {}),
     } as OpenAI.Chat.ChatCompletionCreateParams;
   }
 
