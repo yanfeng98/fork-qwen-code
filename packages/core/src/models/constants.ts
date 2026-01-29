@@ -26,6 +26,7 @@ export const MODEL_GENERATION_CONFIG_FIELDS = [
   'schemaCompliance',
   'reasoning',
   'customHeaders',
+  'extra_body',
 ] as const satisfies ReadonlyArray<keyof ContentGeneratorConfig>;
 
 /**

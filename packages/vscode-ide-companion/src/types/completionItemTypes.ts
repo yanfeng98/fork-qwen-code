@@ -16,4 +16,14 @@ export interface CompletionItem {
   value?: string;
   // Optional full path for files (used to build @filename -> full path mapping)
   path?: string;
+  // Optional group name for grouping items in the completion menu
+  group?: string;
+}
+
+/**
+ * Grouped completion items for display
+ */
+export interface CompletionGroup {
+  name: string;
+  items: CompletionItem[];
 }
