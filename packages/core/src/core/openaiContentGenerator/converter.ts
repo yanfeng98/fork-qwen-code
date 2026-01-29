@@ -64,17 +64,27 @@ export interface ToolCallAccumulator {
   arguments: string;
 }
 
+type OpenAIContentPartVideoUrl = {
+  type: 'video_url';
+  video_url: {
+    url: string;
+  };
+};
+
+type OpenAIContentPartFile = {
+  type: 'file';
+  file: {
+    filename: string;
+    file_data: string;
+  };
+};
+
 type OpenAIContentPart =
   | OpenAI.Chat.ChatCompletionContentPartText
   | OpenAI.Chat.ChatCompletionContentPartImage
   | OpenAI.Chat.ChatCompletionContentPartInputAudio
-  | {
-      type: 'file';
-      file: {
-        filename: string;
-        file_data: string;
-      };
-    };
+  | OpenAIContentPartVideoUrl
+  | OpenAIContentPartFile;
 
 /**
  * Converter class for transforming data between Gemini and OpenAI formats
@@ -607,12 +617,10 @@ export class OpenAIContentConverter {
       }
 
       if (mediaType === 'video') {
-        const filename = part.inlineData.displayName || 'video';
         return {
-          type: 'file' as const,
-          file: {
-            filename,
-            file_data: `data:${mimeType};base64,${part.inlineData.data}`,
+          type: 'video_url' as const,
+          video_url: {
+            url: `data:${mimeType};base64,${part.inlineData.data}`,
           },
         };
       }
@@ -650,12 +658,10 @@ export class OpenAIContentConverter {
       }
 
       if (mediaType === 'video') {
-        const videoFilename = part.fileData.displayName || 'video';
         return {
-          type: 'file' as const,
-          file: {
-            filename: videoFilename,
-            file_data: fileUri,
+          type: 'video_url' as const,
+          video_url: {
+            url: fileUri,
           },
         };
       }

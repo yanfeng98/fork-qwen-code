@@ -544,7 +544,7 @@ describe('OpenAIContentConverter', () => {
       );
     });
 
-    it('should convert video inlineData to tool message with embedded file', () => {
+    it('should convert video inlineData to tool message with embedded video_url', () => {
       const request: GenerateContentParameters = {
         model: 'models/test',
         contents: [
@@ -593,14 +593,13 @@ describe('OpenAIContentConverter', () => {
       const contentArray = toolMessage?.content as Array<{
         type: string;
         text?: string;
-        file?: { filename: string; file_data: string };
+        video_url?: { url: string };
       }>;
       expect(contentArray).toHaveLength(2);
       expect(contentArray[0].type).toBe('text');
       expect(contentArray[0].text).toBe('Video content');
-      expect(contentArray[1].type).toBe('file');
-      expect(contentArray[1].file?.filename).toBe('recording.mp4');
-      expect(contentArray[1].file?.file_data).toBe(
+      expect(contentArray[1].type).toBe('video_url');
+      expect(contentArray[1].video_url?.url).toBe(
         'data:video/mp4;base64,videobase64data',
       );
 
@@ -609,7 +608,7 @@ describe('OpenAIContentConverter', () => {
       expect(userMessage).toBeUndefined();
     });
 
-    it('should convert video fileData URL to tool message with embedded file', () => {
+    it('should convert video fileData URL to tool message with embedded video_url', () => {
       const request: GenerateContentParameters = {
         model: 'models/test',
         contents: [
@@ -657,14 +656,13 @@ describe('OpenAIContentConverter', () => {
       const contentArray = toolMessage?.content as Array<{
         type: string;
         text?: string;
-        file?: { filename: string; file_data: string };
+        video_url?: { url: string };
       }>;
       expect(contentArray).toHaveLength(2);
       expect(contentArray[0].type).toBe('text');
       expect(contentArray[0].text).toBe('Video content');
-      expect(contentArray[1].type).toBe('file');
-      expect(contentArray[1].file?.filename).toBe('recording.mp4');
-      expect(contentArray[1].file?.file_data).toBe(
+      expect(contentArray[1].type).toBe('video_url');
+      expect(contentArray[1].video_url?.url).toBe(
         'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
       );
     });
