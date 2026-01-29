@@ -562,9 +562,16 @@ export class OpenAIContentConverter {
       }
     }
 
-    // Tool messages require content, so skip if empty
+    // IMPORTANT: Always return a tool message, even if content is empty
+    // OpenAI API requires that every tool call has a corresponding tool response
+    // Empty tool results are valid (e.g., reading an empty file, successful operations with no output)
     if (contentParts.length === 0) {
-      return null;
+      // Return empty string for empty tool results
+      return {
+        role: 'tool' as const,
+        tool_call_id: response.id || '',
+        content: '',
+      };
     }
 
     // Cast to OpenAI type - some OpenAI-compatible APIs support richer content in tool messages

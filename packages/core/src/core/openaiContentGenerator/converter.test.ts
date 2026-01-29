@@ -806,17 +806,32 @@ describe('OpenAIContentConverter', () => {
       expect(userMessage).toBeUndefined();
     });
 
-    it('should skip empty function responses with no media and no text', () => {
+    it('should create tool message with empty content for empty function responses', () => {
       const request: GenerateContentParameters = {
         model: 'models/test',
         contents: [
+          {
+            role: 'model',
+            parts: [
+              {
+                text: 'Let me read that file.',
+              },
+              {
+                functionCall: {
+                  id: 'call_1',
+                  name: 'read_file',
+                  args: { path: 'test.txt' },
+                },
+              },
+            ],
+          },
           {
             role: 'user',
             parts: [
               {
                 functionResponse: {
                   id: 'call_1',
-                  name: 'Empty',
+                  name: 'read_file',
                   response: { output: '' },
                 },
               },
@@ -827,8 +842,22 @@ describe('OpenAIContentConverter', () => {
 
       const messages = converter.convertGeminiRequestToOpenAI(request);
 
-      // Should have no messages for empty response
-      expect(messages).toHaveLength(0);
+      // Should create an assistant message with tool call and a tool message with empty content
+      // This is required because OpenAI API expects every tool call to have a corresponding response
+      expect(messages.length).toBeGreaterThanOrEqual(2);
+
+      const toolMessage = messages.find(
+        (m) =>
+          m.role === 'tool' &&
+          'tool_call_id' in m &&
+          m.tool_call_id === 'call_1',
+      );
+      expect(toolMessage).toBeDefined();
+      expect(toolMessage).toMatchObject({
+        role: 'tool',
+        tool_call_id: 'call_1',
+        content: '',
+      });
     });
   });
 
