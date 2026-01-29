@@ -30,7 +30,6 @@ import {
   createContentGenerator,
   resolveContentGeneratorConfigWithSources,
 } from '../core/contentGenerator.js';
-import { tokenLimit } from '../core/tokenLimits.js';
 
 // Services
 import { FileDiscoveryService } from '../services/fileDiscoveryService.js';
@@ -80,7 +79,6 @@ import {
   RipgrepFallbackEvent,
   StartSessionEvent,
   type TelemetryTarget,
-  uiTelemetryService,
 } from '../telemetry/index.js';
 import {
   ExtensionManager,
@@ -927,6 +925,7 @@ export class Config {
       this.contentGeneratorConfig.samplingParams = config.samplingParams;
       this.contentGeneratorConfig.disableCacheControl =
         config.disableCacheControl;
+      this.contentGeneratorConfig.contextWindowSize = config.contextWindowSize;
 
       if ('model' in sources) {
         this.contentGeneratorConfigSources['model'] = sources['model'];
@@ -938,6 +937,10 @@ export class Config {
       if ('disableCacheControl' in sources) {
         this.contentGeneratorConfigSources['disableCacheControl'] =
           sources['disableCacheControl'];
+      }
+      if ('contextWindowSize' in sources) {
+        this.contentGeneratorConfigSources['contextWindowSize'] =
+          sources['contextWindowSize'];
       }
       return;
     }
@@ -1509,13 +1512,7 @@ export class Config {
       return Number.POSITIVE_INFINITY;
     }
 
-    return Math.min(
-      // Estimate remaining context window in characters (1 token ~= 4 chars).
-      4 *
-        (tokenLimit(this.getModel()) -
-          uiTelemetryService.getLastPromptTokenCount()),
-      this.truncateToolOutputThreshold,
-    );
+    return this.truncateToolOutputThreshold;
   }
 
   getTruncateToolOutputLines(): number {

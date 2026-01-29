@@ -25,6 +25,7 @@ export const MODEL_GENERATION_CONFIG_FIELDS = [
   'disableCacheControl',
   'schemaCompliance',
   'reasoning',
+  'contextWindowSize',
   'customHeaders',
   'extra_body',
 ] as const satisfies ReadonlyArray<keyof ContentGeneratorConfig>;
