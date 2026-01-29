@@ -37,4 +37,6 @@ export interface CompletionItem {
   value?: string;
   /** Optional full path for files (used to build @filename -> full path mapping) */
   path?: string;
+  /** Optional group name for grouping items in the completion menu */
+  group?: string;
 }

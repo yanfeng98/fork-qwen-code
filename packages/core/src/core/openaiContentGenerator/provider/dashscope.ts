@@ -124,6 +124,8 @@ export class DashScopeOpenAICompatibleProvider
       request.model,
     );
 
+    const extraBody = this.contentGeneratorConfig.extra_body;
+
     if (this.isVisionModel(request.model)) {
       return {
         ...requestWithTokenLimits,
@@ -132,6 +134,7 @@ export class DashScopeOpenAICompatibleProvider
         ...(this.buildMetadata(userPromptId) || {}),
         /* @ts-expect-error dashscope exclusive */
         vl_high_resolution_images: true,
+        ...(extraBody ? extraBody : {}),
       } as OpenAI.Chat.ChatCompletionCreateParams;
     }
 
@@ -140,6 +143,7 @@ export class DashScopeOpenAICompatibleProvider
       messages,
       ...(tools ? { tools } : {}),
       ...(this.buildMetadata(userPromptId) || {}),
+      ...(extraBody ? extraBody : {}),
     } as OpenAI.Chat.ChatCompletionCreateParams;
   }
 
@@ -265,31 +269,15 @@ export class DashScopeOpenAICompatibleProvider
     contentArray: ChatCompletionContentPartWithCache[],
   ): ChatCompletionContentPartWithCache[] {
     if (contentArray.length === 0) {
-      return [
-        {
-          type: 'text',
-          text: '',
-          cache_control: { type: 'ephemeral' },
-        } as ChatCompletionContentPartTextWithCache,
-      ];
+      return contentArray;
     }
 
+    // Add cache_control to the last text item
     const lastItem = contentArray[contentArray.length - 1];
-
-    if (lastItem.type === 'text') {
-      // Add cache_control to the last text item
-      contentArray[contentArray.length - 1] = {
-        ...lastItem,
-        cache_control: { type: 'ephemeral' },
-      } as ChatCompletionContentPartTextWithCache;
-    } else {
-      // If the last item is not text, add a new text item with cache_control
-      contentArray.push({
-        type: 'text',
-        text: '',
-        cache_control: { type: 'ephemeral' },
-      } as ChatCompletionContentPartTextWithCache);
-    }
+    contentArray[contentArray.length - 1] = {
+      ...lastItem,
+      cache_control: { type: 'ephemeral' },
+    } as ChatCompletionContentPartTextWithCache;
 
     return contentArray;
   }

@@ -134,6 +134,34 @@ export class WebViewProvider {
       });
     });
 
+    // Surface model changes (from ACP current_model_update or set_model response)
+    this.agentManager.onModelChanged((model) => {
+      this.sendMessageToWebView({
+        type: 'modelChanged',
+        data: { model },
+      });
+    });
+
+    // Surface available commands (from ACP available_commands_update)
+    this.agentManager.onAvailableCommands((commands) => {
+      this.sendMessageToWebView({
+        type: 'availableCommands',
+        data: { commands },
+      });
+    });
+
+    // Surface available models (from session/new response)
+    this.agentManager.onAvailableModels((models) => {
+      console.log(
+        '[WebViewProvider] onAvailableModels received, sending to webview:',
+        models,
+      );
+      this.sendMessageToWebView({
+        type: 'availableModels',
+        data: { models },
+      });
+    });
+
     // Setup end-turn handler from ACP stopReason notifications
     this.agentManager.onEndTurn((reason) => {
       // Ensure WebView exits streaming state even if no explicit streamEnd was emitted elsewhere

@@ -49,6 +49,8 @@ export {
   UserIcon,
   SymbolIcon,
   SelectionIcon,
+  CheckIcon,
+  ModelIcon,
 } from './StatusIcons.js';
 
 // Special icons

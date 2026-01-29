@@ -15,14 +15,26 @@ import type {
 } from '@qwen-code/webui';
 import { getApprovalModeInfoFromString } from '../../../types/acpTypes.js';
 import type { ApprovalModeValue } from '../../../types/approvalModeValueTypes.js';
+import type { ModelInfo } from '../../../types/acpTypes.js';
+import { ModelSelector } from './ModelSelector.js';
 
 /**
- * Extended props that accept ApprovalModeValue
+ * Extended props that accept ApprovalModeValue and ModelSelector
  */
 export interface InputFormProps
   extends Omit<BaseInputFormProps, 'editModeInfo'> {
   /** Edit mode value (local type) */
   editMode: ApprovalModeValue;
+  /** Whether to show model selector */
+  showModelSelector?: boolean;
+  /** Available models for selection */
+  availableModels?: ModelInfo[];
+  /** Current model ID */
+  currentModelId?: string | null;
+  /** Callback when a model is selected */
+  onSelectModel?: (modelId: string) => void;
+  /** Callback to close model selector */
+  onCloseModelSelector?: () => void;
 }
 
 /**
@@ -39,13 +51,41 @@ const getEditModeInfo = (editMode: ApprovalModeValue): EditModeInfo => {
 };
 
 /**
- * InputForm with ApprovalModeValue support
+ * InputForm with ApprovalModeValue and ModelSelector support
  *
  * This is an adapter that accepts the local ApprovalModeValue type
  * and converts it to webui's EditModeInfo format.
+ * It also renders the ModelSelector component when needed.
  */
-export const InputForm: FC<InputFormProps> = ({ editMode, ...rest }) => {
+export const InputForm: FC<InputFormProps> = ({
+  editMode,
+  showModelSelector,
+  availableModels,
+  currentModelId,
+  onSelectModel,
+  onCloseModelSelector,
+  ...rest
+}) => {
   const editModeInfo = getEditModeInfo(editMode);
 
-  return <BaseInputForm editModeInfo={editModeInfo} {...rest} />;
+  return (
+    <>
+      {/* ModelSelector rendered alongside InputForm */}
+      {showModelSelector &&
+        availableModels &&
+        onSelectModel &&
+        onCloseModelSelector && (
+          <div className="absolute bottom-[calc(100%+8px)] left-4 right-4 z-[1001]">
+            <ModelSelector
+              visible={showModelSelector}
+              models={availableModels}
+              currentModelId={currentModelId ?? null}
+              onSelectModel={onSelectModel}
+              onClose={onCloseModelSelector}
+            />
+          </div>
+        )}
+      <BaseInputForm editModeInfo={editModeInfo} {...rest} />
+    </>
+  );
 };
