@@ -12,7 +12,7 @@
 !.gemini/config.yaml
 !.gemini/commands/
 
-# Note: .gemini-clipboard/ is NOT in gitignore so Gemini can access pasted images
+# Note: .qwen-clipboard/ is NOT in gitignore so Gemini can access pasted images
 
 # Dependency directory
 node_modules

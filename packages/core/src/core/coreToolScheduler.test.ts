@@ -860,11 +860,11 @@ describe('convertToFunctionResponse', () => {
           name: toolName,
           id: callId,
           response: {
-            output: 'Binary content of type image/png was processed.',
+            output: '',
           },
+          parts: [{ inlineData: { mimeType: 'image/png', data: 'base64...' } }],
         },
       },
-      llmContent,
     ]);
   });
 
@@ -879,11 +879,15 @@ describe('convertToFunctionResponse', () => {
           name: toolName,
           id: callId,
           response: {
-            output: 'Binary content of type application/pdf was processed.',
+            output: '',
           },
+          parts: [
+            {
+              fileData: { mimeType: 'application/pdf', fileUri: 'gs://...' },
+            },
+          ],
         },
       },
-      llmContent,
     ]);
   });
 
@@ -917,11 +921,13 @@ describe('convertToFunctionResponse', () => {
           name: toolName,
           id: callId,
           response: {
-            output: 'Binary content of type image/gif was processed.',
+            output: '',
           },
+          parts: [
+            { inlineData: { mimeType: 'image/gif', data: 'gifdata...' } },
+          ],
         },
       },
-      ...llmContent,
     ]);
   });
 

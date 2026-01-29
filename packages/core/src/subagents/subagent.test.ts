@@ -784,7 +784,9 @@ describe('subagent.ts', () => {
       const promptConfig: PromptConfig = { systemPrompt: 'Execute task.' };
 
       // Helper to create a mock stream that yields specific parts
-      const createMockStreamWithParts = (parts: Part[]) => vi.fn().mockImplementation(async () => (async function* () {
+      const createMockStreamWithParts = (parts: Part[]) =>
+        vi.fn().mockImplementation(async () =>
+          (async function* () {
             yield {
               type: 'chunk',
               value: {
@@ -795,7 +797,8 @@ describe('subagent.ts', () => {
                 ],
               },
             };
-          })());
+          })(),
+        );
 
       it('should emit STREAM_TEXT events with thought flag', async () => {
         const { config } = await createMockConfig();
