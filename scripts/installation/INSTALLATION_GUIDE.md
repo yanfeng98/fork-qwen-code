@@ -11,7 +11,7 @@ The installation scripts automate the process of installing Node.js (if not pres
 We provide platform-specific installation scripts:
 
 - **Linux/macOS**: `install-qwen-with-source.sh`
-- **Windows**: `install-qwen-with-source.ps1`
+- **Windows**: `install-qwen-with-source.bat`
 
 ## Linux/macOS Installation
 
@@ -58,26 +58,26 @@ We provide platform-specific installation scripts:
 
 ## Windows Installation
 
-### Script: install-qwen-with-source.ps1
+### Script: install-qwen-with-source.bat
 
 #### Features:
 
 - Checks for existing Node.js installation and version
 - Installs Node.js 20+ if needed using NVM for Windows
 - Installs Qwen Code globally with source information
-- Stores the source information in `$env:USERPROFILE\.qwen\source.json`
+- Stores the source information in `%USERPROFILE%\.qwen\source.json`
 
 #### Usage:
 
-```powershell
-# Install with a specific source
-.\install-qwen-with-source.ps1 -Source github
+```cmd
+REM Install with a specific source using --source parameter
+install-qwen-with-source.bat --source github
 
-# Install with internal source
-.\install-qwen-with-source.ps1 -Source internal
+REM Install with short parameter
+install-qwen-with-source.bat -s internal
 
-# Bypass execution policy if needed
-powershell -ExecutionPolicy Bypass -File .\install-qwen-with-source.ps1 -Source github
+REM Use default source (unknown)
+install-qwen-with-source.bat
 ```
 
 #### Supported Source Values:
@@ -89,14 +89,14 @@ powershell -ExecutionPolicy Bypass -File .\install-qwen-with-source.ps1 -Source 
 
 #### How it Works:
 
-1. The script accepts a `-Source` parameter to specify where Qwen Code is being installed from
+1. The script accepts a `--source` or `-s` parameter to specify where Qwen Code is being installed from
 2. It installs Node.js if needed
 3. It installs Qwen Code globally
-4. It creates `$env:USERPROFILE\.qwen\source.json` with the specified source information
+4. It creates `%USERPROFILE%\.qwen\source.json` with the specified source information
 
 #### Prerequisites:
 
-- PowerShell 5.1 or higher
+- Windows Command Prompt (cmd.exe)
 - NVM for Windows (if Node.js is not installed)
 
 ## Installation Source Feature
@@ -110,7 +110,7 @@ This feature implements the ability to capture and store the installation source
 The installation source is stored in a separate file at:
 
 - **Unix/Linux/macOS**: `~/.qwen/source.json`
-- **Windows**: `$env:USERPROFILE\.qwen\source.json` (equivalent to `C:\Users\{username}\.qwen\source.json`)
+- **Windows**: `%USERPROFILE%\.qwen\source.json` (equivalent to `C:\Users\{username}\.qwen\source.json`)
 
 ### File Format
 
@@ -147,8 +147,8 @@ cat ~/.qwen/source.json
 
 **Windows:**
 
-```powershell
-Get-Content $env:USERPROFILE\.qwen\source.json
+```cmd
+type %USERPROFILE%\.qwen\source.json
 ```
 
 ## Manual Installation (Without Source Tracking)
@@ -190,9 +190,15 @@ bash install-qwen-with-source.sh --source github
 
 **Windows:**
 
-```powershell
-# Bypass execution policy
-powershell -ExecutionPolicy Bypass -File .\install-qwen-with-source.ps1 -Source github
+```cmd
+# Run the script with --source parameter
+install-qwen-with-source.bat --source github
+
+# Or with short parameter
+install-qwen-with-source.bat -s github
+
+# Or from PowerShell
+.\install-qwen-with-source.bat --source github
 ```
 
 ### Node.js Installation Issues
