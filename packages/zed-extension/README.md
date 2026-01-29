@@ -48,6 +48,7 @@ zed --install-extension qwen-code
 ### Environment Variables
 
 When running as an agent server, Qwen Code will:
+
 - Inherit environment variables from Zed
 - Read/create `~/.qwen` directory for runtime settings
 - Use existing model and authentication settings in `~/.qwen/settings.json` (except for initial login)
@@ -74,7 +75,7 @@ For additional environment variables, configure them in your Zed settings:
 If you encounter errors like "server shut down unexpectedly" or similar issues:
 
 1. Collect logs by pressing `cmd+shift+p` (macOS) or `ctrl+shift+p` (Linux/Windows)
-2. Select **Zed: Open Log** 
+2. Select **Zed: Open Log**
 3. Check logs related to agent server or Node.js
 4. Include the relevant log information when creating an issue
 
@@ -90,6 +91,7 @@ If the agent server starts successfully but you experience problems during use:
 ### Where to report issues
 
 You can report issues at either:
+
 - [Qwen Code Issues](https://github.com/QwenLM/qwen-code/issues)
 - [Qwen Code Zed Extension Issues](https://github.com/QwenLM/qwen-code-zed-extension/issues)
 
@@ -122,4 +124,3 @@ Learn more at [qwenlm.github.io/qwen-code-docs](https://qwenlm.github.io/qwen-co
 ## Stay Tuned
 
 The current version still requires Node.js to run. A single-file executable version is in development - stay tuned for updates!
-

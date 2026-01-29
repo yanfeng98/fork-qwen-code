@@ -7,10 +7,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useVSCode } from './useVSCode.js';
 import type { Conversation } from '../../services/conversationStore.js';
-import type {
-  PermissionOption,
-  ToolCall as PermissionToolCall,
-} from '../components/PermissionDrawer/PermissionRequest.js';
+import type { PermissionOption, PermissionToolCall } from '@qwen-code/webui';
 import type {
   ToolCallUpdate,
   UsageStatsPayload,
@@ -511,12 +508,22 @@ export const useWebViewMessages = ({
           break;
         }
 
-        case 'error':
+        case 'error': {
           handlers.messageHandling.endStreaming();
           handlers.messageHandling.clearThinking();
           activeExecToolCallsRef.current.clear();
           handlers.messageHandling.clearWaitingForResponse();
+          // Display error message to user so they know what went wrong
+          const errorMessage =
+            (message?.data?.message as string) ||
+            'An unexpected error occurred.';
+          handlers.messageHandling.addMessage({
+            role: 'assistant',
+            content: errorMessage,
+            timestamp: Date.now(),
+          });
           break;
+        }
 
         case 'permissionRequest': {
           handlers.handlePermissionRequest(message.data);
@@ -949,6 +956,8 @@ export const useWebViewMessages = ({
 
   useEffect(() => {
     window.addEventListener('message', handleMessage);
+    // Notify extension that the webview is ready to receive initialization state.
+    vscode.postMessage({ type: 'webviewReady', data: {} });
     return () => window.removeEventListener('message', handleMessage);
-  }, [handleMessage]);
+  }, [handleMessage, vscode]);
 };

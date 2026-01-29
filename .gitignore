@@ -69,3 +69,7 @@ __pycache__/
 
 integration-tests/concurrent-runner/output/
 integration-tests/concurrent-runner/task-*
+
+# storybook
+*storybook.log
+storybook-static

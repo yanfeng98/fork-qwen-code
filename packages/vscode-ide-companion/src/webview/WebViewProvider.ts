@@ -8,6 +8,7 @@ import * as vscode from 'vscode';
 import { QwenAgentManager } from '../services/qwenAgentManager.js';
 import { ConversationStore } from '../services/conversationStore.js';
 import type { AcpPermissionRequest } from '../types/acpTypes.js';
+import type { ModelInfo } from '../types/acpTypes.js';
 import type { PermissionResponseMessage } from '../types/webviewMessageTypes.js';
 import { PanelManager } from '../webview/PanelManager.js';
 import { MessageHandler } from '../webview/MessageHandler.js';
@@ -30,6 +31,9 @@ export class WebViewProvider {
   private pendingPermissionResolve: ((optionId: string) => void) | null = null;
   // Track current ACP mode id to influence permission/diff behavior
   private currentModeId: ApprovalModeValue | null = null;
+  private authState: boolean | null = null;
+  /** Cached available models for re-sending on webview ready */
+  private cachedAvailableModels: ModelInfo[] | null = null;
 
   constructor(
     private context: vscode.ExtensionContext,
@@ -155,6 +159,8 @@ export class WebViewProvider {
         '[WebViewProvider] onAvailableModels received, sending to webview:',
         models,
       );
+      // Cache models for re-sending when webview becomes ready
+      this.cachedAvailableModels = models;
       this.sendMessageToWebView({
         type: 'availableModels',
         data: { models },
@@ -448,6 +454,10 @@ export class WebViewProvider {
       async (message: { type: string; data?: unknown }) => {
         // Suppress UI-originated diff opens in auto/yolo mode
         if (message.type === 'openDiff' && this.isAutoMode()) {
+          return;
+        }
+        if (message.type === 'webviewReady') {
+          this.handleWebviewReady();
           return;
         }
         // Allow webview to request updating the VS Code tab title
@@ -909,9 +919,83 @@ export class WebViewProvider {
   }
 
   /**
+   * Track authentication state based on outbound messages to the webview.
+   */
+  private updateAuthStateFromMessage(message: unknown): void {
+    if (!message || typeof message !== 'object') {
+      return;
+    }
+    const msg = message as {
+      type?: string;
+      data?: { authenticated?: boolean | null };
+    };
+
+    switch (msg.type) {
+      case 'authState':
+        if (typeof msg.data?.authenticated === 'boolean') {
+          this.authState = msg.data.authenticated;
+        } else {
+          this.authState = null;
+        }
+        break;
+      case 'agentConnected':
+      case 'loginSuccess':
+        this.authState = true;
+        break;
+      case 'agentConnectionError':
+      case 'loginError':
+        this.authState = false;
+        break;
+      default:
+        break;
+    }
+  }
+
+  /**
+   * Sync important initialization state when the webview signals readiness.
+   */
+  private handleWebviewReady(): void {
+    if (this.currentModeId) {
+      this.sendMessageToWebView({
+        type: 'modeChanged',
+        data: { modeId: this.currentModeId },
+      });
+    }
+
+    // Send cached available models to webview
+    if (this.cachedAvailableModels && this.cachedAvailableModels.length > 0) {
+      console.log(
+        '[WebViewProvider] Sending cached availableModels on webviewReady:',
+        this.cachedAvailableModels.map((m) => m.modelId),
+      );
+      this.sendMessageToWebView({
+        type: 'availableModels',
+        data: { models: this.cachedAvailableModels },
+      });
+    }
+
+    if (typeof this.authState === 'boolean') {
+      this.sendMessageToWebView({
+        type: 'authState',
+        data: { authenticated: this.authState },
+      });
+      return;
+    }
+
+    if (this.agentInitialized) {
+      const authenticated = Boolean(this.agentManager.currentSessionId);
+      this.sendMessageToWebView({
+        type: 'authState',
+        data: { authenticated },
+      });
+    }
+  }
+
+  /**
    * Send message to WebView
    */
   private sendMessageToWebView(message: unknown): void {
+    this.updateAuthStateFromMessage(message);
     const panel = this.panelManager.getPanel();
     panel?.webview.postMessage(message);
   }
@@ -1017,6 +1101,7 @@ export class WebViewProvider {
   resetAgentState(): void {
     console.log('[WebViewProvider] Resetting agent state');
     this.agentInitialized = false;
+    this.authState = null;
     // Disconnect existing connection
     this.agentManager.disconnect();
   }
@@ -1049,6 +1134,10 @@ export class WebViewProvider {
       async (message: { type: string; data?: unknown }) => {
         // Suppress UI-originated diff opens in auto/yolo mode
         if (message.type === 'openDiff' && this.isAutoMode()) {
+          return;
+        }
+        if (message.type === 'webviewReady') {
+          this.handleWebviewReady();
           return;
         }
         if (message.type === 'updatePanelTitle') {
@@ -1208,6 +1297,7 @@ export class WebViewProvider {
     console.log('[WebViewProvider] Restoring state:', state);
     this.messageHandler.setCurrentConversationId(state.conversationId);
     this.agentInitialized = state.agentInitialized;
+    this.authState = null;
     console.log(
       '[WebViewProvider] State restored. agentInitialized:',
       this.agentInitialized,
