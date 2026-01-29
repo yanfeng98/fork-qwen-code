@@ -32,6 +32,7 @@ export type ModelGenerationConfig = Pick<
   | 'schemaCompliance'
   | 'reasoning'
   | 'customHeaders'
+  | 'extra_body'
 >;
 
 /**
