@@ -1046,6 +1046,7 @@ export class SessionMessageHandler extends BaseMessageHandler {
 
   /**
    * Set model via agent (ACP session/set_model)
+   * Displays VSCode native notifications on success or failure.
    */
   private async handleSetModel(data?: { modelId?: string }): Promise<void> {
     try {
@@ -1054,12 +1055,16 @@ export class SessionMessageHandler extends BaseMessageHandler {
         throw new Error('Model ID is required');
       }
       await this.agentManager.setModelFromUi(modelId);
-      // No explicit response needed; WebView listens for modelChanged
+      void vscode.window.showInformationMessage(
+        `Model switched to: ${modelId}`,
+      );
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
       console.error('[SessionMessageHandler] Failed to set model:', error);
+      vscode.window.showErrorMessage(`Failed to switch model: ${errorMsg}`);
       this.sendToWebView({
         type: 'error',
-        data: { message: `Failed to set model: ${error}` },
+        data: { message: `Failed to set model: ${errorMsg}` },
       });
     }
   }

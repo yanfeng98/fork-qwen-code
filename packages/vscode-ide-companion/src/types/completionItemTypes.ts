@@ -4,26 +4,4 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type React from 'react';
-
-export interface CompletionItem {
-  id: string;
-  label: string;
-  description?: string;
-  icon?: React.ReactNode;
-  type: 'file' | 'folder' | 'symbol' | 'command' | 'variable' | 'info';
-  // Value inserted into the input when selected (e.g., filename or command)
-  value?: string;
-  // Optional full path for files (used to build @filename -> full path mapping)
-  path?: string;
-  // Optional group name for grouping items in the completion menu
-  group?: string;
-}
-
-/**
- * Grouped completion items for display
- */
-export interface CompletionGroup {
-  name: string;
-  items: CompletionItem[];
-}
+export type { CompletionItem, CompletionItemType } from '@qwen-code/webui';
