@@ -7,6 +7,7 @@ This guide describes how to install Node.js and Qwen Code with source informatio
 The script automates the installation of Node.js (if not present or below version 20) and Qwen Code, while capturing and storing the installation source information.
 
 ### Features:
+
 - Checks for existing Node.js installation and version
 - Installs Node.js 20+ if needed using NVM
 - Installs Qwen Code globally with source information
@@ -35,15 +36,18 @@ The script automates the installation of Node.js (if not present or below versio
 6. The source information is stored separately in `~/.qwen/source.json`
 
 ### Prerequisites:
+
 - curl (for NVM installation and script download)
 - bash-compatible shell
 
 ### Notes:
+
 - The script requires internet access to download Node.js and Qwen Code
 - Administrative privileges may be required for global npm installation
 - The installation source is stored locally and used for tracking purposes
 
 ### Remote Execution:
+
 You can also run the script directly from a remote location using curl:
 
 ```bash
@@ -61,6 +65,7 @@ Note: Replace `https://your-domain.com/install-qwen-with-source.sh` with the act
 ## Installation Source Feature
 
 ### Overview
+
 This feature implements the ability to capture and store the installation source of the Qwen Code package.
 
 ### How to Use
@@ -68,26 +73,33 @@ This feature implements the ability to capture and store the installation source
 To specify the installation source during npm install, you can use:
 
 #### Method 1: Using the Installation Script
+
 Use the provided installation script that handles Node.js installation and creates a source file:
+
 ```bash
 ./install-qwen-with-source.sh --source github
 ```
 
 The script will:
+
 1. Install Node.js if needed
 2. Install Qwen Code globally
 3. Create `~/.qwen/source.json` with the specified source information
 4. The postinstall script validates the source.json file
 
 #### Default behavior
+
 If no source is specified, no source.json file will be created.
 
 ### Storage Location
+
 The installation source is stored in a separate file at:
+
 - Unix/Linux/macOS: `~/.qwen/source.json`
 - Windows: `%USERPROFILE%\.qwen\source.json`
 
 The file contains:
+
 ```json
 {
   "source": "github"
@@ -95,6 +107,7 @@ The file contains:
 ```
 
 ### Technical Details
+
 - The source information is stored as a separate JSON file
 - The feature integrates with the existing postinstall script for validation
 - The implementation does not modify the core settings system
