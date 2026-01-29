@@ -316,34 +316,23 @@ class GitWorktreeManager:
 
         self.console.print(f"[dim]Session log copied: {session_log.name}[/dim]")
 
-        # Generate rendered HTML
+        # Generate rendered HTML using the JS exporter script
         rendered_html_path = chats_output_dir / f"{session_id}.html"
         try:
-            template_path = Path(__file__).parent / "render-chat-temp.html"
-            if template_path.exists():
-                async with aiofiles.open(template_path, 'r') as f:
-                    template_content = await f.read()
-                
-                chat_data = {
-                    "sessionId": session_id,
-                    "startTime": start_time or datetime.now().isoformat(),
-                    "messages": messages
-                }
-                
-                # Simple string replacement for injection
-                # The template has <script id="chat-data" type="application/json"></script>
-                placeholder = '<script id="chat-data" type="application/json">'
-                json_str = json.dumps(chat_data, ensure_ascii=False, indent=2)
-                # Escape </script> to prevent breaking the HTML script tag
-                json_str = json_str.replace('</script>', '<\\/script>')
-                injection = f'{placeholder}\n{json_str}\n'
-                rendered_content = template_content.replace(placeholder, injection)
-                
-                async with aiofiles.open(rendered_html_path, 'w') as f:
-                    await f.write(rendered_content)
-                self.console.print(f"[dim]Rendered chat HTML saved: {rendered_html_path.name}[/dim]")
+            exporter_script = Path(__file__).parent / "export-html-from-chatrecord-jsonl.js"
+            if exporter_script.exists():
+                # Call the JS script to generate the HTML
+                result = await self._run_command(
+                    ["node", str(exporter_script), str(output_log)],
+                    cwd=exporter_script.parent,
+                    timeout=30
+                )
+                if result.returncode == 0:
+                    self.console.print(f"[dim]Rendered chat HTML saved: {rendered_html_path.name}[/dim]")
+                else:
+                    self.console.print(f"[yellow]Warning: HTML exporter failed: {result.stderr}[/yellow]")
             else:
-                self.console.print(f"[yellow]Warning: Chat template not found at {template_path}[/yellow]")
+                self.console.print(f"[yellow]Warning: HTML exporter script not found at {exporter_script}[/yellow]")
         except Exception as e:
             self.console.print(f"[yellow]Warning: Failed to render chat HTML: {e}[/yellow]")
 
