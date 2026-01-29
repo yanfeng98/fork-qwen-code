@@ -93,6 +93,46 @@ if (fs.existsSync(localesSourceDir)) {
   console.warn(`Warning: locales folder not found at ${localesSourceDir}`);
 }
 
+// Copy extensions folder
+console.log('Copying extension examples folder...');
+const extensionExamplesDir = path.join(
+  rootDir,
+  'packages',
+  'cli',
+  'src',
+  'commands',
+  'extensions',
+  'examples',
+);
+const extensionExamplesDestDir = path.join(distDir, 'examples');
+
+if (fs.existsSync(extensionExamplesDir)) {
+  // Recursive copy function
+  function copyRecursiveSync(src, dest) {
+    const stats = fs.statSync(src);
+    if (stats.isDirectory()) {
+      if (!fs.existsSync(dest)) {
+        fs.mkdirSync(dest, { recursive: true });
+      }
+      const entries = fs.readdirSync(src);
+      for (const entry of entries) {
+        const srcPath = path.join(src, entry);
+        const destPath = path.join(dest, entry);
+        copyRecursiveSync(srcPath, destPath);
+      }
+    } else {
+      fs.copyFileSync(src, dest);
+    }
+  }
+
+  copyRecursiveSync(extensionExamplesDir, extensionExamplesDestDir);
+  console.log('Copied extension examples folder');
+} else {
+  console.warn(
+    `Warning: extension examples folder not found at ${extensionExamplesDir}`,
+  );
+}
+
 // Copy package.json from root and modify it for publishing
 console.log('Creating package.json for distribution...');
 const rootPackageJson = JSON.parse(
@@ -121,7 +161,6 @@ const distPackageJson = {
     '@lydell/node-pty-linux-x64': '1.1.0',
     '@lydell/node-pty-win32-arm64': '1.1.0',
     '@lydell/node-pty-win32-x64': '1.1.0',
-    'node-pty': '^1.0.0',
   },
   engines: rootPackageJson.engines,
 };
