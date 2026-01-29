@@ -22,7 +22,7 @@ export const AppHeader = ({ version }: AppHeaderProps) => {
 
   const contentGeneratorConfig = config.getContentGeneratorConfig();
   const authType = contentGeneratorConfig?.authType;
-  const model = uiState.currentModel; // Use currentModel from UIState instead of config.getModel()
+  const model = uiState.currentModel;
   const targetDir = config.getTargetDir();
   const showBanner = !config.getScreenReader();
   const showTips = !(settings.merged.ui?.hideTips || config.getScreenReader());
