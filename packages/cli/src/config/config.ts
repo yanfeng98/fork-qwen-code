@@ -724,19 +724,6 @@ export async function loadCliConfig(
     .map(resolvePath)
     .concat((argv.includeDirectories || []).map(resolvePath));
 
-  // Call the (now wrapper) loadHierarchicalGeminiMemory which calls the server's version
-  const extensionContextFilePaths: string[] = [];
-
-  await loadHierarchicalGeminiMemory(
-    cwd,
-    settings.context?.loadFromIncludeDirectories ? includeDirectories : [],
-    debugMode,
-    fileService,
-    extensionContextFilePaths,
-    trustedFolder,
-    settings.context?.importFormat || 'tree',
-  );
-
   // LSP configuration: enabled only via --experimental-lsp flag
   const lspEnabled = argv.experimentalLsp === true;
   let lspClient: LspClient | undefined;
