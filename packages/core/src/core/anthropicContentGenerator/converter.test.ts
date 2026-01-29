@@ -209,6 +209,39 @@ describe('AnthropicContentConverter', () => {
       });
     });
 
+    it('creates tool result with empty content for empty function responses', () => {
+      const { messages } = converter.convertGeminiRequestToAnthropic({
+        model: 'models/test',
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                functionResponse: {
+                  id: 'call-1',
+                  name: 'read_file',
+                  response: { output: '' },
+                },
+              },
+            ],
+          },
+        ],
+      });
+
+      // Should create a tool result with empty string content
+      // This is required because Anthropic API expects every tool use to have a corresponding result
+      expect(messages[0]).toEqual({
+        role: 'user',
+        content: [
+          {
+            type: 'tool_result',
+            tool_use_id: 'call-1',
+            content: '',
+          },
+        ],
+      });
+    });
+
     it('converts function response with inlineData image parts into tool_result with images', () => {
       const { messages } = converter.convertGeminiRequestToAnthropic({
         model: 'models/test',
