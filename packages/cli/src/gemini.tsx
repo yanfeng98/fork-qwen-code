@@ -252,7 +252,7 @@ export async function main() {
       if (!settings.merged.security?.auth?.useExternal) {
         // Validate authentication here because the sandbox will interfere with the Oauth2 web redirect.
         try {
-          const authType = partialConfig.modelsConfig.getCurrentAuthType();
+          const authType = partialConfig.getModelsConfig().getCurrentAuthType();
           // Fresh users may not have selected/persisted an authType yet.
           // In that case, defer auth prompting/selection to the main interactive flow.
           if (authType) {

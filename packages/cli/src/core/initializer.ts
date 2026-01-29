@@ -47,7 +47,7 @@ export async function initializeApp(
 
   // Use authType from modelsConfig which respects CLI --auth-type argument
   // over settings.security.auth.selectedType
-  const authType = config.modelsConfig.getCurrentAuthType();
+  const authType = config.getModelsConfig().getCurrentAuthType();
   const authError = await performInitialAuth(config, authType);
 
   // Fallback to user select when initial authentication fails
@@ -61,7 +61,7 @@ export async function initializeApp(
   const themeError = validateTheme(settings);
 
   const shouldOpenAuthDialog =
-    !config.modelsConfig.wasAuthTypeExplicitlyProvided() || !!authError;
+    !config.getModelsConfig().wasAuthTypeExplicitlyProvided() || !!authError;
 
   if (config.getIdeMode()) {
     const ideClient = await IdeClient.getInstance();

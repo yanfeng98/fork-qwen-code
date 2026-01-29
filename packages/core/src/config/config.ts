@@ -413,7 +413,7 @@ export class Config {
   private contentGenerator!: ContentGenerator;
   private readonly embeddingModel: string;
 
-  private _modelsConfig!: ModelsConfig;
+  private modelsConfig!: ModelsConfig;
   private readonly modelProvidersConfig?: ModelProvidersConfig;
   private readonly sandbox: SandboxConfig | undefined;
   private readonly targetDir: string;
@@ -630,7 +630,7 @@ export class Config {
     // Prefer params.authType over generationConfig.authType because:
     // - params.authType preserves undefined (user hasn't selected yet)
     // - generationConfig.authType may have a default value from resolvers
-    this._modelsConfig = new ModelsConfig({
+    this.modelsConfig = new ModelsConfig({
       initialAuthType: params.authType ?? params.generationConfig?.authType,
       modelProvidersConfig: this.modelProvidersConfig,
       generationConfig: {
@@ -727,8 +727,8 @@ export class Config {
    * Get the ModelsConfig instance for model-related operations.
    * External code (e.g., CLI) can use this to access model configuration.
    */
-  get modelsConfig(): ModelsConfig {
-    return this._modelsConfig;
+  getModelsConfig(): ModelsConfig {
+    return this.modelsConfig;
   }
 
   /**
@@ -744,7 +744,7 @@ export class Config {
     },
     settingsGenerationConfig?: Partial<ContentGeneratorConfig>,
   ): void {
-    this._modelsConfig.updateCredentials(credentials, settingsGenerationConfig);
+    this.modelsConfig.updateCredentials(credentials, settingsGenerationConfig);
   }
 
   /**
@@ -752,21 +752,20 @@ export class Config {
    */
   async refreshAuth(authMethod: AuthType, isInitialAuth?: boolean) {
     // Sync modelsConfig state for this auth refresh
-    const modelId = this._modelsConfig.getModel();
-    this._modelsConfig.syncAfterAuthRefresh(authMethod, modelId);
+    const modelId = this.modelsConfig.getModel();
+    this.modelsConfig.syncAfterAuthRefresh(authMethod, modelId);
 
     // Check and consume cached credentials flag
     const requireCached =
-      this._modelsConfig.consumeRequireCachedCredentialsFlag();
+      this.modelsConfig.consumeRequireCachedCredentialsFlag();
 
     const { config, sources } = resolveContentGeneratorConfigWithSources(
       this,
       authMethod,
-      this._modelsConfig.getGenerationConfig(),
-      this._modelsConfig.getGenerationConfigSources(),
+      this.modelsConfig.getGenerationConfig(),
+      this.modelsConfig.getGenerationConfigSources(),
       {
-        strictModelProvider:
-          this._modelsConfig.isStrictModelProviderSelection(),
+        strictModelProvider: this.modelsConfig.isStrictModelProviderSelection(),
       },
     );
     const newContentGeneratorConfig = config;
@@ -856,15 +855,15 @@ export class Config {
     // get sources from ModelsConfig
     if (
       Object.keys(this.contentGeneratorConfigSources).length === 0 &&
-      this._modelsConfig
+      this.modelsConfig
     ) {
-      return this._modelsConfig.getGenerationConfigSources();
+      return this.modelsConfig.getGenerationConfigSources();
     }
     return this.contentGeneratorConfigSources;
   }
 
   getModel(): string {
-    return this.contentGeneratorConfig?.model || this._modelsConfig.getModel();
+    return this.contentGeneratorConfig?.model || this.modelsConfig.getModel();
   }
 
   /**
@@ -875,7 +874,7 @@ export class Config {
     newModel: string,
     metadata?: { reason?: string; context?: string },
   ): Promise<void> {
-    await this._modelsConfig.setModel(newModel, metadata);
+    await this.modelsConfig.setModel(newModel, metadata);
     // Also update contentGeneratorConfig for hot-update compatibility
     if (this.contentGeneratorConfig) {
       this.contentGeneratorConfig.model = newModel;
@@ -905,11 +904,11 @@ export class Config {
       const { config, sources } = resolveContentGeneratorConfigWithSources(
         this,
         authType,
-        this._modelsConfig.getGenerationConfig(),
-        this._modelsConfig.getGenerationConfigSources(),
+        this.modelsConfig.getGenerationConfig(),
+        this.modelsConfig.getGenerationConfigSources(),
         {
           strictModelProvider:
-            this._modelsConfig.isStrictModelProviderSelection(),
+            this.modelsConfig.isStrictModelProviderSelection(),
         },
       );
 
@@ -942,7 +941,7 @@ export class Config {
    * Delegates to ModelsConfig.
    */
   getAvailableModels(): AvailableModel[] {
-    return this._modelsConfig.getAvailableModels();
+    return this.modelsConfig.getAvailableModels();
   }
 
   /**
@@ -950,7 +949,7 @@ export class Config {
    * Delegates to ModelsConfig.
    */
   getAvailableModelsForAuthType(authType: AuthType): AvailableModel[] {
-    return this._modelsConfig.getAvailableModelsForAuthType(authType);
+    return this.modelsConfig.getAvailableModelsForAuthType(authType);
   }
 
   /**
@@ -969,7 +968,7 @@ export class Config {
     options?: { requireCachedCredentials?: boolean },
     metadata?: { reason?: string; context?: string },
   ): Promise<void> {
-    await this._modelsConfig.switchModel(authType, modelId, options, metadata);
+    await this.modelsConfig.switchModel(authType, modelId, options, metadata);
   }
 
   getMaxSessionTurns(): number {
