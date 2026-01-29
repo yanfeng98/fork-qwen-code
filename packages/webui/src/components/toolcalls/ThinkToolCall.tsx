@@ -34,7 +34,7 @@ export const ThinkToolCall: FC<BaseToolCallProps> = ({
   if (errors.length > 0) {
     return (
       <ToolCallContainer
-        label="SaveMemory"
+        label="Think"
         status="error"
         isFirst={isFirst}
         isLast={isLast}
@@ -55,7 +55,7 @@ export const ThinkToolCall: FC<BaseToolCallProps> = ({
 
       return (
         <ToolCallCard icon="💭">
-          <ToolCallRow label="SaveMemory">
+          <ToolCallRow label="Think">
             <div className="italic opacity-90 leading-relaxed">
               {truncatedThoughts}
             </div>
@@ -71,7 +71,7 @@ export const ThinkToolCall: FC<BaseToolCallProps> = ({
         : 'default';
     return (
       <ToolCallContainer
-        label="SaveMemory"
+        label="Think"
         status={status}
         isFirst={isFirst}
         isLast={isLast}

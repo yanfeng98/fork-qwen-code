@@ -135,6 +135,7 @@ export {
   mapToolStatusToContainerStatus,
   // Business ToolCall components
   ThinkToolCall,
+  SaveMemoryToolCall,
   GenericToolCall,
   EditToolCall,
   WriteToolCall,
@@ -142,6 +143,7 @@ export {
   UpdatedPlanToolCall,
   ShellToolCall,
   ReadToolCall,
+  WebFetchToolCall,
   CheckboxDisplay,
 } from './components/toolcalls';
 export type {
