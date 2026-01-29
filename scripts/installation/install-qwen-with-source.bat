@@ -3,7 +3,7 @@ REM Script to install Node.js and Qwen Code with source information
 REM This script handles the installation process and sets the installation source
 REM
 REM Usage: install-qwen-with-source.bat --source [github|npm|internal|local-build]
-REM        install-qwen-with-source.bat [github|npm|internal|local-build]
+REM        install-qwen-with-source.bat -s [github|npm|internal|local-build]
 REM
 
 setlocal enabledelayedexpansion
@@ -49,9 +49,11 @@ if %ERRORLEVEL% EQU 0 (
     
     REM Extract major version number
     set "MAJOR_VERSION=%NODE_VERSION:v=%"
-    for /f "tokens=1 delims=." %%a in ("%MAJOR_VERSION%") do set "MAJOR_VERSION=%%a"
+    for /f "tokens=1 delims=." %%a in ("%MAJOR_VERSION%") do (
+        set "MAJOR_VERSION=%%a"
+    )
     
-    if %MAJOR_VERSION% GEQ 20 (
+    if !MAJOR_VERSION! GEQ 20 (
         echo INFO: Node.js version is sufficient.
     ) else (
         echo INFO: Node.js version is too low. Installing Node.js 20+...
