@@ -63,3 +63,9 @@ patch_output.log
 docs-site/.next
 # content is a symlink to ../docs
 docs-site/content
+
+# python cache
+__pycache__/
+
+integration-tests/concurrent-runner/output/
+integration-tests/concurrent-runner/task-*
