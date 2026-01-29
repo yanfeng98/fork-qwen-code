@@ -48,6 +48,26 @@ describe('convertClaudeToQwenConfig', () => {
     expect(result.mcpServers).toBeUndefined();
   });
 
+  it('should preserve lspServers configuration', () => {
+    const claudeConfig: ClaudePluginConfig = {
+      name: 'lsp-plugin',
+      version: '1.0.0',
+      lspServers: {
+        typescript: {
+          command: 'typescript-language-server',
+          args: ['--stdio'],
+          extensionToLanguage: {
+            '.ts': 'typescript',
+          },
+        },
+      },
+    };
+
+    const result = convertClaudeToQwenConfig(claudeConfig);
+
+    expect(result.lspServers).toEqual(claudeConfig.lspServers);
+  });
+
   it('should throw error for missing name', () => {
     const invalidConfig = {
       version: '1.0.0',
