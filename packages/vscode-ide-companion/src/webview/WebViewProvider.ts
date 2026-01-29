@@ -8,6 +8,7 @@ import * as vscode from 'vscode';
 import { QwenAgentManager } from '../services/qwenAgentManager.js';
 import { ConversationStore } from '../services/conversationStore.js';
 import type { AcpPermissionRequest } from '../types/acpTypes.js';
+import type { ModelInfo } from '../types/acpTypes.js';
 import type { PermissionResponseMessage } from '../types/webviewMessageTypes.js';
 import { PanelManager } from '../webview/PanelManager.js';
 import { MessageHandler } from '../webview/MessageHandler.js';
@@ -31,6 +32,8 @@ export class WebViewProvider {
   // Track current ACP mode id to influence permission/diff behavior
   private currentModeId: ApprovalModeValue | null = null;
   private authState: boolean | null = null;
+  /** Cached available models for re-sending on webview ready */
+  private cachedAvailableModels: ModelInfo[] | null = null;
 
   constructor(
     private context: vscode.ExtensionContext,
@@ -156,6 +159,8 @@ export class WebViewProvider {
         '[WebViewProvider] onAvailableModels received, sending to webview:',
         models,
       );
+      // Cache models for re-sending when webview becomes ready
+      this.cachedAvailableModels = models;
       this.sendMessageToWebView({
         type: 'availableModels',
         data: { models },
@@ -954,6 +959,18 @@ export class WebViewProvider {
       this.sendMessageToWebView({
         type: 'modeChanged',
         data: { modeId: this.currentModeId },
+      });
+    }
+
+    // Send cached available models to webview
+    if (this.cachedAvailableModels && this.cachedAvailableModels.length > 0) {
+      console.log(
+        '[WebViewProvider] Sending cached availableModels on webviewReady:',
+        this.cachedAvailableModels.map((m) => m.modelId),
+      );
+      this.sendMessageToWebView({
+        type: 'availableModels',
+        data: { models: this.cachedAvailableModels },
       });
     }
 

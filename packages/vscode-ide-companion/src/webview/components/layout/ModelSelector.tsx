@@ -120,8 +120,8 @@ export const ModelSelector: FC<ModelSelectorProps> = ({
       role="menu"
       className={[
         'model-selector',
-        // Positioning - bottom drawer style like CompletionMenu
-        'absolute bottom-full left-0 right-0 mb-2 flex flex-col overflow-hidden',
+        // Positioning controlled by parent container
+        'flex flex-col overflow-hidden',
         'rounded-large border bg-[var(--app-menu-background)]',
         'border-[var(--app-input-border)] max-h-[50vh] z-[1000]',
         // Mount animation

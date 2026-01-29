@@ -70,21 +70,18 @@ export const InputForm: FC<InputFormProps> = ({
 
   return (
     <>
-      {/* ModelSelector rendered alongside InputForm */}
-      {showModelSelector &&
-        availableModels &&
-        onSelectModel &&
-        onCloseModelSelector && (
-          <div className="absolute bottom-[calc(100%+8px)] left-4 right-4 z-[1001]">
-            <ModelSelector
-              visible={showModelSelector}
-              models={availableModels}
-              currentModelId={currentModelId ?? null}
-              onSelectModel={onSelectModel}
-              onClose={onCloseModelSelector}
-            />
-          </div>
-        )}
+      {/* ModelSelector rendered above InputForm as a portal-like overlay */}
+      {showModelSelector && onSelectModel && onCloseModelSelector && (
+        <div className="fixed bottom-[120px] left-4 right-4 z-[1001] max-w-[600px] mx-auto">
+          <ModelSelector
+            visible={showModelSelector}
+            models={availableModels ?? []}
+            currentModelId={currentModelId ?? null}
+            onSelectModel={onSelectModel}
+            onClose={onCloseModelSelector}
+          />
+        </div>
+      )}
       <BaseInputForm editModeInfo={editModeInfo} {...rest} />
     </>
   );

@@ -508,12 +508,22 @@ export const useWebViewMessages = ({
           break;
         }
 
-        case 'error':
+        case 'error': {
           handlers.messageHandling.endStreaming();
           handlers.messageHandling.clearThinking();
           activeExecToolCallsRef.current.clear();
           handlers.messageHandling.clearWaitingForResponse();
+          // Display error message to user so they know what went wrong
+          const errorMessage =
+            (message?.data?.message as string) ||
+            'An unexpected error occurred.';
+          handlers.messageHandling.addMessage({
+            role: 'assistant',
+            content: errorMessage,
+            timestamp: Date.now(),
+          });
           break;
+        }
 
         case 'permissionRequest': {
           handlers.handlePermissionRequest(message.data);
