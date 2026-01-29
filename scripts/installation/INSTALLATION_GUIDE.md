@@ -2,18 +2,29 @@
 
 This guide describes how to install Node.js and Qwen Code with source information tracking.
 
-## Script: install-qwen-with-source.sh
+## Overview
 
-The script automates the installation of Node.js (if not present or below version 20) and Qwen Code, while capturing and storing the installation source information.
+The installation scripts automate the process of installing Node.js (if not present or below version 20) and Qwen Code, while capturing and storing the installation source information for analytics and tracking purposes.
 
-### Features:
+## Installation Scripts
+
+We provide platform-specific installation scripts:
+
+- **Linux/macOS**: `install-qwen-with-source.sh`
+- **Windows**: `install-qwen-with-source.ps1`
+
+## Linux/macOS Installation
+
+### Script: install-qwen-with-source.sh
+
+#### Features:
 
 - Checks for existing Node.js installation and version
 - Installs Node.js 20+ if needed using NVM
 - Installs Qwen Code globally with source information
-- Stores the source information in the ~/.qwen/source.json file
+- Stores the source information in `~/.qwen/source.json`
 
-### Usage:
+#### Usage:
 
 ```bash
 # Install with a specific source
@@ -26,79 +37,84 @@ The script automates the installation of Node.js (if not present or below versio
 ./install-qwen-with-source.sh --help
 ```
 
-### How it Works:
+#### Supported Source Values:
+
+- `github` - Installed from GitHub repository
+- `npm` - Installed from npm registry
+- `internal` - Internal installation
+- `local-build` - Local build installation
+
+#### How it Works:
 
 1. The script accepts a `--source` parameter to specify where Qwen Code is being installed from
 2. It installs Node.js if needed
 3. It installs Qwen Code globally
 4. It creates `~/.qwen/source.json` with the specified source information
-5. The postinstall script validates and ensures proper formatting of the source.json file
-6. The source information is stored separately in `~/.qwen/source.json`
 
-### Prerequisites:
+#### Prerequisites:
 
 - curl (for NVM installation and script download)
 - bash-compatible shell
 
-### Notes:
+## Windows Installation
 
-- The script requires internet access to download Node.js and Qwen Code
-- Administrative privileges may be required for global npm installation
-- The installation source is stored locally and used for tracking purposes
+### Script: install-qwen-with-source.ps1
 
-### Remote Execution:
+#### Features:
 
-You can also run the script directly from a remote location using curl:
+- Checks for existing Node.js installation and version
+- Installs Node.js 20+ if needed using NVM for Windows
+- Installs Qwen Code globally with source information
+- Stores the source information in `$env:USERPROFILE\.qwen\source.json`
 
-```bash
-# Download and execute the script with a source parameter
-curl -fsSL https://your-domain.com/install-qwen-with-source.sh | bash -s -- --source github
+#### Usage:
 
-# Or download the script first, then execute
-curl -fsSL https://your-domain.com/install-qwen-with-source.sh -o install-qwen.sh
-chmod +x install-qwen.sh
-./install-qwen.sh --source github
+```powershell
+# Install with a specific source
+.\install-qwen-with-source.ps1 -Source github
+
+# Install with internal source
+.\install-qwen-with-source.ps1 -Source internal
+
+# Bypass execution policy if needed
+powershell -ExecutionPolicy Bypass -File .\install-qwen-with-source.ps1 -Source github
 ```
 
-Note: Replace `https://your-domain.com/install-qwen-with-source.sh` with the actual URL where the script is hosted.
+#### Supported Source Values:
+
+- `github` - Installed from GitHub repository
+- `npm` - Installed from npm registry
+- `internal` - Internal installation
+- `local-build` - Local build installation
+
+#### How it Works:
+
+1. The script accepts a `-Source` parameter to specify where Qwen Code is being installed from
+2. It installs Node.js if needed
+3. It installs Qwen Code globally
+4. It creates `$env:USERPROFILE\.qwen\source.json` with the specified source information
+
+#### Prerequisites:
+
+- PowerShell 5.1 or higher
+- NVM for Windows (if Node.js is not installed)
 
 ## Installation Source Feature
 
 ### Overview
 
-This feature implements the ability to capture and store the installation source of the Qwen Code package.
-
-### How to Use
-
-To specify the installation source during npm install, you can use:
-
-#### Method 1: Using the Installation Script
-
-Use the provided installation script that handles Node.js installation and creates a source file:
-
-```bash
-./install-qwen-with-source.sh --source github
-```
-
-The script will:
-
-1. Install Node.js if needed
-2. Install Qwen Code globally
-3. Create `~/.qwen/source.json` with the specified source information
-4. The postinstall script validates the source.json file
-
-#### Default behavior
-
-If no source is specified, no source.json file will be created.
+This feature implements the ability to capture and store the installation source of the Qwen Code package. The source information is used for analytics and tracking purposes.
 
 ### Storage Location
 
 The installation source is stored in a separate file at:
 
-- Unix/Linux/macOS: `~/.qwen/source.json`
-- Windows: `%USERPROFILE%\.qwen\source.json`
+- **Unix/Linux/macOS**: `~/.qwen/source.json`
+- **Windows**: `$env:USERPROFILE\.qwen\source.json` (equivalent to `C:\Users\{username}\.qwen\source.json`)
 
-The file contains:
+### File Format
+
+The `source.json` file contains:
 
 ```json
 {
@@ -106,8 +122,101 @@ The file contains:
 }
 ```
 
-### Technical Details
+### How the Source Information is Used
+
+1. **Telemetry Tracking**: The source information is included in RUM (Real User Monitoring) telemetry logs
+2. **Analytics**: Helps understand how users are discovering and installing Qwen Code
+3. **Distribution Analysis**: Tracks which distribution channels are most popular
+
+### Technical Implementation
 
 - The source information is stored as a separate JSON file
-- The feature integrates with the existing postinstall script for validation
-- The implementation does not modify the core settings system
+- The `QwenLogger` class reads this file during telemetry initialization
+- The source is included in the `app.channel` field of the RUM payload
+- The implementation gracefully handles missing files, unknown values, and parsing errors
+
+### Verification
+
+After installation, you can verify the source information:
+
+**Linux/macOS:**
+
+```bash
+cat ~/.qwen/source.json
+```
+
+**Windows:**
+
+```powershell
+Get-Content $env:USERPROFILE\.qwen\source.json
+```
+
+## Manual Installation (Without Source Tracking)
+
+If you prefer not to use the installation scripts or don't want source tracking:
+
+### Prerequisites
+
+```bash
+# Node.js 20+
+curl -qL https://www.npmjs.com/install.sh | sh
+```
+
+### NPM Installation
+
+```bash
+npm install -g @qwen-code/qwen-code@latest
+```
+
+### Homebrew (macOS, Linux)
+
+```bash
+brew install qwen-code
+```
+
+## Troubleshooting
+
+### Script Execution Issues
+
+**Linux/macOS:**
+
+```bash
+# Make script executable
+chmod +x install-qwen-with-source.sh
+
+# Run with bash explicitly
+bash install-qwen-with-source.sh --source github
+```
+
+**Windows:**
+
+```powershell
+# Bypass execution policy
+powershell -ExecutionPolicy Bypass -File .\install-qwen-with-source.ps1 -Source github
+```
+
+### Node.js Installation Issues
+
+**Linux/macOS:**
+
+- Ensure NVM is installed: `curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash`
+- Restart your terminal or run: `source ~/.bashrc`
+
+**Windows:**
+
+- Install NVM for Windows from: https://github.com/coreybutler/nvm-windows/releases
+- After installation, run the script again
+
+### Permission Issues
+
+You may need administrative privileges for global npm installation:
+
+- **Linux/macOS**: Use `sudo` with npm
+- **Windows**: Run PowerShell as Administrator
+
+## Notes
+
+- The scripts require internet access to download Node.js and Qwen Code
+- Administrative privileges may be required for global npm installation
+- The installation source is stored locally and used for tracking purposes only
+- If the source file is missing or invalid, the application continues to work normally

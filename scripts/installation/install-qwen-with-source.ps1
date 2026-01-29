@@ -90,7 +90,7 @@ function Install-QwenCode {
     Write-Host "SUCCESS: Qwen Code installed successfully!" -ForegroundColor Green
 
     # After installation, create source.json in the .qwen directory
-    Write-Host "INFO: Creating source.json in ~/.qwen/..." -ForegroundColor Yellow
+    Write-Host "INFO: Creating source.json in $env:USERPROFILE\.qwen..." -ForegroundColor Yellow
     
     $qwenDir = Join-Path $env:USERPROFILE ".qwen"
     if (-not (Test-Path -Path $qwenDir)) {
@@ -105,7 +105,7 @@ function Install-QwenCode {
     $sourceJsonPath = Join-Path $qwenDir "source.json"
     $sourceJson | Out-File -FilePath $sourceJsonPath -Encoding utf8 -Force
     
-    Write-Host "SUCCESS: Installation source saved to ~/.qwen/source.json" -ForegroundColor Green
+    Write-Host "SUCCESS: Installation source saved to $env:USERPROFILE\.qwen\source.json" -ForegroundColor Green
 
     # Verify installation
     if (Test-CommandExists -Command "qwen") {
@@ -130,11 +130,11 @@ function Main {
     Write-Host ""
     Write-Host "===========================================" -ForegroundColor Cyan
     Write-Host "SUCCESS: Installation completed!" -ForegroundColor Green
-    Write-Host "The source information is stored in ~/.qwen/source.json" -ForegroundColor Green
+    Write-Host "The source information is stored in $env:USERPROFILE\.qwen\source.json" -ForegroundColor Green
     Write-Host ""
     Write-Host "To verify the installation:" -ForegroundColor Yellow
     Write-Host "  qwen --version" -ForegroundColor Cyan
-    Write-Host "  cat ~/.qwen/source.json" -ForegroundColor Cyan
+    Write-Host "  Get-Content $env:USERPROFILE\.qwen\source.json" -ForegroundColor Cyan
     Write-Host "===========================================" -ForegroundColor Cyan
 }
 
