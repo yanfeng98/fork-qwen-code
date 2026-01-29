@@ -37,17 +37,17 @@ export const ChevronDownIcon: FC<IconProps> = ({
 );
 
 /**
- * ChevronIcon 属性接口
+ * ChevronIcon props interface
  */
 interface ChevronIconProps extends IconProps {
-  /** 箭头方向: 'up' | 'down' | 'left' | 'right' */
+  /** Arrow direction: 'up' | 'down' | 'left' | 'right' */
   direction?: 'up' | 'down' | 'left' | 'right';
 }
 
 /**
- * 获取旋转角度
- * @param direction - 箭头方向
- * @returns 旋转角度（度）
+ * Get rotation angle
+ * @param direction - Arrow direction
+ * @returns Rotation angle in degrees
  */
 const getRotation = (direction: 'up' | 'down' | 'left' | 'right'): number => {
   switch (direction) {
@@ -65,8 +65,8 @@ const getRotation = (direction: 'up' | 'down' | 'left' | 'right'): number => {
 };
 
 /**
- * Chevron icon (12x12) - 可配置方向的箭头图标
- * 用于展开/收起等交互场景
+ * Chevron icon (12x12) - Configurable direction arrow icon
+ * Used for expand/collapse interactions
  */
 export const ChevronIcon: FC<ChevronIconProps> = ({
   size = 12,

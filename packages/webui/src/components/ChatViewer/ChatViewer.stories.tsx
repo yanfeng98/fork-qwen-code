@@ -327,9 +327,9 @@ service-worker.js:177 Disconnect error: Object
 service-worker.js:178 Disconnect error message: Native host has exited.
 service-worker.js:207 Handshake timeout - no response from Native Host
 
-接收不到 host 的信息。正常应该是:
+Cannot receive host info. Expected output:
 service-worker.js:150 [Native Event] host_info Object
-service-worker.js:552 [Qwen] host_info Object  
+service-worker.js:552 [Qwen] host_info Object
 service-worker.js:617 [Host] Info Object
 service-worker.js:164 [Native Message] handshake_response Object
 service-worker.js:231 Handshake successful: Object`,
@@ -404,7 +404,7 @@ The issue appears to be in the handshake timing. The native host is exiting befo
         type: 'user',
         message: {
           role: 'user',
-          content: '那应该怎么修复这个问题？',
+          content: 'How should I fix this issue?',
         },
       },
       {
@@ -510,7 +510,9 @@ export const WithToolCalls: Story = {
         message: {
           role: 'user',
           parts: [
-            { text: '帮我看看 package.json 文件，然后添加一个 lodash 依赖' },
+            {
+              text: 'Please check the package.json file and add a lodash dependency',
+            },
           ],
         },
       },
@@ -520,7 +522,8 @@ export const WithToolCalls: Story = {
         type: 'assistant',
         message: {
           role: 'assistant',
-          content: '好的，我先读取 package.json 文件来查看当前的依赖配置。',
+          content:
+            'Sure, let me read the package.json file to check the current dependency configuration.',
         },
       },
       {
@@ -562,7 +565,7 @@ export const WithToolCalls: Story = {
         message: {
           role: 'assistant',
           content:
-            '我看到当前项目使用 React 18 和 TypeScript。现在我来添加 lodash 依赖。',
+            'I see the project uses React 18 and TypeScript. Now let me add the lodash dependency.',
         },
       },
       {
@@ -598,15 +601,15 @@ export const WithToolCalls: Story = {
         type: 'assistant',
         message: {
           role: 'assistant',
-          content: `已经成功添加 lodash 依赖到 package.json。
+          content: `Successfully added lodash dependency to package.json.
 
-你需要运行以下命令来安装新的依赖：
+You need to run the following command to install the new dependency:
 
 \`\`\`bash
 npm install
 \`\`\`
 
-或者如果你使用 pnpm:
+Or if you use pnpm:
 
 \`\`\`bash
 pnpm install
@@ -635,7 +638,9 @@ export const WithShellCommands: Story = {
         type: 'user',
         message: {
           role: 'user',
-          parts: [{ text: '帮我创建一个新的 React 组件文件夹结构' }],
+          parts: [
+            { text: 'Help me create a new React component folder structure' },
+          ],
         },
       },
       {
@@ -644,7 +649,8 @@ export const WithShellCommands: Story = {
         type: 'assistant',
         message: {
           role: 'assistant',
-          content: '好的，我来创建一个标准的 React 组件文件夹结构。',
+          content:
+            'Sure, let me create a standard React component folder structure.',
         },
       },
       {
@@ -773,16 +779,16 @@ export type { ButtonProps } from './Button';`,
         type: 'assistant',
         message: {
           role: 'assistant',
-          content: `已创建完整的 Button 组件结构：
+          content: `Created complete Button component structure:
 
 \`\`\`
 src/components/Button/
-├── Button.tsx      # 主组件
-├── Button.css      # 样式
-└── index.ts        # 导出
+├── Button.tsx      # Main component
+├── Button.css      # Styles
+└── index.ts        # Exports
 \`\`\`
 
-你可以这样使用：
+You can use it like this:
 
 \`\`\`tsx
 import { Button } from './components/Button';
@@ -815,7 +821,9 @@ export const WithSearchAndRead: Story = {
         type: 'user',
         message: {
           role: 'user',
-          parts: [{ text: '帮我找一下项目中所有使用了 useState 的文件' }],
+          parts: [
+            { text: 'Help me find all files that use useState in the project' },
+          ],
         },
       },
       {
@@ -824,7 +832,8 @@ export const WithSearchAndRead: Story = {
         type: 'assistant',
         message: {
           role: 'assistant',
-          content: '好的，我来搜索项目中所有使用 useState 的文件。',
+          content:
+            'Sure, let me search for all files that use useState in the project.',
         },
       },
       {
@@ -862,16 +871,16 @@ src/hooks/useLocalStorage.ts:1:import { useState, useEffect } from 'react';`,
         type: 'assistant',
         message: {
           role: 'assistant',
-          content: `找到了 **4 个文件** 使用了 \`useState\`：
+          content: `Found **4 files** using \`useState\`:
 
-| 文件 | 行号 |
+| File | Line |
 |------|------|
 | \`src/App.tsx\` | 3 |
 | \`src/components/Counter.tsx\` | 1 |
 | \`src/components/Form.tsx\` | 2 |
 | \`src/hooks/useLocalStorage.ts\` | 1 |
 
-需要我详细查看其中某个文件吗？`,
+Would you like me to look at any specific file in detail?`,
         },
       },
       {
@@ -880,7 +889,7 @@ src/hooks/useLocalStorage.ts:1:import { useState, useEffect } from 'react';`,
         type: 'user',
         message: {
           role: 'user',
-          parts: [{ text: '看看 Counter.tsx' }],
+          parts: [{ text: 'Show me Counter.tsx' }],
         },
       },
       {
@@ -922,18 +931,18 @@ export const Counter = () => {
         type: 'assistant',
         message: {
           role: 'assistant',
-          content: `这是一个简单的计数器组件，使用 \`useState\` 管理计数状态。
+          content: `This is a simple counter component that uses \`useState\` to manage the count state.
 
-**代码分析：**
-- 使用函数式更新 \`c => c + 1\` 来确保状态更新正确
-- 组件结构简洁，只有一个状态变量
+**Code Analysis:**
+- Uses functional update \`c => c + 1\` to ensure correct state updates
+- Simple component structure with only one state variable
 
-**潜在改进：**
-1. 可以添加 TypeScript 类型注解
-2. 可以提取 min/max 限制
-3. 可以添加 step 参数
+**Potential Improvements:**
+1. Could add TypeScript type annotations
+2. Could add min/max limits
+3. Could add a step parameter
 
-需要我帮你优化这个组件吗？`,
+Would you like me to optimize this component?`,
         },
       },
     ],
@@ -958,7 +967,11 @@ export const WithPlanUpdates: Story = {
         type: 'user',
         message: {
           role: 'user',
-          parts: [{ text: '帮我重构这个项目的认证模块' }],
+          parts: [
+            {
+              text: 'Help me refactor the authentication module of this project',
+            },
+          ],
         },
       },
       {
@@ -968,7 +981,7 @@ export const WithPlanUpdates: Story = {
         message: {
           role: 'assistant',
           content:
-            '好的，这是一个比较复杂的任务。让我先创建一个计划来跟踪进度。',
+            'Sure, this is a complex task. Let me first create a plan to track progress.',
         },
       },
       {
@@ -986,11 +999,20 @@ export const WithPlanUpdates: Story = {
               content: {
                 type: 'text',
                 text: JSON.stringify([
-                  { content: '分析现有认证代码结构', status: 'in_progress' },
-                  { content: '设计新的认证架构', status: 'pending' },
-                  { content: '实现 JWT token 管理', status: 'pending' },
-                  { content: '添加 refresh token 机制', status: 'pending' },
-                  { content: '更新相关测试', status: 'pending' },
+                  {
+                    content: 'Analyze existing auth code structure',
+                    status: 'in_progress',
+                  },
+                  {
+                    content: 'Design new auth architecture',
+                    status: 'pending',
+                  },
+                  {
+                    content: 'Implement JWT token management',
+                    status: 'pending',
+                  },
+                  { content: 'Add refresh token mechanism', status: 'pending' },
+                  { content: 'Update related tests', status: 'pending' },
                 ]),
               },
             },
@@ -1003,7 +1025,8 @@ export const WithPlanUpdates: Story = {
         type: 'assistant',
         message: {
           role: 'assistant',
-          content: '我已经创建了重构计划。现在让我先分析现有的认证代码。',
+          content:
+            'I have created the refactoring plan. Now let me analyze the existing auth code.',
         },
       },
       {
@@ -1056,28 +1079,28 @@ export type { AuthUser, AuthToken } from './types';`,
         type: 'assistant',
         message: {
           role: 'assistant',
-          content: `分析完成！现有的认证模块结构：
+          content: `Analysis complete! Existing auth module structure:
 
 \`\`\`
 src/auth/
-├── index.ts      # 导出入口
-├── login.ts      # 登录逻辑
-├── logout.ts     # 登出逻辑
-├── middleware.ts # 认证中间件
-└── types.ts      # 类型定义
+├── index.ts      # Export entry
+├── login.ts      # Login logic
+├── logout.ts     # Logout logic
+├── middleware.ts # Auth middleware
+└── types.ts      # Type definitions
 \`\`\`
 
-**发现的问题：**
-1. 没有 token 刷新机制
-2. 缺少认证状态持久化
-3. 错误处理不完善
+**Issues Found:**
+1. No token refresh mechanism
+2. Missing auth state persistence
+3. Incomplete error handling
 
-**建议的新架构：**
-- 添加 \`tokenManager.ts\` 管理 JWT
-- 添加 \`storage.ts\` 处理持久化
-- 添加 \`errors.ts\` 统一错误处理
+**Suggested New Architecture:**
+- Add \`tokenManager.ts\` for JWT management
+- Add \`storage.ts\` for persistence handling
+- Add \`errors.ts\` for unified error handling
 
-要我继续实现吗？`,
+Should I continue with the implementation?`,
         },
       },
     ],
@@ -1221,7 +1244,7 @@ const PLAYGROUND_SAMPLE = `[
     "type": "user",
     "message": {
       "role": "user",
-      "parts": [{ "text": "帮我创建一个 React 组件，并添加到项目中" }]
+      "parts": [{ "text": "Help me create a React component and add it to the project" }]
     }
   },
   {
@@ -1230,7 +1253,7 @@ const PLAYGROUND_SAMPLE = `[
     "type": "assistant",
     "message": {
       "role": "assistant",
-      "content": "好的，我来帮你创建一个 React 组件。首先让我搜索一下项目结构。"
+      "content": "Sure, let me help you create a React component. First, let me search for the project structure."
     }
   },
   {
@@ -1281,7 +1304,7 @@ const PLAYGROUND_SAMPLE = `[
     "type": "assistant",
     "message": {
       "role": "assistant",
-      "content": "我找到了项目的组件结构。现在我来创建新的组件文件。"
+      "content": "I found the project's component structure. Now let me create the new component file."
     }
   },
   {
@@ -1326,7 +1349,7 @@ const PLAYGROUND_SAMPLE = `[
     "type": "assistant",
     "message": {
       "role": "assistant",
-      "content": "组件已创建。让我运行测试确保没有问题。"
+      "content": "Component created. Let me run tests to make sure there are no issues."
     }
   },
   {
@@ -1378,7 +1401,7 @@ const PLAYGROUND_SAMPLE = `[
     "type": "assistant",
     "message": {
       "role": "assistant",
-      "content": "Modal 组件已成功创建并通过所有测试！\\n\\n**创建的文件：**\\n- \`src/components/Modal.tsx\` - 主组件文件\\n- \`src/components/Modal.css\` - 样式文件\\n\\n**功能特性：**\\n- 支持打开/关闭状态控制\\n- 可自定义标题和内容\\n- 点击关闭按钮触发回调\\n\\n还需要我添加文档吗？"
+      "content": "Modal component created successfully and passed all tests!\\n\\n**Created Files:**\\n- \`src/components/Modal.tsx\` - Main component file\\n- \`src/components/Modal.css\` - Styles file\\n\\n**Features:**\\n- Supports open/close state control\\n- Customizable title and content\\n- Close button triggers callback\\n\\nWould you like me to add documentation?"
     }
   }
 ]`;

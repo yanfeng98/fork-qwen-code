@@ -13,7 +13,7 @@ import importPlugin from 'eslint-plugin-import';
 import vitest from '@vitest/eslint-plugin';
 import globals from 'globals';
 // For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
-import storybook from "eslint-plugin-storybook";
+import storybook from 'eslint-plugin-storybook';
 
 export default tseslint.config(
   {
@@ -30,32 +30,37 @@ export default tseslint.config(
       'docs-site/out/**',
     ],
   },
-  eslint.configs.recommended, ...tseslint.configs.recommended, reactHooks.configs['recommended-latest'], reactPlugin.configs.flat.recommended, // Add this if you are using React 17+
-  reactPlugin.configs.flat['jsx-runtime'], {
-  // Settings for eslint-plugin-react
-  settings: {
-    react: {
-      version: 'detect',
+  eslint.configs.recommended,
+  ...tseslint.configs.recommended,
+  reactHooks.configs['recommended-latest'],
+  reactPlugin.configs.flat.recommended,
+  reactPlugin.configs.flat['jsx-runtime'], // Add this if you are using React 17+
+  {
+    // Settings for eslint-plugin-react
+    settings: {
+      react: {
+        version: 'detect',
+      },
     },
   },
-}, {
-  // Import specific config
-  files: ['packages/cli/src/**/*.{ts,tsx}'], // Target only TS/TSX in the cli package
-  plugins: {
-    import: importPlugin,
-  },
-  settings: {
-    'import/resolver': {
-      node: true,
+  {
+    // Import specific config
+    files: ['packages/cli/src/**/*.{ts,tsx}'], // Target only TS/TSX in the cli package
+    plugins: {
+      import: importPlugin,
+    },
+    settings: {
+      'import/resolver': {
+        node: true,
+      },
+    },
+    rules: {
+      ...importPlugin.configs.recommended.rules,
+      ...importPlugin.configs.typescript.rules,
+      'import/no-default-export': 'warn',
+      'import/no-unresolved': 'off', // Disable for now, can be noisy with monorepos/paths
     },
   },
-  rules: {
-    ...importPlugin.configs.recommended.rules,
-    ...importPlugin.configs.typescript.rules,
-    'import/no-default-export': 'warn',
-    'import/no-unresolved': 'off', // Disable for now, can be noisy with monorepos/paths
-  },
-},
   {
     // General overrides and rules for the project (TS/TSX files)
     files: ['packages/*/src/**/*.{ts,tsx}'], // Target only TS/TSX in the cli package
@@ -154,25 +159,27 @@ export default tseslint.config(
       radix: 'error',
       'default-case': 'error',
     },
-  }, {
-  files: ['packages/*/src/**/*.test.{ts,tsx}', 'packages/**/test/**/*.test.{ts,tsx}'],
-  plugins: {
-    vitest,
   },
-  rules: {
-    ...vitest.configs.recommended.rules,
-    'vitest/expect-expect': 'off',
-    'vitest/no-commented-out-tests': 'off',
-    '@typescript-eslint/no-unused-vars': [
-      'error',
-      {
-        argsIgnorePattern: '^_',
-        varsIgnorePattern: '^_',
-        caughtErrorsIgnorePattern: '^_',
-      },
-    ],
+  {
+    files: ['packages/*/src/**/*.test.{ts,tsx}', 'packages/**/test/**/*.test.{ts,tsx}'],
+    plugins: {
+      vitest,
+    },
+    rules: {
+      ...vitest.configs.recommended.rules,
+      'vitest/expect-expect': 'off',
+      'vitest/no-commented-out-tests': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
+    },
   },
-}, // extra settings for scripts that we run directly with node
+  // extra settings for scripts that we run directly with node
   {
     files: ['./scripts/**/*.js', 'esbuild.config.js', 'packages/*/scripts/**/*.js'],
     languageOptions: {
@@ -206,20 +213,22 @@ export default tseslint.config(
       '@typescript-eslint/no-require-imports': 'off',
       'no-undef': 'off',
     },
-  }, {
-  files: ['packages/vscode-ide-companion/esbuild.js'],
-  languageOptions: {
-    globals: {
-      ...globals.node,
-      process: 'readonly',
-      console: 'readonly',
+  },
+  {
+    files: ['packages/vscode-ide-companion/esbuild.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        process: 'readonly',
+        console: 'readonly',
+      },
+    },
+    rules: {
+      'no-restricted-syntax': 'off',
+      '@typescript-eslint/no-require-imports': 'off',
     },
   },
-  rules: {
-    'no-restricted-syntax': 'off',
-    '@typescript-eslint/no-require-imports': 'off',
-  },
-}, // extra settings for scripts that we run directly with node
+  // extra settings for scripts that we run directly with node
   {
     files: ['packages/vscode-ide-companion/scripts/**/*.js'],
     languageOptions: {
@@ -233,7 +242,8 @@ export default tseslint.config(
       'no-restricted-syntax': 'off',
       '@typescript-eslint/no-require-imports': 'off',
     },
-  }, // extra settings for core package scripts
+  },
+  // extra settings for core package scripts
   {
     files: ['packages/core/scripts/**/*.js'],
     languageOptions: {
@@ -247,8 +257,10 @@ export default tseslint.config(
       'no-restricted-syntax': 'off',
       '@typescript-eslint/no-require-imports': 'off',
     },
-  }, // Prettier config must be last
-  prettierConfig, // extra settings for scripts that we run directly with node
+  },
+  // Prettier config must be last
+  prettierConfig,
+  // extra settings for scripts that we run directly with node
   {
     files: ['./integration-tests/**/*.{js,ts,tsx}'],
     languageOptions: {
@@ -268,7 +280,8 @@ export default tseslint.config(
         },
       ],
     },
-  }, // Settings for docs-site directory
+  },
+  // Settings for docs-site directory
   {
     files: ['docs-site/**/*.{js,jsx}'],
     languageOptions: {
@@ -289,5 +302,5 @@ export default tseslint.config(
       'react/react-in-jsx-scope': 'off',
     },
   },
-  storybook.configs["flat/recommended"]
+  storybook.configs['flat/recommended'],
 );

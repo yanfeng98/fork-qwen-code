@@ -108,7 +108,7 @@ export const App: React.FC = () => {
           requested: fileContext.hasRequestedFiles,
           workspaceFiles: fileContext.workspaceFiles.length,
         });
-        // 始终根据当前 query 触发请求，让 hook 判断是否需要真正请求
+        // Always trigger request based on current query, let the hook decide if an actual request is needed
         fileContext.requestWorkspaceFiles(query);
 
         const fileIcon = <FileIcon />;

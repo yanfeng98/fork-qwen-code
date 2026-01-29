@@ -101,7 +101,7 @@ service-worker.js:177 Disconnect error: Object
 service-worker.js:178 Disconnect error message: Native host has exited.
 service-worker.js:207 Handshake timeout - no response from Native Host
 
-接收不到 host 的信息。正常应该是:
+Cannot receive host info. Expected output:
 service-worker.js:150 [Native Event] host_info Object
 service-worker.js:552 [Qwen] host_info Object
 service-worker.js:617 [Host] Info Object
@@ -178,7 +178,7 @@ The issue appears to be in the handshake timing. The native host is exiting befo
         type: 'user',
         message: {
           role: 'user',
-          content: '那应该怎么修复这个问题？',
+          content: 'How should I fix this issue?',
         },
       },
       {
@@ -255,7 +255,7 @@ Would you like me to apply these changes to your codebase?`,
         message: {
           role: 'user',
           parts: [
-            { text: '帮我看看 package.json 文件，然后添加一个 lodash 依赖' },
+            { text: 'Please check the package.json file and add a lodash dependency' },
           ],
         },
       },
@@ -265,7 +265,7 @@ Would you like me to apply these changes to your codebase?`,
         type: 'assistant',
         message: {
           role: 'assistant',
-          content: '好的，我先读取 package.json 文件来查看当前的依赖配置。',
+          content: 'Sure, let me read the package.json file to check the current dependency configuration.',
         },
       },
       {
@@ -306,7 +306,7 @@ Would you like me to apply these changes to your codebase?`,
         type: 'assistant',
         message: {
           role: 'assistant',
-          content: '我看到当前项目使用 React 18 和 TypeScript。现在我来添加 lodash 依赖。',
+          content: 'I see the project uses React 18 and TypeScript. Now let me add the lodash dependency.',
         },
       },
       {
@@ -342,15 +342,15 @@ Would you like me to apply these changes to your codebase?`,
         type: 'assistant',
         message: {
           role: 'assistant',
-          content: `已经成功添加 lodash 依赖到 package.json。
+          content: `Successfully added lodash dependency to package.json.
 
-你需要运行以下命令来安装新的依赖：
+You need to run the following command to install the new dependency:
 
 \`\`\`bash
 npm install
 \`\`\`
 
-或者如果你使用 pnpm:
+Or if you use pnpm:
 
 \`\`\`bash
 pnpm install

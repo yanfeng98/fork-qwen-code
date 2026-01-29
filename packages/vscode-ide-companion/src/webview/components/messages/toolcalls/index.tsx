@@ -13,6 +13,7 @@ import {
   // All ToolCall components from webui
   GenericToolCall,
   ThinkToolCall,
+  SaveMemoryToolCall,
   EditToolCall,
   WriteToolCall,
   SearchToolCall,
@@ -61,6 +62,11 @@ export const getToolCallComponent = (kind: string): FC<BaseToolCallProps> => {
     case 'think':
     case 'thinking':
       return ThinkToolCall;
+
+    case 'save_memory':
+    case 'savememory':
+    case 'memory':
+      return SaveMemoryToolCall;
 
     case 'fetch':
     case 'web_fetch':

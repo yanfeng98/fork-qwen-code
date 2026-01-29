@@ -8,13 +8,13 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ThinkingMessage } from './ThinkingMessage.js';
 
 /**
- * ThinkingMessage 组件用于显示 AI 的内部思考过程。
- * 支持折叠/展开功能，默认收起状态，点击可展开查看详细内容。
+ * ThinkingMessage component displays the AI's internal thinking process.
+ * Supports collapse/expand functionality, collapsed by default, click to expand and view details.
  *
- * 样式参考 Claude Code 的 thinking 消息设计：
- * - 收起状态：灰色圆点 + "Thinking" + 向下箭头
- * - 展开状态：实心圆点 + "Thinking" + 向上箭头 + 思考内容
- * - 与其他消息项对齐，有 status icon 和连接线
+ * Style reference from Claude Code's thinking message design:
+ * - Collapsed: gray dot + "Thinking" + down arrow
+ * - Expanded: solid dot + "Thinking" + up arrow + thinking content
+ * - Aligned with other message items, with status icon and connector line
  */
 const meta: Meta<typeof ThinkingMessage> = {
   title: 'Messages/ThinkingMessage',
@@ -26,20 +26,21 @@ const meta: Meta<typeof ThinkingMessage> = {
   argTypes: {
     content: {
       control: 'text',
-      description: '思考内容',
+      description: 'Thinking content',
     },
     timestamp: {
       control: 'number',
-      description: '消息时间戳',
+      description: 'Message timestamp',
     },
     defaultExpanded: {
       control: 'boolean',
-      description: '是否默认展开',
+      description: 'Whether to expand by default',
     },
     status: {
       control: 'select',
       options: ['default', 'loading'],
-      description: '状态: loading 表示正在思考, default 表示思考完成',
+      description:
+        'Status: loading means thinking in progress, default means thinking complete',
     },
     onFileClick: { action: 'fileClicked' },
   },
@@ -61,7 +62,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * 默认状态 - 收起
+ * Default state - collapsed
  */
 export const Default: Story = {
   args: {
@@ -73,7 +74,7 @@ export const Default: Story = {
 };
 
 /**
- * 默认展开状态
+ * Default expanded state
  */
 export const Expanded: Story = {
   args: {
@@ -85,7 +86,7 @@ export const Expanded: Story = {
 };
 
 /**
- * 正在思考状态 - 带脉冲动画
+ * Thinking in progress - with pulse animation
  */
 export const Loading: Story = {
   args: {
@@ -97,7 +98,7 @@ export const Loading: Story = {
 };
 
 /**
- * 正在思考状态 - 展开
+ * Thinking in progress - expanded
  */
 export const LoadingExpanded: Story = {
   args: {
@@ -109,7 +110,7 @@ export const LoadingExpanded: Story = {
 };
 
 /**
- * 长思考内容 - 多行文本
+ * Long thinking content - multiline text
  */
 export const LongThought: Story = {
   args: {
@@ -127,7 +128,7 @@ Let me work through each of these systematically...`,
 };
 
 /**
- * 包含文件路径的思考
+ * Thinking content with file path
  */
 export const WithFilePath: Story = {
   args: {

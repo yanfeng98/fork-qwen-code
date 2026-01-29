@@ -11,29 +11,29 @@ import { ChevronIcon } from '../icons/index.js';
 import './ThinkingMessage.css';
 
 /**
- * ThinkingMessage 组件的属性接口
+ * ThinkingMessage component props interface
  */
 export interface ThinkingMessageProps {
-  /** 思考内容 */
+  /** Thinking content */
   content: string;
-  /** 消息时间戳 */
+  /** Message timestamp */
   timestamp: number;
-  /** 文件点击回调 */
+  /** File click callback */
   onFileClick?: (path: string) => void;
-  /** 是否默认展开，默认为 false */
+  /** Whether to expand by default, defaults to false */
   defaultExpanded?: boolean;
-  /** 状态: 'loading' 表示正在思考, 'default' 表示思考完成 */
+  /** Status: 'loading' means thinking in progress, 'default' means thinking complete */
   status?: 'loading' | 'default';
 }
 
 /**
- * ThinkingMessage - 可折叠的思考消息组件
+ * ThinkingMessage - Collapsible thinking message component
  *
- * 显示 LLM 的思考过程，默认收起状态，点击可展开查看详细内容。
- * 样式参考 Claude Code 的 thinking 消息设计：
- * - 收起状态：灰色圆点 + "Thinking" + 向下箭头
- * - 展开状态：实心圆点 + "Thinking" + 向上箭头 + 思考内容
- * - 与其他消息项对齐，有 status icon 和连接线
+ * Displays the LLM's thinking process, collapsed by default, click to expand and view details.
+ * Style reference from Claude Code's thinking message design:
+ * - Collapsed: gray dot + "Thinking" + down arrow
+ * - Expanded: solid dot + "Thinking" + up arrow + thinking content
+ * - Aligned with other message items, with status icon and connector line
  */
 export const ThinkingMessage: FC<ThinkingMessageProps> = ({
   content,
@@ -53,7 +53,7 @@ export const ThinkingMessage: FC<ThinkingMessageProps> = ({
       className={`qwen-message message-item thinking-message thinking-status-${status}`}
     >
       <div className="thinking-content-wrapper">
-        {/* 可点击的标题栏 */}
+        {/* Clickable title bar */}
         <button
           type="button"
           onClick={handleToggle}
@@ -61,9 +61,9 @@ export const ThinkingMessage: FC<ThinkingMessageProps> = ({
           aria-expanded={isExpanded}
           aria-label={isExpanded ? 'Collapse thinking' : 'Expand thinking'}
         >
-          {/* Thinking 文字 */}
+          {/* Thinking label text */}
           <span className="thinking-label">Thinking</span>
-          {/* 展开/收起箭头 */}
+          {/* Expand/collapse arrow */}
           <ChevronIcon
             size={12}
             direction={isExpanded ? 'up' : 'down'}
@@ -71,7 +71,7 @@ export const ThinkingMessage: FC<ThinkingMessageProps> = ({
           />
         </button>
 
-        {/* 展开时显示的思考内容 */}
+        {/* Thinking content displayed when expanded */}
         {isExpanded && (
           <div className="thinking-content">
             <MessageContent content={content} onFileClick={onFileClick} />
