@@ -5,6 +5,7 @@
  */
 
 import { Agent, ProxyAgent, type Dispatcher } from 'undici';
+import { HttpsProxyAgent } from 'https-proxy-agent';
 
 /**
  * JavaScript runtime type
@@ -113,48 +114,42 @@ export function buildRuntimeFetchOptions(
     }
 
     case 'node': {
-      // Node.js: Use ProxyAgent when proxy is configured, otherwise Agent.
-      // undici timeouts are disabled to let SDK timeout control the request.
-      try {
-        const dispatcher = createDispatcher(proxyUrl);
-        if (sdkType === 'openai') {
-          return {
-            dispatcher,
-          };
-        } else {
-          return {
-            httpAgent: dispatcher,
-          };
-        }
-      } catch {
-        // If undici is not available, return appropriate default
-        if (sdkType === 'openai') {
+      // Node.js: Use appropriate agent based on SDK type.
+      // OpenAI SDK uses undici internally, so we use undici Dispatcher.
+      // Anthropic SDK uses node-fetch internally, so we use Node.js-compatible agents.
+      if (sdkType === 'openai') {
+        try {
+          const dispatcher = createDispatcher(proxyUrl);
+          return { dispatcher };
+        } catch {
           return undefined;
-        } else {
-          return {};
         }
+      } else {
+        // Anthropic SDK: use HttpsProxyAgent when proxy is set,
+        // otherwise let SDK use its default agentkeepalive agent.
+        // The SDK's timeout option controls request-level timeouts.
+        if (proxyUrl) {
+          return { httpAgent: new HttpsProxyAgent(proxyUrl) };
+        }
+        return {};
       }
     }
 
     default: {
-      // Unknown runtime: Use ProxyAgent when proxy is configured, otherwise Agent.
-      try {
-        const dispatcher = createDispatcher(proxyUrl);
-        if (sdkType === 'openai') {
-          return {
-            dispatcher,
-          };
-        } else {
-          return {
-            httpAgent: dispatcher,
-          };
-        }
-      } catch {
-        if (sdkType === 'openai') {
+      // Unknown runtime: treat as Node.js-like environment.
+      if (sdkType === 'openai') {
+        try {
+          const dispatcher = createDispatcher(proxyUrl);
+          return { dispatcher };
+        } catch {
           return undefined;
-        } else {
-          return {};
         }
+      } else {
+        // Anthropic SDK: use HttpsProxyAgent when proxy is set
+        if (proxyUrl) {
+          return { httpAgent: new HttpsProxyAgent(proxyUrl) };
+        }
+        return {};
       }
     }
   }
