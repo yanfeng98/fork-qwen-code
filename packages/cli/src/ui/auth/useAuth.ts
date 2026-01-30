@@ -20,7 +20,7 @@ import type { LoadedSettings } from '../../config/settings.js';
 import { getPersistScopeForModelSelection } from '../../config/modelProvidersScope.js';
 import type { OpenAICredentials } from '../components/OpenAIKeyPrompt.js';
 import { useQwenAuth } from '../hooks/useQwenAuth.js';
-import { AuthState } from '../types.js';
+import { AuthState, MessageType } from '../types.js';
 import type { HistoryItem } from '../types.js';
 import { t } from '../../i18n/index.js';
 
@@ -140,11 +140,22 @@ export const useAuthCommand = (
       // Trigger UI refresh to update header information
       onAuthChange?.();
 
+      // Add success message to history
+      addItem(
+        {
+          type: MessageType.INFO,
+          text: t('Authenticated successfully with {{authType}} credentials.', {
+            authType,
+          }),
+        },
+        Date.now(),
+      );
+
       // Log authentication success
       const authEvent = new AuthEvent(authType, 'manual', 'success');
       logAuth(config, authEvent);
     },
-    [settings, handleAuthFailure, config, onAuthChange],
+    [settings, handleAuthFailure, config, addItem, onAuthChange],
   );
 
   const performAuth = useCallback(
