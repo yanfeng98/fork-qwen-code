@@ -71,7 +71,7 @@ export class DashScopeOpenAICompatibleProvider
     const defaultHeaders = this.buildHeaders();
     // Configure fetch options to ensure user-configured timeout works as expected
     // bodyTimeout is always disabled (0) to let OpenAI SDK timeout control the request
-    const fetchOptions = buildRuntimeFetchOptions(
+    const runtimeOptions = buildRuntimeFetchOptions(
       'openai',
       this.cliConfig.getProxy(),
     );
@@ -81,7 +81,7 @@ export class DashScopeOpenAICompatibleProvider
       timeout,
       maxRetries,
       defaultHeaders,
-      ...(fetchOptions ? { fetchOptions } : {}),
+      ...(runtimeOptions || {}),
     });
   }
 
