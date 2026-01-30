@@ -30,28 +30,16 @@ vi.mock('undici', () => {
   };
 });
 
-vi.mock('https-proxy-agent', () => {
-  class MockHttpsProxyAgent {
-    proxyUrl: string;
-    constructor(proxyUrl: string) {
-      this.proxyUrl = proxyUrl;
-    }
-  }
-
-  return {
-    HttpsProxyAgent: MockHttpsProxyAgent,
-  };
-});
-
 describe('buildRuntimeFetchOptions (node runtime)', () => {
   it('disables undici timeouts for Agent in OpenAI options', () => {
     const result = buildRuntimeFetchOptions('openai');
 
     expect(result).toBeDefined();
-    expect(result && 'dispatcher' in result).toBe(true);
+    expect(result && 'fetchOptions' in result).toBe(true);
 
-    const dispatcher = (result as { dispatcher?: { options?: UndiciOptions } })
-      .dispatcher;
+    const dispatcher = (
+      result as { fetchOptions?: { dispatcher?: { options?: UndiciOptions } } }
+    ).fetchOptions?.dispatcher;
     expect(dispatcher?.options).toMatchObject({
       headersTimeout: 0,
       bodyTimeout: 0,
@@ -62,10 +50,11 @@ describe('buildRuntimeFetchOptions (node runtime)', () => {
     const result = buildRuntimeFetchOptions('openai', 'http://proxy.local');
 
     expect(result).toBeDefined();
-    expect(result && 'dispatcher' in result).toBe(true);
+    expect(result && 'fetchOptions' in result).toBe(true);
 
-    const dispatcher = (result as { dispatcher?: { options?: UndiciOptions } })
-      .dispatcher;
+    const dispatcher = (
+      result as { fetchOptions?: { dispatcher?: { options?: UndiciOptions } } }
+    ).fetchOptions?.dispatcher;
     expect(dispatcher?.options).toMatchObject({
       uri: 'http://proxy.local',
       headersTimeout: 0,
@@ -73,20 +62,34 @@ describe('buildRuntimeFetchOptions (node runtime)', () => {
     });
   });
 
-  it('returns empty object for Anthropic without proxy (uses SDK default agent)', () => {
+  it('returns fetchOptions with dispatcher for Anthropic without proxy', () => {
     const result = buildRuntimeFetchOptions('anthropic');
 
-    expect(result).toEqual({});
+    expect(result).toBeDefined();
+    expect(result && 'fetchOptions' in result).toBe(true);
+
+    const dispatcher = (
+      result as { fetchOptions?: { dispatcher?: { options?: UndiciOptions } } }
+    ).fetchOptions?.dispatcher;
+    expect(dispatcher?.options).toMatchObject({
+      headersTimeout: 0,
+      bodyTimeout: 0,
+    });
   });
 
-  it('returns HttpsProxyAgent for Anthropic with proxy', () => {
+  it('returns fetchOptions with ProxyAgent for Anthropic with proxy', () => {
     const result = buildRuntimeFetchOptions('anthropic', 'http://proxy.local');
 
     expect(result).toBeDefined();
-    expect(result && 'httpAgent' in result).toBe(true);
+    expect(result && 'fetchOptions' in result).toBe(true);
 
-    const httpAgent = (result as { httpAgent?: { proxyUrl?: string } })
-      .httpAgent;
-    expect(httpAgent?.proxyUrl).toBe('http://proxy.local');
+    const dispatcher = (
+      result as { fetchOptions?: { dispatcher?: { options?: UndiciOptions } } }
+    ).fetchOptions?.dispatcher;
+    expect(dispatcher?.options).toMatchObject({
+      uri: 'http://proxy.local',
+      headersTimeout: 0,
+      bodyTimeout: 0,
+    });
   });
 });
