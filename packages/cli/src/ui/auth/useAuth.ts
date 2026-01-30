@@ -20,7 +20,7 @@ import type { LoadedSettings } from '../../config/settings.js';
 import { getPersistScopeForModelSelection } from '../../config/modelProvidersScope.js';
 import type { OpenAICredentials } from '../components/OpenAIKeyPrompt.js';
 import { useQwenAuth } from '../hooks/useQwenAuth.js';
-import { AuthState, MessageType } from '../types.js';
+import { AuthState } from '../types.js';
 import type { HistoryItem } from '../types.js';
 import { t } from '../../i18n/index.js';
 
@@ -30,6 +30,7 @@ export const useAuthCommand = (
   settings: LoadedSettings,
   config: Config,
   addItem: (item: Omit<HistoryItem, 'id'>, timestamp: number) => void,
+  onAuthChange?: () => void,
 ) => {
   const unAuthenticated = config.getAuthType() === undefined;
 
@@ -136,22 +137,14 @@ export const useAuthCommand = (
       setIsAuthDialogOpen(false);
       setIsAuthenticating(false);
 
+      // Trigger UI refresh to update header information
+      onAuthChange?.();
+
       // Log authentication success
       const authEvent = new AuthEvent(authType, 'manual', 'success');
       logAuth(config, authEvent);
-
-      // Show success message
-      addItem(
-        {
-          type: MessageType.INFO,
-          text: t('Authenticated successfully with {{authType}} credentials.', {
-            authType,
-          }),
-        },
-        Date.now(),
-      );
     },
-    [settings, handleAuthFailure, config, addItem],
+    [settings, handleAuthFailure, config, onAuthChange],
   );
 
   const performAuth = useCallback(
