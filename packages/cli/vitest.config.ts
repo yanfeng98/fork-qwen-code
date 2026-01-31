@@ -6,8 +6,17 @@
 
 /// <reference types="vitest" />
 import { defineConfig } from 'vitest/config';
+import path from 'node:path';
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@qwen-code/qwen-code-core': path.resolve(
+        __dirname,
+        '../core/src/index.ts',
+      ),
+    },
+  },
   test: {
     include: ['**/*.{test,spec}.?(c|m)[jt]s?(x)', 'config.test.ts'],
     exclude: ['**/node_modules/**', '**/dist/**', '**/cypress/**'],
@@ -41,7 +50,7 @@ export default defineConfig({
     },
     server: {
       deps: {
-        inline: [/@google\/gemini-cli-core/],
+        inline: [/@qwen-code\/qwen-code-core/],
       },
     },
   },
