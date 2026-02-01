@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 Google LLC
+ * Copyright 2025 Qwen
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -82,6 +82,16 @@ const child = spawn('node', nodeArgs, {
   stdio: 'inherit',
   env,
   cwd: process.cwd(),
+});
+
+child.on('error', (err) => {
+  console.error('Failed to start dev server:', err.message);
+  try {
+    rmSync(tmpDir, { recursive: true, force: true });
+  } catch {
+    // Ignore cleanup errors
+  }
+  process.exit(1);
 });
 
 child.on('close', (code) => {
