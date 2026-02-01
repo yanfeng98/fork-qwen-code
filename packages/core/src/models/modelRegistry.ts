@@ -113,6 +113,7 @@ export class ModelRegistry {
       capabilities: model.capabilities,
       authType: model.authType,
       isVision: model.capabilities?.vision ?? false,
+      contextWindowSize: model.generationConfig.contextWindowSize,
     }));
   }
 

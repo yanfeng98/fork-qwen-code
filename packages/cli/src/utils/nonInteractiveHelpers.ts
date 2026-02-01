@@ -305,7 +305,7 @@ export async function buildSystemMessage(
 export function createTaskToolProgressHandler(
   config: Config,
   taskToolCallId: string,
-  adapter: JsonOutputAdapterInterface | undefined,
+  adapter: JsonOutputAdapterInterface,
 ): {
   handler: OutputUpdateHandler;
 } {
@@ -405,7 +405,7 @@ export function createTaskToolProgressHandler(
       toolCallToEmit.status === 'executing' ||
       toolCallToEmit.status === 'awaiting_approval'
     ) {
-      if (adapter?.processSubagentToolCall) {
+      if (adapter.processSubagentToolCall) {
         adapter.processSubagentToolCall(toolCallToEmit, taskToolCallId);
         emittedToolUseIds.add(toolCall.callId);
       }
@@ -431,19 +431,17 @@ export function createTaskToolProgressHandler(
     // Mark as emitted even if we skip, to prevent duplicate emits
     emittedToolResultIds.add(toolCall.callId);
 
-    if (adapter) {
-      const request = buildRequest(toolCall);
-      const response = buildResponse(toolCall);
-      // For subagent tool results, we need to pass parentToolUseId
-      // The adapter implementations accept an optional parentToolUseId parameter
-      if (
-        'emitToolResult' in adapter &&
-        typeof adapter.emitToolResult === 'function'
-      ) {
-        adapter.emitToolResult(request, response, taskToolCallId);
-      } else {
-        adapter.emitToolResult(request, response);
-      }
+    const request = buildRequest(toolCall);
+    const response = buildResponse(toolCall);
+    // For subagent tool results, we need to pass parentToolUseId
+    // The adapter implementations accept an optional parentToolUseId parameter
+    if (
+      'emitToolResult' in adapter &&
+      typeof adapter.emitToolResult === 'function'
+    ) {
+      adapter.emitToolResult(request, response, taskToolCallId);
+    } else {
+      adapter.emitToolResult(request, response);
     }
   };
 
@@ -499,12 +497,6 @@ export function createTaskToolProgressHandler(
     ) {
       const taskDisplay = outputChunk as TaskResultDisplay;
       const previous = previousTaskStates.get(callId);
-
-      // If no adapter, just track state (for non-JSON modes)
-      if (!adapter) {
-        previousTaskStates.set(callId, taskDisplay);
-        return;
-      }
 
       // Only process if adapter supports subagent APIs
       if (

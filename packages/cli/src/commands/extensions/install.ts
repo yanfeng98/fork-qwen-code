@@ -17,6 +17,7 @@ import { loadSettings } from '../../config/settings.js';
 import {
   requestConsentOrFail,
   requestConsentNonInteractive,
+  requestChoicePluginNonInteractive,
 } from './consent.js';
 import { t } from '../../i18n/index.js';
 
@@ -55,6 +56,7 @@ export async function handleInstall(args: InstallArgs) {
         loadSettings(workspaceDir).merged,
       ),
       requestConsent,
+      requestChoicePlugin: requestChoicePluginNonInteractive,
     });
     await extensionManager.refreshCache();
 
