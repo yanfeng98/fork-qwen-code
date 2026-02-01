@@ -74,7 +74,22 @@ export class AcpFileSystemService implements FileSystemService {
   }
 
   async detectFileBOM(filePath: string): Promise<boolean> {
-    // Always use fallback for BOM detection
+    // Try to detect BOM through ACP client first by reading first line
+    if (this.capabilities.readTextFile) {
+      try {
+        const response = await this.client.readTextFile({
+          path: filePath,
+          sessionId: this.sessionId,
+          line: null,
+          limit: 1,
+        });
+        // Check if content starts with BOM character (U+FEFF)
+        return response.content.charCodeAt(0) === 0xfeff;
+      } catch {
+        // Fall through to fallback if ACP read fails
+      }
+    }
+    // Fall back to local filesystem detection
     return this.fallback.detectFileBOM(filePath);
   }
 
