@@ -22,6 +22,7 @@ import {
 } from '@qwen-code/qwen-code-core';
 import type { ApprovalModeValue } from './schema.js';
 import * as acp from './acp.js';
+import { buildAuthMethods } from './authMethods.js';
 import { AcpFileSystemService } from './service/filesystem.js';
 import { Readable, Writable } from 'node:stream';
 import type { LoadedSettings } from '../config/settings.js';
@@ -73,20 +74,7 @@ class GeminiAgent {
     args: acp.InitializeRequest,
   ): Promise<acp.InitializeResponse> {
     this.clientCapabilities = args.clientCapabilities;
-    const authMethods = [
-      {
-        id: AuthType.USE_OPENAI,
-        name: 'Use OpenAI API key',
-        description:
-          'Requires setting the `OPENAI_API_KEY` environment variable',
-      },
-      {
-        id: AuthType.QWEN_OAUTH,
-        name: 'Qwen OAuth',
-        description:
-          'OAuth authentication for Qwen models with 2000 daily requests',
-      },
-    ];
+    const authMethods = buildAuthMethods();
 
     // Get current approval mode from config
     const currentApprovalMode = this.config.getApprovalMode();
@@ -290,7 +278,7 @@ class GeminiAgent {
         `Session not found for id: ${params.sessionId}`,
       );
     }
-    return session.setModel(params);
+    return await session.setModel(params);
   }
 
   private async ensureAuthenticated(config: Config): Promise<void> {
@@ -298,6 +286,7 @@ class GeminiAgent {
     if (!selectedType) {
       throw acp.RequestError.authRequired(
         'Use Qwen Code CLI to authenticate first.',
+        this.pickAuthMethodsForAuthRequired(),
       );
     }
 
@@ -308,8 +297,53 @@ class GeminiAgent {
       console.error(`Authentication failed: ${e}`);
       throw acp.RequestError.authRequired(
         'Authentication failed: ' + (e as Error).message,
+        this.pickAuthMethodsForAuthRequired(selectedType, e),
       );
     }
+  }
+
+  private pickAuthMethodsForAuthRequired(
+    selectedType?: AuthType | string,
+    error?: unknown,
+  ): acp.AuthMethod[] {
+    const authMethods = buildAuthMethods();
+    const errorMessage = this.extractErrorMessage(error);
+    if (
+      errorMessage?.includes('qwen-oauth') ||
+      errorMessage?.includes('Qwen OAuth')
+    ) {
+      const qwenOAuthMethods = authMethods.filter(
+        (method) => method.id === AuthType.QWEN_OAUTH,
+      );
+      return qwenOAuthMethods.length ? qwenOAuthMethods : authMethods;
+    }
+
+    if (selectedType) {
+      const matchedMethods = authMethods.filter(
+        (method) => method.id === selectedType,
+      );
+      return matchedMethods.length ? matchedMethods : authMethods;
+    }
+
+    return authMethods;
+  }
+
+  private extractErrorMessage(error?: unknown): string | undefined {
+    if (error instanceof Error) {
+      return error.message;
+    }
+    if (
+      typeof error === 'object' &&
+      error != null &&
+      'message' in error &&
+      typeof error.message === 'string'
+    ) {
+      return error.message;
+    }
+    if (typeof error === 'string') {
+      return error;
+    }
+    return undefined;
   }
 
   private setupFileSystem(config: Config): void {
