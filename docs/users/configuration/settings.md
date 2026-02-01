@@ -45,6 +45,32 @@ In addition to a project settings file, a project's `.qwen` directory can contai
 - [Custom sandbox profiles](../features/sandbox) (e.g. `.qwen/sandbox-macos-custom.sb`, `.qwen/sandbox.Dockerfile`).
 - [Agent Skills](../features/skills) (experimental) under `.qwen/skills/` (each Skill is a directory containing a `SKILL.md`).
 
+### Configuration migration
+
+Qwen Code automatically migrates legacy configuration settings to the new format. Old settings files are backed up before migration. The following settings have been renamed from negative (`disable*`) to positive (`enable*`) naming:
+
+| Old Setting                                          | New Setting                                           | Notes                                |
+| ---------------------------------------------------- | ----------------------------------------------------- | ------------------------------------ |
+| `disableAutoUpdate` + `disableUpdateNag`             | `general.enableAutoUpdate`                            | Consolidated into a single setting   |
+| `disableLoadingPhrases`                              | `ui.accessibility.enableLoadingPhrases`               |                                      |
+| `disableFuzzySearch`                                 | `context.fileFiltering.enableFuzzySearch`             |                                      |
+| `disableCacheControl`                                | `model.generationConfig.enableCacheControl`           |                                      |
+
+> [!note]
+>
+> **Boolean value inversion:** When migrating, boolean values are inverted (e.g., `disableAutoUpdate: true` becomes `enableAutoUpdate: false`).
+
+#### Consolidation policy for `disableAutoUpdate` and `disableUpdateNag`
+
+When both legacy settings are present with different values, the migration follows this policy: if **either** `disableAutoUpdate` **or** `disableUpdateNag` is `true`, then `enableAutoUpdate` becomes `false`:
+
+| `disableAutoUpdate` | `disableUpdateNag` | Migrated `enableAutoUpdate` |
+| ------------------- | ------------------ | --------------------------- |
+| `false`             | `false`            | `true`                      |
+| `false`             | `true`             | `false`                     |
+| `true`              | `false`            | `false`                     |
+| `true`              | `true`             | `false`                     |
+
 ### Available settings in `settings.json`
 
 Settings are organized into categories. All settings should be placed within their corresponding top-level category object in your `settings.json` file.
