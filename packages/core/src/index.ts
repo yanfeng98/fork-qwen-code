@@ -166,7 +166,11 @@ export type {
 } from './mcp/oauth-utils.js';
 export { OAuthUtils } from './mcp/oauth-utils.js';
 
-// Export telemetry functions
+// ============================================================================
+// Telemetry
+// ============================================================================
+
+export { QwenLogger } from './telemetry/qwen-logger/qwen-logger.js';
 export * from './telemetry/index.js';
 export * from './utils/browser.js';
 // OpenAI Logging Utilities
