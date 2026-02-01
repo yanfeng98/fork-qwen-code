@@ -54,17 +54,30 @@ export class AcpFileSystemService implements FileSystemService {
     return response.content;
   }
 
-  async writeTextFile(filePath: string, content: string): Promise<void> {
+  async writeTextFile(
+    filePath: string,
+    content: string,
+    options?: { bom?: boolean },
+  ): Promise<void> {
     if (!this.capabilities.writeTextFile) {
-      return this.fallback.writeTextFile(filePath, content);
+      return this.fallback.writeTextFile(filePath, content, options);
     }
+
+    // Prepend BOM character if requested
+    const finalContent = options?.bom ? '\uFEFF' + content : content;
 
     await this.client.writeTextFile({
       path: filePath,
-      content,
+      content: finalContent,
       sessionId: this.sessionId,
     });
   }
+
+  async detectFileBOM(filePath: string): Promise<boolean> {
+    // Always use fallback for BOM detection
+    return this.fallback.detectFileBOM(filePath);
+  }
+
   findFiles(fileName: string, searchPaths: readonly string[]): string[] {
     return this.fallback.findFiles(fileName, searchPaths);
   }
