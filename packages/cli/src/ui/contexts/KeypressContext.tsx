@@ -35,7 +35,6 @@ import {
   MODIFIER_ALT_BIT,
   MODIFIER_CTRL_BIT,
 } from '../utils/platformConstants.js';
-import { clipboardHasImage } from '../utils/clipboardUtils.js';
 
 import { FOCUS_IN, FOCUS_OUT } from '../hooks/useFocus.js';
 
@@ -54,7 +53,6 @@ export interface Key {
   paste: boolean;
   sequence: string;
   kittyProtocol?: boolean;
-  pasteImage?: boolean;
 }
 
 export type KeypressHandler = (key: Key) => void;
@@ -389,7 +387,7 @@ export function KeypressProvider({
       }
     };
 
-    const handleKeypress = async (_: unknown, key: Key) => {
+    const handleKeypress = (_: unknown, key: Key) => {
       if (key.sequence === FOCUS_IN || key.sequence === FOCUS_OUT) {
         return;
       }
@@ -399,28 +397,14 @@ export function KeypressProvider({
       }
       if (key.name === 'paste-end') {
         isPaste = false;
-        if (pasteBuffer.toString().length > 0) {
-          broadcast({
-            name: '',
-            ctrl: false,
-            meta: false,
-            shift: false,
-            paste: true,
-            sequence: pasteBuffer.toString(),
-          });
-        } else {
-          const hasImage = await clipboardHasImage();
-          broadcast({
-            name: '',
-            ctrl: false,
-            meta: false,
-            shift: false,
-            paste: true,
-            pasteImage: hasImage,
-            sequence: pasteBuffer.toString(),
-          });
-        }
-
+        broadcast({
+          name: '',
+          ctrl: false,
+          meta: false,
+          shift: false,
+          paste: true,
+          sequence: pasteBuffer.toString(),
+        });
         pasteBuffer = Buffer.alloc(0);
         return;
       }
@@ -735,7 +719,6 @@ export function KeypressProvider({
     };
 
     let rl: readline.Interface;
-
     if (usePassthrough) {
       rl = readline.createInterface({
         input: keypressStream,
