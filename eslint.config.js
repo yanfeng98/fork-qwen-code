@@ -169,6 +169,7 @@ export default tseslint.config(
       ...vitest.configs.recommended.rules,
       'vitest/expect-expect': 'off',
       'vitest/no-commented-out-tests': 'off',
+      'no-console': 'off', // Allow console in tests
       '@typescript-eslint/no-unused-vars': [
         'error',
         {
@@ -190,6 +191,7 @@ export default tseslint.config(
       },
     },
     rules: {
+      'no-console': 'off', // Allow console in scripts
       '@typescript-eslint/no-unused-vars': [
         'error',
         {
