@@ -33,7 +33,6 @@ import {
 } from './types.js';
 import { createMinimalSettings } from '../config/settings.js';
 import { runNonInteractive } from '../nonInteractiveCli.js';
-import { ConsolePatcher } from '../ui/utils/ConsolePatcher.js';
 
 const debugLogger = createDebugLogger('NON_INTERACTIVE_SESSION');
 
@@ -607,29 +606,20 @@ export async function runNonInteractiveStreamJson(
   config: Config,
   input: string,
 ): Promise<void> {
-  const consolePatcher = new ConsolePatcher({
-    debugMode: config.getDebugMode(),
-  });
-  consolePatcher.patch();
-
-  try {
-    let initialPrompt: CLIUserMessage | undefined = undefined;
-    if (input && input.trim().length > 0) {
-      const sessionId = config.getSessionId();
-      initialPrompt = {
-        type: 'user',
-        session_id: sessionId,
-        message: {
-          role: 'user',
-          content: input.trim(),
-        },
-        parent_tool_use_id: null,
-      };
-    }
-
-    const manager = new Session(config, initialPrompt);
-    await manager.run();
-  } finally {
-    consolePatcher.cleanup();
+  let initialPrompt: CLIUserMessage | undefined = undefined;
+  if (input && input.trim().length > 0) {
+    const sessionId = config.getSessionId();
+    initialPrompt = {
+      type: 'user',
+      session_id: sessionId,
+      message: {
+        role: 'user',
+        content: input.trim(),
+      },
+      parent_tool_use_id: null,
+    };
   }
+
+  const manager = new Session(config, initialPrompt);
+  await manager.run();
 }

@@ -219,7 +219,7 @@ export class ControlDispatcher implements IPendingRequestRegistry {
     const requestIds = Array.from(this.pendingOutgoingRequests.keys());
 
     if (this.context.debugMode) {
-      console.error(
+      debugLogger.debug(
         `[ControlDispatcher] Input closed, rejecting ${requestIds.length} pending outgoing requests`,
       );
     }

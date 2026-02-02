@@ -24,6 +24,8 @@ import { appEvents, AppEvent } from './utils/events.js';
 import type { Config } from '@qwen-code/qwen-code-core';
 import { OutputFormat } from '@qwen-code/qwen-code-core';
 
+const mockWriteStderrLine = vi.hoisted(() => vi.fn());
+
 // Custom error to identify mock process.exit calls
 class MockProcessExitError extends Error {
   constructor(readonly code?: string | number | null | undefined) {
@@ -77,6 +79,12 @@ vi.mock('./utils/events.js', async (importOriginal) => {
 vi.mock('./utils/sandbox.js', () => ({
   sandbox_command: vi.fn(() => ''), // Default to no sandbox command
   start_sandbox: vi.fn(() => Promise.resolve()), // Mock as an async function that resolves
+}));
+
+vi.mock('./utils/stdioHelpers.js', () => ({
+  writeStderrLine: mockWriteStderrLine,
+  writeStdoutLine: vi.fn(),
+  clearScreen: vi.fn(),
 }));
 
 vi.mock('./utils/relaunch.js', () => ({
@@ -501,34 +509,28 @@ describe('gemini.tsx main function kitty protocol', () => {
 });
 
 describe('validateDnsResolutionOrder', () => {
-  let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
-
   beforeEach(() => {
-    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-  });
-
-  afterEach(() => {
-    consoleWarnSpy.mockRestore();
+    mockWriteStderrLine.mockClear();
   });
 
   it('should return "ipv4first" when the input is "ipv4first"', () => {
     expect(validateDnsResolutionOrder('ipv4first')).toBe('ipv4first');
-    expect(consoleWarnSpy).not.toHaveBeenCalled();
+    expect(mockWriteStderrLine).not.toHaveBeenCalled();
   });
 
   it('should return "verbatim" when the input is "verbatim"', () => {
     expect(validateDnsResolutionOrder('verbatim')).toBe('verbatim');
-    expect(consoleWarnSpy).not.toHaveBeenCalled();
+    expect(mockWriteStderrLine).not.toHaveBeenCalled();
   });
 
   it('should return the default "ipv4first" when the input is undefined', () => {
     expect(validateDnsResolutionOrder(undefined)).toBe('ipv4first');
-    expect(consoleWarnSpy).not.toHaveBeenCalled();
+    expect(mockWriteStderrLine).not.toHaveBeenCalled();
   });
 
   it('should return the default "ipv4first" and log a warning for an invalid string', () => {
     expect(validateDnsResolutionOrder('invalid-value')).toBe('ipv4first');
-    expect(consoleWarnSpy).toHaveBeenCalledWith(
+    expect(mockWriteStderrLine).toHaveBeenCalledWith(
       'Invalid value for dnsResolutionOrder in settings: "invalid-value". Using default "ipv4first".',
     );
   });

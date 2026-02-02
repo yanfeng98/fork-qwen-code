@@ -567,10 +567,10 @@ export async function getQwenOAuthClient(
 
 /**
  * Displays a formatted box with OAuth device authorization URL.
- * Uses process.stderr.write() to bypass ConsolePatcher and ensure the auth URL
- * is always visible to users, especially in non-interactive mode.
- * Using stderr prevents corruption of structured JSON output (which goes to stdout)
- * and follows the standard Unix convention of user-facing messages to stderr.
+ * Uses process.stderr.write() to ensure the auth URL is always visible to users,
+ * especially in non-interactive mode. Using stderr prevents corruption of
+ * structured JSON output (which goes to stdout) and follows the standard Unix
+ * convention of user-facing messages to stderr.
  */
 function showFallbackMessage(verificationUriComplete: string): void {
   const title = 'Qwen OAuth Device Authorization';

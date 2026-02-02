@@ -26,12 +26,12 @@ import {
 } from '../types.js';
 import type { RumEvent, RumPayload } from './event-types.js';
 
-const debugLoggerSpy = {
+const debugLoggerSpy = vi.hoisted(() => ({
   debug: vi.fn(),
   info: vi.fn(),
   warn: vi.fn(),
   error: vi.fn(),
-};
+}));
 
 // Mock dependencies
 vi.mock('../../utils/user_id.js', () => ({
@@ -47,7 +47,12 @@ vi.mock('../../utils/debugLogger.js', async (importOriginal) => {
     await importOriginal<typeof import('../../utils/debugLogger.js')>();
   return {
     ...original,
-    createDebugLogger: () => debugLoggerSpy,
+    createDebugLogger: () => ({
+      debug: debugLoggerSpy.debug,
+      info: debugLoggerSpy.info,
+      warn: debugLoggerSpy.warn,
+      error: debugLoggerSpy.error,
+    }),
   };
 });
 
@@ -158,11 +163,11 @@ describe('QwenLogger', () => {
         });
       }
 
-      // Should have logged debug messages about dropping events
-      expect(debugLoggerSpy.debug).toHaveBeenCalledWith(
-        expect.stringContaining(
-          'QwenLogger: Dropped old event to prevent memory leak',
-        ),
+      const events = logger['events'].toArray() as RumEvent[];
+      expect(logger['events'].size).toBe(TEST_ONLY.MAX_EVENTS);
+      expect(events[0]?.name).toBe('test-event-10');
+      expect(events[events.length - 1]?.name).toBe(
+        `test-event-${TEST_ONLY.MAX_EVENTS + 9}`,
       );
     });
 
@@ -182,10 +187,7 @@ describe('QwenLogger', () => {
         name: 'test-event',
       });
 
-      expect(debugLoggerSpy.error).toHaveBeenCalledWith(
-        'QwenLogger: Failed to enqueue log event.',
-        expect.any(Error),
-      );
+      expect(logger['events'].size).toBe(0);
 
       // Restore original method
       logger['events'].push = originalPush;
@@ -202,12 +204,7 @@ describe('QwenLogger', () => {
       // Try to flush while another flush is in progress
       const result = logger.flushToRum();
 
-      // Should have logged about pending flush
-      expect(debugLoggerSpy.debug).toHaveBeenCalledWith(
-        expect.stringContaining(
-          'QwenLogger: Flush already in progress, marking pending flush',
-        ),
-      );
+      expect(logger['pendingFlush']).toBe(true);
 
       // Should return a resolved promise
       expect(result).toBeInstanceOf(Promise);
@@ -235,10 +232,7 @@ describe('QwenLogger', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (logger as any).requeueFailedEvents(failedEvents);
 
-      // Should have logged about dropping events due to retry limit
-      expect(debugLoggerSpy.debug).toHaveBeenCalledWith(
-        expect.stringContaining('QwenLogger: Re-queued'),
-      );
+      expect(logger['events'].size).toBe(TEST_ONLY.MAX_RETRY_EVENTS);
     });
 
     it('should handle empty retry queue gracefully', () => {
@@ -267,9 +261,7 @@ describe('QwenLogger', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (logger as any).requeueFailedEvents(failedEvents);
 
-      expect(debugLoggerSpy.debug).toHaveBeenCalledWith(
-        expect.stringContaining('QwenLogger: No events re-queued'),
-      );
+      expect(logger['events'].size).toBe(TEST_ONLY.MAX_EVENTS);
     });
   });
 

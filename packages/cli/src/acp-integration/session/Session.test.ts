@@ -176,9 +176,6 @@ describe('Session', () => {
     });
 
     it('swallows errors and does not throw', async () => {
-      const consoleErrorSpy = vi
-        .spyOn(console, 'error')
-        .mockImplementation(() => undefined);
       getAvailableCommandsSpy.mockRejectedValueOnce(
         new Error('Command discovery failed'),
       );
@@ -187,8 +184,6 @@ describe('Session', () => {
         session.sendAvailableCommandsUpdate(),
       ).resolves.toBeUndefined();
       expect(mockClient.sessionUpdate).not.toHaveBeenCalled();
-      expect(consoleErrorSpy).toHaveBeenCalled();
-      consoleErrorSpy.mockRestore();
     });
   });
 

@@ -56,7 +56,6 @@ import { useApprovalModeCommand } from './hooks/useApprovalModeCommand.js';
 import { useResumeCommand } from './hooks/useResumeCommand.js';
 import { useSlashCommandProcessor } from './hooks/slashCommandProcessor.js';
 import { useVimMode } from './contexts/VimModeContext.js';
-import { useConsoleMessages } from './hooks/useConsoleMessages.js';
 import { useTerminalSize } from './hooks/useTerminalSize.js';
 import { calculatePromptWidths } from './components/InputPrompt.js';
 import { useStdin, useStdout } from 'ink';
@@ -82,10 +81,8 @@ import { type IdeIntegrationNudgeResult } from './IdeIntegrationNudge.js';
 import { type CommandMigrationNudgeResult } from './CommandFormatMigrationNudge.js';
 import { useCommandMigration } from './hooks/useCommandMigration.js';
 import { migrateTomlCommands } from '../services/command-migration-tool.js';
-import { appEvents, AppEvent } from '../utils/events.js';
 import { type UpdateObject } from './utils/updateCheck.js';
 import { setUpdateHandler } from '../utils/handleAutoUpdate.js';
-import { ConsolePatcher } from './utils/ConsolePatcher.js';
 import { registerCleanup, runExitCleanup } from '../utils/cleanup.js';
 import { useMessageQueue } from './hooks/useMessageQueue.js';
 import { useAutoAcceptIndicator } from './hooks/useAutoAcceptIndicator.js';
@@ -315,21 +312,6 @@ export const AppContainer = (props: AppContainerProps) => {
 
     return () => clearInterval(interval);
   }, [config, currentModel, getCurrentModel]);
-
-  const {
-    consoleMessages,
-    handleNewMessage,
-    clearConsoleMessages: clearConsoleMessagesState,
-  } = useConsoleMessages();
-
-  useEffect(() => {
-    const consolePatcher = new ConsolePatcher({
-      onNewMessage: handleNewMessage,
-      debugMode: config.getDebugMode(),
-    });
-    consolePatcher.patch();
-    registerCleanup(consolePatcher.cleanup);
-  }, [handleNewMessage, config]);
 
   // Derive widths for InputPrompt using shared helper
   const { inputWidth, suggestionsWidth } = useMemo(() => {
@@ -772,10 +754,9 @@ export const AppContainer = (props: AppContainerProps) => {
 
   const handleClearScreen = useCallback(() => {
     historyManager.clearItems();
-    clearConsoleMessagesState();
     clearScreen();
     refreshStatic();
-  }, [historyManager, clearConsoleMessagesState, refreshStatic]);
+  }, [historyManager, refreshStatic]);
 
   const { handleInput: vimHandleInput } = useVim(buffer, handleFinalSubmit);
 
@@ -903,7 +884,6 @@ export const AppContainer = (props: AppContainerProps) => {
     setShowMigrationNudge: setShowCommandMigrationNudge,
   } = useCommandMigration(settings, config.storage);
 
-  const [showErrorDetails, setShowErrorDetails] = useState<boolean>(false);
   const [showToolDescriptions, setShowToolDescriptions] =
     useState<boolean>(false);
 
@@ -953,28 +933,6 @@ export const AppContainer = (props: AppContainerProps) => {
     setIdeContextState(ideContextStore.get());
     return unsubscribe;
   }, []);
-
-  useEffect(() => {
-    const openDebugConsole = () => {
-      setShowErrorDetails(true);
-      setConstrainHeight(false);
-    };
-    appEvents.on(AppEvent.OpenDebugConsole, openDebugConsole);
-
-    const logErrorHandler = (errorMessage: unknown) => {
-      handleNewMessage({
-        type: 'error',
-        content: String(errorMessage),
-        count: 1,
-      });
-    };
-    appEvents.on(AppEvent.LogError, logErrorHandler);
-
-    return () => {
-      appEvents.off(AppEvent.OpenDebugConsole, openDebugConsole);
-      appEvents.off(AppEvent.LogError, logErrorHandler);
-    };
-  }, [handleNewMessage]);
 
   const handleEscapePromptChange = useCallback((showPrompt: boolean) => {
     setShowEscapePrompt(showPrompt);
@@ -1217,9 +1175,7 @@ export const AppContainer = (props: AppContainerProps) => {
         setConstrainHeight(true);
       }
 
-      if (keyMatchers[Command.SHOW_ERROR_DETAILS](key)) {
-        setShowErrorDetails((prev) => !prev);
-      } else if (keyMatchers[Command.TOGGLE_TOOL_DESCRIPTIONS](key)) {
+      if (keyMatchers[Command.TOGGLE_TOOL_DESCRIPTIONS](key)) {
         const newValue = !showToolDescriptions;
         setShowToolDescriptions(newValue);
 
@@ -1247,7 +1203,6 @@ export const AppContainer = (props: AppContainerProps) => {
     [
       constrainHeight,
       setConstrainHeight,
-      setShowErrorDetails,
       showToolDescriptions,
       setShowToolDescriptions,
       config,
@@ -1305,22 +1260,6 @@ export const AppContainer = (props: AppContainerProps) => {
     settings.merged.ui?.hideWindowTitle,
     stdout,
   ]);
-
-  const filteredConsoleMessages = useMemo(() => {
-    if (config.getDebugMode()) {
-      return consoleMessages;
-    }
-    return consoleMessages.filter((msg) => msg.type !== 'debug');
-  }, [consoleMessages, config]);
-
-  // Computed values
-  const errorCount = useMemo(
-    () =>
-      filteredConsoleMessages
-        .filter((msg) => msg.type === 'error')
-        .reduce((total, msg) => total + msg.count, 0),
-    [filteredConsoleMessages],
-  );
 
   const nightly = props.version.includes('nightly');
 
@@ -1416,8 +1355,6 @@ export const AppContainer = (props: AppContainerProps) => {
       isFolderTrustDialogOpen: isFolderTrustDialogOpen ?? false,
       isTrustedFolder,
       constrainHeight,
-      showErrorDetails,
-      filteredConsoleMessages,
       ideContextState,
       showToolDescriptions,
       ctrlCPressedOnce,
@@ -1431,7 +1368,6 @@ export const AppContainer = (props: AppContainerProps) => {
       showAutoAcceptIndicator,
       currentModel,
       contextFileNames,
-      errorCount,
       availableTerminalHeight,
       mainAreaWidth,
       staticAreaMaxItemHeight,
@@ -1509,8 +1445,6 @@ export const AppContainer = (props: AppContainerProps) => {
       isFolderTrustDialogOpen,
       isTrustedFolder,
       constrainHeight,
-      showErrorDetails,
-      filteredConsoleMessages,
       ideContextState,
       showToolDescriptions,
       ctrlCPressedOnce,
@@ -1523,7 +1457,6 @@ export const AppContainer = (props: AppContainerProps) => {
       messageQueue,
       showAutoAcceptIndicator,
       contextFileNames,
-      errorCount,
       availableTerminalHeight,
       mainAreaWidth,
       staticAreaMaxItemHeight,

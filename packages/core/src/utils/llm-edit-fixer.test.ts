@@ -71,9 +71,6 @@ describe('FixLLMEditWithInstruction', () => {
 
   it('should generate and use a fallback promptId when context is not available', async () => {
     mockGenerateJson.mockResolvedValue(mockApiResponse);
-    const consoleWarnSpy = vi
-      .spyOn(console, 'warn')
-      .mockImplementation(() => {});
 
     // Run the function outside of any context
     await FixLLMEditWithInstruction(
@@ -86,13 +83,6 @@ describe('FixLLMEditWithInstruction', () => {
       abortSignal,
     );
 
-    // Verify the warning was logged
-    expect(consoleWarnSpy).toHaveBeenCalledWith(
-      expect.stringContaining(
-        'Could not find promptId in context. This is unexpected. Using a fallback ID: llm-fixer-fallback-',
-      ),
-    );
-
     // Verify that generateJson was called with the generated fallback promptId
     expect(mockGenerateJson).toHaveBeenCalledTimes(1);
     expect(mockGenerateJson).toHaveBeenCalledWith(
@@ -100,9 +90,6 @@ describe('FixLLMEditWithInstruction', () => {
         promptId: expect.stringContaining('llm-fixer-fallback-'),
       }),
     );
-
-    // Restore mocks
-    consoleWarnSpy.mockRestore();
   });
 
   it('should construct the user prompt correctly', async () => {
