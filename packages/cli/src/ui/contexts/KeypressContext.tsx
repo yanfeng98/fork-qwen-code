@@ -513,8 +513,7 @@ export function KeypressProvider({
       // Kitty protocol is not available (e.g., Windows PowerShell)
       if (
         kittySequenceBuffer ||
-        (key.sequence &&
-          key.sequence.startsWith(`${ESC}[`) &&
+        (key.sequence.startsWith(`${ESC}[`) &&
           !key.sequence.startsWith(PASTE_MODE_PREFIX) &&
           !key.sequence.startsWith(PASTE_MODE_SUFFIX) &&
           !key.sequence.startsWith(FOCUS_IN) &&
