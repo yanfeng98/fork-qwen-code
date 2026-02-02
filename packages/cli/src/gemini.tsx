@@ -339,16 +339,18 @@ export async function main() {
       process.cwd(),
       argv.extensions,
     );
+
+    // Register cleanup for MCP clients as early as possible
+    // This ensures MCP server subprocesses are properly terminated on exit
     registerCleanup(() => config.shutdown());
 
-    // FIXME: list extensions after the config initialize
-    // if (config.getListExtensions()) {
-    //   console.log('Installed extensions:');
-    //   for (const extension of extensions) {
-    //     console.log(`- ${extension.config.name}`);
-    //   }
-    //   process.exit(0);
-    // }
+    if (config.getListExtensions()) {
+      console.log('Installed extensions:');
+      for (const extension of extensions) {
+        console.log(`- ${extension.config.name}`);
+      }
+      process.exit(0);
+    }
 
     // Setup unified ConsolePatcher based on interactive mode
     const isInteractive = config.isInteractive();
