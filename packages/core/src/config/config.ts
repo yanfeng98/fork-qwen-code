@@ -112,6 +112,7 @@ import {
   ModelsConfig,
   type ModelProvidersConfig,
   type AvailableModel,
+  type RuntimeModelSnapshot,
 } from '../models/index.js';
 import type { ClaudeMarketplaceConfig } from '../extension/claude-converter.js';
 
@@ -708,6 +709,9 @@ export class Config {
 
     await this.geminiClient.initialize();
 
+    // Detect and capture runtime model snapshot (from CLI/ENV/credentials)
+    this.modelsConfig.detectAndCaptureRuntimeModel();
+
     logStartSession(this, new StartSessionEvent(this));
   }
 
@@ -970,26 +974,35 @@ export class Config {
    * Delegates to ModelsConfig.
    */
   getAllConfiguredModels(authTypes?: AuthType[]): AvailableModel[] {
-    return this._modelsConfig.getAllConfiguredModels(authTypes);
+    return this.modelsConfig.getAllConfiguredModels(authTypes);
   }
 
   /**
-   * Switch authType+model via registry-backed selection.
+   * Get the currently active runtime model snapshot.
+   * Delegates to ModelsConfig.
+   */
+  getActiveRuntimeModelSnapshot(): RuntimeModelSnapshot | undefined {
+    return this.modelsConfig.getActiveRuntimeModelSnapshot();
+  }
+
+  /**
+   * Switch authType+model.
+   * Supports both registry-backed models and runtime model snapshots.
+   *
+   * For runtime models, the modelId should be in format `$runtime|${authType}|${modelId}`.
    * This triggers a refresh of the ContentGenerator when required (always on authType changes).
    * For qwen-oauth model switches that are hot-update safe, this may update in place.
    *
    * @param authType - Target authentication type
-   * @param modelId - Target model ID
+   * @param modelId - Target model ID (or `$runtime|${authType}|${modelId}` for runtime models)
    * @param options - Additional options like requireCachedCredentials
-   * @param metadata - Metadata for logging/tracking
    */
   async switchModel(
     authType: AuthType,
     modelId: string,
     options?: { requireCachedCredentials?: boolean },
-    metadata?: { reason?: string; context?: string },
   ): Promise<void> {
-    await this.modelsConfig.switchModel(authType, modelId, options, metadata);
+    await this.modelsConfig.switchModel(authType, modelId, options);
   }
 
   getMaxSessionTurns(): number {

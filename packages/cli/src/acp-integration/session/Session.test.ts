@@ -124,10 +124,6 @@ describe('Session', () => {
         AuthType.USE_OPENAI,
         'qwen3-coder-plus',
         undefined,
-        {
-          reason: 'user_request_acp',
-          context: 'session/set_model',
-        },
       );
       expect(mockConfig.getModel).toHaveBeenCalled();
       expect(result).toEqual({

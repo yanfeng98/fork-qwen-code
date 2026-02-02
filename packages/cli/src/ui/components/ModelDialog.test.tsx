@@ -182,10 +182,6 @@ describe('<ModelDialog />', () => {
       AuthType.QWEN_OAUTH,
       MAINLINE_CODER,
       undefined,
-      {
-        reason: 'user_manual',
-        context: 'Model switched via /model dialog',
-      },
     );
     expect(mockSettings.setValue).toHaveBeenCalledWith(
       SettingScope.User,
@@ -242,10 +238,6 @@ describe('<ModelDialog />', () => {
       AuthType.QWEN_OAUTH,
       MAINLINE_CODER,
       { requireCachedCredentials: true },
-      {
-        reason: 'user_manual',
-        context: 'AuthType+model switched via /model dialog',
-      },
     );
     expect(mockSettings.setValue).toHaveBeenCalledWith(
       SettingScope.User,

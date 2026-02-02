@@ -291,10 +291,6 @@ class Connection {
         ).toResult();
       }
 
-      if (details?.includes('/auth')) {
-        return RequestError.authRequired(details).toResult();
-      }
-
       return RequestError.internalError(details).toResult();
     }
   }

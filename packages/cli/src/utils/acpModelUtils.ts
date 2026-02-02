@@ -33,6 +33,12 @@ export function parseAcpBaseModelId(value: string): string {
 /**
  * Parses an ACP model option string into `{ modelId, authType? }`.
  *
+ * Supports the following formats:
+ * - `${modelId}(${authType})` - Standard registry model (e.g., "gpt-4(USE_OPENAI)")
+ * - `${snapshotId}(${authType})` - Runtime model snapshot (e.g., "$runtime|USE_OPENAI|gpt-4(USE_OPENAI)")
+ *   where snapshotId is in format `$runtime|${authType}|${modelId}`
+ * - Plain model ID - Returns as-is with no authType
+ *
  * If the string ends with `(...)` and `...` is a valid `AuthType`, returns both;
  * otherwise returns the trimmed input as `modelId` only.
  */

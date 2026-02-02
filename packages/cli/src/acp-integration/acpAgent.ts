@@ -33,10 +33,7 @@ import { loadCliConfig } from '../config/config.js';
 
 // Import the modular Session class
 import { Session } from './session/Session.js';
-import {
-  formatAcpModelId,
-  parseAcpBaseModelId,
-} from '../utils/acpModelUtils.js';
+import { formatAcpModelId } from '../utils/acpModelUtils.js';
 
 export async function runAcpAgent(
   config: Config,
@@ -413,22 +410,35 @@ class GeminiAgent {
     const currentAuthType = config.getAuthType();
     const allConfiguredModels = config.getAllConfiguredModels();
 
-    const baseCurrentModelId = parseAcpBaseModelId(rawCurrentModelId);
-    const currentModelId = this.formatCurrentModelId(
-      baseCurrentModelId,
-      currentAuthType,
-    );
+    // Check if current model is a runtime model
+    // Runtime models use $runtime|${authType}|${modelId} format
+    const activeRuntimeSnapshot = config.getActiveRuntimeModelSnapshot?.();
+    const currentModelId = activeRuntimeSnapshot
+      ? formatAcpModelId(
+          activeRuntimeSnapshot.id,
+          activeRuntimeSnapshot.authType,
+        )
+      : this.formatCurrentModelId(rawCurrentModelId, currentAuthType);
 
     const availableModels = allConfiguredModels;
 
-    const mappedAvailableModels = availableModels.map((model) => ({
-      modelId: formatAcpModelId(model.id, model.authType),
-      name: model.label,
-      description: model.description ?? null,
-      _meta: {
-        contextLimit: model.contextWindowSize ?? tokenLimit(model.id),
-      },
-    }));
+    const mappedAvailableModels = availableModels.map((model) => {
+      // For runtime models, use runtimeSnapshotId as modelId for ACP protocol
+      // This allows ACP clients to correctly identify and switch to runtime models
+      const effectiveModelId =
+        model.isRuntimeModel && model.runtimeSnapshotId
+          ? model.runtimeSnapshotId
+          : model.id;
+
+      return {
+        modelId: formatAcpModelId(effectiveModelId, model.authType),
+        name: model.label,
+        description: model.description ?? null,
+        _meta: {
+          contextLimit: model.contextWindowSize ?? tokenLimit(model.id),
+        },
+      };
+    });
 
     return {
       currentModelId,

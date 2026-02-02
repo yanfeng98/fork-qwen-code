@@ -383,10 +383,6 @@ export class Session implements SessionContext {
         selectedAuthType === AuthType.QWEN_OAUTH
         ? { requireCachedCredentials: true }
         : undefined,
-      {
-        reason: 'user_request_acp',
-        context: 'session/set_model',
-      },
     );
 
     // Get updated model info
