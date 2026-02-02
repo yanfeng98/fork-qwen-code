@@ -306,7 +306,9 @@ export default {
   'Enable User Feedback': '启用用户反馈',
   'How is Qwen doing this session? (optional)': 'Qwen 这次表现如何？（可选）',
   Bad: '不满意',
+  Fine: '还行',
   Good: '满意',
+  Dismiss: '忽略',
   'Not Sure Yet': '暂不评价',
   'Any other key': '任意其他键',
   'Disable Loading Phrases': '禁用加载短语',
@@ -468,6 +470,17 @@ export default {
   'Either an extension name or --all must be provided':
     '必须提供扩展名称或 --all',
   'Lists installed extensions.': '列出已安装的扩展。',
+  'Path:': '路径：',
+  'Source:': '来源：',
+  'Type:': '类型：',
+  'Ref:': '引用：',
+  'Release tag:': '发布标签：',
+  'Enabled (User):': '已启用（用户）：',
+  'Enabled (Workspace):': '已启用（工作区）：',
+  'Context files:': '上下文文件：',
+  'Skills:': '技能：',
+  'Agents:': '代理：',
+  'MCP servers:': 'MCP 服务器：',
   'Link extension failed to install.': '链接扩展安装失败。',
   'Extension "{{name}}" linked successfully and enabled.':
     '扩展 "{{name}}" 链接成功并已启用。',
@@ -547,8 +560,8 @@ export default {
   // ============================================================================
   // Commands - Language
   // ============================================================================
-  'Invalid language. Available: en-US, zh-CN':
-    '无效的语言。可用选项：en-US, zh-CN',
+  'Invalid language. Available: {{options}}':
+    '无效的语言。可用选项：{{options}}',
   'Language subcommands do not accept additional arguments.':
     '语言子命令不接受额外参数',
   'Current UI language: {{lang}}': '当前 UI 语言：{{lang}}',
@@ -556,11 +569,12 @@ export default {
   'LLM output language not set': '未设置 LLM 输出语言',
   'Set UI language': '设置 UI 语言',
   'Set LLM output language': '设置 LLM 输出语言',
-  'Usage: /language ui [zh-CN|en-US]': '用法：/language ui [zh-CN|en-US]',
+  'Usage: /language ui [{{options}}]': '用法：/language ui [{{options}}]',
   'Usage: /language output <language>': '用法：/language output <语言>',
   'Example: /language output 中文': '示例：/language output 中文',
   'Example: /language output English': '示例：/language output English',
   'Example: /language output 日本語': '示例：/language output 日本語',
+  'Example: /language output Português': '示例：/language output Português',
   'UI language changed to {{lang}}': 'UI 语言已更改为 {{lang}}',
   'LLM output language set to {{lang}}': 'LLM 输出语言已设置为 {{lang}}',
   'LLM output language rule file generated at {{path}}':
@@ -574,11 +588,7 @@ export default {
   'To request additional UI language packs, please open an issue on GitHub.':
     '如需请求其他 UI 语言包，请在 GitHub 上提交 issue',
   'Available options:': '可用选项：',
-  '  - zh-CN: Simplified Chinese': '  - zh-CN: 简体中文',
-  '  - en-US: English': '  - en-US: English',
-  'Set UI language to Simplified Chinese (zh-CN)':
-    '将 UI 语言设置为简体中文 (zh-CN)',
-  'Set UI language to English (en-US)': '将 UI 语言设置为英语 (en-US)',
+  'Set UI language to {{name}}': '将 UI 语言设置为 {{name}}',
 
   // ============================================================================
   // Commands - Approval Mode

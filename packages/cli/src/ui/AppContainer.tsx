@@ -434,7 +434,7 @@ export const AppContainer = (props: AppContainerProps) => {
   // Check for enforced auth type mismatch
   useEffect(() => {
     // Check for initialization error first
-    const currentAuthType = config.modelsConfig.getCurrentAuthType();
+    const currentAuthType = config.getModelsConfig().getCurrentAuthType();
 
     if (
       settings.merged.security?.auth?.enforcedType &&
@@ -623,7 +623,7 @@ export const AppContainer = (props: AppContainerProps) => {
     try {
       const { memoryContent, fileCount } = await loadHierarchicalGeminiMemory(
         process.cwd(),
-        settings.merged.context?.loadMemoryFromIncludeDirectories
+        settings.merged.context?.loadFromIncludeDirectories
           ? config.getWorkspaceContext().getDirectories()
           : [],
         config.getDebugMode(),
@@ -1350,6 +1350,7 @@ export const AppContainer = (props: AppContainerProps) => {
     isFeedbackDialogOpen,
     openFeedbackDialog,
     closeFeedbackDialog,
+    temporaryCloseFeedbackDialog,
     submitFeedback,
   } = useFeedbackDialog({
     config,
@@ -1597,6 +1598,7 @@ export const AppContainer = (props: AppContainerProps) => {
       // Feedback dialog
       openFeedbackDialog,
       closeFeedbackDialog,
+      temporaryCloseFeedbackDialog,
       submitFeedback,
     }),
     [
@@ -1637,6 +1639,7 @@ export const AppContainer = (props: AppContainerProps) => {
       // Feedback dialog
       openFeedbackDialog,
       closeFeedbackDialog,
+      temporaryCloseFeedbackDialog,
       submitFeedback,
     ],
   );
