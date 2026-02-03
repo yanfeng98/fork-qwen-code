@@ -299,7 +299,7 @@ jobs:
           echo "Publishing to Microsoft Marketplace..."
           for vsix in vsix-artifacts/*.vsix; do
             echo "Publishing: ${vsix}"
-            vsce publish --packagePath "${vsix}" --pat "${VSCE_PAT}"
+            vsce publish --packagePath "${vsix}" --pat "${VSCE_PAT}" --skip-duplicate
           done
 
       - name: 'Publish to OpenVSX'
