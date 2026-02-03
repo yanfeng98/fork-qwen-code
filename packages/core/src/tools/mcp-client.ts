@@ -196,7 +196,10 @@ export class McpClient {
     return this.status;
   }
 
-  async readResource(uri: string): Promise<ReadResourceResult> {
+  async readResource(
+    uri: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<ReadResourceResult> {
     if (this.status !== MCPServerStatus.CONNECTED) {
       throw new Error('Client is not connected.');
     }
@@ -209,6 +212,7 @@ export class McpClient {
     return this.client.request(
       { method: 'resources/read', params: { uri } },
       ReadResourceResultSchema,
+      options,
     );
   }
 

@@ -474,12 +474,13 @@ export class ToolRegistry {
   async readMcpResource(
     serverName: string,
     uri: string,
+    options?: { signal?: AbortSignal },
   ): Promise<ReadResourceResult> {
     if (!this.config.isTrustedFolder()) {
       throw new Error('MCP resources are unavailable in untrusted folders.');
     }
 
-    return this.mcpClientManager.readResource(serverName, uri);
+    return this.mcpClientManager.readResource(serverName, uri, options);
   }
 
   /**

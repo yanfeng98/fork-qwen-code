@@ -247,6 +247,7 @@ describe('handleAtCommand', () => {
     expect(registry.readMcpResource).toHaveBeenCalledWith(
       'github',
       'github://repos/owner/repo/issues',
+      expect.objectContaining({ signal: abortController.signal }),
     );
     expect(mockAddItem).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -298,6 +299,7 @@ describe('handleAtCommand', () => {
     expect(registry.readMcpResource).toHaveBeenCalledWith(
       'github',
       'github://repos/owner/repo/issues',
+      expect.objectContaining({ signal: abortController.signal }),
     );
     expect(mockAddItem).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -349,6 +351,7 @@ describe('handleAtCommand', () => {
     expect(registry.readMcpResource).toHaveBeenCalledWith(
       'github',
       'github://repos/owner/repo/issues',
+      expect.objectContaining({ signal: abortController.signal }),
     );
     expect(mockAddItem).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -417,6 +420,7 @@ describe('handleAtCommand', () => {
     expect(readMcpResourceSpy).toHaveBeenCalledWith(
       'github',
       'github://repos/owner/repo/issues',
+      expect.objectContaining({ signal: abortController.signal }),
     );
     expect(mockAddItem).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -473,6 +477,7 @@ describe('handleAtCommand', () => {
     expect(registry.readMcpResource).toHaveBeenCalledWith(
       'github',
       'github://repos/owner/repo/issues',
+      expect.objectContaining({ signal: abortController.signal }),
     );
     expect(mockAddItem).toHaveBeenCalledWith(
       expect.objectContaining({

@@ -693,37 +693,17 @@ export async function handleAtCommand({
       const ref = mcpResourceRefs[i];
       let resourceResult: unknown;
       try {
-        resourceResult = await new Promise((resolve, reject) => {
-          if (signal.aborted) {
-            const error = new Error('MCP resource read aborted');
-            error.name = 'AbortError';
-            reject(error);
-            return;
-          }
+        if (signal.aborted) {
+          const error = new Error('MCP resource read aborted');
+          error.name = 'AbortError';
+          throw error;
+        }
 
-          const onAbort = () => {
-            cleanup();
-            const error = new Error('MCP resource read aborted');
-            error.name = 'AbortError';
-            reject(error);
-          };
-          const cleanup = () => {
-            signal.removeEventListener('abort', onAbort);
-          };
-
-          signal.addEventListener('abort', onAbort, { once: true });
-
-          toolRegistry
-            .readMcpResource(ref.serverName, ref.uri)
-            .then((res) => {
-              cleanup();
-              resolve(res);
-            })
-            .catch((err) => {
-              cleanup();
-              reject(err);
-            });
-        });
+        resourceResult = await toolRegistry.readMcpResource(
+          ref.serverName,
+          ref.uri,
+          { signal },
+        );
 
         toolDisplays.push({
           callId: `client-mcp-resource-${userMessageTimestamp}-${i}`,
