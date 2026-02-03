@@ -420,6 +420,8 @@ export default {
   'This extension will install the following subagents:':
     '此扩展将安装以下子代理：',
   'Installation cancelled for "{{name}}".': '已取消安装 "{{name}}"。',
+  'You are installing an extension from {{originSource}}. Some features may not work perfectly with Qwen Code.':
+    '您正在安装来自 {{originSource}} 的扩展。某些功能可能无法完美兼容 Qwen Code。',
   '--ref and --auto-update are not applicable for marketplace extensions.':
     '--ref 和 --auto-update 不适用于市场扩展。',
   'Extension "{{name}}" installed successfully and enabled.':

@@ -55,7 +55,10 @@ import type {
   ExtensionSetting,
   ResolvedExtensionSetting,
 } from './extensionSettings.js';
-import type { TelemetrySettings } from '../config/config.js';
+import type {
+  ExtensionOriginSource,
+  TelemetrySettings,
+} from '../config/config.js';
 import { logExtensionUpdateEvent } from '../telemetry/loggers.js';
 import {
   ExtensionDisableEvent,
@@ -133,6 +136,7 @@ export enum ExtensionUpdateState {
 
 export type ExtensionRequestOptions = {
   extensionConfig: ExtensionConfig;
+  originSource: ExtensionOriginSource;
   commands?: string[];
   skills?: SkillConfig[];
   subagents?: SubagentConfig[];
@@ -140,7 +144,6 @@ export type ExtensionRequestOptions = {
   previousCommands?: string[];
   previousSkills?: SkillConfig[];
   previousSubagents?: SubagentConfig[];
-  isGeminiExtension?: boolean;
 };
 
 export interface ExtensionManagerOptions {
@@ -244,10 +247,11 @@ async function loadCommandsFromDir(dir: string): Promise<string[]> {
 async function convertGeminiOrClaudeExtension(
   extensionDir: string,
   pluginName?: string,
-) {
+): Promise<{ extensionDir: string; originSource: ExtensionOriginSource }> {
   let newExtensionDir = extensionDir;
   const qwenConfigPath = path.join(extensionDir, EXTENSIONS_CONFIG_FILENAME);
   const geminiConfigPath = path.join(extensionDir, 'gemini-extension.json');
+  let originSource: ExtensionOriginSource = 'QwenCode';
 
   if (fs.existsSync(qwenConfigPath)) {
     // Already a Qwen extension — no conversion needed
@@ -262,13 +266,15 @@ async function convertGeminiOrClaudeExtension(
     // THEN convert
     newExtensionDir = (await convertGeminiExtensionPackage(extensionDir))
       .convertedDir;
+    originSource = 'Gemini';
   } else if (pluginName) {
     // Claude plugin conversion (unchanged)
     newExtensionDir = (
       await convertClaudePluginPackage(extensionDir, pluginName)
     ).convertedDir;
+    originSource = 'Claude';
   }
-  return newExtensionDir;
+  return { extensionDir: newExtensionDir, originSource };
 }
 
 // ============================================================================
@@ -812,22 +818,14 @@ export class ExtensionManager {
       }
 
       try {
-        // Save original path BEFORE conversion to detect Gemini origin
-        const originalSourcePath = localSourcePath;
-
-        localSourcePath = await convertGeminiOrClaudeExtension(
-          localSourcePath,
-          installMetadata.pluginName,
-        );
-
-        // Detect if this was a Gemini extension (had gemini-extension.json but not qwen-extension.json)
-        const isGeminiExtension =
-          fs.existsSync(
-            path.join(originalSourcePath, 'gemini-extension.json'),
-          ) &&
-          !fs.existsSync(
-            path.join(originalSourcePath, EXTENSIONS_CONFIG_FILENAME),
+        const { extensionDir, originSource } =
+          await convertGeminiOrClaudeExtension(
+            localSourcePath,
+            installMetadata.pluginName,
           );
+
+        localSourcePath = extensionDir;
+        installMetadata.originSource = originSource;
 
         newExtensionConfig = this.loadExtensionConfig({
           extensionDir: localSourcePath,
@@ -890,7 +888,7 @@ export class ExtensionManager {
             previousCommands,
             previousSkills,
             previousSubagents,
-            isGeminiExtension,
+            originSource: installMetadata.originSource,
           });
         } else {
           await this.requestConsent({
@@ -902,7 +900,7 @@ export class ExtensionManager {
             previousCommands,
             previousSkills,
             previousSubagents,
-            isGeminiExtension,
+            originSource: installMetadata.originSource,
           });
         }
 
@@ -1100,6 +1098,7 @@ export class ExtensionManager {
         const installMetadata: ExtensionInstallMetadata = {
           source: extension.path,
           type: 'local',
+          originSource: extension.installMetadata?.originSource || 'QwenCode',
         };
         await this.installExtension(
           installMetadata,

@@ -443,6 +443,8 @@ export default {
   'This extension will install the following subagents:':
     'Это расширение установит следующие подагенты:',
   'Installation cancelled for "{{name}}".': 'Установка "{{name}}" отменена.',
+  'You are installing an extension from {{originSource}}. Some features may not work perfectly with Qwen Code.':
+    'Вы устанавливаете расширение от {{originSource}}. Некоторые функции могут работать не идеально с Qwen Code.',
   '--ref and --auto-update are not applicable for marketplace extensions.':
     '--ref и --auto-update неприменимы для расширений из маркетплейса.',
   'Extension "{{name}}" installed successfully and enabled.':
