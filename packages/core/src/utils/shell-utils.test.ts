@@ -169,6 +169,66 @@ describe('isCommandAllowed', () => {
       const result = isCommandAllowed("echo '$(pwd)'", config);
       expect(result.allowed).toBe(true);
     });
+
+    describe('heredocs', () => {
+      it('should allow substitution-like content in a quoted heredoc delimiter', () => {
+        const cmd = [
+          "cat <<'EOF' > user_session.md",
+          '```',
+          '$(rm -rf /)',
+          '`not executed`',
+          '```',
+          'EOF',
+        ].join('\n');
+
+        const result = isCommandAllowed(cmd, config);
+        expect(result.allowed).toBe(true);
+      });
+
+      it('should block command substitution in an unquoted heredoc body', () => {
+        const cmd = [
+          'cat <<EOF > user_session.md',
+          "'$(rm -rf /)'",
+          'EOF',
+        ].join('\n');
+
+        const result = isCommandAllowed(cmd, config);
+        expect(result.allowed).toBe(false);
+        expect(result.reason).toContain('Command substitution');
+      });
+
+      it('should block backtick command substitution in an unquoted heredoc body', () => {
+        const cmd = ['cat <<EOF > user_session.md', '`rm -rf /`', 'EOF'].join(
+          '\n',
+        );
+
+        const result = isCommandAllowed(cmd, config);
+        expect(result.allowed).toBe(false);
+        expect(result.reason).toContain('Command substitution');
+      });
+
+      it('should allow escaped command substitution in an unquoted heredoc body', () => {
+        const cmd = [
+          'cat <<EOF > user_session.md',
+          '\\$(rm -rf /)',
+          'EOF',
+        ].join('\n');
+
+        const result = isCommandAllowed(cmd, config);
+        expect(result.allowed).toBe(true);
+      });
+
+      it('should support tab-stripping heredocs (<<-)', () => {
+        const cmd = [
+          "cat <<-'EOF' > user_session.md",
+          '\t$(rm -rf /)',
+          '\tEOF',
+        ].join('\n');
+
+        const result = isCommandAllowed(cmd, config);
+        expect(result.allowed).toBe(true);
+      });
+    });
   });
 });
 
