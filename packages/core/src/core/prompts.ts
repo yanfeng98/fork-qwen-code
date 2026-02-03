@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import path from 'node:path';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -144,7 +138,7 @@ Examples:
 
 <example>
 user: Run the build and fix any type errors
-assistant: I'm going to use the ${ToolNames.TODO_WRITE} tool to write the following items to the todo list: 
+assistant: I'm going to use the ${ToolNames.TODO_WRITE} tool to write the following items to the todo list:
 - Run the build
 - Fix any type errors
 
@@ -248,9 +242,8 @@ IMPORTANT: Always use the ${ToolNames.TODO_WRITE} tool to plan and track tasks t
 - **Feedback:** To report a bug or provide feedback, please use the /bug command.
 
 ${(function () {
-  // Determine sandbox status based on environment variables
   const isSandboxExec = process.env['SANDBOX'] === 'sandbox-exec';
-  const isGenericSandbox = !!process.env['SANDBOX']; // Check if SANDBOX is set to any non-empty value
+  const isGenericSandbox = !!process.env['SANDBOX'];
 
   if (isSandboxExec) {
     return `
@@ -348,7 +341,7 @@ The structure MUST be as follows:
          - Build Command: \`npm run build\`
          - Testing: Tests are run with \`npm test\`. Test files must end in \`.test.ts\`.
          - API Endpoint: The primary API endpoint is \`https://api.example.com/v2\`.
-         
+
         -->
     </key_knowledge>
 
@@ -504,7 +497,7 @@ model: true
 
 <example>
 user: start the server implemented in server.js
-model: 
+model:
 <tool_call>
 <function=${ToolNames.SHELL}>
 <parameter=command>
@@ -658,7 +651,7 @@ model: true
 
 <example>
 user: start the server implemented in server.js
-model: 
+model:
 <tool_call>
 {"name": "${ToolNames.SHELL}", "arguments": {"command": "node server.js &"}}
 </tool_call>

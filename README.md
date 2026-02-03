@@ -42,7 +42,6 @@ qwen --version
 git clone git@github.com:yanfeng98/fork-qwen-code.git
 cd fork-qwen-code
 npm install
-npm install -g .
 
 # install in development mode
 npm run build
