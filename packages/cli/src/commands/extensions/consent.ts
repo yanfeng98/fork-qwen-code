@@ -153,10 +153,10 @@ export function extensionConsentString(
   const output: string[] = [];
   if (originSource !== 'QwenCode') {
     output.push(
-      `⚠️  ${t(
+      t(
         'You are installing an extension from {{originSource}}. Some features may not work perfectly with Qwen Code.',
         { originSource },
-      )}`,
+      ),
     );
   }
   const mcpServerEntries = Object.entries(extensionConfig.mcpServers || {});
@@ -230,6 +230,7 @@ export const requestConsentOrFail = async (
   if (!options) return;
   const {
     extensionConfig,
+    originSource = 'QwenCode',
     commands = [],
     skills = [],
     subagents = [],
@@ -243,6 +244,7 @@ export const requestConsentOrFail = async (
     commands,
     skills,
     subagents,
+    originSource,
   );
   if (previousExtensionConfig) {
     const previousExtensionConsent = extensionConsentString(
@@ -250,6 +252,7 @@ export const requestConsentOrFail = async (
       previousCommands,
       previousSkills,
       previousSubagents,
+      originSource,
     );
     if (previousExtensionConsent === extensionConsent) {
       return;

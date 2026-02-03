@@ -249,31 +249,21 @@ async function convertGeminiOrClaudeExtension(
   pluginName?: string,
 ): Promise<{ extensionDir: string; originSource: ExtensionOriginSource }> {
   let newExtensionDir = extensionDir;
-  const qwenConfigPath = path.join(extensionDir, EXTENSIONS_CONFIG_FILENAME);
-  const geminiConfigPath = path.join(extensionDir, 'gemini-extension.json');
   let originSource: ExtensionOriginSource = 'QwenCode';
-
-  if (fs.existsSync(qwenConfigPath)) {
-    // Already a Qwen extension — no conversion needed
+  const configFilePath = path.join(extensionDir, EXTENSIONS_CONFIG_FILENAME);
+  if (fs.existsSync(configFilePath)) {
     newExtensionDir = extensionDir;
-  } else if (fs.existsSync(geminiConfigPath)) {
-    // VALIDATE FIRST (maintainer requirement)
-    if (!isGeminiExtensionConfig(extensionDir)) {
-      throw new Error(
-        `Invalid gemini-extension.json: missing required fields (name/version)`,
-      );
-    }
-    // THEN convert
+  } else if (isGeminiExtensionConfig(extensionDir)) {
     newExtensionDir = (await convertGeminiExtensionPackage(extensionDir))
       .convertedDir;
     originSource = 'Gemini';
   } else if (pluginName) {
-    // Claude plugin conversion (unchanged)
     newExtensionDir = (
       await convertClaudePluginPackage(extensionDir, pluginName)
     ).convertedDir;
     originSource = 'Claude';
   }
+  // Claude plugin conversion not yet implemented
   return { extensionDir: newExtensionDir, originSource };
 }
 
