@@ -815,13 +815,6 @@ export class Config {
   }
 
   /**
-   * Releases resources owned by the config instance.
-   */
-  async shutdown(): Promise<void> {
-    this.skillManager?.stopWatching();
-  }
-
-  /**
    * Starts a new session and resets session-scoped services.
    */
   startNewSession(
@@ -1025,6 +1018,28 @@ export class Config {
 
   getToolRegistry(): ToolRegistry {
     return this.toolRegistry;
+  }
+
+  /**
+   * Shuts down the Config and releases all resources.
+   * This method is idempotent and safe to call multiple times.
+   * It handles the case where initialization was not completed.
+   */
+  async shutdown(): Promise<void> {
+    if (!this.initialized) {
+      // Nothing to clean up if not initialized
+      return;
+    }
+    try {
+      this.skillManager?.stopWatching();
+
+      if (this.toolRegistry) {
+        await this.toolRegistry.stop();
+      }
+    } catch (error) {
+      // Log but don't throw - cleanup should be best-effort
+      console.error('Error during Config shutdown:', error);
+    }
   }
 
   getPromptRegistry(): PromptRegistry {
