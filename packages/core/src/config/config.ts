@@ -1026,13 +1026,13 @@ export class Config {
    * It handles the case where initialization was not completed.
    */
   async shutdown(): Promise<void> {
-    this.skillManager?.stopWatching();
-
     if (!this.initialized) {
       // Nothing to clean up if not initialized
       return;
     }
     try {
+      this.skillManager?.stopWatching();
+
       if (this.toolRegistry) {
         await this.toolRegistry.stop();
       }
