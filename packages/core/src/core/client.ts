@@ -645,9 +645,7 @@ export class GeminiClient {
       this.hasFailedCompressionAttempt,
     );
 
-    // Handle compression result
     if (info.compressionStatus === CompressionStatus.COMPRESSED) {
-      // Success: update chat with new compressed history
       if (newHistory) {
         const chatRecordingService = this.config.getChatRecordingService();
         chatRecordingService?.recordChatCompression({
@@ -665,7 +663,6 @@ export class GeminiClient {
       info.compressionStatus ===
         CompressionStatus.COMPRESSION_FAILED_EMPTY_SUMMARY
     ) {
-      // Track failed attempts (only mark as failed if not forced)
       if (!force) {
         this.hasFailedCompressionAttempt = true;
       }

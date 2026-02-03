@@ -153,7 +153,6 @@ export class ChatCompressionService {
         ...historyToKeep,
       ];
 
-      // Use a shared utility to construct the initial history for an accurate token count.
       const fullNewHistory = await getInitialChatHistory(config, extraHistory);
 
       // Estimate token count 1 token ≈ 4 characters

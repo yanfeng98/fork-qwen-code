@@ -312,11 +312,6 @@ Your core function is efficient and safe assistance. Balance extreme conciseness
   return `${basePrompt}${memorySuffix}`;
 }
 
-/**
- * Provides the system prompt for the history compression process.
- * This prompt instructs the model to act as a specialized state manager,
- * think in a scratchpad, and produce a structured XML summary.
- */
 export function getCompressionPrompt(): string {
   return `
 You are the component that summarizes internal chat history into a given structure.

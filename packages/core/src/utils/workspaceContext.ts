@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { isNodeError } from '../utils/errors.js';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -11,21 +5,11 @@ import * as process from 'node:process';
 
 export type Unsubscribe = () => void;
 
-/**
- * WorkspaceContext manages multiple workspace directories and validates paths
- * against them. This allows the CLI to operate on files from multiple directories
- * in a single session.
- */
 export class WorkspaceContext {
   private directories = new Set<string>();
   private initialDirectories: Set<string>;
   private onDirectoriesChangedListeners = new Set<() => void>();
 
-  /**
-   * Creates a new WorkspaceContext with the given initial directory and optional additional directories.
-   * @param directory The initial working directory (usually cwd)
-   * @param additionalDirectories Optional array of additional directories to include
-   */
   constructor(directory: string, additionalDirectories: string[] = []) {
     this.addDirectory(directory);
     for (const additionalDirectory of additionalDirectories) {
@@ -58,11 +42,6 @@ export class WorkspaceContext {
     }
   }
 
-  /**
-   * Adds a directory to the workspace.
-   * @param directory The directory path to add (can be relative or absolute)
-   * @param basePath Optional base path for resolving relative paths (defaults to cwd)
-   */
   addDirectory(directory: string, basePath: string = process.cwd()): void {
     try {
       const resolved = this.resolveAndValidateDir(directory, basePath);
@@ -97,10 +76,6 @@ export class WorkspaceContext {
     return fs.realpathSync(absolutePath);
   }
 
-  /**
-   * Gets a copy of all workspace directories.
-   * @returns Array of absolute directory paths
-   */
   getDirectories(): readonly string[] {
     return Array.from(this.directories);
   }

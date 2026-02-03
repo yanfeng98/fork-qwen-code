@@ -1,18 +1,7 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import type { Content, Part } from '@google/genai';
 import type { Config } from '../config/config.js';
 import { getFolderStructure } from './getFolderStructure.js';
 
-/**
- * Generates a string describing the current workspace directories and their structures.
- * @param {Config} config - The runtime configuration and services.
- * @returns {Promise<string>} A promise that resolves to the directory context string.
- */
 export async function getDirectoryContextString(
   config: Config,
 ): Promise<string> {

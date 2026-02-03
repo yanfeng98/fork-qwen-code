@@ -251,11 +251,6 @@ export class ChatRecordingService {
     }
   }
 
-  /**
-   * Records a chat compression checkpoint as a system record. This keeps the UI
-   * history immutable while allowing resume/continue flows to reconstruct the
-   * compressed model-facing history from the stored snapshot.
-   */
   recordChatCompression(payload: ChatCompressionRecordPayload): void {
     try {
       const record: ChatRecord = {

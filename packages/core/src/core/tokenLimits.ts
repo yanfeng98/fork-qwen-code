@@ -8,8 +8,8 @@ type TokenCount = number;
  */
 export type TokenLimitType = 'input' | 'output';
 
-export const DEFAULT_TOKEN_LIMIT: TokenCount = 131_072; // 128K (power-of-two)
-export const DEFAULT_OUTPUT_TOKEN_LIMIT: TokenCount = 4_096; // 4K tokens
+export const DEFAULT_TOKEN_LIMIT: TokenCount = 131_072;
+export const DEFAULT_OUTPUT_TOKEN_LIMIT: TokenCount = 4_096;
 
 const LIMITS = {
   '32k': 32_768,
@@ -21,7 +21,6 @@ const LIMITS = {
   '1m': 1_048_576,
   '2m': 2_097_152,
   '10m': 10_485_760,
-  // Output token limits (typically much smaller than input limits)
   '4k': 4_096,
   '8k': 8_192,
   '16k': 16_384,
@@ -53,9 +52,6 @@ export function normalize(model: string): string {
 }
 
 const PATTERNS: Array<[RegExp, TokenCount]> = [
-  // -------------------
-  // Google Gemini
-  // -------------------
   [/^gemini-1\.5-pro$/, LIMITS['2m']],
   [/^gemini-1\.5-flash$/, LIMITS['1m']],
   [/^gemini-2\.5-pro.*$/, LIMITS['1m']],
@@ -108,7 +104,6 @@ const PATTERNS: Array<[RegExp, TokenCount]> = [
   // Open-source long-context Qwen2.5-1M
   [/^qwen2\.5-1m.*$/, LIMITS['1m']],
 
-  // Standard Qwen2.5: 128K
   [/^qwen2\.5.*$/, LIMITS['128k']],
 
   // Studio commercial Qwen-Plus / Qwen-Flash / Qwen-Turbo
@@ -137,9 +132,6 @@ const PATTERNS: Array<[RegExp, TokenCount]> = [
   [/^glm-4\.5(?:-.*)?$/, LIMITS['128k']],
   [/^glm-4\.6(?:-.*)?$/, 202_752 as unknown as TokenCount], // exact limit from the model config file
 
-  // -------------------
-  // DeepSeek
-  // -------------------
   [/^deepseek(?:-.*)?$/, LIMITS['128k']],
 
   // -------------------
