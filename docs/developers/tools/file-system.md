@@ -77,39 +77,6 @@ Qwen Code provides a comprehensive suite of tools for interacting with the local
 - **Output (`llmContent`):** A message like: `Found 5 file(s) matching "*.ts" within /path/to/search/dir, sorted by modification time (newest first):\n---\n/path/to/file1.ts\n/path/to/subdir/file2.ts\n---\n[95 files truncated] ...`
 - **Confirmation:** No.
 
-## 5. `grep_search` (Grep)
-
-`grep_search` searches for a regular expression pattern within the content of files in a specified directory. Can filter files by a glob pattern. Returns the lines containing matches, along with their file paths and line numbers.
-
-- **Tool name:** `grep_search`
-- **Display name:** Grep
-- **File:** `grep.ts` (with `ripGrep.ts` as fallback)
-- **Parameters:**
-  - `pattern` (string, required): The regular expression pattern to search for in file contents (e.g., `"function\\s+myFunction"`, `"log.*Error"`).
-  - `path` (string, optional): File or directory to search in. Defaults to current working directory.
-  - `glob` (string, optional): Glob pattern to filter files (e.g. `"*.js"`, `"src/**/*.{ts,tsx}"`).
-  - `limit` (number, optional): Limit output to first N matching lines. Optional - shows all matches if not specified.
-- **Behavior:**
-  - Uses ripgrep for fast search when available; otherwise falls back to a JavaScript-based search implementation.
-  - Returns matching lines with file paths and line numbers.
-  - Case-insensitive by default.
-  - Respects .gitignore and .qwenignore patterns.
-  - Limits output to prevent context overflow.
-- **Output (`llmContent`):** A formatted string of matches, e.g.:
-
-  ```
-  Found 3 matches for pattern "myFunction" in path "." (filter: "*.ts"):
-  ---
-  src/utils.ts:15:export function myFunction() {
-  src/utils.ts:22:  myFunction.call();
-  src/index.ts:5:import { myFunction } from './utils';
-  ---
-
-  [0 lines truncated] ...
-  ```
-
-- **Confirmation:** No.
-
 ### `grep_search` examples
 
 Search for a pattern with default result limiting:

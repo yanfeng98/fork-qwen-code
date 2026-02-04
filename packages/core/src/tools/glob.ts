@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import fs from 'node:fs';
 import path from 'node:path';
 import { glob, escape } from 'glob';
@@ -58,18 +52,8 @@ export function sortFileEntries(
   return sortedEntries;
 }
 
-/**
- * Parameters for the GlobTool
- */
 export interface GlobToolParams {
-  /**
-   * The glob pattern to match files against
-   */
   pattern: string;
-
-  /**
-   * The directory to search in (optional, defaults to current directory)
-   */
   path?: string;
 }
 
@@ -229,9 +213,6 @@ class GlobToolInvocation extends BaseToolInvocation<
   }
 }
 
-/**
- * Implementation of the Glob tool logic
- */
 export class GlobTool extends BaseDeclarativeTool<GlobToolParams, ToolResult> {
   static readonly Name = ToolNames.GLOB;
 

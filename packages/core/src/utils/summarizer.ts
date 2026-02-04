@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import type { ToolResult } from '../tools/tools.js';
 import type {
   Content,
@@ -14,26 +8,12 @@ import type { GeminiClient } from '../core/client.js';
 import { DEFAULT_GEMINI_FLASH_LITE_MODEL } from '../config/models.js';
 import { getResponseText, partToString } from './partUtils.js';
 
-/**
- * A function that summarizes the result of a tool execution.
- *
- * @param result The result of the tool execution.
- * @returns The summary of the result.
- */
 export type Summarizer = (
   result: ToolResult,
   geminiClient: GeminiClient,
   abortSignal: AbortSignal,
 ) => Promise<string>;
 
-/**
- * The default summarizer for tool results.
- *
- * @param result The result of the tool execution.
- * @param geminiClient The Gemini client to use for summarization.
- * @param abortSignal The abort signal to use for summarization.
- * @returns The summary of the result.
- */
 export const defaultSummarizer: Summarizer = (
   result: ToolResult,
   _geminiClient: GeminiClient,
@@ -67,8 +47,6 @@ export async function summarizeToolOutput(
   abortSignal: AbortSignal,
   maxOutputTokens: number = 2000,
 ): Promise<string> {
-  // There is going to be a slight difference here since we are comparing length of string with maxOutputTokens.
-  // This is meant to be a ballpark estimation of if we need to summarize the tool output.
   if (!textToSummarize || textToSummarize.length < maxOutputTokens) {
     return textToSummarize;
   }

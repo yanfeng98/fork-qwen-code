@@ -255,12 +255,6 @@ export abstract class DeclarativeTool<
   }
 }
 
-/**
- * New base class for declarative tools that separates validation from execution.
- * New tools should extend this class, which provides a `build` method that
- * validates parameters before deferring to a `createInvocation` method for
- * the final `ToolInvocation` object instantiation.
- */
 export abstract class BaseDeclarativeTool<
   TParams extends object,
   TResult extends ToolResult,
@@ -286,7 +280,6 @@ export abstract class BaseDeclarativeTool<
   }
 
   protected validateToolParamValues(_params: TParams): string | null {
-    // Base implementation can be extended by subclasses.
     return null;
   }
 

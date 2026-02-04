@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import type {
   GenerateContentResponse,
   PartListUnion,
@@ -11,10 +5,6 @@ import type {
   PartUnion,
 } from '@google/genai';
 
-/**
- * Converts a PartListUnion into a string.
- * If verbose is true, includes summary representations of non-text parts.
- */
 export function partToString(
   value: PartListUnion,
   options?: { verbose?: boolean },
@@ -29,7 +19,6 @@ export function partToString(
     return value.map((part) => partToString(part, options)).join('');
   }
 
-  // Cast to Part, assuming it might contain project-specific fields
   const part = value as Part & {
     videoMetadata?: unknown;
     thought?: string;
@@ -51,7 +40,6 @@ export function partToString(
       return `[Executable Code]`;
     }
 
-    // Standard Part fields
     if (part.fileData !== undefined) {
       return `[File Data]`;
     }
