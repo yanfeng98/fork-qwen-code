@@ -1,4 +1,4 @@
-import { spawn, type ChildProcess } from 'node:child_process';
+import { spawn, fork, type ChildProcess } from 'node:child_process';
 import * as readline from 'node:readline';
 import type { Writable, Readable } from 'node:stream';
 import type { TransportOptions } from '../types/types.js';
@@ -52,20 +52,67 @@ export class ProcessTransport implements Transport {
       const stderrMode =
         this.options.debug || this.options.stderr ? 'pipe' : 'ignore';
 
-      logger.debug(
-        `Spawning CLI (${spawnInfo.type}): ${spawnInfo.command} ${[...spawnInfo.args, ...cliArgs].join(' ')}`,
-      );
+      // Check if we should use fork for Electron integration
+      const useFork = env.FORK_MODE === '1';
+      console.log('useFork', useFork);
 
-      this.childProcess = spawn(
-        spawnInfo.command,
-        [...spawnInfo.args, ...cliArgs],
-        {
+      if (useFork) {
+        // Detect Electron environment
+        const isElectron =
+          typeof process !== 'undefined' &&
+          process.versions &&
+          !!process.versions.electron;
+
+        // In Electron, process.execPath points to Electron, not Node.js
+        // When spawnInfo uses process.execPath to run a JS file, we need to handle it specially
+        const isUsingExecPathForJs =
+          spawnInfo.args.length > 0 &&
+          (spawnInfo.args[0]?.endsWith('.js') ||
+            spawnInfo.args[0]?.endsWith('.mjs') ||
+            spawnInfo.args[0]?.endsWith('.cjs'));
+
+        let forkModulePath: string;
+        let forkArgs: string[];
+
+        if (isElectron && isUsingExecPathForJs) {
+          // In Electron with JS file: use the JS file as module path, rest as args
+          forkModulePath = spawnInfo.args[0] ?? '';
+          forkArgs = [...spawnInfo.args.slice(1), ...cliArgs];
+        } else {
+          // Normal case: use command as module path
+          forkModulePath = spawnInfo.command;
+          forkArgs = [...spawnInfo.args, ...cliArgs];
+        }
+
+        logger.debug(
+          `Forking CLI (${spawnInfo.type}): ${forkModulePath} ${forkArgs.join(' ')}`,
+        );
+
+        this.childProcess = fork(forkModulePath, forkArgs, {
           cwd,
           env,
-          stdio: ['pipe', 'pipe', stderrMode],
+          stdio:
+            stderrMode === 'pipe'
+              ? ['pipe', 'pipe', 'pipe', 'ipc']
+              : ['pipe', 'pipe', 'ignore', 'ipc'],
           signal: this.abortController.signal,
-        },
-      );
+        });
+      } else {
+        logger.debug(
+          `Spawning CLI (${spawnInfo.type}): ${spawnInfo.command} ${[...spawnInfo.args, ...cliArgs].join(' ')}`,
+        );
+
+        this.childProcess = spawn(
+          spawnInfo.command,
+          [...spawnInfo.args, ...cliArgs],
+          {
+            cwd,
+            env,
+            stdio: ['pipe', 'pipe', stderrMode],
+            signal: this.abortController.signal,
+          },
+        );
+      }
 
       this.childStdin = this.childProcess.stdin;
       this.childStdout = this.childProcess.stdout;
