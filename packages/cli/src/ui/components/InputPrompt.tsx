@@ -38,6 +38,7 @@ import { SCREEN_READER_USER_PREFIX } from '../textConstants.js';
 import { useShellFocusState } from '../contexts/ShellFocusContext.js';
 import { useUIState } from '../contexts/UIStateContext.js';
 import { useUIActions } from '../contexts/UIActionsContext.js';
+import { useKeypressContext } from '../contexts/KeypressContext.js';
 import { FEEDBACK_DIALOG_KEYS } from '../FeedbackDialog.js';
 export interface InputPromptProps {
   buffer: TextBuffer;
@@ -111,12 +112,20 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
   const isShellFocused = useShellFocusState();
   const uiState = useUIState();
   const uiActions = useUIActions();
+  const { pasteWorkaround } = useKeypressContext();
   const [justNavigatedHistory, setJustNavigatedHistory] = useState(false);
   const [escPressCount, setEscPressCount] = useState(0);
   const [showEscapePrompt, setShowEscapePrompt] = useState(false);
   const escapeTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [recentPasteTime, setRecentPasteTime] = useState<number | null>(null);
   const pasteTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Large paste placeholder handling
+  const LARGE_PASTE_CHAR_THRESHOLD = 1000;
+  const [pendingPastes, setPendingPastes] = useState<Map<string, string>>(
+    new Map(),
+  );
+  const largePasteCounters = useRef<Map<number, number>>(new Map());
 
   const [dirs, setDirs] = useState<readonly string[]>(
     config.getWorkspaceContext().getDirectories(),
@@ -186,6 +195,18 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
     }
   }, [showEscapePrompt, onEscapePromptChange]);
 
+  // Helper to generate unique placeholder for large pastes
+  const nextLargePastePlaceholder = useCallback((charCount: number): string => {
+    const base = `[Pasted Content ${charCount} chars]`;
+    const currentCount = largePasteCounters.current.get(charCount) || 0;
+    const nextCount = currentCount + 1;
+    largePasteCounters.current.set(charCount, nextCount);
+    if (nextCount === 1) {
+      return base;
+    }
+    return `${base} #${nextCount}`;
+  }, []);
+
   // Clear escape prompt timer on unmount
   useEffect(
     () => () => {
@@ -204,10 +225,18 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
       if (shellModeActive) {
         shellHistory.addCommandToHistory(submittedValue);
       }
+      // Expand any large paste placeholders to their full content before submitting
+      let finalValue = submittedValue;
+      if (pendingPastes.size > 0) {
+        pendingPastes.forEach((fullContent, placeholder) => {
+          finalValue = finalValue.replace(placeholder, fullContent);
+        });
+        setPendingPastes(new Map());
+      }
       // Clear the buffer *before* calling onSubmit to prevent potential re-submission
       // if onSubmit triggers a re-render while the buffer still holds the old value.
       buffer.setText('');
-      onSubmit(submittedValue);
+      onSubmit(finalValue);
       resetCompletionState();
       resetReverseSearchCompletionState();
     },
@@ -218,6 +247,7 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
       shellModeActive,
       shellHistory,
       resetReverseSearchCompletionState,
+      pendingPastes,
     ],
   );
 
@@ -330,8 +360,22 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
           pasteTimeoutRef.current = null;
         }, 500);
 
-        // Ensure we never accidentally interpret paste as regular input.
-        buffer.handleInput(key);
+        // Handle large pastes by showing a placeholder
+        const pasted = key.sequence.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        const charCount = [...pasted].length; // Proper Unicode char count
+        if (charCount > LARGE_PASTE_CHAR_THRESHOLD) {
+          const placeholder = nextLargePastePlaceholder(charCount);
+          setPendingPastes((prev) => {
+            const next = new Map(prev);
+            next.set(placeholder, pasted);
+            return next;
+          });
+          // Insert the placeholder as regular text
+          buffer.insert(placeholder, { paste: false });
+        } else {
+          // Normal paste handling for small content
+          buffer.handleInput(key);
+        }
         return;
       }
 
@@ -619,8 +663,10 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
 
       if (keyMatchers[Command.SUBMIT](key)) {
         if (buffer.text.trim()) {
-          // Check if a paste operation occurred recently to prevent accidental auto-submission
-          if (recentPasteTime !== null) {
+          // Check if a paste operation occurred recently to prevent accidental auto-submission.
+          // Only applies when pasteWorkaround is enabled (Windows or Node < 20), where bracketed
+          // paste markers may not work reliably and Enter key events can leak from pasted text.
+          if (pasteWorkaround && recentPasteTime !== null) {
             // Paste occurred recently, ignore this submit to prevent auto-execution
             return;
           }
@@ -719,6 +765,9 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
       showShortcuts,
       uiState,
       uiActions,
+      pasteWorkaround,
+      LARGE_PASTE_CHAR_THRESHOLD,
+      nextLargePastePlaceholder,
     ],
   );
 
