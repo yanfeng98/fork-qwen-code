@@ -97,7 +97,7 @@ function hasUTF8BOM(buffer: Buffer): boolean {
  */
 export class StandardFileSystemService implements FileSystemService {
   async readTextFile(filePath: string): Promise<string> {
-    return fs.readFile(filePath, 'utf-8');
+    return fs.readFile(filePath, FileEncoding.UTF8);
   }
 
   async writeTextFile(
@@ -109,8 +109,11 @@ export class StandardFileSystemService implements FileSystemService {
 
     if (bom) {
       // Prepend UTF-8 BOM (EF BB BF)
+      // If content already starts with BOM character, strip it first to avoid double BOM
+      const normalizedContent =
+        content.charCodeAt(0) === 0xfeff ? content.slice(1) : content;
       const bomBuffer = Buffer.from([0xef, 0xbb, 0xbf]);
-      const contentBuffer = Buffer.from(content, 'utf-8');
+      const contentBuffer = Buffer.from(normalizedContent, 'utf-8');
       await fs.writeFile(filePath, Buffer.concat([bomBuffer, contentBuffer]));
     } else {
       await fs.writeFile(filePath, content, 'utf-8');
@@ -118,12 +121,12 @@ export class StandardFileSystemService implements FileSystemService {
   }
 
   async detectFileBOM(filePath: string): Promise<boolean> {
+    let fd: fs.FileHandle | undefined;
     try {
       // Read only the first 3 bytes to check for BOM
-      const fd = await fs.open(filePath, 'r');
+      fd = await fs.open(filePath, 'r');
       const buffer = Buffer.alloc(3);
       const { bytesRead } = await fd.read(buffer, 0, 3, 0);
-      await fd.close();
 
       if (bytesRead < 3) {
         return false;
@@ -133,6 +136,8 @@ export class StandardFileSystemService implements FileSystemService {
     } catch {
       // File doesn't exist or can't be read - treat as no BOM
       return false;
+    } finally {
+      await fd?.close();
     }
   }
 

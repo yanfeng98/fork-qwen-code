@@ -86,6 +86,40 @@ describe('StandardFileSystemService', () => {
         'utf-8',
       );
     });
+
+    it('should not duplicate BOM when content already has BOM character', async () => {
+      vi.mocked(fs.writeFile).mockResolvedValue();
+
+      // Content that includes the BOM character (as readTextFile would return)
+      const contentWithBOM = '\uFEFF' + 'Hello';
+      await fileSystem.writeTextFile('/test/file.txt', contentWithBOM, {
+        bom: true,
+      });
+
+      // Verify that fs.writeFile was called with a Buffer that has only one BOM
+      const writeCall = vi.mocked(fs.writeFile).mock.calls[0];
+      expect(writeCall[0]).toBe('/test/file.txt');
+      expect(writeCall[1]).toBeInstanceOf(Buffer);
+      const buffer = writeCall[1] as Buffer;
+      // First three bytes should be BOM
+      expect(buffer[0]).toBe(0xef);
+      expect(buffer[1]).toBe(0xbb);
+      expect(buffer[2]).toBe(0xbf);
+      // Fourth byte should be 'H' (0x48), not another BOM
+      expect(buffer[3]).toBe(0x48);
+      // Count BOM sequences in the buffer - should be only one
+      let bomCount = 0;
+      for (let i = 0; i <= buffer.length - 3; i++) {
+        if (
+          buffer[i] === 0xef &&
+          buffer[i + 1] === 0xbb &&
+          buffer[i + 2] === 0xbf
+        ) {
+          bomCount++;
+        }
+      }
+      expect(bomCount).toBe(1);
+    });
   });
 
   describe('detectFileBOM', () => {
