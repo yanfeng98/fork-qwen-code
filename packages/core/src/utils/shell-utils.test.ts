@@ -229,6 +229,36 @@ describe('isCommandAllowed', () => {
         expect(result.allowed).toBe(true);
       });
     });
+
+    describe('comments', () => {
+      it('should ignore heredoc operators inside comments', () => {
+        const cmd = ["# Fake heredoc <<'EOF'", '$(rm -rf /)', 'EOF'].join('\n');
+
+        const result = isCommandAllowed(cmd, config);
+        expect(result.allowed).toBe(false);
+        expect(result.reason).toContain('Command substitution');
+      });
+
+      it('should allow command substitution patterns inside full-line comments', () => {
+        const cmd = ['# Note: $(rm -rf /) is dangerous', 'echo hello'].join(
+          '\n',
+        );
+
+        const result = isCommandAllowed(cmd, config);
+        expect(result.allowed).toBe(true);
+      });
+
+      it('should allow command substitution patterns inside inline comments', () => {
+        const result = isCommandAllowed('echo hello # $(rm -rf /)', config);
+        expect(result.allowed).toBe(true);
+      });
+
+      it('should not treat # inside a word as a comment starter', () => {
+        const result = isCommandAllowed('echo foo#$(rm -rf /)', config);
+        expect(result.allowed).toBe(false);
+        expect(result.reason).toContain('Command substitution');
+      });
+    });
   });
 });
 

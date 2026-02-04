@@ -256,6 +256,20 @@ export function detectCommandSubstitution(command: string): boolean {
     stripLeadingTabs: boolean;
   };
 
+  const isCommentStart = (index: number): boolean => {
+    if (command[index] !== '#') return false;
+    if (index === 0) return true;
+
+    const prev = command[index - 1]!;
+    if (prev === ' ' || prev === '\t' || prev === '\n' || prev === '\r') {
+      return true;
+    }
+
+    // `#` starts a comment when it begins a word. In practice this includes
+    // common command separators/operators where a new word can begin.
+    return [';', '&', '|', '(', ')', '<', '>'].includes(prev);
+  };
+
   const isWordBoundary = (char: string): boolean => {
     if (char === ' ' || char === '\t' || char === '\n' || char === '\r') {
       return true;
@@ -450,6 +464,7 @@ export function detectCommandSubstitution(command: string): boolean {
   let inSingleQuotes = false;
   let inDoubleQuotes = false;
   let inBackticks = false;
+  let inComment = false;
   const pendingHeredocs: PendingHeredoc[] = [];
   let i = 0;
 
@@ -462,6 +477,7 @@ export function detectCommandSubstitution(command: string): boolean {
     // consume heredoc bodies sequentially before continuing.
     if (!inSingleQuotes && !inDoubleQuotes && !inBackticks) {
       if (char === '\r' && nextChar === '\n') {
+        inComment = false;
         if (pendingHeredocs.length > 0) {
           const result = consumeHeredocBodies(i + 2, pendingHeredocs);
           if (result.hasSubstitution) return true;
@@ -469,7 +485,8 @@ export function detectCommandSubstitution(command: string): boolean {
           i = result.nextIndex;
           continue;
         }
-      } else if (char === '\n') {
+      } else if (char === '\n' || char === '\r') {
+        inComment = false;
         if (pendingHeredocs.length > 0) {
           const result = consumeHeredocBodies(i + 1, pendingHeredocs);
           if (result.hasSubstitution) return true;
@@ -477,6 +494,19 @@ export function detectCommandSubstitution(command: string): boolean {
           i = result.nextIndex;
           continue;
         }
+      }
+    }
+
+    if (!inSingleQuotes && !inDoubleQuotes && !inBackticks) {
+      if (!inComment && isCommentStart(i)) {
+        inComment = true;
+        i++;
+        continue;
+      }
+
+      if (inComment) {
+        i++;
+        continue;
       }
     }
 
