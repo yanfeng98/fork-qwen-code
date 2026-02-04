@@ -200,6 +200,7 @@ class WriteFileToolInvocation extends BaseToolInvocation<
   async execute(_abortSignal: AbortSignal): Promise<ToolResult> {
     const { file_path, content, ai_proposed_content, modified_by_user } =
       this.params;
+
     const correctedContentResult = await getCorrectedFileContent(
       this.config,
       file_path,
@@ -297,12 +298,13 @@ class WriteFileToolInvocation extends BaseToolInvocation<
       const extension = path.extname(file_path);
       const operation = isNewFile ? FileOperation.CREATE : FileOperation.UPDATE;
 
+      const lineCount = fileContent.split('\n').length;
       logFileOperation(
         this.config,
         new FileOperationEvent(
           WriteFileTool.Name,
           operation,
-          fileContent.split('\n').length,
+          lineCount,
           mimetype,
           extension,
           programmingLanguage,

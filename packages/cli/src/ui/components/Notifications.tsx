@@ -9,7 +9,6 @@ import { useAppContext } from '../contexts/AppContext.js';
 import { useUIState } from '../contexts/UIStateContext.js';
 import { theme } from '../semantic-colors.js';
 import { StreamingState } from '../types.js';
-import { DebugModeNotification } from './DebugModeNotification.js';
 import { UpdateNotification } from './UpdateNotification.js';
 
 export const Notifications = () => {
@@ -23,7 +22,6 @@ export const Notifications = () => {
   return (
     <>
       {updateInfo && <UpdateNotification message={updateInfo.message} />}
-      <DebugModeNotification />
       {showStartupWarnings && (
         <Box
           borderStyle="round"

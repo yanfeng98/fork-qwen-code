@@ -375,6 +375,7 @@ export class ShellToolInvocation extends BaseToolInvocation<
             },
           }
         : {};
+
       if (summarizeConfig && summarizeConfig[ShellTool.Name]) {
         const summary = await summarizeToolOutput(
           llmContent,

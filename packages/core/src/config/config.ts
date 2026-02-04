@@ -690,6 +690,7 @@ export class Config {
       throw Error('Config was already initialized');
     }
     this.initialized = true;
+    this.debugLogger.info('Config initialization started');
 
     // Initialize centralized FileDiscoveryService
     this.getFileService();
@@ -699,11 +700,13 @@ export class Config {
     this.promptRegistry = new PromptRegistry();
     this.extensionManager.setConfig(this);
     await this.extensionManager.refreshCache();
+    this.debugLogger.debug('Extension manager initialized');
 
     this.subagentManager = new SubagentManager(this);
     if (this.getExperimentalSkills()) {
       this.skillManager = new SkillManager(this);
       await this.skillManager.startWatching();
+      this.debugLogger.debug('Skill manager initialized');
     }
 
     // Load session subagents if they were provided before initialization
@@ -714,14 +717,20 @@ export class Config {
     await this.extensionManager.refreshCache();
 
     await this.refreshHierarchicalMemory();
+    this.debugLogger.debug('Hierarchical memory loaded');
 
     this.toolRegistry = await this.createToolRegistry(
       options?.sendSdkMcpMessage,
     );
+    this.debugLogger.info(
+      `Tool registry initialized with ${this.toolRegistry.getAllToolNames().length} tools`,
+    );
 
     await this.geminiClient.initialize();
+    this.debugLogger.info('Gemini client initialized');
 
     logStartSession(this, new StartSessionEvent(this));
+    this.debugLogger.info('Config initialization completed');
   }
 
   async refreshHierarchicalMemory(): Promise<void> {
@@ -1713,7 +1722,9 @@ export class Config {
     }
 
     await registry.discoverAllTools();
-    this.debugLogger.debug('ToolRegistry created', registry.getAllToolNames());
+    this.debugLogger.debug(
+      `ToolRegistry created: ${JSON.stringify(registry.getAllToolNames())} (${registry.getAllToolNames().length} tools)`,
+    );
     return registry;
   }
 }

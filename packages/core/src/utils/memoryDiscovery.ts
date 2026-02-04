@@ -350,12 +350,6 @@ export async function loadServerHierarchicalMemory(
     memoryFilenames.has(path.basename(item.filePath)),
   ).length;
 
-  logger.debug(`Combined instructions length: ${combinedInstructions.length}`);
-  if (combinedInstructions.length > 0) {
-    logger.debug(
-      `Combined instructions (snippet): ${combinedInstructions.substring(0, 500)}...`,
-    );
-  }
   return {
     memoryContent: combinedInstructions,
     fileCount, // Only count the context files

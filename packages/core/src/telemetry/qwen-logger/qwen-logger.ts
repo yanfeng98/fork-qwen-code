@@ -75,6 +75,11 @@ const RUN_APP_ID = 'gb4w8c3ygj@851d5d500f08f92';
 const FLUSH_INTERVAL_MS = 1000 * 60;
 
 /**
+ * Minimum interval between logging network errors to avoid log spam.
+ */
+const ERROR_LOG_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+
+/**
  * Maximum amount of events to keep in memory. Events added after this amount
  * are dropped until the next flush to RUM, which happens periodically as
  * defined by {@link FLUSH_INTERVAL_MS}.
@@ -123,6 +128,11 @@ export class QwenLogger {
    * This value is true when a flush was requested during an ongoing flush.
    */
   private pendingFlush: boolean = false;
+
+  /**
+   * Timestamp of the last network error log to prevent log spam.
+   */
+  private lastErrorLogTime: number = 0;
 
   private constructor(config: Config) {
     this.config = config;
@@ -269,9 +279,7 @@ export class QwenLogger {
       return;
     }
 
-    this.flushToRum().catch((error) => {
-      this.debugLogger.debug('Error flushing to RUM:', error);
-    });
+    void this.flushToRum();
   }
 
   async flushToRum(): Promise<LogResponse> {
@@ -284,7 +292,6 @@ export class QwenLogger {
     }
     this.isFlushInProgress = true;
 
-    this.debugLogger.debug('Flushing log events to RUM.');
     if (this.events.size === 0) {
       this.isFlushInProgress = false;
       return {};
@@ -336,7 +343,12 @@ export class QwenLogger {
       this.lastFlushTime = Date.now();
       return {};
     } catch (error) {
-      this.debugLogger.error('RUM flush failed.', error);
+      // Only log network errors if sufficient time has passed to avoid spam
+      const now = Date.now();
+      if (now - this.lastErrorLogTime > ERROR_LOG_INTERVAL_MS) {
+        this.debugLogger.error('RUM flush failed.', error);
+        this.lastErrorLogTime = now;
+      }
 
       // Re-queue failed events for retry
       this.requeueFailedEvents(eventsToSend);
@@ -348,9 +360,7 @@ export class QwenLogger {
       if (this.pendingFlush) {
         this.pendingFlush = false;
         // Fire and forget the pending flush
-        this.flushToRum().catch((error) => {
-          this.debugLogger.debug('Error in pending flush to RUM:', error);
-        });
+        void this.flushToRum();
       }
     }
   }
@@ -359,12 +369,7 @@ export class QwenLogger {
   async logStartSessionEvent(event: StartSessionEvent): Promise<void> {
     // Flush all pending events with the old session ID first.
     // If flush fails, discard the pending events to avoid mixing sessions.
-    await this.flushToRum().catch((error: unknown) => {
-      this.debugLogger.debug(
-        'Error flushing pending events before session start:',
-        error,
-      );
-    });
+    await this.flushToRum();
 
     // Clear any remaining events (discard if flush failed)
     this.events.clear();
@@ -393,9 +398,7 @@ export class QwenLogger {
 
     // Flush start event immediately
     this.enqueueLogEvent(applicationEvent);
-    this.flushToRum().catch((error: unknown) => {
-      this.debugLogger.debug('Error flushing to RUM:', error);
-    });
+    void this.flushToRum();
   }
 
   logEndSessionEvent(_event: EndSessionEvent): void {
@@ -403,9 +406,7 @@ export class QwenLogger {
 
     // Flush immediately on session end.
     this.enqueueLogEvent(applicationEvent);
-    this.flushToRum().catch((error: unknown) => {
-      this.debugLogger.debug('Error flushing to RUM:', error);
-    });
+    void this.flushToRum();
   }
 
   logConversationFinishedEvent(event: ConversationFinishedEvent): void {
@@ -920,9 +921,6 @@ export class QwenLogger {
     const numEventsToRequeue = Math.min(eventsToRetry.length, availableSpace);
 
     if (numEventsToRequeue === 0) {
-      this.debugLogger.debug(
-        `QwenLogger: No events re-queued (queue size: ${this.events.size})`,
-      );
       return;
     }
 

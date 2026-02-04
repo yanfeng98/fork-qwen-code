@@ -400,10 +400,8 @@ describe('QwenLogger', () => {
       // Wait for async operations
       await vi.runAllTimersAsync();
 
-      expect(debugLoggerSpy.debug).toHaveBeenCalledWith(
-        'Error flushing to RUM:',
-        expect.any(Error),
-      );
+      // Errors are now silently ignored to reduce log spam
+      // Only rate-limited error logs are emitted inside flushToRum itself
 
       // Restore original method
       logger.flushToRum = originalFlush;
