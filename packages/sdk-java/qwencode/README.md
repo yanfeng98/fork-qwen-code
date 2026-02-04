@@ -283,10 +283,6 @@ The SDK provides specific exception types for different error scenarios:
 
 ## FAQ / Troubleshooting
 
-### Q: Do I need to install the Qwen CLI separately?
-
-A: No, from v0.1.1, the CLI is bundled with the SDK, so no standalone CLI installation is needed.
-
 ### Q: What Java versions are supported?
 
 A: The SDK requires Java 1.8 or higher.
