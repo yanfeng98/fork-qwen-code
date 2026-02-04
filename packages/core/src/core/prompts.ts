@@ -447,7 +447,7 @@ model: true
 
 <example>
 user: start the server implemented in server.js
-model: [tool_call: ${ToolNames.SHELL} for 'node server.js &' because it must run in the background]
+model: [tool_call: ${ToolNames.SHELL} for 'node server.js &' with is_background: true because it must run in the background]
 </example>
 
 <example>
@@ -471,7 +471,7 @@ Here's the plan:
 
 [tool_call: ${ToolNames.EDIT} for path 'src/auth.py' replacing old content with new content]
 Refactoring complete. Running verification...
-[tool_call: ${ToolNames.SHELL} for 'ruff check src/auth.py && pytest']
+[tool_call: ${ToolNames.SHELL} for 'ruff check src/auth.py && pytest' with is_background: false]
 (After verification passes)
 All checks passed. This is a stable checkpoint.
 Would you like me to write a commit message and commit these changes?
@@ -492,7 +492,7 @@ Now I'll look for existing or related test files to understand current testing c
 (After reviewing existing tests and the file content)
 [tool_call: ${ToolNames.WRITE_FILE} for path '/path/to/someFile.test.ts']
 I've written the tests. Now I'll run the project's test command to verify them.
-[tool_call: ${ToolNames.SHELL} for 'npm run test']
+[tool_call: ${ToolNames.SHELL} for 'npm run test' with is_background: false]
 (After verification passes)
 All checks passed. This is a stable checkpoint.
 </example>
@@ -523,11 +523,14 @@ model: true
 
 <example>
 user: start the server implemented in server.js
-model: 
+model:
 <tool_call>
 <function=${ToolNames.SHELL}>
 <parameter=command>
 node server.js &
+</parameter>
+<parameter=is_background>
+true
 </parameter>
 </function>
 </tool_call>
@@ -595,6 +598,9 @@ Refactoring complete. Running verification...
 <parameter=command>
 ruff check src/auth.py && pytest
 </parameter>
+<parameter=is_background>
+false
+</parameter>
 </function>
 </tool_call>
 (After verification passes)
@@ -640,6 +646,9 @@ I've written the tests. Now I'll run the project's test command to verify them.
 <parameter=command>
 npm run test
 </parameter>
+<parameter=is_background>
+false
+</parameter>
 </function>
 </tool_call>
 (After verification passes)
@@ -679,7 +688,7 @@ model: true
 user: start the server implemented in server.js
 model: 
 <tool_call>
-{"name": "${ToolNames.SHELL}", "arguments": {"command": "node server.js &"}}
+{"name": "${ToolNames.SHELL}", "arguments": {"command": "node server.js &", "is_background": true}}
 </tool_call>
 </example>
 
@@ -713,7 +722,7 @@ Here's the plan:
 </tool_call>
 Refactoring complete. Running verification...
 <tool_call>
-{"name": "${ToolNames.SHELL}", "arguments": {"command": "ruff check src/auth.py && pytest"}}
+{"name": "${ToolNames.SHELL}", "arguments": {"command": "ruff check src/auth.py && pytest", "is_background": false}}
 </tool_call>
 (After verification passes)
 All checks passed. This is a stable checkpoint.
@@ -742,7 +751,7 @@ Now I'll look for existing or related test files to understand current testing c
 </tool_call>
 I've written the tests. Now I'll run the project's test command to verify them.
 <tool_call>
-{"name": "${ToolNames.SHELL}", "arguments": {"command": "npm run test"}}
+{"name": "${ToolNames.SHELL}", "arguments": {"command": "npm run test", "is_background": false}}
 </tool_call>
 (After verification passes)
 All checks passed. This is a stable checkpoint.

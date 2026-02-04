@@ -149,7 +149,7 @@ model: true
 
 <example>
 user: start the server implemented in server.js
-model: [tool_call: run_shell_command for 'node server.js &' because it must run in the background]
+model: [tool_call: run_shell_command for 'node server.js &' with is_background: true because it must run in the background]
 </example>
 
 <example>
@@ -173,7 +173,7 @@ Here's the plan:
 
 [tool_call: edit for path 'src/auth.py' replacing old content with new content]
 Refactoring complete. Running verification...
-[tool_call: run_shell_command for 'ruff check src/auth.py && pytest']
+[tool_call: run_shell_command for 'ruff check src/auth.py && pytest' with is_background: false]
 (After verification passes)
 All checks passed. This is a stable checkpoint.
 Would you like me to write a commit message and commit these changes?
@@ -194,7 +194,7 @@ Now I'll look for existing or related test files to understand current testing c
 (After reviewing existing tests and the file content)
 [tool_call: write_file for path '/path/to/someFile.test.ts']
 I've written the tests. Now I'll run the project's test command to verify them.
-[tool_call: run_shell_command for 'npm run test']
+[tool_call: run_shell_command for 'npm run test' with is_background: false]
 (After verification passes)
 All checks passed. This is a stable checkpoint.
 </example>
@@ -383,7 +383,7 @@ model: true
 
 <example>
 user: start the server implemented in server.js
-model: [tool_call: run_shell_command for 'node server.js &' because it must run in the background]
+model: [tool_call: run_shell_command for 'node server.js &' with is_background: true because it must run in the background]
 </example>
 
 <example>
@@ -407,7 +407,7 @@ Here's the plan:
 
 [tool_call: edit for path 'src/auth.py' replacing old content with new content]
 Refactoring complete. Running verification...
-[tool_call: run_shell_command for 'ruff check src/auth.py && pytest']
+[tool_call: run_shell_command for 'ruff check src/auth.py && pytest' with is_background: false]
 (After verification passes)
 All checks passed. This is a stable checkpoint.
 Would you like me to write a commit message and commit these changes?
@@ -428,7 +428,7 @@ Now I'll look for existing or related test files to understand current testing c
 (After reviewing existing tests and the file content)
 [tool_call: write_file for path '/path/to/someFile.test.ts']
 I've written the tests. Now I'll run the project's test command to verify them.
-[tool_call: run_shell_command for 'npm run test']
+[tool_call: run_shell_command for 'npm run test' with is_background: false]
 (After verification passes)
 All checks passed. This is a stable checkpoint.
 </example>
@@ -597,7 +597,7 @@ model: true
 
 <example>
 user: start the server implemented in server.js
-model: [tool_call: run_shell_command for 'node server.js &' because it must run in the background]
+model: [tool_call: run_shell_command for 'node server.js &' with is_background: true because it must run in the background]
 </example>
 
 <example>
@@ -621,7 +621,7 @@ Here's the plan:
 
 [tool_call: edit for path 'src/auth.py' replacing old content with new content]
 Refactoring complete. Running verification...
-[tool_call: run_shell_command for 'ruff check src/auth.py && pytest']
+[tool_call: run_shell_command for 'ruff check src/auth.py && pytest' with is_background: false]
 (After verification passes)
 All checks passed. This is a stable checkpoint.
 Would you like me to write a commit message and commit these changes?
@@ -642,7 +642,7 @@ Now I'll look for existing or related test files to understand current testing c
 (After reviewing existing tests and the file content)
 [tool_call: write_file for path '/path/to/someFile.test.ts']
 I've written the tests. Now I'll run the project's test command to verify them.
-[tool_call: run_shell_command for 'npm run test']
+[tool_call: run_shell_command for 'npm run test' with is_background: false]
 (After verification passes)
 All checks passed. This is a stable checkpoint.
 </example>
@@ -811,7 +811,7 @@ model: true
 
 <example>
 user: start the server implemented in server.js
-model: [tool_call: run_shell_command for 'node server.js &' because it must run in the background]
+model: [tool_call: run_shell_command for 'node server.js &' with is_background: true because it must run in the background]
 </example>
 
 <example>
@@ -835,7 +835,7 @@ Here's the plan:
 
 [tool_call: edit for path 'src/auth.py' replacing old content with new content]
 Refactoring complete. Running verification...
-[tool_call: run_shell_command for 'ruff check src/auth.py && pytest']
+[tool_call: run_shell_command for 'ruff check src/auth.py && pytest' with is_background: false]
 (After verification passes)
 All checks passed. This is a stable checkpoint.
 Would you like me to write a commit message and commit these changes?
@@ -856,7 +856,7 @@ Now I'll look for existing or related test files to understand current testing c
 (After reviewing existing tests and the file content)
 [tool_call: write_file for path '/path/to/someFile.test.ts']
 I've written the tests. Now I'll run the project's test command to verify them.
-[tool_call: run_shell_command for 'npm run test']
+[tool_call: run_shell_command for 'npm run test' with is_background: false]
 (After verification passes)
 All checks passed. This is a stable checkpoint.
 </example>
@@ -1025,7 +1025,7 @@ model: true
 
 <example>
 user: start the server implemented in server.js
-model: [tool_call: run_shell_command for 'node server.js &' because it must run in the background]
+model: [tool_call: run_shell_command for 'node server.js &' with is_background: true because it must run in the background]
 </example>
 
 <example>
@@ -1049,7 +1049,7 @@ Here's the plan:
 
 [tool_call: edit for path 'src/auth.py' replacing old content with new content]
 Refactoring complete. Running verification...
-[tool_call: run_shell_command for 'ruff check src/auth.py && pytest']
+[tool_call: run_shell_command for 'ruff check src/auth.py && pytest' with is_background: false]
 (After verification passes)
 All checks passed. This is a stable checkpoint.
 Would you like me to write a commit message and commit these changes?
@@ -1070,7 +1070,7 @@ Now I'll look for existing or related test files to understand current testing c
 (After reviewing existing tests and the file content)
 [tool_call: write_file for path '/path/to/someFile.test.ts']
 I've written the tests. Now I'll run the project's test command to verify them.
-[tool_call: run_shell_command for 'npm run test']
+[tool_call: run_shell_command for 'npm run test' with is_background: false]
 (After verification passes)
 All checks passed. This is a stable checkpoint.
 </example>
@@ -1239,7 +1239,7 @@ model: true
 
 <example>
 user: start the server implemented in server.js
-model: [tool_call: run_shell_command for 'node server.js &' because it must run in the background]
+model: [tool_call: run_shell_command for 'node server.js &' with is_background: true because it must run in the background]
 </example>
 
 <example>
@@ -1263,7 +1263,7 @@ Here's the plan:
 
 [tool_call: edit for path 'src/auth.py' replacing old content with new content]
 Refactoring complete. Running verification...
-[tool_call: run_shell_command for 'ruff check src/auth.py && pytest']
+[tool_call: run_shell_command for 'ruff check src/auth.py && pytest' with is_background: false]
 (After verification passes)
 All checks passed. This is a stable checkpoint.
 Would you like me to write a commit message and commit these changes?
@@ -1284,7 +1284,7 @@ Now I'll look for existing or related test files to understand current testing c
 (After reviewing existing tests and the file content)
 [tool_call: write_file for path '/path/to/someFile.test.ts']
 I've written the tests. Now I'll run the project's test command to verify them.
-[tool_call: run_shell_command for 'npm run test']
+[tool_call: run_shell_command for 'npm run test' with is_background: false]
 (After verification passes)
 All checks passed. This is a stable checkpoint.
 </example>
@@ -1453,7 +1453,7 @@ model: true
 
 <example>
 user: start the server implemented in server.js
-model: [tool_call: run_shell_command for 'node server.js &' because it must run in the background]
+model: [tool_call: run_shell_command for 'node server.js &' with is_background: true because it must run in the background]
 </example>
 
 <example>
@@ -1477,7 +1477,7 @@ Here's the plan:
 
 [tool_call: edit for path 'src/auth.py' replacing old content with new content]
 Refactoring complete. Running verification...
-[tool_call: run_shell_command for 'ruff check src/auth.py && pytest']
+[tool_call: run_shell_command for 'ruff check src/auth.py && pytest' with is_background: false]
 (After verification passes)
 All checks passed. This is a stable checkpoint.
 Would you like me to write a commit message and commit these changes?
@@ -1498,7 +1498,7 @@ Now I'll look for existing or related test files to understand current testing c
 (After reviewing existing tests and the file content)
 [tool_call: write_file for path '/path/to/someFile.test.ts']
 I've written the tests. Now I'll run the project's test command to verify them.
-[tool_call: run_shell_command for 'npm run test']
+[tool_call: run_shell_command for 'npm run test' with is_background: false]
 (After verification passes)
 All checks passed. This is a stable checkpoint.
 </example>
@@ -1667,7 +1667,7 @@ model: true
 
 <example>
 user: start the server implemented in server.js
-model: [tool_call: run_shell_command for 'node server.js &' because it must run in the background]
+model: [tool_call: run_shell_command for 'node server.js &' with is_background: true because it must run in the background]
 </example>
 
 <example>
@@ -1691,7 +1691,7 @@ Here's the plan:
 
 [tool_call: edit for path 'src/auth.py' replacing old content with new content]
 Refactoring complete. Running verification...
-[tool_call: run_shell_command for 'ruff check src/auth.py && pytest']
+[tool_call: run_shell_command for 'ruff check src/auth.py && pytest' with is_background: false]
 (After verification passes)
 All checks passed. This is a stable checkpoint.
 Would you like me to write a commit message and commit these changes?
@@ -1712,7 +1712,7 @@ Now I'll look for existing or related test files to understand current testing c
 (After reviewing existing tests and the file content)
 [tool_call: write_file for path '/path/to/someFile.test.ts']
 I've written the tests. Now I'll run the project's test command to verify them.
-[tool_call: run_shell_command for 'npm run test']
+[tool_call: run_shell_command for 'npm run test' with is_background: false]
 (After verification passes)
 All checks passed. This is a stable checkpoint.
 </example>
@@ -1881,7 +1881,7 @@ model: true
 
 <example>
 user: start the server implemented in server.js
-model: [tool_call: run_shell_command for 'node server.js &' because it must run in the background]
+model: [tool_call: run_shell_command for 'node server.js &' with is_background: true because it must run in the background]
 </example>
 
 <example>
@@ -1905,7 +1905,7 @@ Here's the plan:
 
 [tool_call: edit for path 'src/auth.py' replacing old content with new content]
 Refactoring complete. Running verification...
-[tool_call: run_shell_command for 'ruff check src/auth.py && pytest']
+[tool_call: run_shell_command for 'ruff check src/auth.py && pytest' with is_background: false]
 (After verification passes)
 All checks passed. This is a stable checkpoint.
 Would you like me to write a commit message and commit these changes?
@@ -1926,7 +1926,7 @@ Now I'll look for existing or related test files to understand current testing c
 (After reviewing existing tests and the file content)
 [tool_call: write_file for path '/path/to/someFile.test.ts']
 I've written the tests. Now I'll run the project's test command to verify them.
-[tool_call: run_shell_command for 'npm run test']
+[tool_call: run_shell_command for 'npm run test' with is_background: false]
 (After verification passes)
 All checks passed. This is a stable checkpoint.
 </example>
@@ -2097,7 +2097,7 @@ model: true
 user: start the server implemented in server.js
 model: 
 <tool_call>
-{"name": "run_shell_command", "arguments": {"command": "node server.js &"}}
+{"name": "run_shell_command", "arguments": {"command": "node server.js &", "is_background": true}}
 </tool_call>
 </example>
 
@@ -2131,7 +2131,7 @@ Here's the plan:
 </tool_call>
 Refactoring complete. Running verification...
 <tool_call>
-{"name": "run_shell_command", "arguments": {"command": "ruff check src/auth.py && pytest"}}
+{"name": "run_shell_command", "arguments": {"command": "ruff check src/auth.py && pytest", "is_background": false}}
 </tool_call>
 (After verification passes)
 All checks passed. This is a stable checkpoint.
@@ -2160,7 +2160,7 @@ Now I'll look for existing or related test files to understand current testing c
 </tool_call>
 I've written the tests. Now I'll run the project's test command to verify them.
 <tool_call>
-{"name": "run_shell_command", "arguments": {"command": "npm run test"}}
+{"name": "run_shell_command", "arguments": {"command": "npm run test", "is_background": false}}
 </tool_call>
 (After verification passes)
 All checks passed. This is a stable checkpoint.
@@ -2332,11 +2332,14 @@ model: true
 
 <example>
 user: start the server implemented in server.js
-model: 
+model:
 <tool_call>
 <function=run_shell_command>
 <parameter=command>
 node server.js &
+</parameter>
+<parameter=is_background>
+true
 </parameter>
 </function>
 </tool_call>
@@ -2404,6 +2407,9 @@ Refactoring complete. Running verification...
 <parameter=command>
 ruff check src/auth.py && pytest
 </parameter>
+<parameter=is_background>
+false
+</parameter>
 </function>
 </tool_call>
 (After verification passes)
@@ -2448,6 +2454,9 @@ I've written the tests. Now I'll run the project's test command to verify them.
 <function=run_shell_command>
 <parameter=command>
 npm run test
+</parameter>
+<parameter=is_background>
+false
 </parameter>
 </function>
 </tool_call>
@@ -2631,7 +2640,7 @@ model: true
 user: start the server implemented in server.js
 model: 
 <tool_call>
-{"name": "run_shell_command", "arguments": {"command": "node server.js &"}}
+{"name": "run_shell_command", "arguments": {"command": "node server.js &", "is_background": true}}
 </tool_call>
 </example>
 
@@ -2665,7 +2674,7 @@ Here's the plan:
 </tool_call>
 Refactoring complete. Running verification...
 <tool_call>
-{"name": "run_shell_command", "arguments": {"command": "ruff check src/auth.py && pytest"}}
+{"name": "run_shell_command", "arguments": {"command": "ruff check src/auth.py && pytest", "is_background": false}}
 </tool_call>
 (After verification passes)
 All checks passed. This is a stable checkpoint.
@@ -2694,7 +2703,7 @@ Now I'll look for existing or related test files to understand current testing c
 </tool_call>
 I've written the tests. Now I'll run the project's test command to verify them.
 <tool_call>
-{"name": "run_shell_command", "arguments": {"command": "npm run test"}}
+{"name": "run_shell_command", "arguments": {"command": "npm run test", "is_background": false}}
 </tool_call>
 (After verification passes)
 All checks passed. This is a stable checkpoint.
@@ -2866,11 +2875,14 @@ model: true
 
 <example>
 user: start the server implemented in server.js
-model: 
+model:
 <tool_call>
 <function=run_shell_command>
 <parameter=command>
 node server.js &
+</parameter>
+<parameter=is_background>
+true
 </parameter>
 </function>
 </tool_call>
@@ -2938,6 +2950,9 @@ Refactoring complete. Running verification...
 <parameter=command>
 ruff check src/auth.py && pytest
 </parameter>
+<parameter=is_background>
+false
+</parameter>
 </function>
 </tool_call>
 (After verification passes)
@@ -2982,6 +2997,9 @@ I've written the tests. Now I'll run the project's test command to verify them.
 <function=run_shell_command>
 <parameter=command>
 npm run test
+</parameter>
+<parameter=is_background>
+false
 </parameter>
 </function>
 </tool_call>
@@ -3159,7 +3177,7 @@ model: true
 
 <example>
 user: start the server implemented in server.js
-model: [tool_call: run_shell_command for 'node server.js &' because it must run in the background]
+model: [tool_call: run_shell_command for 'node server.js &' with is_background: true because it must run in the background]
 </example>
 
 <example>
@@ -3183,7 +3201,7 @@ Here's the plan:
 
 [tool_call: edit for path 'src/auth.py' replacing old content with new content]
 Refactoring complete. Running verification...
-[tool_call: run_shell_command for 'ruff check src/auth.py && pytest']
+[tool_call: run_shell_command for 'ruff check src/auth.py && pytest' with is_background: false]
 (After verification passes)
 All checks passed. This is a stable checkpoint.
 Would you like me to write a commit message and commit these changes?
@@ -3204,7 +3222,7 @@ Now I'll look for existing or related test files to understand current testing c
 (After reviewing existing tests and the file content)
 [tool_call: write_file for path '/path/to/someFile.test.ts']
 I've written the tests. Now I'll run the project's test command to verify them.
-[tool_call: run_shell_command for 'npm run test']
+[tool_call: run_shell_command for 'npm run test' with is_background: false]
 (After verification passes)
 All checks passed. This is a stable checkpoint.
 </example>
@@ -3373,7 +3391,7 @@ model: true
 
 <example>
 user: start the server implemented in server.js
-model: [tool_call: run_shell_command for 'node server.js &' because it must run in the background]
+model: [tool_call: run_shell_command for 'node server.js &' with is_background: true because it must run in the background]
 </example>
 
 <example>
@@ -3397,7 +3415,7 @@ Here's the plan:
 
 [tool_call: edit for path 'src/auth.py' replacing old content with new content]
 Refactoring complete. Running verification...
-[tool_call: run_shell_command for 'ruff check src/auth.py && pytest']
+[tool_call: run_shell_command for 'ruff check src/auth.py && pytest' with is_background: false]
 (After verification passes)
 All checks passed. This is a stable checkpoint.
 Would you like me to write a commit message and commit these changes?
@@ -3418,7 +3436,7 @@ Now I'll look for existing or related test files to understand current testing c
 (After reviewing existing tests and the file content)
 [tool_call: write_file for path '/path/to/someFile.test.ts']
 I've written the tests. Now I'll run the project's test command to verify them.
-[tool_call: run_shell_command for 'npm run test']
+[tool_call: run_shell_command for 'npm run test' with is_background: false]
 (After verification passes)
 All checks passed. This is a stable checkpoint.
 </example>
