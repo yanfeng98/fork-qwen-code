@@ -26,16 +26,24 @@ import {
 } from '../../utils/schemaConverter.js';
 
 type AnthropicMessageParam = Anthropic.MessageParam;
-type AnthropicToolParam = Anthropic.Tool;
+type AnthropicToolParam = Anthropic.Tool & {
+  cache_control?: { type: 'ephemeral' };
+};
 type AnthropicContentBlockParam = Anthropic.ContentBlockParam;
 
 export class AnthropicContentConverter {
   private model: string;
   private schemaCompliance: SchemaComplianceMode;
+  private disableCacheControl: boolean;
 
-  constructor(model: string, schemaCompliance: SchemaComplianceMode = 'auto') {
+  constructor(
+    model: string,
+    schemaCompliance: SchemaComplianceMode = 'auto',
+    disableCacheControl: boolean = false,
+  ) {
     this.model = model;
     this.schemaCompliance = schemaCompliance;
+    this.disableCacheControl = disableCacheControl;
   }
 
   convertGeminiRequestToAnthropic(request: GenerateContentParameters): {
@@ -50,9 +58,13 @@ export class AnthropicContentConverter {
 
     this.processContents(request.contents, messages);
 
-    // Add cache_control to enable prompt caching
-    const system = this.buildSystemWithCacheControl(systemText);
-    this.addCacheControlToMessages(messages);
+    // Add cache_control to enable prompt caching (if not disabled)
+    const system = this.disableCacheControl
+      ? systemText
+      : this.buildSystemWithCacheControl(systemText);
+    if (!this.disableCacheControl) {
+      this.addCacheControlToMessages(messages);
+    }
 
     return {
       system,
@@ -105,6 +117,15 @@ export class AnthropicContentConverter {
           input_schema: inputSchema as Anthropic.Tool.InputSchema,
         });
       }
+    }
+
+    // Add cache_control to the last tool for prompt caching (if not disabled)
+    if (!this.disableCacheControl && tools.length > 0) {
+      const lastToolIndex = tools.length - 1;
+      tools[lastToolIndex] = {
+        ...tools[lastToolIndex],
+        cache_control: { type: 'ephemeral' },
+      };
     }
 
     return tools;
