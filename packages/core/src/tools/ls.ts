@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { ToolInvocation, ToolResult } from './tools.js';
@@ -15,56 +9,20 @@ import { DEFAULT_FILE_FILTERING_OPTIONS } from '../config/constants.js';
 import { ToolErrorType } from './tool-error.js';
 import { ToolDisplayNames, ToolNames } from './tool-names.js';
 
-/**
- * Parameters for the LS tool
- */
 export interface LSToolParams {
-  /**
-   * The absolute path to the directory to list
-   */
   path: string;
-
-  /**
-   * Array of glob patterns to ignore (optional)
-   */
   ignore?: string[];
-
-  /**
-   * Whether to respect .gitignore and .qwenignore patterns (optional, defaults to true)
-   */
   file_filtering_options?: {
     respect_git_ignore?: boolean;
     respect_qwen_ignore?: boolean;
   };
 }
 
-/**
- * File entry returned by LS tool
- */
 export interface FileEntry {
-  /**
-   * Name of the file or directory
-   */
   name: string;
-
-  /**
-   * Absolute path to the file or directory
-   */
   path: string;
-
-  /**
-   * Whether this entry is a directory
-   */
   isDirectory: boolean;
-
-  /**
-   * Size of the file in bytes (0 for directories)
-   */
   size: number;
-
-  /**
-   * Last modified timestamp
-   */
   modifiedTime: Date;
 }
 
@@ -76,18 +34,11 @@ class LSToolInvocation extends BaseToolInvocation<LSToolParams, ToolResult> {
     super(params);
   }
 
-  /**
-   * Checks if a filename matches any of the ignore patterns
-   * @param filename Filename to check
-   * @param patterns Array of glob patterns to check against
-   * @returns True if the filename should be ignored
-   */
   private shouldIgnore(filename: string, patterns?: string[]): boolean {
     if (!patterns || patterns.length === 0) {
       return false;
     }
     for (const pattern of patterns) {
-      // Convert glob pattern to RegExp
       const regexPattern = pattern
         .replace(/[.+^${}()|[\]\\]/g, '\\$&')
         .replace(/\*/g, '.*')
@@ -250,9 +201,6 @@ class LSToolInvocation extends BaseToolInvocation<LSToolParams, ToolResult> {
   }
 }
 
-/**
- * Implementation of the LS tool logic
- */
 export class LSTool extends BaseDeclarativeTool<LSToolParams, ToolResult> {
   static readonly Name = ToolNames.LS;
 
@@ -300,11 +248,6 @@ export class LSTool extends BaseDeclarativeTool<LSToolParams, ToolResult> {
     );
   }
 
-  /**
-   * Validates the parameters for the tool
-   * @param params Parameters to validate
-   * @returns An error message string if invalid, null otherwise
-   */
   protected override validateToolParamValues(
     params: LSToolParams,
   ): string | null {

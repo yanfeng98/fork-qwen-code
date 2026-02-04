@@ -99,11 +99,6 @@ export class WorkspaceContext {
     }
   }
 
-  /**
-   * Checks if a given path is within any of the workspace directories.
-   * @param pathToCheck The path to validate
-   * @returns True if the path is within the workspace, false otherwise
-   */
   isPathWithinWorkspace(pathToCheck: string): boolean {
     try {
       const fullyResolvedPath = this.fullyResolvedPath(pathToCheck);
@@ -119,11 +114,6 @@ export class WorkspaceContext {
     }
   }
 
-  /**
-   * Fully resolves a path, including symbolic links.
-   * If the path does not exist, it returns the fully resolved path as it would be
-   * if it did exist.
-   */
   private fullyResolvedPath(pathToCheck: string): string {
     try {
       return fs.realpathSync(pathToCheck);
@@ -132,23 +122,14 @@ export class WorkspaceContext {
         isNodeError(e) &&
         e.code === 'ENOENT' &&
         e.path &&
-        // realpathSync does not set e.path correctly for symlinks to
-        // non-existent files.
         !this.isFileSymlink(e.path)
       ) {
-        // If it doesn't exist, e.path contains the fully resolved path.
         return e.path;
       }
       throw e;
     }
   }
 
-  /**
-   * Checks if a path is within a given root directory.
-   * @param pathToCheck The absolute path to check
-   * @param rootDirectory The absolute root directory
-   * @returns True if the path is within the root directory, false otherwise
-   */
   private isPathWithinRoot(
     pathToCheck: string,
     rootDirectory: string,

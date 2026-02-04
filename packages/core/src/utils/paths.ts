@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -179,17 +173,9 @@ export function getProjectHash(projectRoot: string): string {
   return crypto.createHash('sha256').update(projectRoot).digest('hex');
 }
 
-/**
- * Checks if a path is a subpath of another path.
- * @param parentPath The parent path.
- * @param childPath The child path.
- * @returns True if childPath is a subpath of parentPath, false otherwise.
- */
 export function isSubpath(parentPath: string, childPath: string): boolean {
   const isWindows = os.platform() === 'win32';
   const pathModule = isWindows ? path.win32 : path;
-
-  // On Windows, path.relative is case-insensitive. On POSIX, it's case-sensitive.
   const relative = pathModule.relative(parentPath, childPath);
 
   return (

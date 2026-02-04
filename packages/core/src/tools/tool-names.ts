@@ -16,11 +16,6 @@ export const ToolNames = {
   LS: 'list_directory',
 } as const;
 
-/**
- * Tool display name constants to avoid circular dependencies.
- * These constants are used across multiple files and should be kept in sync
- * with the actual tool display names.
- */
 export const ToolDisplayNames = {
   EDIT: 'Edit',
   WRITE_FILE: 'WriteFile',

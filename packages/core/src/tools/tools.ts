@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import type { FunctionDeclaration, Part, PartListUnion } from '@google/genai';
 import { ToolErrorType } from './tool-error.js';
 import type { DiffUpdateResult } from '../ide/ide-client.js';
@@ -12,36 +6,15 @@ import { SchemaValidator } from '../utils/schemaValidator.js';
 import { type SubagentStatsSummary } from '../subagents/subagent-statistics.js';
 import type { AnsiOutput } from '../utils/terminalSerializer.js';
 
-/**
- * Represents a validated and ready-to-execute tool call.
- * An instance of this is created by a `ToolBuilder`.
- */
 export interface ToolInvocation<
   TParams extends object,
   TResult extends ToolResult,
 > {
-  /**
-   * The validated parameters for this specific invocation.
-   */
   params: TParams;
 
-  /**
-   * Gets a pre-execution description of the tool operation.
-   *
-   * @returns A markdown string describing what the tool will do.
-   */
   getDescription(): string;
-
-  /**
-   * Determines what file system paths the tool will affect.
-   * @returns A list of such paths.
-   */
   toolLocations(): ToolLocation[];
 
-  /**
-   * Determines if the tool should prompt for confirmation before execution.
-   * @returns Confirmation details or false if no confirmation is needed.
-   */
   shouldConfirmExecute(
     abortSignal: AbortSignal,
   ): Promise<ToolCallConfirmationDetails | false>;
@@ -53,9 +26,6 @@ export interface ToolInvocation<
   ): Promise<TResult>;
 }
 
-/**
- * A convenience base class for ToolInvocation.
- */
 export abstract class BaseToolInvocation<
   TParams extends object,
   TResult extends ToolResult,
@@ -87,60 +57,21 @@ export abstract class BaseToolInvocation<
  */
 export type AnyToolInvocation = ToolInvocation<object, ToolResult>;
 
-/**
- * Interface for a tool builder that validates parameters and creates invocations.
- */
 export interface ToolBuilder<
   TParams extends object,
   TResult extends ToolResult,
 > {
-  /**
-   * The internal name of the tool (used for API calls).
-   */
   name: string;
-
-  /**
-   * The user-friendly display name of the tool.
-   */
   displayName: string;
-
-  /**
-   * Description of what the tool does.
-   */
   description: string;
-
-  /**
-   * The kind of tool for categorization and permissions
-   */
   kind: Kind;
-
-  /**
-   * Function declaration schema from @google/genai.
-   */
   schema: FunctionDeclaration;
-
-  /**
-   * Whether the tool's output should be rendered as markdown.
-   */
   isOutputMarkdown: boolean;
-
-  /**
-   * Whether the tool supports live (streaming) output.
-   */
   canUpdateOutput: boolean;
 
-  /**
-   * Validates raw parameters and builds a ready-to-execute invocation.
-   * @param params The raw, untrusted parameters from the model.
-   * @returns A valid `ToolInvocation` if successful. Throws an error if validation fails.
-   */
   build(params: TParams): ToolInvocation<TParams, TResult>;
 }
 
-/**
- * New base class for tools that separates validation from execution.
- * New tools should extend this class.
- */
 export abstract class DeclarativeTool<
   TParams extends object,
   TResult extends ToolResult,
