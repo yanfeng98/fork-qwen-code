@@ -411,6 +411,11 @@ export function detectCommandSubstitution(command: string): boolean {
     let i = startIndex;
 
     for (const heredoc of pending) {
+      // Track `$\<newline>` line continuations in unquoted heredocs, since
+      // bash ignores `\<newline>` during heredoc expansions and this can join
+      // `$` and `(` across lines to form `$(`.
+      let pendingDollarLineContinuation = false;
+
       while (i <= command.length) {
         const lineStart = i;
         while (
@@ -437,17 +442,42 @@ export function detectCommandSubstitution(command: string): boolean {
         }
 
         const rawLine = command.slice(lineStart, lineEnd);
-        const compareLine = heredoc.stripLeadingTabs
+        const effectiveLine = heredoc.stripLeadingTabs
           ? rawLine.replace(/^\t+/, '')
           : rawLine;
 
-        if (compareLine === heredoc.delimiter) {
+        if (effectiveLine === heredoc.delimiter) {
           i = lineEnd + newlineLength;
           break;
         }
 
-        if (!heredoc.isQuotedDelimiter && lineHasCommandSubstitution(rawLine)) {
-          return { nextIndex: i, hasSubstitution: true };
+        if (!heredoc.isQuotedDelimiter) {
+          if (pendingDollarLineContinuation && effectiveLine.startsWith('(')) {
+            return { nextIndex: i, hasSubstitution: true };
+          }
+
+          if (lineHasCommandSubstitution(effectiveLine)) {
+            return { nextIndex: i, hasSubstitution: true };
+          }
+
+          pendingDollarLineContinuation = false;
+          if (
+            newlineLength > 0 &&
+            rawLine.length >= 2 &&
+            rawLine.endsWith('\\') &&
+            rawLine[rawLine.length - 2] === '$'
+          ) {
+            let backslashCount = 0;
+            for (
+              let j = rawLine.length - 3;
+              j >= 0 && rawLine[j] === '\\';
+              j--
+            ) {
+              backslashCount++;
+            }
+            const isEscapedDollar = backslashCount % 2 === 1;
+            pendingDollarLineContinuation = !isEscapedDollar;
+          }
         }
 
         // Advance to the next line (or end).

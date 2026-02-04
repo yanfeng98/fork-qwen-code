@@ -228,6 +228,31 @@ describe('isCommandAllowed', () => {
         const result = isCommandAllowed(cmd, config);
         expect(result.allowed).toBe(true);
       });
+
+      it('should block command substitution split by line continuation in an unquoted heredoc body', () => {
+        const cmd = [
+          'cat <<EOF > user_session.md',
+          '$\\',
+          '(rm -rf /)',
+          'EOF',
+        ].join('\n');
+
+        const result = isCommandAllowed(cmd, config);
+        expect(result.allowed).toBe(false);
+        expect(result.reason).toContain('Command substitution');
+      });
+
+      it('should allow escaped command substitution split by line continuation in an unquoted heredoc body', () => {
+        const cmd = [
+          'cat <<EOF > user_session.md',
+          '\\$\\',
+          '(rm -rf /)',
+          'EOF',
+        ].join('\n');
+
+        const result = isCommandAllowed(cmd, config);
+        expect(result.allowed).toBe(true);
+      });
     });
 
     describe('comments', () => {
