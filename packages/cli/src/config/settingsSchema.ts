@@ -629,7 +629,8 @@ const SETTINGS_SCHEMA = {
             category: 'Generation Configuration',
             requiresRestart: false,
             default: false,
-            description: 'Disable cache control for DashScope providers.',
+            description:
+              'Disable cache control for Anthropic and DashScope providers.',
             parentKey: 'generationConfig',
             showInDialog: false,
           },
