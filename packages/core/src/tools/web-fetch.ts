@@ -154,7 +154,11 @@ ${textContent}
   override async shouldConfirmExecute(): Promise<
     ToolCallConfirmationDetails | false
   > {
-    if (this.config.getApprovalMode() === ApprovalMode.AUTO_EDIT) {
+    // Auto-execute in AUTO_EDIT mode and PLAN mode (read-only tool)
+    if (
+      this.config.getApprovalMode() === ApprovalMode.AUTO_EDIT ||
+      this.config.getApprovalMode() === ApprovalMode.PLAN
+    ) {
       return false;
     }
 

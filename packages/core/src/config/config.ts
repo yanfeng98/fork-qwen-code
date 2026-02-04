@@ -36,6 +36,8 @@ import { FileDiscoveryService } from '../services/fileDiscoveryService.js';
 import {
   type FileSystemService,
   StandardFileSystemService,
+  type FileEncodingType,
+  FileEncoding,
 } from '../services/fileSystemService.js';
 import { GitService } from '../services/gitService.js';
 
@@ -355,6 +357,7 @@ export interface ConfigParameters {
   chatCompression?: ChatCompressionSettings;
   interactive?: boolean;
   trustedFolder?: boolean;
+  defaultFileEncoding?: FileEncodingType;
   useRipgrep?: boolean;
   useBuiltinRipgrep?: boolean;
   shouldUseNodePtyShell?: boolean;
@@ -518,6 +521,7 @@ export class Config {
   private readonly eventEmitter?: EventEmitter;
   private readonly useSmartEdit: boolean;
   private readonly channel: string | undefined;
+  private readonly defaultFileEncoding: FileEncodingType;
 
   constructor(params: ConfigParameters) {
     this.sessionId = params.sessionId ?? randomUUID();
@@ -633,6 +637,7 @@ export class Config {
     this.enableToolOutputTruncation = params.enableToolOutputTruncation ?? true;
     this.useSmartEdit = params.useSmartEdit ?? false;
     this.channel = params.channel;
+    this.defaultFileEncoding = params.defaultFileEncoding ?? FileEncoding.UTF8;
     this.storage = new Storage(this.targetDir);
     this.vlmSwitchMode = params.vlmSwitchMode;
     this.inputFormat = params.inputFormat ?? InputFormat.TEXT;
@@ -823,13 +828,6 @@ export class Config {
 
   getDebugLogger(): DebugLogger {
     return this.debugLogger;
-  }
-
-  /**
-   * Releases resources owned by the config instance.
-   */
-  async shutdown(): Promise<void> {
-    this.skillManager?.stopWatching();
   }
 
   /**
@@ -1038,6 +1036,28 @@ export class Config {
 
   getToolRegistry(): ToolRegistry {
     return this.toolRegistry;
+  }
+
+  /**
+   * Shuts down the Config and releases all resources.
+   * This method is idempotent and safe to call multiple times.
+   * It handles the case where initialization was not completed.
+   */
+  async shutdown(): Promise<void> {
+    if (!this.initialized) {
+      // Nothing to clean up if not initialized
+      return;
+    }
+    try {
+      this.skillManager?.stopWatching();
+
+      if (this.toolRegistry) {
+        await this.toolRegistry.stop();
+      }
+    } catch (error) {
+      // Log but don't throw - cleanup should be best-effort
+      this.debugLogger.error('Error during Config shutdown:', error);
+    }
   }
 
   getPromptRegistry(): PromptRegistry {
@@ -1443,6 +1463,14 @@ export class Config {
 
   getChannel(): string | undefined {
     return this.channel;
+  }
+
+  /**
+   * Get the default file encoding for new files.
+   * @returns FileEncodingType
+   */
+  getDefaultFileEncoding(): FileEncodingType {
+    return this.defaultFileEncoding;
   }
 
   /**
