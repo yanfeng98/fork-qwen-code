@@ -62,22 +62,36 @@ We provide platform-specific installation scripts:
 
 #### Features:
 
-- Checks for existing Node.js installation and version
-- Installs Node.js 20+ if needed using NVM for Windows
+- Checks for existing Node.js installation and version (requires version 18+)
+- Automatically downloads and installs Node.js 24 LTS if not present or version is too low
 - Installs Qwen Code globally with source information
 - Stores the source information in `%USERPROFILE%\.qwen\source.json`
 
+#### Prerequisites:
+
+- **PowerShell (Administrator)**: The script must be run in PowerShell with Administrator privileges
+- Internet connection for downloading Node.js and Qwen Code
+
 #### Usage:
 
-```cmd
-REM Install with a specific source using --source parameter
-install-qwen-with-source.bat --source github
+> ⚠️ **Important**: You must run PowerShell as Administrator to install Node.js and global npm packages.
 
-REM Install with short parameter
-install-qwen-with-source.bat -s internal
+**Step 1**: Open PowerShell as Administrator
 
-REM Use default source (unknown)
-install-qwen-with-source.bat
+- Right-click on PowerShell and select "Run as Administrator"
+- Or press `Win + X` and select "Windows PowerShell (Admin)"
+
+**Step 2**: Navigate to the script directory and run:
+
+```powershell
+# Install with a specific source using --source parameter
+./install-qwen-with-source.bat --source github
+
+# Install with short parameter
+./install-qwen-with-source.bat -s internal
+
+# Use default source (unknown)
+./install-qwen-with-source.bat
 ```
 
 #### Supported Source Values:
@@ -90,14 +104,16 @@ install-qwen-with-source.bat
 #### How it Works:
 
 1. The script accepts a `--source` or `-s` parameter to specify where Qwen Code is being installed from
-2. It installs Node.js if needed
-3. It installs Qwen Code globally
-4. It creates `%USERPROFILE%\.qwen\source.json` with the specified source information
+2. It checks if Node.js is already installed and if the version is 18 or higher
+3. If Node.js is not installed or version is too low, it automatically downloads and installs Node.js 24 LTS
+4. It installs Qwen Code globally using npm
+5. It creates `%USERPROFILE%\.qwen\source.json` with the specified source information
 
-#### Prerequisites:
+#### Why Administrator Privileges are Required:
 
-- Windows Command Prompt (cmd.exe)
-- NVM for Windows (if Node.js is not installed)
+- Installing Node.js requires writing to `C:\Program Files\nodejs`
+- Installing global npm packages requires elevated permissions
+- Modifying system PATH environment variables requires Administrator access
 
 ## Installation Source Feature
 
@@ -188,17 +204,14 @@ chmod +x install-qwen-with-source.sh
 bash install-qwen-with-source.sh --source github
 ```
 
-**Windows:**
+**Windows (PowerShell as Administrator):**
 
-```cmd
+```powershell
 # Run the script with --source parameter
-install-qwen-with-source.bat --source github
+./install-qwen-with-source.bat --source github
 
 # Or with short parameter
-install-qwen-with-source.bat -s github
-
-# Or from PowerShell
-.\install-qwen-with-source.bat --source github
+./install-qwen-with-source.bat -s github
 ```
 
 ### Node.js Installation Issues
@@ -218,7 +231,7 @@ install-qwen-with-source.bat -s github
 You may need administrative privileges for global npm installation:
 
 - **Linux/macOS**: Use `sudo` with npm
-- **Windows**: Run PowerShell as Administrator
+- **Windows**: Run PowerShell as Administrator (required for Node.js installation and global npm packages)
 
 ## Notes
 

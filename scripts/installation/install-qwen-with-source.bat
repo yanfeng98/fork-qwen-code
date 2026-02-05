@@ -41,33 +41,67 @@ echo.
 echo INFO: Installation source: %SOURCE%
 echo.
 
-REM Function to check if a command exists
+REM Check if Node.js is already installed
 call :CheckCommandExists node
-if %ERRORLEVEL% EQU 0 (
+if !ERRORLEVEL! EQU 0 (
     for /f "delims=" %%i in ('node --version') do set "NODE_VERSION=%%i"
-    echo INFO: Node.js is already installed: %NODE_VERSION%
+    echo INFO: Node.js is already installed: !NODE_VERSION!
     
     REM Extract major version number
-    set "MAJOR_VERSION=%NODE_VERSION:v=%"
-    for /f "tokens=1 delims=." %%a in ("%MAJOR_VERSION%") do (
+    set "MAJOR_VERSION=!NODE_VERSION:v=!"
+    for /f "tokens=1 delims=." %%a in ("!MAJOR_VERSION!") do (
         set "MAJOR_VERSION=%%a"
     )
     
-    if !MAJOR_VERSION! GEQ 20 (
-        echo INFO: Node.js version is sufficient.
+    if !MAJOR_VERSION! GEQ 18 (
+        echo INFO: Node.js version !NODE_VERSION! is sufficient. Skipping Node.js installation.
+        goto :InstallQwenCode
     ) else (
-        echo INFO: Node.js version is too low. Installing Node.js 20+...
+        echo INFO: Node.js version !NODE_VERSION! is too low. Need version 18 or higher.
+        echo INFO: Installing Node.js 18+
         call :InstallNodeJSViaNVM
+        if !ERRORLEVEL! NEQ 0 (
+            echo ERROR: Failed to install Node.js. Cannot continue with Qwen Code installation.
+            exit /b 1
+        )
     )
 ) else (
-    echo INFO: Node.js not found. Installing Node.js 20+...
+    echo INFO: Node.js not found. Installing Node.js 18+
     call :InstallNodeJSViaNVM
+    if !ERRORLEVEL! NEQ 0 (
+        echo ERROR: Failed to install Node.js. Cannot continue with Qwen Code installation.
+        exit /b 1
+    )
+)
+
+:InstallQwenCode
+
+REM Verify npm is available before installing Qwen Code
+REM Always use full path to npm to avoid local node_modules conflicts
+set "NODEJS_PATH=C:\Program Files\nodejs"
+set "NODEJS_PATH_X86=C:\Program Files (x86)\nodejs"
+
+if exist "!NODEJS_PATH!\npm.cmd" (
+    echo INFO: Using npm from !NODEJS_PATH!
+    set "NPM_CMD=!NODEJS_PATH!\npm.cmd"
+) else if exist "!NODEJS_PATH_X86!\npm.cmd" (
+    echo INFO: Using npm from !NODEJS_PATH_X86!
+    set "NPM_CMD=!NODEJS_PATH_X86!\npm.cmd"
+) else (
+    call :CheckCommandExists npm
+    if !ERRORLEVEL! NEQ 0 (
+        echo ERROR: npm command not found. Node.js installation may have failed.
+        echo INFO: Please restart your command prompt and try again.
+        echo INFO: If the problem persists, manually install Node.js from: https://nodejs.org/
+        exit /b 1
+    )
+    set "NPM_CMD=npm"
 )
 
 REM Install Qwen Code with source information
 echo INFO: Installing Qwen Code with source: %SOURCE%
-echo INFO: Running: npm install -g @qwen-code/qwen-code
-call npm install -g @qwen-code/qwen-code
+echo INFO: Running: %NPM_CMD% install -g @qwen-code/qwen-code
+call "%NPM_CMD%" install -g @qwen-code/qwen-code
 
 if %ERRORLEVEL% EQU 0 (
     echo SUCCESS: Qwen Code installed successfully!
@@ -105,9 +139,6 @@ echo ===========================================
 echo SUCCESS: Installation completed!
 echo The source information is stored in %USERPROFILE%\.qwen\source.json
 echo.
-echo To verify the installation:
-echo   qwen --version
-echo   type %USERPROFILE%\.qwen\source.json
 echo ===========================================
 
 endlocal
@@ -123,28 +154,237 @@ exit /b %ERRORLEVEL%
 
 REM ============================================================
 REM Function: InstallNodeJSViaNVM
-REM Description: Install Node.js via nvm-windows
+REM Description: Install Node.js via nvm-windows or direct download
 REM ============================================================
 :InstallNodeJSViaNVM
-echo INFO: Installing Node Version Manager (NVM) for Windows...
+echo INFO: Installing Node.js
 
 REM Check if nvm is already installed
 call :CheckCommandExists nvm
-if %ERRORLEVEL% EQU 0 (
-    echo INFO: NVM is already installed.
+if !ERRORLEVEL! EQU 0 (
+    echo INFO: NVM is already installed. Using NVM to install Node.js 24
+    call nvm install 24
+    call nvm use 24
+    
+    for /f "delims=" %%i in ('node --version') do set "NODE_VERSION=%%i"
+    echo INFO: Node.js %NODE_VERSION% installed and activated via NVM.
+    exit /b 0
 ) else (
-    echo INFO: Please install NVM for Windows manually from:
-    echo https://github.com/coreybutler/nvm-windows/releases
-    echo.
-    echo After installing NVM, run this script again.
+    echo INFO: NVM not found. Installing Node.js directly...
+    call :InstallNodeJSDirectly
+    exit /b !ERRORLEVEL!
+)
+
+REM ============================================================
+REM Function: InstallNodeJSDirectly
+REM Description: Download and install Node.js directly from official website
+REM ============================================================
+:InstallNodeJSDirectly
+echo INFO: Downloading Node.js LTS (24.x) from official website
+
+REM Create temp directory for download
+set "TEMP_DIR=%TEMP%\qwen-nodejs-install"
+if not exist "%TEMP_DIR%" mkdir "%TEMP_DIR%"
+
+REM Determine architecture
+set "ARCH=x64"
+if "%PROCESSOR_ARCHITECTURE%"=="x86" set "ARCH=x86"
+if "%PROCESSOR_ARCHITECTURE%"=="AMD64" set "ARCH=x64"
+if defined PROCESSOR_ARCHITEW6432 set "ARCH=x64"
+
+REM Set Node.js download URL (LTS version 24.x)
+set "NODE_VERSION=24.13.0"
+set "NODE_URL=https://nodejs.org/dist/v!NODE_VERSION!/node-v!NODE_VERSION!-!ARCH!.msi"
+set "NODE_INSTALLER=%TEMP_DIR%\nodejs-installer.msi"
+
+echo INFO: Downloading from: !NODE_URL!
+echo INFO: Architecture: !ARCH!
+
+REM Download Node.js installer using PowerShell
+powershell -Command "try { Invoke-WebRequest -Uri '!NODE_URL!' -OutFile '!NODE_INSTALLER!' -UseBasicParsing; Write-Host 'Download completed successfully.' } catch { Write-Host 'Download failed:' $_.Exception.Message; exit 1 }"
+
+if !ERRORLEVEL! NEQ 0 (
+    echo ERROR: Failed to download Node.js installer from official source.
+    echo INFO: Trying alternative installation method...
+    call :TryAlternativeInstall
+    if !ERRORLEVEL! NEQ 0 (
+        echo ERROR: All installation methods failed.
+        echo INFO: Please manually download and install Node.js from: https://nodejs.org/
+        echo INFO: After manual installation, restart your command prompt and run this script again.
+        exit /b 1
+    )
+    exit /b 0
+)
+
+if not exist "!NODE_INSTALLER!" (
+    echo ERROR: Node.js installer not found after download.
     exit /b 1
 )
 
-REM Install and use Node.js 20
-echo INFO: Installing Node.js 20...
-call nvm install 20
-call nvm use 20
+echo INFO: Installing Node.js silently
+REM Install Node.js silently
+msiexec /i "!NODE_INSTALLER!" /quiet /norestart ADDLOCAL=ALL
 
-for /f "delims=" %%i in ('node --version') do set "NODE_VERSION=%%i"
-echo INFO: Node.js %NODE_VERSION% installed and activated via NVM.
+if !ERRORLEVEL! NEQ 0 (
+    echo ERROR: Failed to install Node.js.
+    echo INFO: You may need to run this script as Administrator.
+    echo INFO: Or manually install Node.js from: https://nodejs.org/
+    exit /b 1
+)
+
+echo INFO: Node.js installation completed.
+
+REM Clean up installer
+del "!NODE_INSTALLER!" 2>nul
+rmdir "!TEMP_DIR!" 2>nul
+
+REM Refresh environment variables
+echo INFO: Refreshing environment variables
+call :RefreshEnvVars
+
+REM Verify installation and return success
+set "NODEJS_INSTALL_PATH=C:\Program Files\nodejs"
+if exist "!NODEJS_INSTALL_PATH!\node.exe" (
+    for /f "delims=" %%i in ('"!NODEJS_INSTALL_PATH!\node.exe" --version') do set "NODE_VERSION=%%i"
+    echo SUCCESS: Node.js !NODE_VERSION! installed successfully!
+    exit /b 0
+)
+
+set "NODEJS_INSTALL_PATH_X86=C:\Program Files (x86)\nodejs"
+if exist "!NODEJS_INSTALL_PATH_X86!\node.exe" (
+    for /f "delims=" %%i in ('"!NODEJS_INSTALL_PATH_X86!\node.exe" --version') do set "NODE_VERSION=%%i"
+    echo SUCCESS: Node.js !NODE_VERSION! installed successfully!
+    exit /b 0
+)
+
+call :CheckCommandExists node
+if !ERRORLEVEL! EQU 0 (
+    for /f "delims=" %%i in ('node --version') do set "NODE_VERSION=%%i"
+    echo SUCCESS: Node.js !NODE_VERSION! installed successfully!
+    exit /b 0
+) else (
+    echo WARNING: Node.js installed but not found in PATH.
+    echo INFO: Trying to use Node.js from default installation path
+    
+    REM Try to use Node.js directly from installation path
+    set "NODE_PATH=C:\Program Files\nodejs"
+    if exist "%NODE_PATH%\node.exe" (
+        echo INFO: Found Node.js at %NODE_PATH%
+        REM Update PATH for current session
+        set "PATH=%PATH%;%NODE_PATH%"
+        
+        REM Test if node works now
+        "%NODE_PATH%\node.exe" --version >nul 2>&1
+        if !ERRORLEVEL! EQU 0 (
+            for /f "delims=" %%i in ('"%NODE_PATH%\node.exe" --version') do set "NODE_VERSION=%%i"
+            echo SUCCESS: Node.js %NODE_VERSION% is working from %NODE_PATH%
+            exit /b 0
+        )
+    )
+    
+    REM Try x86 path
+    set "NODE_PATH_X86=C:\Program Files (x86)\nodejs"
+    if exist "%NODE_PATH_X86%\node.exe" (
+        echo INFO: Found Node.js at %NODE_PATH_X86%
+        REM Update PATH for current session
+        set "PATH=%PATH%;%NODE_PATH_X86%"
+        
+        REM Test if node works now
+        "%NODE_PATH_X86%\node.exe" --version >nul 2>&1
+        if !ERRORLEVEL! EQU 0 (
+            for /f "delims=" %%i in ('"%NODE_PATH_X86%\node.exe" --version') do set "NODE_VERSION=%%i"
+            echo SUCCESS: Node.js %NODE_VERSION% is working from %NODE_PATH_X86%
+            exit /b 0
+        )
+    )
+    
+    echo ERROR: Node.js installation completed but cannot be executed
+    exit /b 1
+)
+
 exit /b 0
+
+REM ============================================================
+REM Function: RefreshEnvVars
+REM Description: Refresh environment variables without restarting
+REM ============================================================
+:RefreshEnvVars
+REM Add Node.js to PATH if not already there
+set "NODEJS_DIR=C:\Program Files\nodejs"
+if exist "!NODEJS_DIR!\node.exe" (
+    echo INFO: Found Node.js at !NODEJS_DIR!
+    set "PATH=!PATH!;!NODEJS_DIR!"
+)
+
+REM Try alternative path for x86 systems
+set "NODEJS_DIR_X86=C:\Program Files (x86)\nodejs"
+if exist "!NODEJS_DIR_X86!\node.exe" (
+    echo INFO: Found Node.js at !NODEJS_DIR_X86!
+    set "PATH=!PATH!;!NODEJS_DIR_X86!"
+)
+
+exit /b 0
+
+REM ============================================================
+REM Function: TryAlternativeInstall
+REM Description: Try alternative Node.js installation methods
+REM ============================================================
+:TryAlternativeInstall
+echo INFO: Trying alternative Node.js installation methods
+
+REM Try with different Node.js versions
+call :TryNodeVersion 24.13.0
+if !ERRORLEVEL! EQU 0 exit /b 0
+
+call :TryNodeVersion 24.12.0
+if !ERRORLEVEL! EQU 0 exit /b 0
+
+call :TryNodeVersion 20.20.0
+if !ERRORLEVEL! EQU 0 exit /b 0
+
+REM Try Chocolatey if available
+call :CheckCommandExists choco
+if %ERRORLEVEL% EQU 0 (
+    echo INFO: Chocolatey found. Trying to install Node.js via Chocolatey
+    choco install nodejs-lts -y
+    if %ERRORLEVEL% EQU 0 (
+        echo SUCCESS: Node.js installed successfully via Chocolatey!
+        call :RefreshEnvVars
+        exit /b 0
+    ) else (
+        echo WARNING: Chocolatey installation failed.
+    )
+)
+
+echo ERROR: All alternative installation methods failed.
+exit /b 1
+
+REM ============================================================
+REM Function: TryNodeVersion
+REM Description: Try to download and install a specific Node.js version
+REM ============================================================
+:TryNodeVersion
+set "VERSION=%~1"
+echo INFO: Trying Node.js version %VERSION%
+set "ALT_URL=https://nodejs.org/dist/v%VERSION%/node-v%VERSION%-!ARCH!.msi"
+
+powershell -Command "try { Invoke-WebRequest -Uri '%ALT_URL%' -OutFile '%ALT_INSTALLER%' -UseBasicParsing; Write-Host 'Download completed successfully.' } catch { Write-Host 'Download failed for version %VERSION%'; exit 1 }"
+
+if !ERRORLEVEL! EQU 0 (
+    if exist "%ALT_INSTALLER%" (
+        echo INFO: Successfully downloaded Node.js %VERSION%. Installing
+        msiexec /i "%ALT_INSTALLER%" /quiet /norestart ADDLOCAL=ALL
+        
+        if !ERRORLEVEL! EQU 0 (
+            echo SUCCESS: Node.js %VERSION% installed successfully via alternative method!
+            del "%ALT_INSTALLER%" 2>nul
+            call :RefreshEnvVars
+            exit /b 0
+        ) else (
+            echo WARNING: Failed to install Node.js %VERSION%
+            del "%ALT_INSTALLER%" 2>nul
+        )
+    )
+)
+
+exit /b 1
