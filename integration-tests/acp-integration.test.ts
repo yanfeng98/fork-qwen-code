@@ -401,11 +401,14 @@ function setupAcpTest(
       expect(setModeResult3).toBeDefined();
       expect(setModeResult3.modeId).toBe('default');
 
-      // Test 7: Set model using first available model
-      const firstModel = newSession.models.availableModels[0];
+      // Test 7: Set model using openai model instead of first available model (index=0) which could be qwen-oauth requiring login
+      const openaiModel = newSession.models.availableModels.find((model) =>
+        model.modelId.includes('openai'),
+      );
+      expect(openaiModel).toBeDefined();
       const setModelResult = (await sendRequest('session/set_model', {
         sessionId: newSession.sessionId,
-        modelId: firstModel.modelId,
+        modelId: openaiModel!.modelId,
       })) as { modelId: string };
       expect(setModelResult).toBeDefined();
       expect(setModelResult.modelId).toBeTruthy();
@@ -433,10 +436,24 @@ function setupAcpTest(
         },
       });
 
+      // Create a new session first
+      const newSession = (await sendRequest('session/new', {
+        cwd: rig.testDir!,
+        mcpServers: [],
+      })) as {
+        sessionId: string;
+        models: {
+          availableModels: Array<{ modelId: string }>;
+        };
+      };
+
+      // Attempt to set the first model (which might be qwen-oauth requiring login) without authenticating
+      // This should trigger an auth error with authMethods in the response
+      const firstModel = newSession.models.availableModels[0];
       await expect(
-        sendRequest('session/new', {
-          cwd: rig.testDir!,
-          mcpServers: [],
+        sendRequest('session/set_model', {
+          sessionId: newSession.sessionId,
+          modelId: firstModel.modelId,
         }),
       ).rejects.toMatchObject({
         response: {
