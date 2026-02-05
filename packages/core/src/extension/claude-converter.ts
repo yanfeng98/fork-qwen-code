@@ -699,6 +699,7 @@ async function resolvePluginSource(
       const installMetadata: ExtensionInstallMetadata = {
         source,
         type: 'git',
+        originSource: 'Claude',
       };
       try {
         await downloadFromGitHubRelease(installMetadata, pluginDir);

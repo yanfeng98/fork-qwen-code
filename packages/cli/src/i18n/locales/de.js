@@ -425,6 +425,8 @@ export default {
     'Diese Erweiterung wird folgende Unteragenten installieren:',
   'Installation cancelled for "{{name}}".':
     'Installation von "{{name}}" abgebrochen.',
+  'You are installing an extension from {{originSource}}. Some features may not work perfectly with Qwen Code.':
+    'Sie installieren eine Erweiterung von {{originSource}}. Einige Funktionen funktionieren möglicherweise nicht perfekt mit Qwen Code.',
   '--ref and --auto-update are not applicable for marketplace extensions.':
     '--ref und --auto-update sind nicht anwendbar für Marketplace-Erweiterungen.',
   'Extension "{{name}}" installed successfully and enabled.':

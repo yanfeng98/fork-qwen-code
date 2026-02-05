@@ -439,6 +439,8 @@ export default {
     'This extension will install the following subagents:',
   'Installation cancelled for "{{name}}".':
     'Installation cancelled for "{{name}}".',
+  'You are installing an extension from {{originSource}}. Some features may not work perfectly with Qwen Code.':
+    'You are installing an extension from {{originSource}}. Some features may not work perfectly with Qwen Code.',
   '--ref and --auto-update are not applicable for marketplace extensions.':
     '--ref and --auto-update are not applicable for marketplace extensions.',
   'Extension "{{name}}" installed successfully and enabled.':
