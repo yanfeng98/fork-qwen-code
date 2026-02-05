@@ -25,6 +25,7 @@ export type TransportOptions = {
   allowedTools?: string[];
   authType?: string;
   includePartialMessages?: boolean;
+  resume?: string;
 };
 
 type ToolInput = Record<string, unknown>;
@@ -401,6 +402,13 @@ export interface QueryOptions {
    * @default false
    */
   includePartialMessages?: boolean;
+
+  /**
+   * Resume a previous session by providing its session ID.
+   * This is equivalent to using the `--resume` flag in the Qwen CLI.
+   * @example '123e4567-e89b-12d3-a456-426614174000'
+   */
+  resume?: string;
 
   /**
    * Timeout configuration for various SDK operations.
