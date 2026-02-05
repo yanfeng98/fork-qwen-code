@@ -125,7 +125,33 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
   const [pendingPastes, setPendingPastes] = useState<Map<string, string>>(
     new Map(),
   );
-  const largePasteCounters = useRef<Map<number, number>>(new Map());
+  // Track active placeholder IDs for each charCount to enable reuse
+  const activePlaceholderIds = useRef<Map<number, Set<number>>>(new Map());
+
+  // Parse placeholder to extract charCount and ID
+  const parsePlaceholder = useCallback(
+    (placeholder: string): { charCount: number; id: number } | null => {
+      const match = placeholder.match(
+        /^\[Pasted Content (\d+) chars\](?: #(\d+))?$/,
+      );
+      if (!match) return null;
+      const charCount = parseInt(match[1], 10);
+      const id = match[2] ? parseInt(match[2], 10) : 1;
+      return { charCount, id };
+    },
+    [],
+  );
+
+  // Free a placeholder ID when deleted so it can be reused
+  const freePlaceholderId = useCallback((charCount: number, id: number) => {
+    const activeIds = activePlaceholderIds.current.get(charCount);
+    if (activeIds) {
+      activeIds.delete(id);
+      if (activeIds.size === 0) {
+        activePlaceholderIds.current.delete(charCount);
+      }
+    }
+  }, []);
 
   const [dirs, setDirs] = useState<readonly string[]>(
     config.getWorkspaceContext().getDirectories(),
@@ -196,15 +222,22 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
   }, [showEscapePrompt, onEscapePromptChange]);
 
   // Helper to generate unique placeholder for large pastes
+  // Reuses IDs that have been freed up from deleted placeholders
   const nextLargePastePlaceholder = useCallback((charCount: number): string => {
-    const base = `[Pasted Content ${charCount} chars]`;
-    const currentCount = largePasteCounters.current.get(charCount) || 0;
-    const nextCount = currentCount + 1;
-    largePasteCounters.current.set(charCount, nextCount);
-    if (nextCount === 1) {
-      return base;
+    const activeIds = activePlaceholderIds.current.get(charCount) || new Set();
+
+    // Find smallest available ID (starting from 1)
+    let id = 1;
+    while (activeIds.has(id)) {
+      id++;
     }
-    return `${base} #${nextCount}`;
+
+    // Mark as active
+    activeIds.add(id);
+    activePlaceholderIds.current.set(charCount, activeIds);
+
+    const base = `[Pasted Content ${charCount} chars]`;
+    return id === 1 ? base : `${base} #${id}`;
   }, []);
 
   // Clear escape prompt timer on unmount
@@ -363,7 +396,12 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
         // Handle large pastes by showing a placeholder
         const pasted = key.sequence.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
         const charCount = [...pasted].length; // Proper Unicode char count
-        if (charCount > LARGE_PASTE_CHAR_THRESHOLD) {
+        const lineCount = pasted.split('\n').length;
+        const LARGE_PASTE_LINE_THRESHOLD = 10;
+        if (
+          charCount > LARGE_PASTE_CHAR_THRESHOLD ||
+          lineCount > LARGE_PASTE_LINE_THRESHOLD
+        ) {
           const placeholder = nextLargePastePlaceholder(charCount);
           setPendingPastes((prev) => {
             const next = new Map(prev);
@@ -735,6 +773,54 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
         return;
       }
 
+      // Handle backspace with placeholder-aware deletion
+      if (
+        key.name === 'backspace' ||
+        key.sequence === '\x7f' ||
+        (key.ctrl && key.name === 'h')
+      ) {
+        const text = buffer.text;
+        const [row, col] = buffer.cursor;
+
+        // Calculate the offset where the cursor is
+        let offset = 0;
+        for (let i = 0; i < row; i++) {
+          offset += buffer.lines[i].length + 1; // +1 for newline
+        }
+        offset += col;
+
+        // Check if we're at the end of any placeholder
+        let placeholderDeleted = false;
+        for (const placeholder of pendingPastes.keys()) {
+          const placeholderStart = offset - placeholder.length;
+          if (
+            placeholderStart >= 0 &&
+            text.slice(placeholderStart, offset) === placeholder
+          ) {
+            // Delete the entire placeholder
+            buffer.replaceRangeByOffset(placeholderStart, offset, '');
+            // Remove from pendingPastes and free the ID for reuse
+            setPendingPastes((prev) => {
+              const next = new Map(prev);
+              next.delete(placeholder);
+              return next;
+            });
+            const parsed = parsePlaceholder(placeholder);
+            if (parsed) {
+              freePlaceholderId(parsed.charCount, parsed.id);
+            }
+            placeholderDeleted = true;
+            break;
+          }
+        }
+
+        if (!placeholderDeleted) {
+          // Normal backspace behavior
+          buffer.backspace();
+        }
+        return;
+      }
+
       // Fall back to the text buffer's default input handling for all other keys
       buffer.handleInput(key);
     },
@@ -768,6 +854,9 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
       pasteWorkaround,
       LARGE_PASTE_CHAR_THRESHOLD,
       nextLargePastePlaceholder,
+      pendingPastes,
+      parsePlaceholder,
+      freePlaceholderId,
     ],
   );
 
