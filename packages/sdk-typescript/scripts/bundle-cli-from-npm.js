@@ -32,13 +32,13 @@ function main() {
     );
   }
 
-  const cliDistDir = join(cliPackagePath, 'dist');
+  const cliDistDir = cliPackagePath;
   const sdkCliDistDir = join(sdkRoot, 'dist', 'cli');
 
-  // Verify CLI dist exists
+  // Verify CLI package exists
   if (!existsSync(cliDistDir)) {
     throw new Error(
-      `[sdk bundle] CLI dist not found at: ${cliDistDir}. ` +
+      `[sdk bundle] CLI package not found at: ${cliDistDir}. ` +
         `Make sure the CLI package was downloaded and extracted correctly.`,
     );
   }
@@ -55,7 +55,7 @@ function main() {
   mkdirSync(sdkCliDistDir, { recursive: true });
 
   console.log('[sdk bundle] Copying CLI from npm package...');
-  console.log(`[sdk bundle] Source: ${cliDistDir}`);
+  console.log(`[sdk bundle] Source: ${cliDistDir} (package root)`);
   console.log(`[sdk bundle] Destination: ${sdkCliDistDir}`);
 
   // Copy main CLI file

@@ -188,15 +188,9 @@ jobs:
           cd "${CLI_TMP_DIR}"
           tar -xzf qwen-code-qwen-code-*.tgz
 
-          # Verify dist exists
-          if [[ ! -d "${CLI_TMP_DIR}/package/dist" ]]; then
-            echo "::error::CLI package does not contain dist/ directory"
-            exit 1
-          fi
-
           echo "CLI package extracted to: ${CLI_TMP_DIR}/package"
-          echo "CLI dist contents:"
-          ls -la "${CLI_TMP_DIR}/package/dist/"
+          echo "CLI package contents:"
+          ls -la "${CLI_TMP_DIR}/package/"
 
       - name: 'Build CLI from source'
         id: 'cli_build'
