@@ -54,7 +54,8 @@ install_nodejs() {
 
         # Check if version is sufficient (>= 20.0.0)
         if [[ $(node -pe "require('semver').gte(require('semver').coerce('$NODE_VERSION'), '20.0.0')") == "true" ]]; then
-            echo "INFO: Node.js version is sufficient."
+            echo "INFO: Node.js version is sufficient. Skipping installation."
+            return 0
         else
             echo "INFO: Node.js version is too low. Installing Node.js 20+..."
             install_nodejs_via_nvm
@@ -89,7 +90,24 @@ install_nodejs_via_nvm() {
 
 # Function to install Qwen Code with source information
 install_qwen_code() {
-    echo "INFO: Installing Qwen Code with source: $SOURCE"
+    echo "INFO: Checking for Qwen Code installation..."
+
+    if command_exists qwen; then
+        QWEN_VERSION=$(qwen --version)
+        echo "INFO: Qwen Code is already installed: $QWEN_VERSION"
+        echo "INFO: Skipping Qwen Code installation."
+        
+        # Update source.json even if Qwen Code is already installed
+        echo "INFO: Updating source.json in ~/.qwen/"
+        if [ ! -d "$HOME/.qwen" ]; then
+            mkdir -p "$HOME/.qwen"
+        fi
+        echo "{\"source\": \"$SOURCE\"}" > "$HOME/.qwen/source.json"
+        echo "SUCCESS: Installation source updated in ~/.qwen/source.json"
+        return 0
+    fi
+
+    echo "INFO: Qwen Code not found. Installing Qwen Code with source: $SOURCE"
 
     # Install Qwen Code globally
     echo "INFO: Running: npm install -g @qwen-code/qwen-code"
@@ -102,6 +120,10 @@ install_qwen_code() {
     if [ ! -d "$HOME/.qwen" ]; then
         mkdir -p "$HOME/.qwen"
     fi
+
+    # Create the source.json file with the installation source
+    echo "{\"source\": \"$SOURCE\"}" > "$HOME/.qwen/source.json"
+    echo "SUCCESS: Installation source saved to ~/.qwen/source.json"
 
     # Verify installation
     if command_exists qwen; then
