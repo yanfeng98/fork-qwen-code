@@ -28,13 +28,13 @@ We provide platform-specific installation scripts:
 
 ```bash
 # Install with a specific source
-./install-qwen-with-source.sh --source github
+sh install-qwen-with-source.sh --source github
 
 # Install with internal source
-./install-qwen-with-source.sh -s internal
+sh install-qwen-with-source.sh -s internal
 
 # Show help
-./install-qwen-with-source.sh --help
+sh install-qwen-with-source.sh --help
 ```
 
 #### Supported Source Values:
@@ -50,6 +50,18 @@ We provide platform-specific installation scripts:
 2. It installs Node.js if needed
 3. It installs Qwen Code globally
 4. It creates `~/.qwen/source.json` with the specified source information
+
+#### Important Notes:
+
+⚠️ **After installation, you need to restart your terminal or run:**
+
+```bash
+source ~/.bashrc  # For bash users
+# or
+source ~/.zshrc   # For zsh users
+```
+
+This is required to load the newly installed Node.js and Qwen Code into your PATH.
 
 #### Prerequisites:
 
@@ -153,7 +165,7 @@ The `source.json` file contains:
 
 ### Verification
 
-After installation, you can verify the source information:
+After installation and restarting your terminal (or sourcing your shell configuration), you can verify the source information:
 
 **Linux/macOS:**
 
@@ -197,11 +209,8 @@ brew install qwen-code
 **Linux/macOS:**
 
 ```bash
-# Make script executable
-chmod +x install-qwen-with-source.sh
-
-# Run with bash explicitly
-bash install-qwen-with-source.sh --source github
+# Run with sh
+sh install-qwen-with-source.sh --source github
 ```
 
 **Windows (PowerShell as Administrator):**
@@ -218,7 +227,7 @@ bash install-qwen-with-source.sh --source github
 
 **Linux/macOS:**
 
-- Ensure NVM is installed: `curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash`
+- Ensure NVM is installed: `curl -o- https://qwen-code-assets.oss-cn-hangzhou.aliyuncs.com/installation/install_nvm.sh | bash`
 - Restart your terminal or run: `source ~/.bashrc`
 
 **Windows:**

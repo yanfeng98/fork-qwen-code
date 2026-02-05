@@ -101,8 +101,17 @@ install_qwen_code() {
 
     echo "Installing Qwen Code..."
 
-    # Install Qwen Code globally (may require sudo)
-    if sudo npm install -g @qwen-code/qwen-code >/dev/null 2>&1; then
+    # Check if running as root
+    if [ "$(id -u)" -eq 0 ]; then
+        # Running as root, no need for sudo
+        NPM_INSTALL_CMD="npm install -g @qwen-code/qwen-code"
+    else
+        # Not root, use sudo
+        NPM_INSTALL_CMD="sudo npm install -g @qwen-code/qwen-code"
+    fi
+
+    # Install Qwen Code globally
+    if $NPM_INSTALL_CMD >/dev/null 2>&1; then
         # Verify installation
         if command_exists qwen; then
             QWEN_VERSION=$(qwen --version 2>/dev/null || echo "unknown")
@@ -131,7 +140,18 @@ main() {
     echo "✓ Installation completed!"
     echo "==========================================="
     echo ""
-    echo "Run 'qwen' to start using Qwen Code"
+    
+    # Try to source the shell configuration file
+    if [ -f "$HOME/.zshrc" ]; then
+        echo "Loading zsh configuration..."
+        source "$HOME/.zshrc" 2>/dev/null || true
+    elif [ -f "$HOME/.bashrc" ]; then
+        echo "Loading bash configuration..."
+        source "$HOME/.bashrc" 2>/dev/null || true
+    fi
+    
+    echo "To use Qwen Code in new terminals, run: qwen"
+    echo "If 'qwen' command is not found, please restart your terminal."
 }
 
 # Run main function
