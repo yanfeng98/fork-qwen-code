@@ -387,6 +387,9 @@ export class ModelsConfig {
       // Apply model defaults
       this.applyResolvedModelDefaults(model);
 
+      // Clear active runtime model snapshot since we're now using a registry model
+      this.activeRuntimeModelSnapshotId = undefined;
+
       const requiresRefresh = isAuthTypeChange
         ? true
         : this.checkRequiresRefresh(
@@ -899,6 +902,8 @@ export class ModelsConfig {
       if (resolved) {
         this.applyResolvedModelDefaults(resolved);
         this.strictModelProviderSelection = true;
+        // Clear active runtime model snapshot since we're now using a registry model
+        this.activeRuntimeModelSnapshotId = undefined;
         return;
       }
     }
@@ -947,6 +952,8 @@ export class ModelsConfig {
       this.modelRegistry.getDefaultModelForAuthType(authType);
     if (defaultModel) {
       this.applyResolvedModelDefaults(defaultModel);
+      // Clear active runtime model snapshot since we're now using a registry model
+      this.activeRuntimeModelSnapshotId = undefined;
       return;
     }
 
