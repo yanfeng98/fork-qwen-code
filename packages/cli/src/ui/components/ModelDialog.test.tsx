@@ -70,7 +70,6 @@ const renderComponent = (
       authType: AuthType.QWEN_OAUTH,
       model: MAINLINE_CODER,
     })),
-    getUseSmartEdit: vi.fn(() => false),
     getUseModelRouter: vi.fn(() => false),
     getProxy: vi.fn(() => undefined),
 

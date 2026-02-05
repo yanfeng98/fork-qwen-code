@@ -10,6 +10,7 @@ import {
   Config,
   DEFAULT_QWEN_EMBEDDING_MODEL,
   FileDiscoveryService,
+  FileEncoding,
   getCurrentGeminiMdFilename,
   loadServerHierarchicalMemory,
   setGeminiMdFilename as setServerGeminiMdFilename,
@@ -132,7 +133,6 @@ export interface CliArgs {
   webSearchDefault: string | undefined;
   screenReader: boolean | undefined;
   vlmSwitchMode: string | undefined;
-  useSmartEdit: boolean | undefined;
   inputFormat?: string | undefined;
   outputFormat: string | undefined;
   includePartialMessages?: boolean;
@@ -1019,7 +1019,6 @@ export async function loadCliConfig(
     truncateToolOutputLines: settings.tools?.truncateToolOutputLines,
     enableToolOutputTruncation: settings.tools?.enableToolOutputTruncation,
     eventEmitter: appEvents,
-    useSmartEdit: argv.useSmartEdit ?? settings.useSmartEdit,
     gitCoAuthor: settings.general?.gitCoAuthor,
     output: {
       format: outputSettingsFormat,
@@ -1030,6 +1029,8 @@ export async function loadCliConfig(
     // always be true and the settings file can never disable recording.
     chatRecording:
       argv.chatRecording ?? settings.general?.chatRecording ?? true,
+    defaultFileEncoding:
+      settings.general?.defaultFileEncoding ?? FileEncoding.UTF8,
     lsp: {
       enabled: lspEnabled,
     },

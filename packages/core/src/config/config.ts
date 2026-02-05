@@ -36,6 +36,8 @@ import { FileDiscoveryService } from '../services/fileDiscoveryService.js';
 import {
   type FileSystemService,
   StandardFileSystemService,
+  type FileEncodingType,
+  FileEncoding,
 } from '../services/fileSystemService.js';
 import { GitService } from '../services/gitService.js';
 
@@ -52,7 +54,6 @@ import { ReadManyFilesTool } from '../tools/read-many-files.js';
 import { canUseRipgrep } from '../utils/ripgrepUtils.js';
 import { RipGrepTool } from '../tools/ripGrep.js';
 import { ShellTool } from '../tools/shell.js';
-import { SmartEditTool } from '../tools/smart-edit.js';
 import { SkillTool } from '../tools/skill.js';
 import { TaskTool } from '../tools/task.js';
 import { TodoWriteTool } from '../tools/todoWrite.js';
@@ -169,7 +170,7 @@ export const APPROVAL_MODE_INFO: Record<ApprovalMode, ApprovalModeInfo> = {
 };
 
 export interface AccessibilitySettings {
-  disableLoadingPhrases?: boolean;
+  enableLoadingPhrases?: boolean;
   screenReader?: boolean;
 }
 
@@ -205,9 +206,12 @@ export interface GitCoAuthorSettings {
   email?: string;
 }
 
+export type ExtensionOriginSource = 'QwenCode' | 'Claude' | 'Gemini';
+
 export interface ExtensionInstallMetadata {
   source: string;
   type: 'git' | 'local' | 'link' | 'github-release' | 'marketplace';
+  originSource?: ExtensionOriginSource;
   releaseTag?: string; // Only present for github-release installs.
   ref?: string;
   autoUpdate?: boolean;
@@ -305,7 +309,7 @@ export interface ConfigParameters {
     respectGitIgnore?: boolean;
     respectQwenIgnore?: boolean;
     enableRecursiveFileSearch?: boolean;
-    disableFuzzySearch?: boolean;
+    enableFuzzySearch?: boolean;
   };
   checkpointing?: boolean;
   proxy?: string;
@@ -351,6 +355,7 @@ export interface ConfigParameters {
   chatCompression?: ChatCompressionSettings;
   interactive?: boolean;
   trustedFolder?: boolean;
+  defaultFileEncoding?: FileEncodingType;
   useRipgrep?: boolean;
   useBuiltinRipgrep?: boolean;
   shouldUseNodePtyShell?: boolean;
@@ -362,7 +367,6 @@ export interface ConfigParameters {
   truncateToolOutputLines?: number;
   enableToolOutputTruncation?: boolean;
   eventEmitter?: EventEmitter;
-  useSmartEdit?: boolean;
   output?: OutputSettings;
   inputFormat?: InputFormat;
   outputFormat?: OutputFormat;
@@ -455,7 +459,7 @@ export class Config {
     respectGitIgnore: boolean;
     respectQwenIgnore: boolean;
     enableRecursiveFileSearch: boolean;
-    disableFuzzySearch: boolean;
+    enableFuzzySearch: boolean;
   };
   private fileDiscoveryService: FileDiscoveryService | null = null;
   private gitService: GitService | undefined = undefined;
@@ -511,8 +515,8 @@ export class Config {
   private readonly truncateToolOutputLines: number;
   private readonly enableToolOutputTruncation: boolean;
   private readonly eventEmitter?: EventEmitter;
-  private readonly useSmartEdit: boolean;
   private readonly channel: string | undefined;
+  private readonly defaultFileEncoding: FileEncodingType;
 
   constructor(params: ConfigParameters) {
     this.sessionId = params.sessionId ?? randomUUID();
@@ -573,7 +577,7 @@ export class Config {
       respectQwenIgnore: params.fileFiltering?.respectQwenIgnore ?? true,
       enableRecursiveFileSearch:
         params.fileFiltering?.enableRecursiveFileSearch ?? true,
-      disableFuzzySearch: params.fileFiltering?.disableFuzzySearch ?? false,
+      enableFuzzySearch: params.fileFiltering?.enableFuzzySearch ?? true,
     };
     this.checkpointing = params.checkpointing ?? false;
     this.proxy = params.proxy;
@@ -624,8 +628,8 @@ export class Config {
     this.truncateToolOutputLines =
       params.truncateToolOutputLines ?? DEFAULT_TRUNCATE_TOOL_OUTPUT_LINES;
     this.enableToolOutputTruncation = params.enableToolOutputTruncation ?? true;
-    this.useSmartEdit = params.useSmartEdit ?? false;
     this.channel = params.channel;
+    this.defaultFileEncoding = params.defaultFileEncoding ?? FileEncoding.UTF8;
     this.storage = new Storage(this.targetDir);
     this.vlmSwitchMode = params.vlmSwitchMode;
     this.inputFormat = params.inputFormat ?? InputFormat.TEXT;
@@ -819,13 +823,6 @@ export class Config {
   }
 
   /**
-   * Releases resources owned by the config instance.
-   */
-  async shutdown(): Promise<void> {
-    this.skillManager?.stopWatching();
-  }
-
-  /**
    * Starts a new session and resets session-scoped services.
    */
   startNewSession(
@@ -927,9 +924,9 @@ export class Config {
       // Hot-update fields (qwen-oauth models share the same auth + client).
       this.contentGeneratorConfig.model = config.model;
       this.contentGeneratorConfig.samplingParams = config.samplingParams;
-      this.contentGeneratorConfig.disableCacheControl =
-        config.disableCacheControl;
       this.contentGeneratorConfig.contextWindowSize = config.contextWindowSize;
+      this.contentGeneratorConfig.enableCacheControl =
+        config.enableCacheControl;
 
       if ('model' in sources) {
         this.contentGeneratorConfigSources['model'] = sources['model'];
@@ -938,9 +935,9 @@ export class Config {
         this.contentGeneratorConfigSources['samplingParams'] =
           sources['samplingParams'];
       }
-      if ('disableCacheControl' in sources) {
-        this.contentGeneratorConfigSources['disableCacheControl'] =
-          sources['disableCacheControl'];
+      if ('enableCacheControl' in sources) {
+        this.contentGeneratorConfigSources['enableCacheControl'] =
+          sources['enableCacheControl'];
       }
       if ('contextWindowSize' in sources) {
         this.contentGeneratorConfigSources['contextWindowSize'] =
@@ -1046,6 +1043,28 @@ export class Config {
 
   getToolRegistry(): ToolRegistry {
     return this.toolRegistry;
+  }
+
+  /**
+   * Shuts down the Config and releases all resources.
+   * This method is idempotent and safe to call multiple times.
+   * It handles the case where initialization was not completed.
+   */
+  async shutdown(): Promise<void> {
+    if (!this.initialized) {
+      // Nothing to clean up if not initialized
+      return;
+    }
+    try {
+      this.skillManager?.stopWatching();
+
+      if (this.toolRegistry) {
+        await this.toolRegistry.stop();
+      }
+    } catch (error) {
+      // Log but don't throw - cleanup should be best-effort
+      console.error('Error during Config shutdown:', error);
+    }
   }
 
   getPromptRegistry(): PromptRegistry {
@@ -1251,8 +1270,8 @@ export class Config {
     return this.fileFiltering.enableRecursiveFileSearch;
   }
 
-  getFileFilteringDisableFuzzySearch(): boolean {
-    return this.fileFiltering.disableFuzzySearch;
+  getFileFilteringEnableFuzzySearch(): boolean {
+    return this.fileFiltering.enableFuzzySearch;
   }
 
   getFileFilteringRespectGitIgnore(): boolean {
@@ -1454,6 +1473,14 @@ export class Config {
   }
 
   /**
+   * Get the default file encoding for new files.
+   * @returns FileEncodingType
+   */
+  getDefaultFileEncoding(): FileEncodingType {
+    return this.defaultFileEncoding;
+  }
+
+  /**
    * Get the current FileSystemService
    */
   getFileSystemService(): FileSystemService {
@@ -1542,10 +1569,6 @@ export class Config {
     }
 
     return this.truncateToolOutputLines;
-  }
-
-  getUseSmartEdit(): boolean {
-    return this.useSmartEdit;
   }
 
   getOutputFormat(): OutputFormat {
@@ -1670,11 +1693,7 @@ export class Config {
     }
 
     registerCoreTool(GlobTool, this);
-    if (this.getUseSmartEdit()) {
-      registerCoreTool(SmartEditTool, this);
-    } else {
-      registerCoreTool(EditTool, this);
-    }
+    registerCoreTool(EditTool, this);
     registerCoreTool(WriteFileTool, this);
     registerCoreTool(ReadManyFilesTool, this);
     registerCoreTool(ShellTool, this);

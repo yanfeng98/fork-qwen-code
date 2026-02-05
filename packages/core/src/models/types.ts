@@ -29,7 +29,7 @@ export type ModelGenerationConfig = Pick<
   | 'samplingParams'
   | 'timeout'
   | 'maxRetries'
-  | 'disableCacheControl'
+  | 'enableCacheControl'
   | 'schemaCompliance'
   | 'reasoning'
   | 'customHeaders'

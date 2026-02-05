@@ -478,7 +478,6 @@ describe('gemini.tsx main function kitty protocol', () => {
       webSearchDefault: undefined,
       screenReader: undefined,
       vlmSwitchMode: undefined,
-      useSmartEdit: undefined,
       inputFormat: undefined,
       outputFormat: undefined,
       includePartialMessages: undefined,
@@ -643,8 +642,19 @@ describe('startInteractiveUI', () => {
     expect(checkForUpdates).toHaveBeenCalledTimes(1);
   });
 
-  it('should not check for updates when update nag is disabled', async () => {
+  it('should not call checkForUpdates when enableAutoUpdate is false', async () => {
     const { checkForUpdates } = await import('./ui/utils/updateCheck.js');
+
+    const settingsWithAutoUpdateDisabled = {
+      merged: {
+        general: {
+          enableAutoUpdate: false,
+        },
+        ui: {
+          hideWindowTitle: false,
+        },
+      },
+    } as LoadedSettings;
 
     const mockInitializationResult = {
       authError: null,
@@ -653,26 +663,17 @@ describe('startInteractiveUI', () => {
       geminiMdFileCount: 0,
     };
 
-    const settingsWithUpdateNagDisabled = {
-      merged: {
-        general: {
-          disableUpdateNag: true,
-        },
-        ui: {
-          hideWindowTitle: false,
-        },
-      },
-    } as LoadedSettings;
-
     await startInteractiveUI(
       mockConfig,
-      settingsWithUpdateNagDisabled,
+      settingsWithAutoUpdateDisabled,
       mockStartupWarnings,
       mockWorkspaceRoot,
       mockInitializationResult,
     );
 
     await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // checkForUpdates should NOT be called when enableAutoUpdate is false
     expect(checkForUpdates).not.toHaveBeenCalled();
   });
 });
