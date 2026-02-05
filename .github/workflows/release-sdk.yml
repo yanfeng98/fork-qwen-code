@@ -12,11 +12,14 @@ on:
         required: true
         type: 'string'
         default: 'main'
-      cli_ref:
-        description: 'CLI ref to bundle (tag, branch, or commit). Default: latest stable CLI release tag (recommended for stable releases)'
-        required: false
-        type: 'string'
-        default: ''
+      cli_source:
+        description: 'CLI source to bundle. "build_from_source" builds CLI from the current branch/ref (recommended when releasing CLI and SDK together). "npm_latest" uses the latest stable CLI from npm (recommended for standalone SDK releases).'
+        required: true
+        type: 'choice'
+        options:
+          - 'build_from_source'
+          - 'npm_latest'
+        default: 'build_from_source'
       dry_run:
         description: 'Run a dry-run of the release process; no branches, npm packages or GitHub releases will be created.'
         required: true
@@ -141,62 +144,105 @@ jobs:
           # This is required for nightly/preview because npm does not allow re-publishing the same version.
           npm version -w @qwen-code/sdk "${RELEASE_VERSION}" --no-git-tag-version --allow-same-version
 
-      - name: 'Determine CLI ref to bundle'
-        id: 'cli_ref'
+      - name: 'Determine CLI source and version'
+        id: 'cli_source'
         env:
-          CLI_REF_INPUT: '${{ github.event.inputs.cli_ref }}'
-          IS_STABLE: '${{ steps.vars.outputs.is_nightly == false && steps.vars.outputs.is_preview == false }}'
+          CLI_SOURCE_INPUT: '${{ github.event.inputs.cli_source }}'
         run: |
-          if [[ -n "${CLI_REF_INPUT}" ]]; then
-            # User explicitly specified CLI ref
-            echo "CLI_REF=${CLI_REF_INPUT}" >> "$GITHUB_OUTPUT"
-            echo "Using user-specified CLI ref: ${CLI_REF_INPUT}"
+          # Determine CLI source mode
+          if [[ "${CLI_SOURCE_INPUT}" == "npm_latest" ]]; then
+            echo "mode=npm_latest" >> "$GITHUB_OUTPUT"
+            echo "Building SDK with latest stable CLI from npm"
           else
-            # Auto-detect latest stable CLI release tag
-            # Exclude sdk-typescript tags, nightly, and preview tags
-            LATEST_CLI_TAG=$(git tag -l 'v*' --sort=-v:refname | grep -v 'sdk-typescript' | grep -v 'nightly' | grep -v 'preview' | head -1)
-            if [[ -z "${LATEST_CLI_TAG}" ]]; then
-              echo '::error::Could not find latest stable CLI tag'
-              exit 1
-            fi
-            echo "CLI_REF=${LATEST_CLI_TAG}" >> "$GITHUB_OUTPUT"
-            echo "Using latest stable CLI tag: ${LATEST_CLI_TAG}"
+            echo "mode=build_from_source" >> "$GITHUB_OUTPUT"
+            echo "Building SDK with CLI built from current branch/ref"
           fi
 
-      - name: 'Validate CLI ref for stable releases'
-        env:
-          CLI_REF: '${{ steps.cli_ref.outputs.CLI_REF }}'
-          IS_STABLE: '${{ steps.vars.outputs.is_nightly == false && steps.vars.outputs.is_preview == false }}'
+      - name: 'Get CLI version from npm (for npm_latest mode)'
+        id: 'cli_version_npm'
+        if: steps.cli_source.outputs.mode == 'npm_latest'
         run: |
-          if [[ "${IS_STABLE}" == "true" ]]; then
-            # For stable releases, ensure CLI ref is a tag (not main or a branch)
-            if [[ "${CLI_REF}" == "main" ]] || [[ "${CLI_REF}" == "master" ]]; then
-              echo "::error::Stable SDK releases cannot bundle CLI from '${CLI_REF}' branch. Please specify a CLI release tag via 'cli_ref' input, or ensure the latest stable CLI tag is available."
-              exit 1
-            fi
-            # Check if it's a valid tag
-            if ! git rev-parse "refs/tags/${CLI_REF}" >/dev/null 2>&1; then
-              echo "::warning::CLI ref '${CLI_REF}' is not a tag. Stable releases should use tagged CLI versions."
-            else
-              echo "✓ CLI ref '${CLI_REF}' is a valid tag"
-            fi
+          CLI_VERSION=$(npm view @qwen-code/qwen-code version --tag=latest)
+          if [[ -z "${CLI_VERSION}" ]]; then
+            echo '::error::Could not get latest stable CLI version from npm'
+            exit 1
+          fi
+          echo "CLI_VERSION=${CLI_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Using latest stable CLI version from npm: ${CLI_VERSION}"
+
+      - name: 'Download CLI package from npm'
+        id: 'cli_download'
+        if: steps.cli_source.outputs.mode == 'npm_latest'
+        env:
+          CLI_VERSION: '${{ steps.cli_version_npm.outputs.CLI_VERSION }}'
+        run: |
+          # Create temp directory for CLI package
+          CLI_TMP_DIR=$(mktemp -d)
+          echo "CLI_TMP_DIR=${CLI_TMP_DIR}" >> "$GITHUB_OUTPUT"
+
+          # Download CLI package
+          echo "Downloading @qwen-code/qwen-code@${CLI_VERSION}..."
+          npm pack @qwen-code/qwen-code@${CLI_VERSION} --pack-destination "${CLI_TMP_DIR}"
+
+          # Extract package
+          cd "${CLI_TMP_DIR}"
+          tar -xzf qwen-code-qwen-code-*.tgz
+
+          # Verify dist exists
+          if [[ ! -d "${CLI_TMP_DIR}/package/dist" ]]; then
+            echo "::error::CLI package does not contain dist/ directory"
+            exit 1
           fi
 
-      - name: 'Build CLI Bundle'
-        env:
-          CLI_REF: '${{ steps.cli_ref.outputs.CLI_REF }}'
+          echo "CLI package extracted to: ${CLI_TMP_DIR}/package"
+          echo "CLI dist contents:"
+          ls -la "${CLI_TMP_DIR}/package/dist/"
+
+      - name: 'Build CLI from source'
+        id: 'cli_build'
+        if: steps.cli_source.outputs.mode == 'build_from_source'
         run: |
-          echo "Building CLI from ref: ${CLI_REF}"
-          # Save current state
-          CURRENT_REF=$(git rev-parse HEAD)
-          # Checkout CLI ref
-          git checkout "${CLI_REF}"
-          # Install dependencies and build CLI
-          npm ci
+          # Build the CLI bundle from source
+          echo "Building CLI from source..."
           npm run bundle
-          # Return to original ref for SDK build
-          git checkout "${CURRENT_REF}"
-          echo "CLI bundle built successfully from ${CLI_REF}"
+
+          # Get the CLI version from the built package
+          CLI_VERSION=$(node -p "require('./packages/cli/package.json').version")
+          echo "CLI_VERSION=${CLI_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Built CLI version: ${CLI_VERSION}"
+
+          # Verify dist exists
+          if [[ ! -f "./dist/cli.js" ]]; then
+            echo "::error::CLI bundle not found at ./dist/cli.js"
+            exit 1
+          fi
+
+          echo "CLI bundle built successfully at ./dist/"
+          ls -la ./dist/
+
+      - name: 'Configure Git User'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: 'Build SDK'
+        working-directory: 'packages/sdk-typescript'
+        run: |-
+          npm run build
+
+      - name: 'Bundle CLI into SDK (from npm)'
+        if: steps.cli_source.outputs.mode == 'npm_latest'
+        working-directory: 'packages/sdk-typescript'
+        env:
+          CLI_PACKAGE_PATH: '${{ steps.cli_download.outputs.CLI_TMP_DIR }}/package'
+        run: |
+          node scripts/bundle-cli-from-npm.js
+
+      - name: 'Bundle CLI into SDK (from source)'
+        if: steps.cli_source.outputs.mode == 'build_from_source'
+        working-directory: 'packages/sdk-typescript'
+        run: |
+          node scripts/bundle-cli.js
 
       - name: 'Run Tests'
         if: |-
@@ -220,23 +266,13 @@ jobs:
           OPENAI_BASE_URL: '${{ secrets.OPENAI_BASE_URL }}'
           OPENAI_MODEL: '${{ secrets.OPENAI_MODEL }}'
 
-      - name: 'Configure Git User'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: 'Build SDK'
-        working-directory: 'packages/sdk-typescript'
-        run: |-
-          npm run build
-
       - name: 'Record bundled CLI version'
         env:
-          CLI_REF: '${{ steps.cli_ref.outputs.CLI_REF }}'
+          CLI_VERSION: "${{ steps.cli_source.outputs.mode == 'npm_latest' && steps.cli_version_npm.outputs.CLI_VERSION || steps.cli_build.outputs.CLI_VERSION }}"
         run: |
           # Create a metadata file to record which CLI version was bundled
-          echo "${CLI_REF}" > packages/sdk-typescript/dist/BUNDLED_CLI_VERSION
-          echo "Bundled CLI version: ${CLI_REF}"
+          echo "${CLI_VERSION}" > packages/sdk-typescript/dist/BUNDLED_CLI_VERSION
+          echo "Bundled CLI version: ${CLI_VERSION}"
 
       - name: 'Publish @qwen-code/sdk'
         working-directory: 'packages/sdk-typescript'
@@ -284,7 +320,8 @@ jobs:
           IS_NIGHTLY: '${{ steps.vars.outputs.is_nightly }}'
           IS_PREVIEW: '${{ steps.vars.outputs.is_preview }}'
           REF: '${{ github.event.inputs.ref || github.sha }}'
-          CLI_REF: '${{ steps.cli_ref.outputs.CLI_REF }}'
+          CLI_VERSION: "${{ steps.cli_source.outputs.mode == 'npm_latest' && steps.cli_version_npm.outputs.CLI_VERSION || steps.cli_build.outputs.CLI_VERSION }}"
+          CLI_SOURCE_MODE: '${{ steps.cli_source.outputs.mode }}'
         run: |-
           # For stable releases, use the release branch; for nightly/preview, use the current ref
           if [[ "${IS_NIGHTLY}" == "true" || "${IS_PREVIEW}" == "true" ]]; then
@@ -295,8 +332,15 @@ jobs:
             PRERELEASE_FLAG=""
           fi
 
+          # Determine CLI source description
+          if [[ "${CLI_SOURCE_MODE}" == "npm_latest" ]]; then
+            CLI_SOURCE_DESC="latest stable CLI from npm"
+          else
+            CLI_SOURCE_DESC="CLI built from source (same branch/ref as SDK)"
+          fi
+
           # Create release notes with CLI version info
-          NOTES="## Bundled CLI Version\n\nThis SDK release bundles CLI version: \`${CLI_REF}\`\n\n---\n\n"
+          NOTES="## Bundled CLI Version\n\nThis SDK release bundles CLI version: \`${CLI_VERSION}\`\n\nSource: ${CLI_SOURCE_DESC}\n\n---\n\n"
 
           gh release create "sdk-typescript-${RELEASE_TAG}" \
             --target "${TARGET}" \
@@ -339,7 +383,7 @@ jobs:
 
       - name: 'Create Issue on Failure'
         if: |-
-          ${{ failure() }}
+          ${{ failure() && steps.vars.outputs.is_dry_run == 'false' }}
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
           RELEASE_TAG: "${{ steps.version.outputs.RELEASE_TAG || 'N/A' }}"

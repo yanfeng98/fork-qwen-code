@@ -330,7 +330,9 @@ export async function runNonInteractive(
               abortController.signal,
               taskToolProgressHandler || toolCallUpdateCallback
                 ? {
-                    ...(taskToolProgressHandler && { taskToolProgressHandler }),
+                    ...(taskToolProgressHandler && {
+                      outputUpdateHandler: taskToolProgressHandler,
+                    }),
                     ...(toolCallUpdateCallback && {
                       onToolCallsUpdate: toolCallUpdateCallback,
                     }),
