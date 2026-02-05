@@ -406,9 +406,12 @@ export const agentCapabilitiesSchema = z.object({
 });
 
 export const authMethodSchema = z.object({
+  args: z.array(z.string()).optional(),
   description: z.string().nullable(),
+  env: z.record(z.string()).optional(),
   id: z.string(),
   name: z.string(),
+  type: z.string().optional(),
 });
 
 export const clientResponseSchema = z.union([
