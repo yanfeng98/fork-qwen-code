@@ -263,6 +263,8 @@ export class ProcessTransport implements Transport {
 
     if (this.options.resume) {
       args.push('--resume', this.options.resume);
+    } else if (this.options.continue) {
+      args.push('--continue');
     }
 
     return args;

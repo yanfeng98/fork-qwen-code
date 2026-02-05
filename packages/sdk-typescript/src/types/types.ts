@@ -3,10 +3,11 @@ import type {
   PermissionSuggestion,
   SubagentConfig,
   SDKMcpServerConfig,
+  AuthType,
 } from './protocol.js';
 import type { SpawnInfo } from '../utils/cliPath.js';
 
-export type { PermissionMode };
+export type { PermissionMode, AuthType };
 
 export type TransportOptions = {
   pathToQwenExecutable?: string;
@@ -23,8 +24,19 @@ export type TransportOptions = {
   coreTools?: string[];
   excludeTools?: string[];
   allowedTools?: string[];
-  authType?: string;
+  authType?: AuthType;
   includePartialMessages?: boolean;
+  /**
+   * Resume the most recent session for the current project.
+   * Equivalent to CLI's --continue flag.
+   * @default false
+   */
+  continue?: boolean;
+  /**
+   * Resume a specific session by its ID.
+   * Equivalent to CLI's --resume flag.
+   * When provided, takes precedence over `continue`.
+   */
   resume?: string;
 };
 
@@ -385,7 +397,7 @@ export interface QueryOptions {
    * Though we support 'qwen-oauth', it's not recommended to use it in the SDK.
    * Because the credentials are stored in `~/.qwen` and may need to refresh periodically.
    */
-  authType?: 'openai' | 'qwen-oauth';
+  authType?: AuthType;
 
   /**
    * Configuration for subagents that can be invoked during the session.
