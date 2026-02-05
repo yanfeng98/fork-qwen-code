@@ -50,7 +50,6 @@ import { LSTool } from '../tools/ls.js';
 import type { SendSdkMcpMessage } from '../tools/mcp-client.js';
 import { MemoryTool, setGeminiMdFilename } from '../tools/memoryTool.js';
 import { ReadFileTool } from '../tools/read-file.js';
-import { ReadManyFilesTool } from '../tools/read-many-files.js';
 import { canUseRipgrep } from '../utils/ripgrepUtils.js';
 import { RipGrepTool } from '../tools/ripGrep.js';
 import { ShellTool } from '../tools/shell.js';
@@ -285,7 +284,6 @@ export interface ConfigParameters {
   debugMode: boolean;
   includePartialMessages?: boolean;
   question?: string;
-  fullContext?: boolean;
   coreTools?: string[];
   allowedTools?: string[];
   excludeTools?: string[];
@@ -432,7 +430,6 @@ export class Config {
   private readonly outputFormat: OutputFormat;
   private readonly includePartialMessages: boolean;
   private readonly question: string | undefined;
-  private readonly fullContext: boolean;
   private readonly coreTools: string[] | undefined;
   private readonly allowedTools: string[] | undefined;
   private readonly excludeTools: string[] | undefined;
@@ -537,7 +534,6 @@ export class Config {
     this.outputFormat = normalizedOutputFormat ?? OutputFormat.TEXT;
     this.includePartialMessages = params.includePartialMessages ?? false;
     this.question = params.question;
-    this.fullContext = params.fullContext ?? false;
     this.coreTools = params.coreTools;
     this.allowedTools = params.allowedTools;
     this.excludeTools = params.excludeTools;
@@ -1077,10 +1073,6 @@ export class Config {
 
   getQuestion(): string | undefined {
     return this.question;
-  }
-
-  getFullContext(): boolean {
-    return this.fullContext;
   }
 
   getCoreTools(): string[] | undefined {
@@ -1695,7 +1687,6 @@ export class Config {
     registerCoreTool(GlobTool, this);
     registerCoreTool(EditTool, this);
     registerCoreTool(WriteFileTool, this);
-    registerCoreTool(ReadManyFilesTool, this);
     registerCoreTool(ShellTool, this);
     registerCoreTool(MemoryTool);
     registerCoreTool(TodoWriteTool, this);
