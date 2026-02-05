@@ -160,7 +160,7 @@ jobs:
 
       - name: 'Get CLI version from npm (for npm_latest mode)'
         id: 'cli_version_npm'
-        if: steps.cli_source.outputs.mode == 'npm_latest'
+        if: "steps.cli_source.outputs.mode == 'npm_latest'"
         run: |
           CLI_VERSION=$(npm view @qwen-code/qwen-code version --tag=latest)
           if [[ -z "${CLI_VERSION}" ]]; then
@@ -172,7 +172,7 @@ jobs:
 
       - name: 'Download CLI package from npm'
         id: 'cli_download'
-        if: steps.cli_source.outputs.mode == 'npm_latest'
+        if: "steps.cli_source.outputs.mode == 'npm_latest'"
         env:
           CLI_VERSION: '${{ steps.cli_version_npm.outputs.CLI_VERSION }}'
         run: |
@@ -182,7 +182,7 @@ jobs:
 
           # Download CLI package
           echo "Downloading @qwen-code/qwen-code@${CLI_VERSION}..."
-          npm pack @qwen-code/qwen-code@${CLI_VERSION} --pack-destination "${CLI_TMP_DIR}"
+          npm pack "@qwen-code/qwen-code@${CLI_VERSION}" --pack-destination "${CLI_TMP_DIR}"
 
           # Extract package
           cd "${CLI_TMP_DIR}"
@@ -200,7 +200,7 @@ jobs:
 
       - name: 'Build CLI from source'
         id: 'cli_build'
-        if: steps.cli_source.outputs.mode == 'build_from_source'
+        if: "steps.cli_source.outputs.mode == 'build_from_source'"
         run: |
           # Build the CLI bundle from source
           echo "Building CLI from source..."
@@ -231,7 +231,7 @@ jobs:
           npm run build
 
       - name: 'Bundle CLI into SDK (from npm)'
-        if: steps.cli_source.outputs.mode == 'npm_latest'
+        if: "steps.cli_source.outputs.mode == 'npm_latest'"
         working-directory: 'packages/sdk-typescript'
         env:
           CLI_PACKAGE_PATH: '${{ steps.cli_download.outputs.CLI_TMP_DIR }}/package'
@@ -239,7 +239,7 @@ jobs:
           node scripts/bundle-cli-from-npm.js
 
       - name: 'Bundle CLI into SDK (from source)'
-        if: steps.cli_source.outputs.mode == 'build_from_source'
+        if: "steps.cli_source.outputs.mode == 'build_from_source'"
         working-directory: 'packages/sdk-typescript'
         run: |
           node scripts/bundle-cli.js
@@ -347,7 +347,7 @@ jobs:
             --title "SDK TypeScript Release ${RELEASE_TAG}" \
             --notes-start-tag "sdk-typescript-${PREVIOUS_RELEASE_TAG}" \
             --notes "${NOTES}$(gh release view "sdk-typescript-${PREVIOUS_RELEASE_TAG}" --json body -q '.body' 2>/dev/null || echo 'See commit history for changes.')" \
-            ${PRERELEASE_FLAG}
+            "${PRERELEASE_FLAG}"
 
       - name: 'Create PR to merge release branch into main'
         if: |-
