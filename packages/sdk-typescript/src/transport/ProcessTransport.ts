@@ -178,6 +178,10 @@ export class ProcessTransport implements Transport {
       args.push('--include-partial-messages');
     }
 
+    if (this.options.resume) {
+      args.push('--resume', this.options.resume);
+    }
+
     return args;
   }
 

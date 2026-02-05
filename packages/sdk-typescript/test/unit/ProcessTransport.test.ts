@@ -191,6 +191,32 @@ describe('ProcessTransport', () => {
       );
     });
 
+    it('should include --resume argument when provided', () => {
+      mockPrepareSpawnInfo.mockReturnValue({
+        command: 'qwen',
+        args: [],
+        type: 'native',
+        originalInput: 'qwen',
+      });
+      mockSpawn.mockReturnValue(mockChildProcess);
+
+      const options: TransportOptions = {
+        pathToQwenExecutable: 'qwen',
+        resume: '123e4567-e89b-12d3-a456-426614174000',
+      };
+
+      new ProcessTransport(options);
+
+      expect(mockSpawn).toHaveBeenCalledWith(
+        'qwen',
+        expect.arrayContaining([
+          '--resume',
+          '123e4567-e89b-12d3-a456-426614174000',
+        ]),
+        expect.any(Object),
+      );
+    });
+
     it('should throw if aborted before initialization', () => {
       mockPrepareSpawnInfo.mockReturnValue({
         command: 'qwen',
