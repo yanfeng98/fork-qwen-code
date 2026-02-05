@@ -17,9 +17,6 @@ usage() {
     echo "  -s, --source SOURCE    Specify the installation source (e.g., github, npm, internal)"
     echo "  -h, --help             Show this help message"
     echo ""
-    echo "Examples:"
-    echo "  $0 --source github"
-    echo "  $0 -s internal"
     exit 1
 }
 
@@ -35,7 +32,6 @@ while [[ $# -gt 0 ]]; do
             usage
             ;;
         *)
-            echo "Unknown option: $1"
             usage
             ;;
     esac
@@ -107,10 +103,6 @@ install_qwen_code() {
         mkdir -p "$HOME/.qwen"
     fi
 
-    # Create the source.json file with the installation source
-    echo "{\"source\": \"$SOURCE\"}" > "$HOME/.qwen/source.json"
-    echo "SUCCESS: Installation source saved to ~/.qwen/source.json"
-
     # Verify installation
     if command_exists qwen; then
         echo "SUCCESS: Qwen Code is available as 'qwen' command."
@@ -133,11 +125,6 @@ main() {
     echo ""
     echo "==========================================="
     echo "SUCCESS: Installation completed!"
-    echo "The source information is stored in ~/.qwen/source.json"
-    echo ""
-    echo "To verify the installation:"
-    echo "  qwen --version"
-    echo "  cat ~/.qwen/source.json"
     echo "==========================================="
 }
 
