@@ -11,9 +11,14 @@ import * as path from 'node:path';
 import * as childProcess from 'node:child_process';
 import { isGitRepository } from '@qwen-code/qwen-code-core';
 
-vi.mock('@qwen-code/qwen-code-core', () => ({
-  isGitRepository: vi.fn(),
-}));
+vi.mock('@qwen-code/qwen-code-core', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@qwen-code/qwen-code-core')>();
+  return {
+    ...actual,
+    isGitRepository: vi.fn(),
+  };
+});
 
 vi.mock('fs', async (importOriginal) => {
   const actualFs = await importOriginal<typeof fs>();
@@ -58,8 +63,7 @@ describe('getInstallationInfo', () => {
     expect(info.packageManager).toBe(PackageManager.UNKNOWN);
   });
 
-  it('should return UNKNOWN and log error if realpathSync fails', () => {
-    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+  it('should return UNKNOWN if realpathSync fails', () => {
     process.argv[1] = '/path/to/cli';
     const error = new Error('realpath failed');
     mockedRealPathSync.mockImplementation(() => {
@@ -69,8 +73,6 @@ describe('getInstallationInfo', () => {
     const info = getInstallationInfo(projectRoot, false);
 
     expect(info.packageManager).toBe(PackageManager.UNKNOWN);
-    expect(consoleSpy).toHaveBeenCalledWith(error);
-    consoleSpy.mockRestore();
   });
 
   it('should detect running from a local git clone', () => {

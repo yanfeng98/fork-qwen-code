@@ -107,6 +107,11 @@ import {
 } from '../services/sessionService.js';
 import { randomUUID } from 'node:crypto';
 import { loadServerHierarchicalMemory } from '../utils/memoryDiscovery.js';
+import {
+  createDebugLogger,
+  setDebugLogSession,
+  type DebugLogger,
+} from '../utils/debugLogger.js';
 
 import {
   ModelsConfig,
@@ -409,6 +414,7 @@ export interface ConfigInitializeOptions {
 export class Config {
   private sessionId: string;
   private sessionData?: ResumedSessionData;
+  private debugLogger: DebugLogger;
   private toolRegistry!: ToolRegistry;
   private promptRegistry!: PromptRegistry;
   private subagentManager!: SubagentManager;
@@ -518,6 +524,8 @@ export class Config {
   constructor(params: ConfigParameters) {
     this.sessionId = params.sessionId ?? randomUUID();
     this.sessionData = params.sessionData;
+    setDebugLogSession(this);
+    this.debugLogger = createDebugLogger();
     this.embeddingModel = params.embeddingModel ?? DEFAULT_QWEN_EMBEDDING_MODEL;
     this.fileSystemService = new StandardFileSystemService();
     this.sandbox = params.sandbox;
@@ -678,6 +686,7 @@ export class Config {
       throw Error('Config was already initialized');
     }
     this.initialized = true;
+    this.debugLogger.info('Config initialization started');
 
     // Initialize centralized FileDiscoveryService
     this.getFileService();
@@ -687,11 +696,13 @@ export class Config {
     this.promptRegistry = new PromptRegistry();
     this.extensionManager.setConfig(this);
     await this.extensionManager.refreshCache();
+    this.debugLogger.debug('Extension manager initialized');
 
     this.subagentManager = new SubagentManager(this);
     if (this.getExperimentalSkills()) {
       this.skillManager = new SkillManager(this);
       await this.skillManager.startWatching();
+      this.debugLogger.debug('Skill manager initialized');
     }
 
     // Load session subagents if they were provided before initialization
@@ -702,17 +713,23 @@ export class Config {
     await this.extensionManager.refreshCache();
 
     await this.refreshHierarchicalMemory();
+    this.debugLogger.debug('Hierarchical memory loaded');
 
     this.toolRegistry = await this.createToolRegistry(
       options?.sendSdkMcpMessage,
     );
+    this.debugLogger.info(
+      `Tool registry initialized with ${this.toolRegistry.getAllToolNames().length} tools`,
+    );
 
     await this.geminiClient.initialize();
+    this.debugLogger.info('Gemini client initialized');
 
     // Detect and capture runtime model snapshot (from CLI/ENV/credentials)
     this.modelsConfig.detectAndCaptureRuntimeModel();
 
     logStartSession(this, new StartSessionEvent(this));
+    this.debugLogger.info('Config initialization completed');
   }
 
   async refreshHierarchicalMemory(): Promise<void> {
@@ -721,7 +738,6 @@ export class Config {
       this.shouldLoadMemoryFromIncludeDirectories()
         ? this.getWorkspaceContext().getDirectories()
         : [],
-      this.getDebugMode(),
       this.getFileService(),
       this.getExtensionContextFilePaths(),
       this.isTrustedFolder(),
@@ -818,6 +834,10 @@ export class Config {
     return this.sessionId;
   }
 
+  getDebugLogger(): DebugLogger {
+    return this.debugLogger;
+  }
+
   /**
    * Starts a new session and resets session-scoped services.
    */
@@ -827,6 +847,8 @@ export class Config {
   ): string {
     this.sessionId = sessionId ?? randomUUID();
     this.sessionData = sessionData;
+    setDebugLogSession(this);
+    this.debugLogger = createDebugLogger();
     this.chatRecordingService = this.chatRecordingEnabled
       ? new ChatRecordingService(this)
       : undefined;
@@ -1059,7 +1081,7 @@ export class Config {
       }
     } catch (error) {
       // Log but don't throw - cleanup should be best-effort
-      console.error('Error during Config shutdown:', error);
+      this.debugLogger.error('Error during Config shutdown:', error);
     }
   }
 
@@ -1630,10 +1652,9 @@ export class Config {
 
       if (!toolName) {
         // Log warning and skip this tool instead of crashing
-        console.warn(
-          `[Config] Skipping tool registration: ${className} is missing static Name property. ` +
-            `Tools must define a static Name property to be registered. ` +
-            `Location: config.ts:registerCoreTool`,
+        this.debugLogger.warn(
+          `Skipping tool registration: ${className} is missing static Name property. ` +
+            `Tools must define a static Name property to be registered.`,
         );
         return;
       }
@@ -1642,8 +1663,8 @@ export class Config {
         try {
           registry.registerTool(new ToolClass(...args));
         } catch (error) {
-          console.error(
-            `[Config] Failed to register tool ${className} (${toolName}):`,
+          this.debugLogger.error(
+            `Failed to register tool ${className} (${toolName}):`,
             error,
           );
           throw error; // Re-throw after logging context
@@ -1704,7 +1725,9 @@ export class Config {
     }
 
     await registry.discoverAllTools();
-    console.debug('ToolRegistry created', registry.getAllToolNames());
+    this.debugLogger.debug(
+      `ToolRegistry created: ${JSON.stringify(registry.getAllToolNames())} (${registry.getAllToolNames().length} tools)`,
+    );
     return registry;
   }
 }

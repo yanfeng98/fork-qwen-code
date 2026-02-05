@@ -22,6 +22,7 @@ import {
   AuthType,
   ApprovalMode,
   convertToFunctionResponse,
+  createDebugLogger,
   DiscoveredMCPTool,
   StreamEventType,
   ToolConfirmationOutcome,
@@ -67,6 +68,8 @@ import { ToolCallEmitter } from './emitters/ToolCallEmitter.js';
 import { PlanEmitter } from './emitters/PlanEmitter.js';
 import { MessageEmitter } from './emitters/MessageEmitter.js';
 import { SubAgentTracker } from './SubAgentTracker.js';
+
+const debugLogger = createDebugLogger('SESSION');
 
 /**
  * Session represents an active conversation session with the AI model.
@@ -319,7 +322,7 @@ export class Session implements SessionContext {
       await this.sendUpdate(update);
     } catch (error) {
       // Log error but don't fail session creation
-      console.error('Error sending available commands update:', error);
+      debugLogger.error('Error sending available commands update:', error);
     }
   }
 
@@ -927,7 +930,7 @@ export class Session implements SessionContext {
 
   debug(msg: string): void {
     if (this.config.getDebugMode()) {
-      console.warn(msg);
+      debugLogger.warn(msg);
     }
   }
 }

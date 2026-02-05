@@ -234,11 +234,8 @@ export async function handleAtCommand({
           sawNotFound = true;
           continue;
         } else {
-          console.error(
-            `Error stating path ${pathName}: ${getErrorMessage(error)}`,
-          );
           onDebugMessage(
-            `Error stating path ${pathName}. Path ${pathName} will be skipped.`,
+            `Error stating path ${pathName}: ${getErrorMessage(error)}. Path ${pathName} will be skipped.`,
           );
         }
       }
@@ -318,7 +315,6 @@ export async function handleAtCommand({
     }
 
     const message = `Ignored ${totalIgnored} files:\n${messages.join('\n')}`;
-    console.log(message);
     onDebugMessage(message);
   }
 

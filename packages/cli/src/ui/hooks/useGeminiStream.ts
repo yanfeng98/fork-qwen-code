@@ -19,6 +19,7 @@ import type {
 } from '@qwen-code/qwen-code-core';
 import {
   GeminiEventType as ServerGeminiEventType,
+  createDebugLogger,
   getErrorMessage,
   isNodeError,
   MessageSenderType,
@@ -64,6 +65,8 @@ import path from 'node:path';
 import { useSessionStats } from '../contexts/SessionContext.js';
 import { useKeypress } from './useKeypress.js';
 import type { LoadedSettings } from '../../config/settings.js';
+
+const debugLogger = createDebugLogger('GEMINI_STREAM');
 
 enum StreamProcessingStatus {
   Completed,
@@ -336,7 +339,7 @@ export const useGeminiStream = (
 
       if (typeof query === 'string') {
         const trimmedQuery = query.trim();
-        onDebugMessage(`User query: '${trimmedQuery}'`);
+        onDebugMessage(`Received user query (${trimmedQuery.length} chars)`);
         await logger?.logMessage(MessageSenderType.USER, trimmedQuery);
 
         // Handle UI-only commands first
@@ -985,7 +988,7 @@ export const useGeminiStream = (
           if (processingStatus === StreamProcessingStatus.UserCancelled) {
             // Restore original model if it was temporarily overridden
             restoreOriginalModel().catch((error) => {
-              console.error('Failed to restore original model:', error);
+              debugLogger.error('Failed to restore original model:', error);
             });
             isSubmittingQueryRef.current = false;
             return;
@@ -1002,12 +1005,12 @@ export const useGeminiStream = (
 
           // Restore original model if it was temporarily overridden
           restoreOriginalModel().catch((error) => {
-            console.error('Failed to restore original model:', error);
+            debugLogger.error('Failed to restore original model:', error);
           });
         } catch (error: unknown) {
           // Restore original model if it was temporarily overridden
           restoreOriginalModel().catch((error) => {
-            console.error('Failed to restore original model:', error);
+            debugLogger.error('Failed to restore original model:', error);
           });
 
           if (error instanceof UnauthorizedError) {
@@ -1077,7 +1080,7 @@ export const useGeminiStream = (
                 ToolConfirmationOutcome.ProceedOnce,
               );
             } catch (error) {
-              console.error(
+              debugLogger.error(
                 `Failed to auto-approve tool call ${call.request.callId}:`,
                 error,
               );

@@ -17,6 +17,9 @@ import {
 } from '@google/genai';
 import * as jsonl from '../utils/jsonl-utils.js';
 import { getGitBranch } from '../utils/gitUtils.js';
+import { createDebugLogger } from '../utils/debugLogger.js';
+
+const debugLogger = createDebugLogger('CHAT_RECORDING');
 import type {
   ChatCompressionInfo,
   ToolCallResponseInfo,
@@ -266,7 +269,7 @@ export class ChatRecordingService {
       jsonl.writeLineSync(conversationFile, record);
       this.lastRecordUuid = record.uuid;
     } catch (error) {
-      console.error('Error appending record:', error);
+      debugLogger.error('Error appending record:', error);
       throw error;
     }
   }
@@ -285,7 +288,7 @@ export class ChatRecordingService {
       };
       this.appendRecord(record);
     } catch (error) {
-      console.error('Error saving user message:', error);
+      debugLogger.error('Error saving user message:', error);
     }
   }
 
@@ -319,7 +322,7 @@ export class ChatRecordingService {
 
       this.appendRecord(record);
     } catch (error) {
-      console.error('Error saving assistant turn:', error);
+      debugLogger.error('Error saving assistant turn:', error);
     }
   }
 
@@ -363,7 +366,7 @@ export class ChatRecordingService {
 
       this.appendRecord(record);
     } catch (error) {
-      console.error('Error saving tool result:', error);
+      debugLogger.error('Error saving tool result:', error);
     }
   }
 
@@ -383,7 +386,7 @@ export class ChatRecordingService {
 
       this.appendRecord(record);
     } catch (error) {
-      console.error('Error saving slash command record:', error);
+      debugLogger.error('Error saving slash command record:', error);
     }
   }
 
@@ -403,7 +406,7 @@ export class ChatRecordingService {
 
       this.appendRecord(record);
     } catch (error) {
-      console.error('Error saving chat compression record:', error);
+      debugLogger.error('Error saving chat compression record:', error);
     }
   }
 
@@ -421,7 +424,7 @@ export class ChatRecordingService {
 
       this.appendRecord(record);
     } catch (error) {
-      console.error('Error saving ui telemetry record:', error);
+      debugLogger.error('Error saving ui telemetry record:', error);
     }
   }
 
@@ -439,7 +442,7 @@ export class ChatRecordingService {
 
       this.appendRecord(record);
     } catch (error) {
-      console.error('Error saving @-command record:', error);
+      debugLogger.error('Error saving @-command record:', error);
     }
   }
 }
