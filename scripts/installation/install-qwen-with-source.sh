@@ -33,14 +33,14 @@ install_nodejs_via_nvm() {
         # Download NVM install script to a temporary file first
         TMP_INSTALL_SCRIPT="/tmp/nvm_install_$.sh"
         
-        if curl -f -s -S -o "$TMP_INSTALL_SCRIPT" https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh; then
+        if curl -f -s -S -o "$TMP_INSTALL_SCRIPT" "https://qwen-code-assets.oss-cn-hangzhou.aliyuncs.com/installation/install_nvm.sh"; then
             # Run the installation script
             if bash "$TMP_INSTALL_SCRIPT"; then
                 rm -f "$TMP_INSTALL_SCRIPT"
             else
                 echo "✗ NVM installation failed"
                 rm -f "$TMP_INSTALL_SCRIPT"
-                echo "Please install Node.js manually from https://nodejs.org/"
+                echo "Please install Node.js manually from: https://nodejs.org/"
                 exit 1
             fi
         else
