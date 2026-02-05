@@ -524,7 +524,9 @@ export async function getQwenOAuthClient(
     }
 
     if (options?.requireCachedCredentials) {
-      throw new Error('Please use /auth to re-authenticate.');
+      throw new Error(
+        'Qwen OAuth credentials expired. Please use /auth to re-authenticate with qwen-oauth.',
+      );
     }
 
     // If we couldn't obtain valid credentials via SharedTokenManager, fall back to

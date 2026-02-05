@@ -840,7 +840,9 @@ describe('getQwenOAuthClient', () => {
           requireCachedCredentials: true,
         }),
       ),
-    ).rejects.toThrow('Please use /auth to re-authenticate.');
+    ).rejects.toThrow(
+      'Qwen OAuth credentials expired. Please use /auth to re-authenticate with qwen-oauth.',
+    );
 
     expect(global.fetch).not.toHaveBeenCalled();
 

@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { createDebugLogger } from '@qwen-code/qwen-code-core';
 import * as schema from './schema.js';
 import { ACP_ERROR_CODES } from './errorCodes.js';
+import { pickAuthMethodsForDetails } from './authMethods.js';
 export * from './schema.js';
 
 import type { WritableStream, ReadableStream } from 'node:stream/web';
@@ -182,6 +183,7 @@ type ErrorResponse = {
   code: number;
   message: string;
   data?: unknown;
+  authMethods?: schema.AuthMethod[];
 };
 
 type PendingResponse = {
@@ -302,8 +304,11 @@ class Connection {
         details = error.message;
       }
 
-      if (errorName === 'TokenManagerError') {
-        return RequestError.authRequired(details).toResult();
+      if (errorName === 'TokenManagerError' || details?.includes('/auth')) {
+        return RequestError.authRequired(
+          details,
+          pickAuthMethodsForDetails(details),
+        ).toResult();
       }
 
       debugLogger.error(
@@ -367,17 +372,24 @@ class Connection {
 }
 
 export class RequestError extends Error {
-  data?: { details?: string };
+  data?: { details?: string; authMethods?: schema.AuthMethod[] };
 
   constructor(
     public code: number,
     message: string,
     details?: string,
+    authMethods?: schema.AuthMethod[],
   ) {
     super(message);
     this.name = 'RequestError';
-    if (details) {
-      this.data = { details };
+    if (details || authMethods) {
+      this.data = {};
+      if (details) {
+        this.data.details = details;
+      }
+      if (authMethods) {
+        this.data.authMethods = authMethods;
+      }
     }
   }
 
@@ -421,11 +433,15 @@ export class RequestError extends Error {
     );
   }
 
-  static authRequired(details?: string): RequestError {
+  static authRequired(
+    details?: string,
+    authMethods?: schema.AuthMethod[],
+  ): RequestError {
     return new RequestError(
       ACP_ERROR_CODES.AUTH_REQUIRED,
       'Authentication required',
       details,
+      authMethods,
     );
   }
 

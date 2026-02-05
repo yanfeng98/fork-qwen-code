@@ -55,7 +55,10 @@ import type {
   ExtensionSetting,
   ResolvedExtensionSetting,
 } from './extensionSettings.js';
-import type { TelemetrySettings } from '../config/config.js';
+import type {
+  ExtensionOriginSource,
+  TelemetrySettings,
+} from '../config/config.js';
 import { logExtensionUpdateEvent } from '../telemetry/loggers.js';
 import {
   ExtensionDisableEvent,
@@ -136,6 +139,7 @@ export enum ExtensionUpdateState {
 
 export type ExtensionRequestOptions = {
   extensionConfig: ExtensionConfig;
+  originSource: ExtensionOriginSource;
   commands?: string[];
   skills?: SkillConfig[];
   subagents?: SubagentConfig[];
@@ -246,21 +250,24 @@ async function loadCommandsFromDir(dir: string): Promise<string[]> {
 async function convertGeminiOrClaudeExtension(
   extensionDir: string,
   pluginName?: string,
-) {
+): Promise<{ extensionDir: string; originSource: ExtensionOriginSource }> {
   let newExtensionDir = extensionDir;
+  let originSource: ExtensionOriginSource = 'QwenCode';
   const configFilePath = path.join(extensionDir, EXTENSIONS_CONFIG_FILENAME);
   if (fs.existsSync(configFilePath)) {
     newExtensionDir = extensionDir;
   } else if (isGeminiExtensionConfig(extensionDir)) {
     newExtensionDir = (await convertGeminiExtensionPackage(extensionDir))
       .convertedDir;
+    originSource = 'Gemini';
   } else if (pluginName) {
     newExtensionDir = (
       await convertClaudePluginPackage(extensionDir, pluginName)
     ).convertedDir;
+    originSource = 'Claude';
   }
   // Claude plugin conversion not yet implemented
-  return newExtensionDir;
+  return { extensionDir: newExtensionDir, originSource };
 }
 
 // ============================================================================
@@ -804,10 +811,15 @@ export class ExtensionManager {
       }
 
       try {
-        localSourcePath = await convertGeminiOrClaudeExtension(
-          localSourcePath,
-          installMetadata.pluginName,
-        );
+        const { extensionDir, originSource } =
+          await convertGeminiOrClaudeExtension(
+            localSourcePath,
+            installMetadata.pluginName,
+          );
+
+        localSourcePath = extensionDir;
+        installMetadata.originSource = originSource;
+
         newExtensionConfig = this.loadExtensionConfig({
           extensionDir: localSourcePath,
           workspaceDir: currentDir,
@@ -869,6 +881,7 @@ export class ExtensionManager {
             previousCommands,
             previousSkills,
             previousSubagents,
+            originSource: installMetadata.originSource,
           });
         } else {
           await this.requestConsent({
@@ -880,6 +893,7 @@ export class ExtensionManager {
             previousCommands,
             previousSkills,
             previousSubagents,
+            originSource: installMetadata.originSource,
           });
         }
 
@@ -1077,6 +1091,7 @@ export class ExtensionManager {
         const installMetadata: ExtensionInstallMetadata = {
           source: extension.path,
           type: 'local',
+          originSource: extension.installMetadata?.originSource || 'QwenCode',
         };
         await this.installExtension(
           installMetadata,

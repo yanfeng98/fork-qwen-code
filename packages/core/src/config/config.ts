@@ -50,11 +50,9 @@ import { LSTool } from '../tools/ls.js';
 import type { SendSdkMcpMessage } from '../tools/mcp-client.js';
 import { MemoryTool, setGeminiMdFilename } from '../tools/memoryTool.js';
 import { ReadFileTool } from '../tools/read-file.js';
-import { ReadManyFilesTool } from '../tools/read-many-files.js';
 import { canUseRipgrep } from '../utils/ripgrepUtils.js';
 import { RipGrepTool } from '../tools/ripGrep.js';
 import { ShellTool } from '../tools/shell.js';
-import { SmartEditTool } from '../tools/smart-edit.js';
 import { SkillTool } from '../tools/skill.js';
 import { TaskTool } from '../tools/task.js';
 import { TodoWriteTool } from '../tools/todoWrite.js';
@@ -119,6 +117,7 @@ import {
   ModelsConfig,
   type ModelProvidersConfig,
   type AvailableModel,
+  type RuntimeModelSnapshot,
 } from '../models/index.js';
 import type { ClaudeMarketplaceConfig } from '../extension/claude-converter.js';
 
@@ -175,7 +174,7 @@ export const APPROVAL_MODE_INFO: Record<ApprovalMode, ApprovalModeInfo> = {
 };
 
 export interface AccessibilitySettings {
-  disableLoadingPhrases?: boolean;
+  enableLoadingPhrases?: boolean;
   screenReader?: boolean;
 }
 
@@ -211,9 +210,12 @@ export interface GitCoAuthorSettings {
   email?: string;
 }
 
+export type ExtensionOriginSource = 'QwenCode' | 'Claude' | 'Gemini';
+
 export interface ExtensionInstallMetadata {
   source: string;
   type: 'git' | 'local' | 'link' | 'github-release' | 'marketplace';
+  originSource?: ExtensionOriginSource;
   releaseTag?: string; // Only present for github-release installs.
   ref?: string;
   autoUpdate?: boolean;
@@ -287,7 +289,6 @@ export interface ConfigParameters {
   debugMode: boolean;
   includePartialMessages?: boolean;
   question?: string;
-  fullContext?: boolean;
   coreTools?: string[];
   allowedTools?: string[];
   excludeTools?: string[];
@@ -311,7 +312,7 @@ export interface ConfigParameters {
     respectGitIgnore?: boolean;
     respectQwenIgnore?: boolean;
     enableRecursiveFileSearch?: boolean;
-    disableFuzzySearch?: boolean;
+    enableFuzzySearch?: boolean;
   };
   checkpointing?: boolean;
   proxy?: string;
@@ -369,7 +370,6 @@ export interface ConfigParameters {
   truncateToolOutputLines?: number;
   enableToolOutputTruncation?: boolean;
   eventEmitter?: EventEmitter;
-  useSmartEdit?: boolean;
   output?: OutputSettings;
   inputFormat?: InputFormat;
   outputFormat?: OutputFormat;
@@ -436,7 +436,6 @@ export class Config {
   private readonly outputFormat: OutputFormat;
   private readonly includePartialMessages: boolean;
   private readonly question: string | undefined;
-  private readonly fullContext: boolean;
   private readonly coreTools: string[] | undefined;
   private readonly allowedTools: string[] | undefined;
   private readonly excludeTools: string[] | undefined;
@@ -463,7 +462,7 @@ export class Config {
     respectGitIgnore: boolean;
     respectQwenIgnore: boolean;
     enableRecursiveFileSearch: boolean;
-    disableFuzzySearch: boolean;
+    enableFuzzySearch: boolean;
   };
   private fileDiscoveryService: FileDiscoveryService | null = null;
   private gitService: GitService | undefined = undefined;
@@ -519,7 +518,6 @@ export class Config {
   private readonly truncateToolOutputLines: number;
   private readonly enableToolOutputTruncation: boolean;
   private readonly eventEmitter?: EventEmitter;
-  private readonly useSmartEdit: boolean;
   private readonly channel: string | undefined;
   private readonly defaultFileEncoding: FileEncodingType;
 
@@ -544,7 +542,6 @@ export class Config {
     this.outputFormat = normalizedOutputFormat ?? OutputFormat.TEXT;
     this.includePartialMessages = params.includePartialMessages ?? false;
     this.question = params.question;
-    this.fullContext = params.fullContext ?? false;
     this.coreTools = params.coreTools;
     this.allowedTools = params.allowedTools;
     this.excludeTools = params.excludeTools;
@@ -584,7 +581,7 @@ export class Config {
       respectQwenIgnore: params.fileFiltering?.respectQwenIgnore ?? true,
       enableRecursiveFileSearch:
         params.fileFiltering?.enableRecursiveFileSearch ?? true,
-      disableFuzzySearch: params.fileFiltering?.disableFuzzySearch ?? false,
+      enableFuzzySearch: params.fileFiltering?.enableFuzzySearch ?? true,
     };
     this.checkpointing = params.checkpointing ?? false;
     this.proxy = params.proxy;
@@ -635,7 +632,6 @@ export class Config {
     this.truncateToolOutputLines =
       params.truncateToolOutputLines ?? DEFAULT_TRUNCATE_TOOL_OUTPUT_LINES;
     this.enableToolOutputTruncation = params.enableToolOutputTruncation ?? true;
-    this.useSmartEdit = params.useSmartEdit ?? false;
     this.channel = params.channel;
     this.defaultFileEncoding = params.defaultFileEncoding ?? FileEncoding.UTF8;
     this.storage = new Storage(this.targetDir);
@@ -728,6 +724,9 @@ export class Config {
 
     await this.geminiClient.initialize();
     this.debugLogger.info('Gemini client initialized');
+
+    // Detect and capture runtime model snapshot (from CLI/ENV/credentials)
+    this.modelsConfig.detectAndCaptureRuntimeModel();
 
     logStartSession(this, new StartSessionEvent(this));
     this.debugLogger.info('Config initialization completed');
@@ -943,9 +942,9 @@ export class Config {
       // Hot-update fields (qwen-oauth models share the same auth + client).
       this.contentGeneratorConfig.model = config.model;
       this.contentGeneratorConfig.samplingParams = config.samplingParams;
-      this.contentGeneratorConfig.disableCacheControl =
-        config.disableCacheControl;
       this.contentGeneratorConfig.contextWindowSize = config.contextWindowSize;
+      this.contentGeneratorConfig.enableCacheControl =
+        config.enableCacheControl;
 
       if ('model' in sources) {
         this.contentGeneratorConfigSources['model'] = sources['model'];
@@ -954,9 +953,9 @@ export class Config {
         this.contentGeneratorConfigSources['samplingParams'] =
           sources['samplingParams'];
       }
-      if ('disableCacheControl' in sources) {
-        this.contentGeneratorConfigSources['disableCacheControl'] =
-          sources['disableCacheControl'];
+      if ('enableCacheControl' in sources) {
+        this.contentGeneratorConfigSources['enableCacheControl'] =
+          sources['enableCacheControl'];
       }
       if ('contextWindowSize' in sources) {
         this.contentGeneratorConfigSources['contextWindowSize'] =
@@ -986,22 +985,39 @@ export class Config {
   }
 
   /**
-   * Switch authType+model via registry-backed selection.
+   * Get all configured models across authTypes.
+   * Delegates to ModelsConfig.
+   */
+  getAllConfiguredModels(authTypes?: AuthType[]): AvailableModel[] {
+    return this.modelsConfig.getAllConfiguredModels(authTypes);
+  }
+
+  /**
+   * Get the currently active runtime model snapshot.
+   * Delegates to ModelsConfig.
+   */
+  getActiveRuntimeModelSnapshot(): RuntimeModelSnapshot | undefined {
+    return this.modelsConfig.getActiveRuntimeModelSnapshot();
+  }
+
+  /**
+   * Switch authType+model.
+   * Supports both registry-backed models and runtime model snapshots.
+   *
+   * For runtime models, the modelId should be in format `$runtime|${authType}|${modelId}`.
    * This triggers a refresh of the ContentGenerator when required (always on authType changes).
    * For qwen-oauth model switches that are hot-update safe, this may update in place.
    *
    * @param authType - Target authentication type
-   * @param modelId - Target model ID
+   * @param modelId - Target model ID (or `$runtime|${authType}|${modelId}` for runtime models)
    * @param options - Additional options like requireCachedCredentials
-   * @param metadata - Metadata for logging/tracking
    */
   async switchModel(
     authType: AuthType,
     modelId: string,
     options?: { requireCachedCredentials?: boolean },
-    metadata?: { reason?: string; context?: string },
   ): Promise<void> {
-    await this.modelsConfig.switchModel(authType, modelId, options, metadata);
+    await this.modelsConfig.switchModel(authType, modelId, options);
   }
 
   getMaxSessionTurns(): number {
@@ -1079,10 +1095,6 @@ export class Config {
 
   getQuestion(): string | undefined {
     return this.question;
-  }
-
-  getFullContext(): boolean {
-    return this.fullContext;
   }
 
   getCoreTools(): string[] | undefined {
@@ -1272,8 +1284,8 @@ export class Config {
     return this.fileFiltering.enableRecursiveFileSearch;
   }
 
-  getFileFilteringDisableFuzzySearch(): boolean {
-    return this.fileFiltering.disableFuzzySearch;
+  getFileFilteringEnableFuzzySearch(): boolean {
+    return this.fileFiltering.enableFuzzySearch;
   }
 
   getFileFilteringRespectGitIgnore(): boolean {
@@ -1573,10 +1585,6 @@ export class Config {
     return this.truncateToolOutputLines;
   }
 
-  getUseSmartEdit(): boolean {
-    return this.useSmartEdit;
-  }
-
   getOutputFormat(): OutputFormat {
     return this.outputFormat;
   }
@@ -1698,13 +1706,8 @@ export class Config {
     }
 
     registerCoreTool(GlobTool, this);
-    if (this.getUseSmartEdit()) {
-      registerCoreTool(SmartEditTool, this);
-    } else {
-      registerCoreTool(EditTool, this);
-    }
+    registerCoreTool(EditTool, this);
     registerCoreTool(WriteFileTool, this);
-    registerCoreTool(ReadManyFilesTool, this);
     registerCoreTool(ShellTool, this);
     registerCoreTool(MemoryTool);
     registerCoreTool(TodoWriteTool, this);

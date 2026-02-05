@@ -53,7 +53,11 @@ export interface ChatRecord {
    */
   type: 'user' | 'assistant' | 'tool_result' | 'system';
   /** Optional system subtype for distinguishing system behaviors */
-  subtype?: 'chat_compression' | 'slash_command' | 'ui_telemetry';
+  subtype?:
+    | 'chat_compression'
+    | 'slash_command'
+    | 'ui_telemetry'
+    | 'at_command';
   /** Working directory at time of message */
   cwd: string;
   /** CLI version for compatibility tracking */
@@ -90,7 +94,8 @@ export interface ChatRecord {
   systemPayload?:
     | ChatCompressionRecordPayload
     | SlashCommandRecordPayload
-    | UiTelemetryRecordPayload;
+    | UiTelemetryRecordPayload
+    | AtCommandRecordPayload;
 }
 
 /**
@@ -118,6 +123,20 @@ export interface SlashCommandRecordPayload {
    * the CLI (without IDs). Stored as plain objects for replay on resume.
    */
   outputHistoryItems?: Array<Record<string, unknown>>;
+}
+
+/**
+ * Stored payload for @-command replay.
+ */
+export interface AtCommandRecordPayload {
+  /** Files that were read for this @-command. */
+  filesRead: string[];
+  /** Status for UI reconstruction. */
+  status: 'success' | 'error';
+  /** Optional result message for UI reconstruction. */
+  message?: string;
+  /** Raw user-entered @-command query (optional for legacy records). */
+  userText?: string;
 }
 
 /**
@@ -406,6 +425,24 @@ export class ChatRecordingService {
       this.appendRecord(record);
     } catch (error) {
       debugLogger.error('Error saving ui telemetry record:', error);
+    }
+  }
+
+  /**
+   * Records @-command metadata as a system record for UI reconstruction.
+   */
+  recordAtCommand(payload: AtCommandRecordPayload): void {
+    try {
+      const record: ChatRecord = {
+        ...this.createBaseRecord('system'),
+        type: 'system',
+        subtype: 'at_command',
+        systemPayload: payload,
+      };
+
+      this.appendRecord(record);
+    } catch (error) {
+      debugLogger.error('Error saving @-command record:', error);
     }
   }
 }

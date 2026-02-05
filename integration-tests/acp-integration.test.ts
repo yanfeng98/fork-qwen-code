@@ -146,7 +146,9 @@ function setupAcpTest(
     clearTimeout(waiter.timeout);
     pending.delete(msg.id);
     if (msg.error) {
-      waiter.reject(new Error(msg.error.message ?? 'Unknown error'));
+      const error = new Error(msg.error.message ?? 'Unknown error');
+      (error as Error & { response?: unknown }).response = msg.error;
+      waiter.reject(error);
     } else {
       waiter.resolve(msg.result);
     }
@@ -407,6 +409,42 @@ function setupAcpTest(
       })) as { modelId: string };
       expect(setModelResult).toBeDefined();
       expect(setModelResult.modelId).toBeTruthy();
+    } catch (e) {
+      if (stderr.length) {
+        console.error('Agent stderr:', stderr.join(''));
+      }
+      throw e;
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it('includes authMethods in error data when auth is required', async () => {
+    const rig = new TestRig();
+    rig.setup('acp auth methods in error data');
+
+    const { sendRequest, cleanup, stderr } = setupAcpTest(rig);
+
+    try {
+      await sendRequest('initialize', {
+        protocolVersion: 1,
+        clientCapabilities: {
+          fs: { readTextFile: true, writeTextFile: true },
+        },
+      });
+
+      await expect(
+        sendRequest('session/new', {
+          cwd: rig.testDir!,
+          mcpServers: [],
+        }),
+      ).rejects.toMatchObject({
+        response: {
+          data: {
+            authMethods: expect.any(Array),
+          },
+        },
+      });
     } catch (e) {
       if (stderr.length) {
         console.error('Agent stderr:', stderr.join(''));

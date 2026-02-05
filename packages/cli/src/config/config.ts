@@ -97,7 +97,6 @@ export interface CliArgs {
   debug: boolean | undefined;
   prompt: string | undefined;
   promptInteractive: string | undefined;
-  allFiles: boolean | undefined;
   yolo: boolean | undefined;
   approvalMode: string | undefined;
   telemetry: boolean | undefined;
@@ -127,7 +126,6 @@ export interface CliArgs {
   webSearchDefault: string | undefined;
   screenReader: boolean | undefined;
   vlmSwitchMode: string | undefined;
-  useSmartEdit: boolean | undefined;
   inputFormat?: string | undefined;
   outputFormat: string | undefined;
   includePartialMessages?: boolean;
@@ -284,12 +282,6 @@ export async function parseArguments(settings: Settings): Promise<CliArgs> {
         .option('sandbox-image', {
           type: 'string',
           description: 'Sandbox image URI.',
-        })
-        .option('all-files', {
-          alias: ['a'],
-          type: 'boolean',
-          description: 'Include ALL files in context?',
-          default: false,
         })
         .option('yolo', {
           alias: 'y',
@@ -506,10 +498,6 @@ export async function parseArguments(settings: Settings): Promise<CliArgs> {
         .deprecateOption(
           'checkpointing',
           'Use the "general.checkpointing.enabled" setting in settings.json instead. This flag will be removed in a future version.',
-        )
-        .deprecateOption(
-          'all-files',
-          'Use @ includes in the application instead. This flag will be removed in a future version.',
         )
         .deprecateOption(
           'prompt',
@@ -933,7 +921,6 @@ export async function loadCliConfig(
     importFormat: settings.context?.importFormat || 'tree',
     debugMode,
     question,
-    fullContext: argv.allFiles || false,
     coreTools: argv.coreTools || settings.tools?.core || undefined,
     allowedTools: argv.allowedTools || settings.tools?.allowed || undefined,
     excludeTools,
@@ -1002,7 +989,6 @@ export async function loadCliConfig(
     truncateToolOutputLines: settings.tools?.truncateToolOutputLines,
     enableToolOutputTruncation: settings.tools?.enableToolOutputTruncation,
     eventEmitter: appEvents,
-    useSmartEdit: argv.useSmartEdit ?? settings.useSmartEdit,
     gitCoAuthor: settings.general?.gitCoAuthor,
     output: {
       format: outputSettingsFormat,

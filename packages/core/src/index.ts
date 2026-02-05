@@ -59,6 +59,10 @@ export * from './core/nonInteractiveToolExecutor.js';
 export * from './core/prompts.js';
 export * from './core/tokenLimits.js';
 export * from './core/turn.js';
+export * from './core/geminiRequest.js';
+export * from './core/coreToolScheduler.js';
+export * from './core/nonInteractiveToolExecutor.js';
+export * from './tools/tool-names.js';
 
 // ============================================================================
 // Tools
@@ -152,7 +156,6 @@ export * from './tools/mcp-client.js';
 export * from './tools/mcp-client-manager.js';
 export * from './tools/mcp-tool.js';
 export * from './tools/read-file.js';
-export * from './tools/read-many-files.js';
 export * from './tools/ripGrep.js';
 export * from './tools/sdk-control-client-transport.js';
 export * from './tools/shell.js';
@@ -214,7 +217,6 @@ export type {
 // Telemetry
 // ============================================================================
 
-export { ClearcutLogger } from './telemetry/clearcut-logger/clearcut-logger.js';
 export { QwenLogger } from './telemetry/qwen-logger/qwen-logger.js';
 export * from './telemetry/index.js';
 export {
@@ -268,6 +270,7 @@ export * from './utils/paths.js';
 export * from './utils/promptIdContext.js';
 export * from './utils/projectSummary.js';
 export * from './utils/quotaErrorDetection.js';
+export * from './utils/readManyFiles.js';
 export * from './utils/request-tokenizer/supportedImageFormats.js';
 export * from './utils/retry.js';
 export * from './utils/ripgrepUtils.js';

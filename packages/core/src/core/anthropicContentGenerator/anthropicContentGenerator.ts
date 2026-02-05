@@ -78,7 +78,7 @@ export class AnthropicContentGenerator implements ContentGenerator {
     this.converter = new AnthropicContentConverter(
       contentGeneratorConfig.model,
       contentGeneratorConfig.schemaCompliance,
-      contentGeneratorConfig.disableCacheControl,
+      contentGeneratorConfig.enableCacheControl,
     );
   }
 
