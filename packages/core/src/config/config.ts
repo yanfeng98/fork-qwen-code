@@ -170,7 +170,7 @@ export const APPROVAL_MODE_INFO: Record<ApprovalMode, ApprovalModeInfo> = {
 };
 
 export interface AccessibilitySettings {
-  disableLoadingPhrases?: boolean;
+  enableLoadingPhrases?: boolean;
   screenReader?: boolean;
 }
 
@@ -306,7 +306,7 @@ export interface ConfigParameters {
     respectGitIgnore?: boolean;
     respectQwenIgnore?: boolean;
     enableRecursiveFileSearch?: boolean;
-    disableFuzzySearch?: boolean;
+    enableFuzzySearch?: boolean;
   };
   checkpointing?: boolean;
   proxy?: string;
@@ -457,7 +457,7 @@ export class Config {
     respectGitIgnore: boolean;
     respectQwenIgnore: boolean;
     enableRecursiveFileSearch: boolean;
-    disableFuzzySearch: boolean;
+    enableFuzzySearch: boolean;
   };
   private fileDiscoveryService: FileDiscoveryService | null = null;
   private gitService: GitService | undefined = undefined;
@@ -576,7 +576,7 @@ export class Config {
       respectQwenIgnore: params.fileFiltering?.respectQwenIgnore ?? true,
       enableRecursiveFileSearch:
         params.fileFiltering?.enableRecursiveFileSearch ?? true,
-      disableFuzzySearch: params.fileFiltering?.disableFuzzySearch ?? false,
+      enableFuzzySearch: params.fileFiltering?.enableFuzzySearch ?? true,
     };
     this.checkpointing = params.checkpointing ?? false;
     this.proxy = params.proxy;
@@ -921,9 +921,9 @@ export class Config {
       // Hot-update fields (qwen-oauth models share the same auth + client).
       this.contentGeneratorConfig.model = config.model;
       this.contentGeneratorConfig.samplingParams = config.samplingParams;
-      this.contentGeneratorConfig.disableCacheControl =
-        config.disableCacheControl;
       this.contentGeneratorConfig.contextWindowSize = config.contextWindowSize;
+      this.contentGeneratorConfig.enableCacheControl =
+        config.enableCacheControl;
 
       if ('model' in sources) {
         this.contentGeneratorConfigSources['model'] = sources['model'];
@@ -932,9 +932,9 @@ export class Config {
         this.contentGeneratorConfigSources['samplingParams'] =
           sources['samplingParams'];
       }
-      if ('disableCacheControl' in sources) {
-        this.contentGeneratorConfigSources['disableCacheControl'] =
-          sources['disableCacheControl'];
+      if ('enableCacheControl' in sources) {
+        this.contentGeneratorConfigSources['enableCacheControl'] =
+          sources['enableCacheControl'];
       }
       if ('contextWindowSize' in sources) {
         this.contentGeneratorConfigSources['contextWindowSize'] =
@@ -1250,8 +1250,8 @@ export class Config {
     return this.fileFiltering.enableRecursiveFileSearch;
   }
 
-  getFileFilteringDisableFuzzySearch(): boolean {
-    return this.fileFiltering.disableFuzzySearch;
+  getFileFilteringEnableFuzzySearch(): boolean {
+    return this.fileFiltering.enableFuzzySearch;
   }
 
   getFileFilteringRespectGitIgnore(): boolean {
