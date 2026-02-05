@@ -447,7 +447,7 @@ model: true
 
 <example>
 user: start the server implemented in server.js
-model: [tool_call: ${ToolNames.SHELL} for 'node server.js &' because it must run in the background]
+model: [tool_call: ${ToolNames.SHELL} for 'node server.js &' with is_background: true because it must run in the background]
 </example>
 
 <example>
@@ -523,11 +523,14 @@ model: true
 
 <example>
 user: start the server implemented in server.js
-model: 
+model:
 <tool_call>
 <function=${ToolNames.SHELL}>
 <parameter=command>
 node server.js &
+</parameter>
+<parameter=is_background>
+true
 </parameter>
 </function>
 </tool_call>
@@ -679,7 +682,7 @@ model: true
 user: start the server implemented in server.js
 model: 
 <tool_call>
-{"name": "${ToolNames.SHELL}", "arguments": {"command": "node server.js &"}}
+{"name": "${ToolNames.SHELL}", "arguments": {"command": "node server.js &", "is_background": true}}
 </tool_call>
 </example>
 

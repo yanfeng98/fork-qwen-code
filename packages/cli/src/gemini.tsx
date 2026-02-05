@@ -182,7 +182,9 @@ export async function startInteractiveUI(
     },
   );
 
-  if (!settings.merged.general?.disableUpdateNag) {
+  // Check for updates only if enableAutoUpdate is not explicitly disabled.
+  // Using !== false ensures updates are enabled by default when undefined.
+  if (settings.merged.general?.enableAutoUpdate !== false) {
     checkForUpdates()
       .then((info) => {
         handleAutoUpdate(info, settings, config.getProjectRoot());
@@ -339,6 +341,9 @@ export async function main() {
       process.cwd(),
       argv.extensions,
     );
+
+    // Register cleanup for MCP clients as early as possible
+    // This ensures MCP server subprocesses are properly terminated on exit
     registerCleanup(() => config.shutdown());
 
     // FIXME: list extensions after the config initialize
