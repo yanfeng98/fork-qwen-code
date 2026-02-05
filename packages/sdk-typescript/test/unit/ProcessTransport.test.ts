@@ -1393,10 +1393,10 @@ describe('ProcessTransport', () => {
     it('should use fork when FORK_MODE=1', () => {
       process.env.FORK_MODE = '1';
       mockPrepareSpawnInfo.mockReturnValue({
-        command: 'qwen',
-        args: [],
-        type: 'native',
-        originalInput: 'qwen',
+        command: 'node',
+        args: ['/path/to/cli.js'],
+        type: 'node',
+        originalInput: 'node /path/to/cli.js',
       });
       mockFork.mockReturnValue(mockChildProcess);
 
@@ -1446,21 +1446,24 @@ describe('ProcessTransport', () => {
 
       new ProcessTransport(options);
 
-      // In non-Electron environment, command is used as modulePath
+      // In non-Electron environment, JS file is used as modulePath
+      // and execPath is set to the runtime (node)
       expect(mockFork).toHaveBeenCalledWith(
-        'node', // modulePath is the command in non-Electron environment
-        expect.arrayContaining(['/path/to/cli.js']),
-        expect.any(Object),
+        '/path/to/cli.js', // modulePath is the JS file
+        expect.arrayContaining([]),
+        expect.objectContaining({
+          execPath: 'node',
+        }),
       );
     });
 
     it('should configure stdio with ipc channel for fork', () => {
       process.env.FORK_MODE = '1';
       mockPrepareSpawnInfo.mockReturnValue({
-        command: 'qwen',
-        args: [],
-        type: 'native',
-        originalInput: 'qwen',
+        command: 'node',
+        args: ['/path/to/cli.js'],
+        type: 'node',
+        originalInput: 'node /path/to/cli.js',
       });
       mockFork.mockReturnValue(mockChildProcess);
 
@@ -1482,10 +1485,10 @@ describe('ProcessTransport', () => {
     it('should configure stdio with pipe for stderr when debug mode is on', () => {
       process.env.FORK_MODE = '1';
       mockPrepareSpawnInfo.mockReturnValue({
-        command: 'qwen',
-        args: [],
-        type: 'native',
-        originalInput: 'qwen',
+        command: 'node',
+        args: ['/path/to/cli.js'],
+        type: 'node',
+        originalInput: 'node /path/to/cli.js',
       });
       mockFork.mockReturnValue(mockChildProcess);
 
@@ -1549,21 +1552,24 @@ describe('ProcessTransport', () => {
 
       new ProcessTransport(options);
 
-      // In normal Node.js, command is used as modulePath, not cli.js
+      // In normal Node.js, JS file is used as modulePath
+      // and execPath is set to the runtime (node)
       expect(mockFork).toHaveBeenCalledWith(
-        'node',
-        expect.arrayContaining(['/path/to/cli.js', '--some-arg']),
-        expect.any(Object),
+        '/path/to/cli.js',
+        expect.arrayContaining(['--some-arg']),
+        expect.objectContaining({
+          execPath: 'node',
+        }),
       );
     });
 
     it('should pass env to fork', () => {
       process.env.FORK_MODE = '1';
       mockPrepareSpawnInfo.mockReturnValue({
-        command: 'qwen',
-        args: [],
-        type: 'native',
-        originalInput: 'qwen',
+        command: 'node',
+        args: ['/path/to/cli.js'],
+        type: 'node',
+        originalInput: 'node /path/to/cli.js',
       });
       mockFork.mockReturnValue(mockChildProcess);
 
@@ -1589,10 +1595,10 @@ describe('ProcessTransport', () => {
     it('should pass cwd to fork', () => {
       process.env.FORK_MODE = '1';
       mockPrepareSpawnInfo.mockReturnValue({
-        command: 'qwen',
-        args: [],
-        type: 'native',
-        originalInput: 'qwen',
+        command: 'node',
+        args: ['/path/to/cli.js'],
+        type: 'node',
+        originalInput: 'node /path/to/cli.js',
       });
       mockFork.mockReturnValue(mockChildProcess);
 
@@ -1615,10 +1621,10 @@ describe('ProcessTransport', () => {
     it('should pass abort signal to fork', () => {
       process.env.FORK_MODE = '1';
       mockPrepareSpawnInfo.mockReturnValue({
-        command: 'qwen',
-        args: [],
-        type: 'native',
-        originalInput: 'qwen',
+        command: 'node',
+        args: ['/path/to/cli.js'],
+        type: 'node',
+        originalInput: 'node /path/to/cli.js',
       });
       mockFork.mockReturnValue(mockChildProcess);
 
@@ -1635,6 +1641,60 @@ describe('ProcessTransport', () => {
         expect.any(Array),
         expect.objectContaining({
           signal: abortController.signal,
+        }),
+      );
+    });
+
+    it('should fallback to spawn for native type when FORK_MODE=1', () => {
+      process.env.FORK_MODE = '1';
+      mockPrepareSpawnInfo.mockReturnValue({
+        command: 'qwen',
+        args: [],
+        type: 'native',
+        originalInput: 'qwen',
+      });
+      mockSpawn.mockReturnValue(mockChildProcess);
+
+      const options: TransportOptions = {
+        pathToQwenExecutable: 'qwen',
+      };
+
+      new ProcessTransport(options);
+
+      // Native type should fallback to spawn, not fork
+      expect(mockFork).not.toHaveBeenCalled();
+      expect(mockSpawn).toHaveBeenCalledWith(
+        'qwen',
+        expect.any(Array),
+        expect.objectContaining({
+          stdio: ['pipe', 'pipe', 'ignore'],
+        }),
+      );
+    });
+
+    it('should use fork for bun type with correct execPath when FORK_MODE=1', () => {
+      process.env.FORK_MODE = '1';
+      mockPrepareSpawnInfo.mockReturnValue({
+        command: 'bun',
+        args: ['/path/to/cli.js'],
+        type: 'bun',
+        originalInput: 'bun /path/to/cli.js',
+      });
+      mockFork.mockReturnValue(mockChildProcess);
+
+      const options: TransportOptions = {
+        pathToQwenExecutable: 'qwen',
+      };
+
+      new ProcessTransport(options);
+
+      // Bun type should use fork with execPath set to bun
+      expect(mockSpawn).not.toHaveBeenCalled();
+      expect(mockFork).toHaveBeenCalledWith(
+        '/path/to/cli.js',
+        expect.any(Array),
+        expect.objectContaining({
+          execPath: 'bun',
         }),
       );
     });

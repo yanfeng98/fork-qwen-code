@@ -54,7 +54,6 @@ export class ProcessTransport implements Transport {
 
       // Check if we should use fork for Electron integration
       const useFork = env.FORK_MODE === '1';
-      console.log('useFork', useFork);
 
       if (useFork) {
         // Detect Electron environment
@@ -73,30 +72,67 @@ export class ProcessTransport implements Transport {
 
         let forkModulePath: string;
         let forkArgs: string[];
+        let forkExecPath: string | undefined;
 
         if (isElectron && isUsingExecPathForJs) {
           // In Electron with JS file: use the JS file as module path, rest as args
           forkModulePath = spawnInfo.args[0] ?? '';
           forkArgs = [...spawnInfo.args.slice(1), ...cliArgs];
+        } else if (
+          (spawnInfo.type === 'node' || spawnInfo.type === 'bun') &&
+          spawnInfo.args.length > 0
+        ) {
+          // For node/bun type: command is the runtime, args[0] is the JS module
+          forkModulePath = spawnInfo.args[0] ?? '';
+          forkArgs = [...spawnInfo.args.slice(1), ...cliArgs];
+          forkExecPath = spawnInfo.command;
         } else {
-          // Normal case: use command as module path
-          forkModulePath = spawnInfo.command;
-          forkArgs = [...spawnInfo.args, ...cliArgs];
+          // Native or other types: cannot use fork, fall back to spawn
+          logger.debug(
+            `FORK_MODE enabled but CLI type '${spawnInfo.type}' does not support fork. Falling back to spawn.`,
+          );
+          forkModulePath = '';
+          forkArgs = [];
         }
 
-        logger.debug(
-          `Forking CLI (${spawnInfo.type}): ${forkModulePath} ${forkArgs.join(' ')}`,
-        );
+        // Only use fork if we have a valid module path
+        if (forkModulePath) {
+          logger.debug(
+            `Forking CLI (${spawnInfo.type}): ${forkModulePath} ${forkArgs.join(' ')}`,
+          );
 
-        this.childProcess = fork(forkModulePath, forkArgs, {
-          cwd,
-          env,
-          stdio:
-            stderrMode === 'pipe'
-              ? ['pipe', 'pipe', 'pipe', 'ipc']
-              : ['pipe', 'pipe', 'ignore', 'ipc'],
-          signal: this.abortController.signal,
-        });
+          const forkOptions: Parameters<typeof fork>[2] = {
+            cwd,
+            env,
+            stdio:
+              stderrMode === 'pipe'
+                ? ['pipe', 'pipe', 'pipe', 'ipc']
+                : ['pipe', 'pipe', 'ignore', 'ipc'],
+            signal: this.abortController.signal,
+          };
+
+          if (forkExecPath) {
+            forkOptions.execPath = forkExecPath;
+          }
+
+          this.childProcess = fork(forkModulePath, forkArgs, forkOptions);
+        } else {
+          // Fallback to spawn for native/unsupported types
+          logger.debug(
+            `Spawning CLI (${spawnInfo.type}): ${spawnInfo.command} ${[...spawnInfo.args, ...cliArgs].join(' ')}`,
+          );
+
+          this.childProcess = spawn(
+            spawnInfo.command,
+            [...spawnInfo.args, ...cliArgs],
+            {
+              cwd,
+              env,
+              stdio: ['pipe', 'pipe', stderrMode],
+              signal: this.abortController.signal,
+            },
+          );
+        }
       } else {
         logger.debug(
           `Spawning CLI (${spawnInfo.type}): ${spawnInfo.command} ${[...spawnInfo.args, ...cliArgs].join(' ')}`,
