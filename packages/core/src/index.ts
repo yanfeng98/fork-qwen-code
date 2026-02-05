@@ -150,7 +150,6 @@ export type {
 // Telemetry
 // ============================================================================
 
-export { ClearcutLogger } from './telemetry/clearcut-logger/clearcut-logger.js';
 export { QwenLogger } from './telemetry/qwen-logger/qwen-logger.js';
 export * from './telemetry/index.js';
 export {
