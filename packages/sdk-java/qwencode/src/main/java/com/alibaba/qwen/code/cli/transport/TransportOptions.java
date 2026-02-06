@@ -58,10 +58,6 @@ public class TransportOptions implements Cloneable {
      */
     private Boolean includePartialMessages;
     /**
-     * Whether to enable skills.
-     */
-    private Boolean skillsEnable;
-    /**
      * Timeout for individual turns.
      */
     private Timeout turnTimeout;
@@ -295,26 +291,6 @@ public class TransportOptions implements Cloneable {
      */
     public TransportOptions setIncludePartialMessages(Boolean includePartialMessages) {
         this.includePartialMessages = includePartialMessages;
-        return this;
-    }
-
-    /**
-     * Gets whether skills are enabled.
-     *
-     * @return Whether skills are enabled
-     */
-    public Boolean getSkillsEnable() {
-        return skillsEnable;
-    }
-
-    /**
-     * Sets whether skills are enabled.
-     *
-     * @param skillsEnable Whether skills are enabled
-     * @return This instance for method chaining
-     */
-    public TransportOptions setSkillsEnable(Boolean skillsEnable) {
-        this.skillsEnable = skillsEnable;
         return this;
     }
 

@@ -340,7 +340,6 @@ export default {
   'Folder Trust': '文件夹信任',
   'Vision Model Preview': '视觉模型预览',
   'Tool Schema Compliance': '工具 Schema 兼容性',
-  'Experimental: Skills': '实验性: 技能',
   // Settings enum options
   'Auto (detect from system)': '自动（从系统检测）',
   Text: '文本',

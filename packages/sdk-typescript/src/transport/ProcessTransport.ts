@@ -226,7 +226,6 @@ export class ProcessTransport implements Transport {
       '--output-format',
       'stream-json',
       '--channel=SDK',
-      '--experimental-skills',
     ];
 
     if (this.options.model) {

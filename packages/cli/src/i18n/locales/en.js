@@ -351,7 +351,6 @@ export default {
   'Folder Trust': 'Folder Trust',
   'Vision Model Preview': 'Vision Model Preview',
   'Tool Schema Compliance': 'Tool Schema Compliance',
-  'Experimental: Skills': 'Experimental: Skills',
   // Settings enum options
   'Auto (detect from system)': 'Auto (detect from system)',
   Text: 'Text',

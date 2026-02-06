@@ -45,7 +45,7 @@ class SessionTest {
     private static final Logger logger = LoggerFactory.getLogger(SessionTest.class);
     @Test
     public void testSession() throws AgentInitializeException, SessionNewException, IOException {
-        AcpClient acpClient = new AcpClient(new ProcessTransport(new ProcessTransportOptions().setCommandArgs(new String[] {"qwen", "--acp", "--experimental-skills", "-y"})));
+        AcpClient acpClient = new AcpClient(new ProcessTransport(new ProcessTransportOptions().setCommandArgs(new String[] {"qwen", "--acp", "-y"})));
         try {
             acpClient.sendPrompt(Collections.singletonList(new TextContent("你是谁")), new AgentEventConsumer().setContentEventConsumer(new ContentEventSimpleConsumer(){
                 @Override
@@ -86,7 +86,7 @@ class SessionTest {
     @Test
     void test() throws SessionNewException, AgentInitializeException, IOException {
         Transport transport = new ProcessTransport(
-                new ProcessTransportOptions().setCommandArgs(new String[] {"qwen", "--acp", "--experimental-skills", "-y"}));
+                new ProcessTransportOptions().setCommandArgs(new String[] {"qwen", "--acp", "-y"}));
         AcpClient acpClient = new AcpClient(transport, new InitializeRequestParams().setClientCapabilities(
                 new ClientCapabilities()
                         .setTerminal(true)
@@ -98,7 +98,7 @@ class SessionTest {
     @Test
     void testPermission() throws AgentInitializeException, SessionNewException, IOException {
         Transport transport = new ProcessTransport(
-                new ProcessTransportOptions().setCommandArgs(new String[] {"qwen", "--acp", "--experimental-skills"}));
+                new ProcessTransportOptions().setCommandArgs(new String[] {"qwen", "--acp"}));
         AcpClient acpClient = new AcpClient(transport, new InitializeRequestParams().setClientCapabilities(
                 new ClientCapabilities()
                         .setTerminal(false)

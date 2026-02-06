@@ -355,7 +355,6 @@ export default {
   'Folder Trust': 'Доверие к папке',
   'Vision Model Preview': 'Визуальная модель (предпросмотр)',
   'Tool Schema Compliance': 'Соответствие схеме инструмента',
-  'Experimental: Skills': 'Экспериментальное: Навыки',
   // Варианты перечислений настроек
   'Auto (detect from system)': 'Авто (определить из системы)',
   Text: 'Текст',

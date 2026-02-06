@@ -335,7 +335,6 @@ export default {
   'Folder Trust': 'Ordnervertrauen',
   'Vision Model Preview': 'Vision-Modell-Vorschau',
   'Tool Schema Compliance': 'Werkzeug-Schema-Konformität',
-  'Experimental: Skills': 'Experimentell: Fähigkeiten',
   // Settings enum options
   'Auto (detect from system)': 'Automatisch (vom System erkennen)',
   Text: 'Text',
