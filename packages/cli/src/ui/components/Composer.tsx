@@ -37,9 +37,14 @@ export const Composer = () => {
 
   // State for suggestions visibility
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const handleSuggestionsVisibilityChange = useCallback((visible: boolean) => {
-    setShowSuggestions(visible);
-  }, []);
+  const handleSuggestionsVisibilityChange = useCallback(
+    (visible: boolean) => {
+      setShowSuggestions(visible);
+      // Also notify AppContainer for Tab key handling
+      uiActions.onSuggestionsVisibilityChange(visible);
+    },
+    [uiActions],
+  );
 
   return (
     <Box flexDirection="column" marginTop={1}>

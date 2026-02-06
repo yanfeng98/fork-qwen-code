@@ -188,6 +188,22 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
     }
   }, [showEscapePrompt, onEscapePromptChange]);
 
+  // Notify parent component about suggestions visibility changes
+  useEffect(() => {
+    if (onSuggestionsVisibilityChange) {
+      const hasSuggestions =
+        completion.showSuggestions ||
+        reverseSearchCompletion.showSuggestions ||
+        commandSearchCompletion.showSuggestions;
+      onSuggestionsVisibilityChange(hasSuggestions);
+    }
+  }, [
+    completion.showSuggestions,
+    reverseSearchCompletion.showSuggestions,
+    commandSearchCompletion.showSuggestions,
+    onSuggestionsVisibilityChange,
+  ]);
+
   // Clear escape prompt timer on unmount
   useEffect(
     () => () => {

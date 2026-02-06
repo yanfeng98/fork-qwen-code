@@ -690,11 +690,15 @@ export const AppContainer = (props: AppContainerProps) => {
     embeddedShellFocused,
   );
 
+  // Track whether suggestions are visible for Tab key handling
+  const [hasSuggestionsVisible, setHasSuggestionsVisible] = useState(false);
+
   // Auto-accept indicator
   const showAutoAcceptIndicator = useAutoAcceptIndicator({
     config,
     addItem: historyManager.addItem,
     onApprovalModeChange: handleApprovalModeChange,
+    shouldBlockTab: () => hasSuggestionsVisible,
   });
 
   const { messageQueue, addMessage, clearQueue, getQueuedMessagesText } =
@@ -1516,6 +1520,7 @@ export const AppContainer = (props: AppContainerProps) => {
       handleFolderTrustSelect,
       setConstrainHeight,
       onEscapePromptChange: handleEscapePromptChange,
+      onSuggestionsVisibilityChange: setHasSuggestionsVisible,
       refreshStatic,
       handleFinalSubmit,
       handleClearScreen,
