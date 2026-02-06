@@ -2244,6 +2244,67 @@ describe('InputPrompt', () => {
       unmount();
     });
 
+    it('should expand same-size placeholders correctly when #2 appears first', async () => {
+      const firstPaste = 'x'.repeat(1001);
+      const secondPaste = 'y'.repeat(1001);
+
+      const { stdin, unmount } = renderWithProviders(
+        <InputPrompt {...props} />,
+      );
+      await wait();
+
+      stdin.write(`\x1b[200~${firstPaste}\x1b[201~`);
+      await wait();
+      stdin.write(`\x1b[200~${secondPaste}\x1b[201~`);
+      await wait();
+
+      mockBuffer.text =
+        '[Pasted Content 1001 chars] #2\n[Pasted Content 1001 chars]';
+      mockBuffer.lines = mockBuffer.text.split('\n');
+      mockBuffer.cursor = [1, '[Pasted Content 1001 chars]'.length];
+
+      // Wait for paste protection to expire
+      await new Promise((resolve) => setTimeout(resolve, 600));
+
+      stdin.write('\r');
+      await wait();
+
+      expect(props.onSubmit).toHaveBeenCalledWith(
+        `${secondPaste}\n${firstPaste}`,
+      );
+
+      unmount();
+    });
+
+    it('should write expanded placeholder content to shell history', async () => {
+      props.shellModeActive = true;
+      const largeContent = 'x'.repeat(1001);
+      mockBuffer.text = '[Pasted Content 1001 chars]';
+      mockBuffer.lines = [mockBuffer.text];
+      mockBuffer.cursor = [0, mockBuffer.text.length];
+
+      const { stdin, unmount } = renderWithProviders(
+        <InputPrompt {...props} />,
+      );
+      await wait();
+
+      stdin.write(`\x1b[200~${largeContent}\x1b[201~`);
+      await wait();
+
+      // Wait for paste protection to expire
+      await new Promise((resolve) => setTimeout(resolve, 600));
+
+      stdin.write('\r');
+      await wait();
+
+      expect(mockShellHistory.addCommandToHistory).toHaveBeenCalledWith(
+        largeContent,
+      );
+      expect(props.onSubmit).toHaveBeenCalledWith(largeContent);
+
+      unmount();
+    });
+
     it('should delete entire placeholder on backspace', async () => {
       const placeholderText = '[Pasted Content 1001 chars]';
       mockBuffer.text = placeholderText;

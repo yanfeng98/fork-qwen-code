@@ -88,6 +88,10 @@ export const calculatePromptWidths = (terminalWidth: number) => {
   } as const;
 };
 
+// Large paste placeholder thresholds
+const LARGE_PASTE_CHAR_THRESHOLD = 1000;
+const LARGE_PASTE_LINE_THRESHOLD = 10;
+
 export const InputPrompt: React.FC<InputPromptProps> = ({
   buffer,
   onSubmit,
@@ -121,7 +125,6 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
   const pasteTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Large paste placeholder handling
-  const LARGE_PASTE_CHAR_THRESHOLD = 1000;
   const [pendingPastes, setPendingPastes] = useState<Map<string, string>>(
     new Map(),
   );
@@ -255,16 +258,26 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
 
   const handleSubmitAndClear = useCallback(
     (submittedValue: string) => {
-      if (shellModeActive) {
-        shellHistory.addCommandToHistory(submittedValue);
-      }
       // Expand any large paste placeholders to their full content before submitting
       let finalValue = submittedValue;
       if (pendingPastes.size > 0) {
-        pendingPastes.forEach((fullContent, placeholder) => {
-          finalValue = finalValue.replace(placeholder, fullContent);
-        });
+        const placeholders = Array.from(pendingPastes.keys()).sort(
+          (a, b) => b.length - a.length,
+        );
+        const escapedPlaceholders = placeholders.map((placeholderValue) =>
+          placeholderValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+        );
+        const placeholderRegex = new RegExp(escapedPlaceholders.join('|'), 'g');
+        finalValue = finalValue.replace(
+          placeholderRegex,
+          (matchedPlaceholder) =>
+            pendingPastes.get(matchedPlaceholder) ?? matchedPlaceholder,
+        );
         setPendingPastes(new Map());
+        activePlaceholderIds.current.clear();
+      }
+      if (shellModeActive) {
+        shellHistory.addCommandToHistory(finalValue);
       }
       // Clear the buffer *before* calling onSubmit to prevent potential re-submission
       // if onSubmit triggers a re-render while the buffer still holds the old value.
@@ -397,7 +410,6 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
         const pasted = key.sequence.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
         const charCount = [...pasted].length; // Proper Unicode char count
         const lineCount = pasted.split('\n').length;
-        const LARGE_PASTE_LINE_THRESHOLD = 10;
         if (
           charCount > LARGE_PASTE_CHAR_THRESHOLD ||
           lineCount > LARGE_PASTE_LINE_THRESHOLD
@@ -852,7 +864,6 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
       uiState,
       uiActions,
       pasteWorkaround,
-      LARGE_PASTE_CHAR_THRESHOLD,
       nextLargePastePlaceholder,
       pendingPastes,
       parsePlaceholder,
