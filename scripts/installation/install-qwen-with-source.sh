@@ -213,17 +213,36 @@ main() {
     echo "==========================================="
     echo ""
     
-    # Try to source the shell configuration file
-    if [ -f "$HOME/.zshrc" ]; then
-        echo "Loading zsh configuration..."
-        source "$HOME/.zshrc" 2>/dev/null || true
-    elif [ -f "$HOME/.bashrc" ]; then
-        echo "Loading bash configuration..."
-        source "$HOME/.bashrc" 2>/dev/null || true
+    # Check if qwen is immediately available
+    if command_exists qwen; then
+        echo "✓ Qwen Code is ready to use!"
+        echo ""
+        echo "You can now run: qwen"
+    else
+        echo "⚠ To start using Qwen Code, please run one of the following commands:"
+        echo ""
+        
+        # Detect user's shell
+        USER_SHELL=$(basename "$SHELL")
+        
+        if [ "$USER_SHELL" = "zsh" ] && [ -f "$HOME/.zshrc" ]; then
+            echo "  source ~/.zshrc"
+        elif [ "$USER_SHELL" = "bash" ]; then
+            if [ -f "$HOME/.bash_profile" ]; then
+                echo "  source ~/.bash_profile"
+            elif [ -f "$HOME/.bashrc" ]; then
+                echo "  source ~/.bashrc"
+            fi
+        else
+            # Fallback: show all possible options
+            [ -f "$HOME/.zshrc" ] && echo "  source ~/.zshrc"
+            [ -f "$HOME/.bashrc" ] && echo "  source ~/.bashrc"
+            [ -f "$HOME/.bash_profile" ] && echo "  source ~/.bash_profile"
+        fi
+        
+        echo ""
+        echo "Or simply restart your terminal, then run: qwen"
     fi
-    
-    echo "To use Qwen Code in new terminals, run: qwen"
-    echo "If 'qwen' command is not found, please restart your terminal."
 }
 
 # Run main function
