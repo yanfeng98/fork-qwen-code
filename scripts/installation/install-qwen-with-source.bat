@@ -367,6 +367,7 @@ REM ============================================================
 set "VERSION=%~1"
 echo INFO: Trying Node.js version %VERSION%
 set "ALT_URL=https://nodejs.org/dist/v%VERSION%/node-v%VERSION%-!ARCH!.msi"
+set "ALT_INSTALLER=%TEMP_DIR%\nodejs-installer-alt.msi"
 
 powershell -Command "try { Invoke-WebRequest -Uri '%ALT_URL%' -OutFile '%ALT_INSTALLER%' -UseBasicParsing; Write-Host 'Download completed successfully.' } catch { Write-Host 'Download failed for version %VERSION%'; exit 1 }"
 

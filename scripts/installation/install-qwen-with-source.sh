@@ -1,10 +1,41 @@
 #!/bin/bash
 
-# Script to install Node.js and Qwen Code
-# This script checks and installs Node.js and Qwen Code if not already installed
+# Script to install Node.js and Qwen Code with source information
+# This script handles the installation process and sets the installation source
+#
+# Usage: install-qwen-with-source.sh --source [github|npm|internal|local-build]
+#        install-qwen-with-source.sh -s [github|npm|internal|local-build]
+
+# Function to display usage
+usage() {
+    echo "Usage: $0 [OPTIONS]"
+    echo ""
+    echo "Options:"
+    echo "  -s, --source SOURCE    Specify the installation source (e.g., github, npm, internal)"
+    echo "  -h, --help             Show this help message"
+    echo ""
+    exit 1
+}
+
+# Parse command line arguments
+SOURCE="unknown"
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -s|--source)
+            SOURCE="$2"
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            ;;
+        *)
+            usage
+            ;;
+    esac
+done
 
 echo "==========================================="
-echo "Qwen Code Installation Script"
+echo "Qwen Code Installation Script with Source Tracking"
 echo "==========================================="
 
 # Function to check if a command exists
@@ -16,8 +47,17 @@ command_exists() {
 install_nodejs() {
     if command_exists node; then
         NODE_VERSION=$(node --version)
-        echo "✓ Node.js is already installed: $NODE_VERSION"
-        return 0
+        # Extract major version number (remove 'v' prefix and get first number)
+        NODE_MAJOR_VERSION=$(echo "$NODE_VERSION" | sed 's/v//' | cut -d'.' -f1)
+        
+        if [ "$NODE_MAJOR_VERSION" -ge 20 ]; then
+            echo "✓ Node.js is already installed: $NODE_VERSION"
+            return 0
+        else
+            echo "⚠ Node.js $NODE_VERSION is installed, but Qwen Code requires Node.js 20+"
+            echo "Installing Node.js 20+..."
+            install_nodejs_via_nvm
+        fi
     else
         echo "Installing Node.js 20+..."
         install_nodejs_via_nvm
@@ -96,10 +136,15 @@ install_qwen_code() {
     if command_exists qwen; then
         QWEN_VERSION=$(qwen --version 2>/dev/null || echo "unknown")
         echo "✓ Qwen Code is already installed: $QWEN_VERSION"
+        
+        # Update source.json only if source parameter was provided
+        if [ "$SOURCE" != "unknown" ]; then
+            echo "Updating source.json in ~/.qwen/"
+            create_source_json
+        fi
         return 0
     fi
 
-    echo "Installing Qwen Code..."
 
     # Check if running as root
     if [ "$(id -u)" -eq 0 ]; then
@@ -112,10 +157,18 @@ install_qwen_code() {
 
     # Install Qwen Code globally
     if $NPM_INSTALL_CMD >/dev/null 2>&1; then
+        echo "✓ Qwen Code installed successfully!"
+        
+        # Create source.json only if source parameter was provided
+        if [ "$SOURCE" != "unknown" ]; then
+            create_source_json
+        fi
+        
         # Verify installation
         if command_exists qwen; then
             QWEN_VERSION=$(qwen --version 2>/dev/null || echo "unknown")
-            echo "✓ Qwen Code $QWEN_VERSION installed"
+            echo "✓ Qwen Code is available as 'qwen' command"
+            echo "  Installed version: $QWEN_VERSION"
         else
             echo "⚠ Qwen Code installed but not in PATH"
             echo "  You may need to restart your terminal"
@@ -124,6 +177,25 @@ install_qwen_code() {
         echo "✗ Failed to install Qwen Code"
         exit 1
     fi
+}
+
+# Function to create source.json
+create_source_json() {
+    QWEN_DIR="$HOME/.qwen"
+    
+    # Create .qwen directory if it doesn't exist
+    if [ ! -d "$QWEN_DIR" ]; then
+        mkdir -p "$QWEN_DIR"
+    fi
+    
+    # Create source.json file
+    cat > "$QWEN_DIR/source.json" <<EOF
+{
+  "source": "$SOURCE"
+}
+EOF
+    
+    echo "✓ Installation source saved to ~/.qwen/source.json"
 }
 
 # Main execution
