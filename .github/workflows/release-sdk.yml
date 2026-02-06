@@ -19,7 +19,7 @@ on:
         options:
           - 'build_from_source'
           - 'npm_latest'
-        default: 'build_from_source'
+        default: 'npm_latest'
       dry_run:
         description: 'Run a dry-run of the release process; no branches, npm packages or GitHub releases will be created.'
         required: true
