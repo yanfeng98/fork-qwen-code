@@ -39,7 +39,7 @@ Qwen Code is an open-source AI agent for the terminal, optimized for [Qwen3-Code
 eval "$(curl -fsSL https://qwen-code-assets.oss-cn-hangzhou.aliyuncs.com/installation/install-qwen.sh)"
 ```
 
-#### Windows (以管理员身份运行 CMD)
+#### Windows (Run as Administrator CMD)
 
 ```cmd
 curl -fsSL -o %TEMP%\install-qwen.bat https://qwen-code-assets.oss-cn-hangzhou.aliyuncs.com/installation/install-qwen.bat && %TEMP%\install-qwen.bat
