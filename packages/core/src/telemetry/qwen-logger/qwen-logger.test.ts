@@ -140,6 +140,26 @@ describe('QwenLogger', () => {
           typeof payload.app.channel === 'string',
       ).toBe(true);
     });
+
+    it('caches source info and does not read file on every payload creation', async () => {
+      const logger = QwenLogger.getInstance(mockConfig)!;
+
+      // Get the cached sourceInfo value
+      const cachedSourceInfo = logger['sourceInfo'];
+
+      // Create multiple payloads
+      const payload1 = await (
+        logger as unknown as { createRumPayload(): Promise<RumPayload> }
+      ).createRumPayload();
+      const payload2 = await (
+        logger as unknown as { createRumPayload(): Promise<RumPayload> }
+      ).createRumPayload();
+
+      // Both payloads should use the same cached source info
+      expect(payload1.app.channel).toBe(payload2.app.channel);
+      // The cached value should not have changed
+      expect(logger['sourceInfo']).toBe(cachedSourceInfo);
+    });
     it('does not include source when source.json does not exist', async () => {
       // Note: Testing source information requires actual file system operations
       // This test verifies the payload structure is correct
@@ -386,6 +406,28 @@ describe('QwenLogger', () => {
       logger.logStartSessionEvent(event);
 
       expect(flushSpy).toHaveBeenCalled();
+    });
+
+    it('should re-read source info when starting a new session', async () => {
+      const logger = QwenLogger.getInstance(mockConfig)!;
+      const readSourceInfoSpy = vi.spyOn(
+        logger as unknown as { readSourceInfo(): string },
+        'readSourceInfo',
+      );
+
+      const testConfig = makeFakeConfig({
+        getModel: () => 'test-model',
+        getEmbeddingModel: () => 'test-embedding',
+        getSessionId: () => 'new-session-id',
+      });
+      const event = new StartSessionEvent(testConfig);
+
+      await logger.logStartSessionEvent(event);
+
+      // readSourceInfo should be called when starting a new session
+      expect(readSourceInfoSpy).toHaveBeenCalled();
+      // Session ID should be updated
+      expect(logger['sessionId']).toBe('new-session-id');
     });
 
     it('should flush end session events immediately', async () => {
