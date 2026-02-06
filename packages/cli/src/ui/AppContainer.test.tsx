@@ -142,9 +142,6 @@ describe('AppContainer State Management', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Increase max listeners to prevent EventEmitter memory leak warnings in tests
-    process.setMaxListeners(20);
-
     // Initialize mock stdout for terminal title tests
     mockStdout = { write: vi.fn() };
 
@@ -308,8 +305,6 @@ describe('AppContainer State Management', () => {
 
   afterEach(() => {
     cleanup();
-    // Reset max listeners to default
-    process.setMaxListeners(10);
   });
 
   describe('Basic Rendering', () => {
