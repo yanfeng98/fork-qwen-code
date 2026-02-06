@@ -18,7 +18,7 @@ import { promisify } from 'node:util';
 import type { Config, SandboxConfig } from '@qwen-code/qwen-code-core';
 import { FatalSandboxError } from '@qwen-code/qwen-code-core';
 import { randomBytes } from 'node:crypto';
-import { writeStdoutLine, writeStderrLine } from './stdioHelpers.js';
+import { writeStderrLine } from './stdioHelpers.js';
 
 const execAsync = promisify(exec);
 
@@ -292,7 +292,7 @@ export async function start_sandbox(
       });
       // install handlers to stop proxy on exit/signal
       const stopProxy = () => {
-        writeStdoutLine('stopping proxy ...');
+        writeStderrLine('stopping proxy ...');
         if (proxyProcess?.pid) {
           process.kill(-proxyProcess.pid, 'SIGTERM');
         }
@@ -316,7 +316,7 @@ export async function start_sandbox(
           `Proxy command '${proxyCommand}' exited with code ${code}, signal ${signal}`,
         );
       });
-      writeStdoutLine('waiting for proxy to start ...');
+      writeStderrLine('waiting for proxy to start ...');
       await execAsync(
         `until timeout 0.25 curl -s http://localhost:8877; do sleep 0.25; done`,
       );
@@ -547,7 +547,7 @@ export async function start_sandbox(
     containerName = `gemini-cli-integration-test-${randomBytes(4).toString(
       'hex',
     )}`;
-    writeStdoutLine(`ContainerName: ${containerName}`);
+    writeStderrLine(`ContainerName: ${containerName}`);
   } else {
     let index = 0;
     const containerNameCheck = execSync(
@@ -559,7 +559,7 @@ export async function start_sandbox(
       index++;
     }
     containerName = `${imageName}-${index}`;
-    writeStdoutLine(`ContainerName (regular): ${containerName}`);
+    writeStderrLine(`ContainerName (regular): ${containerName}`);
   }
   args.push('--name', containerName, '--hostname', containerName);
 
@@ -783,7 +783,7 @@ export async function start_sandbox(
     });
     // install handlers to stop proxy on exit/signal
     const stopProxy = () => {
-      writeStdoutLine('stopping proxy container ...');
+      writeStderrLine('stopping proxy container ...');
       execSync(`${config.command} rm -f ${SANDBOX_PROXY_NAME}`);
     };
     process.on('exit', stopProxy);
@@ -805,7 +805,7 @@ export async function start_sandbox(
         `Proxy container command '${proxyContainerCommand}' exited with code ${code}, signal ${signal}`,
       );
     });
-    writeStdoutLine('waiting for proxy to start ...');
+    writeStderrLine('waiting for proxy to start ...');
     await execAsync(
       `until timeout 0.25 curl -s http://localhost:8877; do sleep 0.25; done`,
     );
@@ -872,7 +872,7 @@ async function imageExists(sandbox: string, image: string): Promise<boolean> {
 }
 
 async function pullImage(sandbox: string, image: string): Promise<boolean> {
-  writeStdoutLine(`Attempting to pull image ${image} using ${sandbox}...`);
+  writeStderrLine(`Attempting to pull image ${image} using ${sandbox}...`);
   return new Promise((resolve) => {
     const args = ['pull', image];
     const pullProcess = spawn(sandbox, args, { stdio: 'pipe' });
@@ -880,7 +880,7 @@ async function pullImage(sandbox: string, image: string): Promise<boolean> {
     let stderrData = '';
 
     const onStdoutData = (data: Buffer) => {
-      writeStdoutLine(data.toString().trim()); // Show pull progress
+      writeStderrLine(data.toString().trim()); // Show pull progress
     };
 
     const onStderrData = (data: Buffer) => {
@@ -898,7 +898,7 @@ async function pullImage(sandbox: string, image: string): Promise<boolean> {
 
     const onClose = (code: number | null) => {
       if (code === 0) {
-        writeStdoutLine(`Successfully pulled image ${image}.`);
+        writeStderrLine(`Successfully pulled image ${image}.`);
         cleanup();
         resolve(true);
       } else {
@@ -942,13 +942,13 @@ async function ensureSandboxImageIsPresent(
   sandbox: string,
   image: string,
 ): Promise<boolean> {
-  writeStdoutLine(`Checking for sandbox image: ${image}`);
+  writeStderrLine(`Checking for sandbox image: ${image}`);
   if (await imageExists(sandbox, image)) {
-    writeStdoutLine(`Sandbox image ${image} found locally.`);
+    writeStderrLine(`Sandbox image ${image} found locally.`);
     return true;
   }
 
-  writeStdoutLine(`Sandbox image ${image} not found locally.`);
+  writeStderrLine(`Sandbox image ${image} not found locally.`);
   if (image === LOCAL_DEV_SANDBOX_IMAGE_NAME) {
     // user needs to build the image themselves
     return false;
@@ -957,7 +957,7 @@ async function ensureSandboxImageIsPresent(
   if (await pullImage(sandbox, image)) {
     // After attempting to pull, check again to be certain
     if (await imageExists(sandbox, image)) {
-      writeStdoutLine(`Sandbox image ${image} is now available after pulling.`);
+      writeStderrLine(`Sandbox image ${image} is now available after pulling.`);
       return true;
     } else {
       writeStderrLine(
