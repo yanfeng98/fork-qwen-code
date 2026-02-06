@@ -7,6 +7,8 @@
 import { Buffer } from 'buffer';
 import * as https from 'https';
 import * as os from 'node:os';
+import fs from 'node:fs';
+import path from 'node:path';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 
 import type {
@@ -119,6 +121,12 @@ export class QwenLogger {
   private sessionId: string;
 
   /**
+   * Cached source information read from source.json.
+   * Only read once at session start to avoid repeated file I/O.
+   */
+  private sourceInfo: string = '';
+
+  /**
    * The value is true when there is a pending flush happening. This prevents
    * concurrent flush operations.
    */
@@ -141,6 +149,8 @@ export class QwenLogger {
     this.installationManager = new InstallationManager();
     this.userId = this.generateUserId();
     this.sessionId = config.getSessionId();
+    // Read source info once during initialization
+    this.sourceInfo = this.readSourceInfo();
   }
 
   private generateUserId(): string {
@@ -239,12 +249,14 @@ export class QwenLogger {
     const version = this.config?.getCliVersion() || 'unknown';
     const osMetadata = this.getOsMetadata();
 
+    // Use cached source information
     return {
       app: {
         id: RUN_APP_ID,
         env: process.env['DEBUG'] ? 'dev' : 'prod',
         version: version || 'unknown',
         type: 'cli',
+        channel: this.sourceInfo || undefined,
       },
       user: {
         id: this.userId,
@@ -280,6 +292,27 @@ export class QwenLogger {
     }
 
     void this.flushToRum();
+  }
+
+  readSourceInfo(): string {
+    try {
+      const sourceJsonPath = path.join(os.homedir(), '.qwen', 'source.json');
+      if (fs.existsSync(sourceJsonPath)) {
+        const sourceJsonContent = fs.readFileSync(sourceJsonPath, 'utf8');
+        const sourceData = JSON.parse(sourceJsonContent);
+        if (
+          sourceData &&
+          typeof sourceData === 'object' &&
+          sourceData.source &&
+          sourceData.source !== 'unknown'
+        ) {
+          return sourceData.source;
+        }
+      }
+    } catch (_error) {
+      // Ignore errors when reading source.json - continue without source info
+    }
+    return '';
   }
 
   async flushToRum(): Promise<LogResponse> {
@@ -376,6 +409,9 @@ export class QwenLogger {
 
     // Now set the new session ID
     this.sessionId = event.session_id;
+
+    // Re-read source info at the start of each new session
+    this.sourceInfo = this.readSourceInfo();
 
     const applicationEvent = this.createViewEvent('session', 'session_start', {
       properties: {

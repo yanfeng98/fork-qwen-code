@@ -31,6 +31,24 @@ Qwen Code is an open-source AI agent for the terminal, optimized for [Qwen3-Code
 
 ## Installation
 
+### Quick Install (Recommended)
+
+#### Linux / macOS
+
+```bash
+eval "$(curl -fsSL https://qwen-code-assets.oss-cn-hangzhou.aliyuncs.com/installation/install-qwen.sh)"
+```
+
+#### Windows (Run as Administrator CMD)
+
+```cmd
+curl -fsSL -o %TEMP%\install-qwen.bat https://qwen-code-assets.oss-cn-hangzhou.aliyuncs.com/installation/install-qwen.bat && %TEMP%\install-qwen.bat
+```
+
+> **Note**: It's recommended to restart your terminal after installation to ensure environment variables take effect.
+
+### Manual Installation
+
 #### Prerequisites
 
 ```bash
@@ -38,7 +56,7 @@ Qwen Code is an open-source AI agent for the terminal, optimized for [Qwen3-Code
 curl -qL https://www.npmjs.com/install.sh | sh
 ```
 
-#### NPM (recommended)
+#### NPM
 
 ```bash
 npm install -g @qwen-code/qwen-code@latest
