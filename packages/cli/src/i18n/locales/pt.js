@@ -365,7 +365,6 @@ export default {
   'Folder Trust': 'Confiança de Pasta',
   'Vision Model Preview': 'Visualização de Modelo de Visão',
   'Tool Schema Compliance': 'Conformidade de Esquema de Ferramenta',
-  'Experimental: Skills': 'Experimental: Habilidades',
 
   // Settings enum options
   'Auto (detect from system)': 'Automático (detectar do sistema)',

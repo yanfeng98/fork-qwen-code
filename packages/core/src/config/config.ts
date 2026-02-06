@@ -324,7 +324,6 @@ export interface ConfigParameters {
   outputLanguageFilePath?: string;
   maxSessionTurns?: number;
   sessionTokenLimit?: number;
-  experimentalSkills?: boolean;
   experimentalZedIntegration?: boolean;
   listExtensions?: boolean;
   overrideExtensions?: string[];
@@ -488,7 +487,6 @@ export class Config {
     | undefined;
   private readonly cliVersion?: string;
   private readonly experimentalZedIntegration: boolean = false;
-  private readonly experimentalSkills: boolean = false;
   private readonly chatRecordingEnabled: boolean;
   private readonly loadMemoryFromIncludeDirectories: boolean = false;
   private readonly importFormat: 'tree' | 'flat';
@@ -592,7 +590,6 @@ export class Config {
     this.sessionTokenLimit = params.sessionTokenLimit ?? -1;
     this.experimentalZedIntegration =
       params.experimentalZedIntegration ?? false;
-    this.experimentalSkills = params.experimentalSkills ?? false;
     this.listExtensions = params.listExtensions ?? false;
     this.overrideExtensions = params.overrideExtensions;
     this.noBrowser = params.noBrowser ?? false;
@@ -699,11 +696,9 @@ export class Config {
     this.debugLogger.debug('Extension manager initialized');
 
     this.subagentManager = new SubagentManager(this);
-    if (this.getExperimentalSkills()) {
-      this.skillManager = new SkillManager(this);
-      await this.skillManager.startWatching();
-      this.debugLogger.debug('Skill manager initialized');
-    }
+    this.skillManager = new SkillManager(this);
+    await this.skillManager.startWatching();
+    this.debugLogger.debug('Skill manager initialized');
 
     // Load session subagents if they were provided before initialization
     if (this.sessionSubagents.length > 0) {
@@ -1358,10 +1353,6 @@ export class Config {
     return this.experimentalZedIntegration;
   }
 
-  getExperimentalSkills(): boolean {
-    return this.experimentalSkills;
-  }
-
   getListExtensions(): boolean {
     return this.listExtensions;
   }
@@ -1673,9 +1664,7 @@ export class Config {
     };
 
     registerCoreTool(TaskTool, this);
-    if (this.getExperimentalSkills()) {
-      registerCoreTool(SkillTool, this);
-    }
+    registerCoreTool(SkillTool, this);
     registerCoreTool(LSTool, this);
     registerCoreTool(ReadFileTool, this);
 

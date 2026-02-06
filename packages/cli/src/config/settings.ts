@@ -1133,28 +1133,6 @@ export function loadSettings(
   );
 }
 
-export function migrateDeprecatedSettings(
-  loadedSettings: LoadedSettings,
-): void {
-  const processScope = (scope: SettingScope) => {
-    const settings = loadedSettings.forScope(scope).settings;
-    const legacySkills = (
-      settings as Settings & {
-        tools?: { experimental?: { skills?: boolean } };
-      }
-    ).tools?.experimental?.skills;
-    if (
-      legacySkills !== undefined &&
-      settings.experimental?.skills === undefined
-    ) {
-      loadedSettings.setValue(scope, 'experimental.skills', legacySkills);
-    }
-  };
-
-  processScope(SettingScope.User);
-  processScope(SettingScope.Workspace);
-}
-
 export function saveSettings(settingsFile: SettingsFile): void {
   try {
     // Ensure the directory exists

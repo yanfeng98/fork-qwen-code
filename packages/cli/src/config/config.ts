@@ -110,7 +110,6 @@ export interface CliArgs {
   allowedTools: string[] | undefined;
   acp: boolean | undefined;
   experimentalAcp: boolean | undefined;
-  experimentalSkills: boolean | undefined;
   experimentalLsp: boolean | undefined;
   extensions: string[] | undefined;
   listExtensions: boolean | undefined;
@@ -160,7 +159,7 @@ function normalizeOutputFormat(
   return OutputFormat.TEXT;
 }
 
-export async function parseArguments(settings: Settings): Promise<CliArgs> {
+export async function parseArguments(): Promise<CliArgs> {
   let rawArgv = hideBin(process.argv);
 
   // hack: if the first argument is the CLI entry point, remove it
@@ -313,15 +312,9 @@ export async function parseArguments(settings: Settings): Promise<CliArgs> {
         })
         .option('experimental-skills', {
           type: 'boolean',
-          description: 'Enable experimental Skills feature',
-          default: (() => {
-            const legacySkills = (
-              settings as Settings & {
-                tools?: { experimental?: { skills?: boolean } };
-              }
-            ).tools?.experimental?.skills;
-            return settings.experimental?.skills ?? legacySkills ?? false;
-          })(),
+          description:
+            'Deprecated: Skills are now enabled by default. This flag is ignored.',
+          hidden: true,
         })
         .option('experimental-lsp', {
           type: 'boolean',
@@ -959,7 +952,6 @@ export async function loadCliConfig(
     maxSessionTurns:
       argv.maxSessionTurns ?? settings.model?.maxSessionTurns ?? -1,
     experimentalZedIntegration: argv.acp || argv.experimentalAcp || false,
-    experimentalSkills: argv.experimentalSkills || false,
     listExtensions: argv.listExtensions || false,
     overrideExtensions: overrideExtensions || argv.extensions,
     noBrowser: !!process.env['NO_BROWSER'],

@@ -58,7 +58,7 @@ The following is a simple example showing how to use the ACP SDK to create a cli
 public void testSession() throws AgentInitializeException, SessionNewException, IOException {
     // Create an ACP client with a process transport
     AcpClient acpClient = new AcpClient(
-            new ProcessTransport(new ProcessTransportOptions().setCommandArgs(new String[] {"qwen", "--acp", "--experimental-skills", "-y"})));
+            new ProcessTransport(new ProcessTransportOptions().setCommandArgs(new String[] {"qwen", "--acp", "-y"})));
 
     try {
         // Send a prompt to the agent

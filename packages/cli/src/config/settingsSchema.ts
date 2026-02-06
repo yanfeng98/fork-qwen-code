@@ -1150,16 +1150,6 @@ const SETTINGS_SCHEMA = {
     description: 'Setting to enable experimental features',
     showInDialog: false,
     properties: {
-      skills: {
-        type: 'boolean',
-        label: 'Experimental: Skills',
-        category: 'Experimental',
-        requiresRestart: true,
-        default: false,
-        description:
-          'Enable experimental Agent Skills feature. When enabled, Qwen Code can use Skills from .qwen/skills/ and ~/.qwen/skills/.',
-        showInDialog: true,
-      },
       visionModelPreview: {
         type: 'boolean',
         label: 'Vision Model Preview',

@@ -470,7 +470,6 @@ describe('gemini.tsx main function kitty protocol', () => {
       allowedTools: undefined,
       acp: undefined,
       experimentalAcp: undefined,
-      experimentalSkills: undefined,
       extensions: undefined,
       listExtensions: undefined,
       openaiLogging: undefined,

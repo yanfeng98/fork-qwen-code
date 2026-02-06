@@ -107,10 +107,6 @@ class TransportOptionsAdapter {
             args.add("--include-partial-messages");
         }
 
-        if (transportOptions.getSkillsEnable() != null && transportOptions.getSkillsEnable()) {
-            args.add("--experimental-skills");
-        }
-
         if (StringUtils.isNotBlank(transportOptions.getResumeSessionId())) {
             args.add("--resume");
             args.add(transportOptions.getResumeSessionId());
