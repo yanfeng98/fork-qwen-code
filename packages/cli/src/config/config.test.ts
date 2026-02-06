@@ -2061,7 +2061,7 @@ describe('loadCliConfig fileFiltering', () => {
           fileFiltering: { [property]: value },
         },
       };
-      const argv = await parseArguments(settings);
+      const argv = await parseArguments();
       const config = await loadCliConfig(settings, argv, undefined, []);
       expect(getter(config)).toBe(value);
     },
