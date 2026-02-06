@@ -53,21 +53,21 @@ if !ERRORLEVEL! EQU 0 (
         set "MAJOR_VERSION=%%a"
     )
     
-    if !MAJOR_VERSION! GEQ 18 (
+    if !MAJOR_VERSION! GEQ 20 (
         echo INFO: Node.js version !NODE_VERSION! is sufficient. Skipping Node.js installation.
         goto :InstallQwenCode
     ) else (
-        echo INFO: Node.js version !NODE_VERSION! is too low. Need version 18 or higher.
-        echo INFO: Installing Node.js 18+
-        call :InstallNodeJSViaNVM
+        echo INFO: Node.js version !NODE_VERSION! is too low. Need version 20 or higher.
+        echo INFO: Installing Node.js 20+
+        call :InstallNodeJSDirectly
         if !ERRORLEVEL! NEQ 0 (
             echo ERROR: Failed to install Node.js. Cannot continue with Qwen Code installation.
             exit /b 1
         )
     )
 ) else (
-    echo INFO: Node.js not found. Installing Node.js 18+
-    call :InstallNodeJSViaNVM
+    echo INFO: Node.js not found. Installing Node.js 20+
+    call :InstallNodeJSDirectly
     if !ERRORLEVEL! NEQ 0 (
         echo ERROR: Failed to install Node.js. Cannot continue with Qwen Code installation.
         exit /b 1
@@ -153,34 +153,11 @@ where %~1 >nul 2>&1
 exit /b %ERRORLEVEL%
 
 REM ============================================================
-REM Function: InstallNodeJSViaNVM
-REM Description: Install Node.js via nvm-windows or direct download
-REM ============================================================
-:InstallNodeJSViaNVM
-echo INFO: Installing Node.js
-
-REM Check if nvm is already installed
-call :CheckCommandExists nvm
-if !ERRORLEVEL! EQU 0 (
-    echo INFO: NVM is already installed. Using NVM to install Node.js 24
-    call nvm install 24
-    call nvm use 24
-    
-    for /f "delims=" %%i in ('node --version') do set "NODE_VERSION=%%i"
-    echo INFO: Node.js %NODE_VERSION% installed and activated via NVM.
-    exit /b 0
-) else (
-    echo INFO: NVM not found. Installing Node.js directly...
-    call :InstallNodeJSDirectly
-    exit /b !ERRORLEVEL!
-)
-
-REM ============================================================
 REM Function: InstallNodeJSDirectly
 REM Description: Download and install Node.js directly from official website
 REM ============================================================
 :InstallNodeJSDirectly
-echo INFO: Downloading Node.js LTS (24.x) from official website
+echo INFO: Downloading Node.js LTS (20.x) from official website
 
 REM Create temp directory for download
 set "TEMP_DIR=%TEMP%\qwen-nodejs-install"
@@ -192,8 +169,8 @@ if "%PROCESSOR_ARCHITECTURE%"=="x86" set "ARCH=x86"
 if "%PROCESSOR_ARCHITECTURE%"=="AMD64" set "ARCH=x64"
 if defined PROCESSOR_ARCHITEW6432 set "ARCH=x64"
 
-REM Set Node.js download URL (LTS version 24.x)
-set "NODE_VERSION=24.13.0"
+REM Set Node.js download URL (LTS version 20.x)
+set "NODE_VERSION=20.18.1"
 set "NODE_URL=https://nodejs.org/dist/v!NODE_VERSION!/node-v!NODE_VERSION!-!ARCH!.msi"
 set "NODE_INSTALLER=%TEMP_DIR%\nodejs-installer.msi"
 
@@ -205,15 +182,9 @@ powershell -Command "try { Invoke-WebRequest -Uri '!NODE_URL!' -OutFile '!NODE_I
 
 if !ERRORLEVEL! NEQ 0 (
     echo ERROR: Failed to download Node.js installer from official source.
-    echo INFO: Trying alternative installation method...
-    call :TryAlternativeInstall
-    if !ERRORLEVEL! NEQ 0 (
-        echo ERROR: All installation methods failed.
-        echo INFO: Please manually download and install Node.js from: https://nodejs.org/
-        echo INFO: After manual installation, restart your command prompt and run this script again.
-        exit /b 1
-    )
-    exit /b 0
+    echo INFO: Please manually download and install Node.js from: https://nodejs.org/
+    echo INFO: After manual installation, restart your command prompt and run this script again.
+    exit /b 1
 )
 
 if not exist "!NODE_INSTALLER!" (
@@ -324,68 +295,3 @@ if exist "!NODEJS_DIR_X86!\node.exe" (
 )
 
 exit /b 0
-
-REM ============================================================
-REM Function: TryAlternativeInstall
-REM Description: Try alternative Node.js installation methods
-REM ============================================================
-:TryAlternativeInstall
-echo INFO: Trying alternative Node.js installation methods
-
-REM Try with different Node.js versions
-call :TryNodeVersion 24.13.0
-if !ERRORLEVEL! EQU 0 exit /b 0
-
-call :TryNodeVersion 24.12.0
-if !ERRORLEVEL! EQU 0 exit /b 0
-
-call :TryNodeVersion 20.20.0
-if !ERRORLEVEL! EQU 0 exit /b 0
-
-REM Try Chocolatey if available
-call :CheckCommandExists choco
-if %ERRORLEVEL% EQU 0 (
-    echo INFO: Chocolatey found. Trying to install Node.js via Chocolatey
-    choco install nodejs-lts -y
-    if %ERRORLEVEL% EQU 0 (
-        echo SUCCESS: Node.js installed successfully via Chocolatey!
-        call :RefreshEnvVars
-        exit /b 0
-    ) else (
-        echo WARNING: Chocolatey installation failed.
-    )
-)
-
-echo ERROR: All alternative installation methods failed.
-exit /b 1
-
-REM ============================================================
-REM Function: TryNodeVersion
-REM Description: Try to download and install a specific Node.js version
-REM ============================================================
-:TryNodeVersion
-set "VERSION=%~1"
-echo INFO: Trying Node.js version %VERSION%
-set "ALT_URL=https://nodejs.org/dist/v%VERSION%/node-v%VERSION%-!ARCH!.msi"
-set "ALT_INSTALLER=%TEMP_DIR%\nodejs-installer-alt.msi"
-
-powershell -Command "try { Invoke-WebRequest -Uri '%ALT_URL%' -OutFile '%ALT_INSTALLER%' -UseBasicParsing; Write-Host 'Download completed successfully.' } catch { Write-Host 'Download failed for version %VERSION%'; exit 1 }"
-
-if !ERRORLEVEL! EQU 0 (
-    if exist "%ALT_INSTALLER%" (
-        echo INFO: Successfully downloaded Node.js %VERSION%. Installing
-        msiexec /i "%ALT_INSTALLER%" /quiet /norestart ADDLOCAL=ALL
-        
-        if !ERRORLEVEL! EQU 0 (
-            echo SUCCESS: Node.js %VERSION% installed successfully via alternative method!
-            del "%ALT_INSTALLER%" 2>nul
-            call :RefreshEnvVars
-            exit /b 0
-        ) else (
-            echo WARNING: Failed to install Node.js %VERSION%
-            del "%ALT_INSTALLER%" 2>nul
-        )
-    )
-)
-
-exit /b 1
