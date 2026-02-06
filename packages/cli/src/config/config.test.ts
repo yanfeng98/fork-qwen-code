@@ -116,11 +116,20 @@ vi.mock('read-package-up', () => ({
 
 vi.mock('@qwen-code/qwen-code-core', async (importOriginal) => {
   const actualServer = await importOriginal<typeof ServerConfig>();
+  const SkillManagerMock = vi.fn();
+  SkillManagerMock.prototype.startWatching = vi
+    .fn()
+    .mockResolvedValue(undefined);
+  SkillManagerMock.prototype.stopWatching = vi.fn();
+  SkillManagerMock.prototype.listSkills = vi.fn().mockResolvedValue([]);
+  SkillManagerMock.prototype.addChangeListener = vi.fn();
+  SkillManagerMock.prototype.removeChangeListener = vi.fn();
   return {
     ...actualServer,
     NativeLspService: vi
       .fn()
       .mockImplementation(() => createNativeLspServiceInstance()),
+    SkillManager: SkillManagerMock,
     IdeClient: {
       getInstance: vi.fn().mockResolvedValue({
         getConnectionStatus: vi.fn(),

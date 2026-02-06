@@ -56,7 +56,11 @@ export class SkillTool extends BaseDeclarativeTool<SkillParams, ToolResult> {
       false, // canUpdateOutput
     );
 
-    this.skillManager = config.getSkillManager()!;
+    const skillManager = config.getSkillManager();
+    if (!skillManager) {
+      throw new Error('SkillManager not available');
+    }
+    this.skillManager = skillManager;
     this.skillManager.addChangeListener(() => {
       void this.refreshSkills();
     });

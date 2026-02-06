@@ -165,6 +165,9 @@ vi.mock('../skills/skill-manager.js', () => {
     .fn()
     .mockResolvedValue(undefined);
   SkillManagerMock.prototype.stopWatching = vi.fn();
+  SkillManagerMock.prototype.listSkills = vi.fn().mockResolvedValue([]);
+  SkillManagerMock.prototype.addChangeListener = vi.fn();
+  SkillManagerMock.prototype.removeChangeListener = vi.fn();
   return { SkillManager: SkillManagerMock };
 });
 
