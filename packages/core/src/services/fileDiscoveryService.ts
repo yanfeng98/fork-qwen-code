@@ -56,10 +56,6 @@ export class FileDiscoveryService {
     });
   }
 
-  /**
-   * Filters a list of file paths based on git ignore rules and returns a report
-   * with counts of ignored files.
-   */
   filterFilesWithReport(
     filePaths: string[],
     opts: FilterFilesOptions = {
@@ -92,9 +88,6 @@ export class FileDiscoveryService {
     };
   }
 
-  /**
-   * Checks if a single file should be git-ignored
-   */
   shouldGitIgnoreFile(filePath: string): boolean {
     if (this.gitIgnoreFilter) {
       return this.gitIgnoreFilter.isIgnored(filePath);
@@ -102,9 +95,6 @@ export class FileDiscoveryService {
     return false;
   }
 
-  /**
-   * Checks if a single file should be qwen-ignored
-   */
   shouldQwenIgnoreFile(filePath: string): boolean {
     if (this.qwenIgnoreFilter) {
       return this.qwenIgnoreFilter.isIgnored(filePath);

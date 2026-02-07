@@ -51,10 +51,6 @@ class LSToolInvocation extends BaseToolInvocation<LSToolParams, ToolResult> {
     return false;
   }
 
-  /**
-   * Gets a description of the file reading operation
-   * @returns A string describing the file being read
-   */
   getDescription(): string {
     const relativePath = makeRelative(
       this.params.path,
@@ -63,7 +59,6 @@ class LSToolInvocation extends BaseToolInvocation<LSToolParams, ToolResult> {
     return shortenPath(relativePath);
   }
 
-  // Helper for consistent error formatting
   private errorResult(
     llmContent: string,
     returnDisplay: string,
@@ -71,7 +66,6 @@ class LSToolInvocation extends BaseToolInvocation<LSToolParams, ToolResult> {
   ): ToolResult {
     return {
       llmContent,
-      // Keep returnDisplay simpler in core logic
       returnDisplay: `Error: ${returnDisplay}`,
       error: {
         message: llmContent,
@@ -80,16 +74,10 @@ class LSToolInvocation extends BaseToolInvocation<LSToolParams, ToolResult> {
     };
   }
 
-  /**
-   * Executes the LS operation with the given parameters
-   * @returns Result of the LS operation
-   */
   async execute(_signal: AbortSignal): Promise<ToolResult> {
     try {
       const stats = await fs.stat(this.params.path);
       if (!stats) {
-        // fs.statSync throws on non-existence, so this check might be redundant
-        // but keeping for clarity. Error message adjusted.
         return this.errorResult(
           `Error: Directory not found or inaccessible: ${this.params.path}`,
           `Directory not found or inaccessible.`,
@@ -106,7 +94,6 @@ class LSToolInvocation extends BaseToolInvocation<LSToolParams, ToolResult> {
 
       const files = await fs.readdir(this.params.path);
       if (files.length === 0) {
-        // Changed error message to be more neutral for LLM
         return {
           llmContent: `Directory ${this.params.path} is empty.`,
           returnDisplay: `Directory is empty.`,
@@ -152,19 +139,16 @@ class LSToolInvocation extends BaseToolInvocation<LSToolParams, ToolResult> {
             modifiedTime: stats.mtime,
           });
         } catch (error) {
-          // Log error internally but don't fail the whole listing
           console.error(`Error accessing ${fullPath}: ${error}`);
         }
       }
 
-      // Sort entries (directories first, then alphabetically)
       entries.sort((a, b) => {
         if (a.isDirectory && !b.isDirectory) return -1;
         if (!a.isDirectory && b.isDirectory) return 1;
         return a.name.localeCompare(b.name);
       });
 
-      // Create formatted content for LLM
       const directoryContent = entries
         .map((entry) => `${entry.isDirectory ? '[DIR] ' : ''}${entry.name}`)
         .join('\n');

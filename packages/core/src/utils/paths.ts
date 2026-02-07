@@ -28,10 +28,6 @@ export function tildeifyPath(path: string): string {
   return path;
 }
 
-/**
- * Shortens a path string if it exceeds maxLen, prioritizing the start and end segments.
- * Example: /path/to/a/very/long/file.txt -> /path/.../long/file.txt
- */
 export function shortenPath(filePath: string, maxLen: number = 80): string {
   if (filePath.length <= maxLen) {
     return filePath;
@@ -41,15 +37,11 @@ export function shortenPath(filePath: string, maxLen: number = 80): string {
   const root = parsedPath.root;
   const separator = path.sep;
 
-  // Get segments of the path *after* the root
   const relativePath = filePath.substring(root.length);
-  const segments = relativePath.split(separator).filter((s) => s !== ''); // Filter out empty segments
+  const segments = relativePath.split(separator).filter((s) => s !== '');
 
-  // Handle cases with no segments after root (e.g., "/", "C:\") or only one segment
   if (segments.length <= 1) {
-    // Fall back to simple start/end truncation for very short paths or single segments
     const keepLen = Math.floor((maxLen - 3) / 2);
-    // Ensure keepLen is not negative if maxLen is very small
     if (keepLen <= 0) {
       return filePath.substring(0, maxLen - 3) + '...';
     }
@@ -63,17 +55,14 @@ export function shortenPath(filePath: string, maxLen: number = 80): string {
   const startComponent = root + firstDir;
 
   const endPartSegments: string[] = [];
-  // Base length: separator + "..." + lastDir
   let currentLength = separator.length + lastSegment.length;
 
-  // Iterate backwards through segments (excluding the first one)
   for (let i = segments.length - 2; i >= 0; i--) {
     const segment = segments[i];
-    // Length needed if we add this segment: current + separator + segment
     const lengthWithSegment = currentLength + separator.length + segment.length;
 
     if (lengthWithSegment <= maxLen) {
-      endPartSegments.unshift(segment); // Add to the beginning of the end part
+      endPartSegments.unshift(segment);
       currentLength = lengthWithSegment;
     } else {
       break;
@@ -86,11 +75,8 @@ export function shortenPath(filePath: string, maxLen: number = 80): string {
     return result;
   }
 
-  // Construct the final path
   result = startComponent + separator + result;
 
-  // As a final check, if the result is somehow still too long
-  // truncate the result string from the beginning, prefixing with "...".
   if (result.length > maxLen) {
     return '...' + result.substring(result.length - maxLen - 3);
   }
@@ -98,15 +84,6 @@ export function shortenPath(filePath: string, maxLen: number = 80): string {
   return result;
 }
 
-/**
- * Calculates the relative path from a root directory to a target path.
- * Ensures both paths are resolved before calculating.
- * Returns '.' if the target path is the same as the root directory.
- *
- * @param targetPath The absolute or relative path to make relative.
- * @param rootDirectory The absolute path of the directory to make the target path relative to.
- * @returns The relative path from rootDirectory to targetPath.
- */
 export function makeRelative(
   targetPath: string,
   rootDirectory: string,
@@ -119,8 +96,6 @@ export function makeRelative(
   }
 
   const relativePath = path.relative(resolvedRootDirectory, resolvedTargetPath);
-
-  // If the paths are the same, path.relative returns '', return '.' instead
   return relativePath || '.';
 }
 

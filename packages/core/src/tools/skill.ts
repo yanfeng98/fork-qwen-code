@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Qwen
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { BaseDeclarativeTool, BaseToolInvocation, Kind } from './tools.js';
 import { ToolNames, ToolDisplayNames } from './tool-names.js';
 import type { ToolResult, ToolResultDisplay } from './tools.js';
@@ -17,11 +11,6 @@ export interface SkillParams {
   skill: string;
 }
 
-/**
- * Skill tool that enables the model to access skill definitions.
- * The tool dynamically loads available skills and includes them in its description
- * for the model to choose from.
- */
 export class SkillTool extends BaseDeclarativeTool<SkillParams, ToolResult> {
   static readonly Name: string = ToolNames.SKILL;
 
@@ -29,7 +18,6 @@ export class SkillTool extends BaseDeclarativeTool<SkillParams, ToolResult> {
   private availableSkills: SkillConfig[] = [];
 
   constructor(private readonly config: Config) {
-    // Initialize with a basic schema first
     const initialSchema = {
       type: 'object',
       properties: {
@@ -46,11 +34,11 @@ export class SkillTool extends BaseDeclarativeTool<SkillParams, ToolResult> {
     super(
       SkillTool.Name,
       ToolDisplayNames.SKILL,
-      'Execute a skill within the main conversation. Loading available skills...', // Initial description
+      'Execute a skill within the main conversation. Loading available skills...',
       Kind.Read,
       initialSchema,
-      true, // isOutputMarkdown
-      false, // canUpdateOutput
+      true,
+      false,
     );
 
     this.skillManager = config.getSkillManager();
@@ -58,14 +46,9 @@ export class SkillTool extends BaseDeclarativeTool<SkillParams, ToolResult> {
       void this.refreshSkills();
     });
 
-    // Initialize the tool asynchronously
     this.refreshSkills();
   }
 
-  /**
-   * Asynchronously initializes the tool by loading available skills
-   * and updating the description and schema.
-   */
   async refreshSkills(): Promise<void> {
     try {
       this.availableSkills = await this.skillManager.listSkills();

@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Qwen
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
@@ -21,10 +15,6 @@ const QWEN_CONFIG_DIR = '.qwen';
 const SKILLS_CONFIG_DIR = 'skills';
 const SKILL_MANIFEST_FILE = 'SKILL.md';
 
-/**
- * Manages skill configurations stored as directories containing SKILL.md files.
- * Provides discovery, parsing, validation, and caching for skills.
- */
 export class SkillManager {
   private skillsCache: Map<SkillLevel, SkillConfig[]> | null = null;
   private readonly changeListeners: Set<() => void> = new Set();
@@ -32,10 +22,6 @@ export class SkillManager {
 
   constructor(private readonly config: Config) {}
 
-  /**
-   * Adds a listener that will be called when skills change.
-   * @returns A function to remove the listener.
-   */
   addChangeListener(listener: () => void): () => void {
     this.changeListeners.add(listener);
     return () => {
@@ -64,12 +50,6 @@ export class SkillManager {
     return new Map(this.parseErrors);
   }
 
-  /**
-   * Lists all available skills.
-   *
-   * @param options - Filtering options
-   * @returns Array of skill configurations
-   */
   async listSkills(options: ListSkillsOptions = {}): Promise<SkillConfig[]> {
     const skills: SkillConfig[] = [];
     const seenNames = new Set<string>();
@@ -78,15 +58,11 @@ export class SkillManager {
       ? [options.level]
       : ['project', 'user'];
 
-    // Check if we should use cache or force refresh
     const shouldUseCache = !options.force && this.skillsCache !== null;
-
-    // Initialize cache if it doesn't exist or we're forcing a refresh
     if (!shouldUseCache) {
       await this.refreshCache();
     }
 
-    // Collect skills from each level (project takes precedence over user)
     for (const level of levelsToCheck) {
       const levelSkills = this.skillsCache?.get(level) || [];
 
@@ -203,9 +179,6 @@ export class SkillManager {
     };
   }
 
-  /**
-   * Refreshes the skills cache by loading all skills from disk.
-   */
   async refreshCache(): Promise<void> {
     const skillsCache = new Map<SkillLevel, SkillConfig[]>();
     this.parseErrors.clear();
@@ -233,9 +206,6 @@ export class SkillManager {
     return this.parseSkillFileInternal(filePath, level);
   }
 
-  /**
-   * Internal implementation of skill file parsing.
-   */
   private async parseSkillFileInternal(
     filePath: string,
     level: SkillLevel,
@@ -256,15 +226,6 @@ export class SkillManager {
     return this.parseSkillContent(content, filePath, level);
   }
 
-  /**
-   * Parses skill content from a string.
-   *
-   * @param content - File content
-   * @param filePath - File path for error reporting
-   * @param level - Storage level
-   * @returns SkillConfig
-   * @throws SkillError if parsing fails
-   */
   parseSkillContent(
     content: string,
     filePath: string,
@@ -340,12 +301,6 @@ export class SkillManager {
     }
   }
 
-  /**
-   * Gets the base directory for skills at a specific level.
-   *
-   * @param level - Storage level
-   * @returns Absolute directory path
-   */
   getSkillsBaseDir(level: SkillLevel): string {
     const baseDir =
       level === 'project'
@@ -359,19 +314,11 @@ export class SkillManager {
     return baseDir;
   }
 
-  /**
-   * Lists skills at a specific level.
-   *
-   * @param level - Storage level to scan
-   * @returns Array of skill configurations
-   */
   private async listSkillsAtLevel(level: SkillLevel): Promise<SkillConfig[]> {
     const projectRoot = this.config.getProjectRoot();
     const homeDir = os.homedir();
     const isHomeDirectory = path.resolve(projectRoot) === path.resolve(homeDir);
 
-    // If project level is requested but project root is same as home directory,
-    // return empty array to avoid conflicts between project and global skills
     if (level === 'project' && isHomeDirectory) {
       return [];
     }
@@ -383,14 +330,12 @@ export class SkillManager {
       const skills: SkillConfig[] = [];
 
       for (const entry of entries) {
-        // Only process directories (each skill is a directory)
         if (!entry.isDirectory()) continue;
 
         const skillDir = path.join(baseDir, entry.name);
         const skillManifest = path.join(skillDir, SKILL_MANIFEST_FILE);
 
         try {
-          // Check if SKILL.md exists
           await fs.access(skillManifest);
 
           const config = await this.parseSkillFileInternal(
