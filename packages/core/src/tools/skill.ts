@@ -58,7 +58,6 @@ export class SkillTool extends BaseDeclarativeTool<SkillParams, ToolResult> {
       this.availableSkills = [];
       this.updateDescriptionAndSchema();
     } finally {
-      // Update the client with the new tools
       const geminiClient = this.config.getGeminiClient();
       if (geminiClient && geminiClient.isInitialized()) {
         await geminiClient.setTools();
@@ -66,9 +65,6 @@ export class SkillTool extends BaseDeclarativeTool<SkillParams, ToolResult> {
     }
   }
 
-  /**
-   * Updates the tool's description and schema based on available skills.
-   */
   private updateDescriptionAndSchema(): void {
     let skillDescriptions = '';
     if (this.availableSkills.length === 0) {
@@ -117,7 +113,6 @@ Important:
 ${skillDescriptions}
 </available_skills>
 `;
-    // Update description using object property assignment
     (this as { description: string }).description = baseDescription;
   }
 
@@ -170,7 +165,6 @@ class SkillToolInvocation extends BaseToolInvocation<SkillParams, ToolResult> {
   }
 
   override async shouldConfirmExecute(): Promise<false> {
-    // Skill loading is a read-only operation, no confirmation needed
     return false;
   }
 
@@ -179,19 +173,16 @@ class SkillToolInvocation extends BaseToolInvocation<SkillParams, ToolResult> {
     _updateOutput?: (output: ToolResultDisplay) => void,
   ): Promise<ToolResult> {
     try {
-      // Load the skill with runtime config (includes additional files)
       const skill = await this.skillManager.loadSkillForRuntime(
         this.params.skill,
       );
 
       if (!skill) {
-        // Log failed skill launch
         logSkillLaunch(
           this.config,
           new SkillLaunchEvent(this.params.skill, false),
         );
 
-        // Get parse errors if any
         const parseErrors = this.skillManager.getParseErrors();
         const errorMessages: string[] = [];
 
@@ -212,15 +203,12 @@ class SkillToolInvocation extends BaseToolInvocation<SkillParams, ToolResult> {
         };
       }
 
-      // Log successful skill launch
       logSkillLaunch(
         this.config,
         new SkillLaunchEvent(this.params.skill, true),
       );
 
       const baseDir = path.dirname(skill.filePath);
-
-      // Build markdown content for LLM (show base dir, then body)
       const llmContent = `Base directory for this skill: ${baseDir}\n\n${skill.body}\n`;
 
       return {
@@ -232,7 +220,6 @@ class SkillToolInvocation extends BaseToolInvocation<SkillParams, ToolResult> {
         error instanceof Error ? error.message : String(error);
       console.error(`[SkillsTool] Error launching skill: ${errorMessage}`);
 
-      // Log failed skill launch
       logSkillLaunch(
         this.config,
         new SkillLaunchEvent(this.params.skill, false),

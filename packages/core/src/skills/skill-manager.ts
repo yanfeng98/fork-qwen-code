@@ -29,9 +29,6 @@ export class SkillManager {
     };
   }
 
-  /**
-   * Notifies all registered change listeners.
-   */
   private notifyChangeListeners(): void {
     for (const listener of this.changeListeners) {
       try {
@@ -42,10 +39,6 @@ export class SkillManager {
     }
   }
 
-  /**
-   * Gets any parse errors that occurred during skill loading.
-   * @returns Map of skill paths to their parse errors.
-   */
   getParseErrors(): Map<string, SkillError> {
     return new Map(this.parseErrors);
   }
@@ -67,7 +60,6 @@ export class SkillManager {
       const levelSkills = this.skillsCache?.get(level) || [];
 
       for (const skill of levelSkills) {
-        // Skip if we've already seen this name (precedence: project > user)
         if (seenNames.has(skill.name)) {
           continue;
         }
@@ -77,21 +69,11 @@ export class SkillManager {
       }
     }
 
-    // Sort by name for consistent ordering
     skills.sort((a, b) => a.name.localeCompare(b.name));
 
     return skills;
   }
 
-  /**
-   * Loads a skill configuration by name.
-   * If level is specified, only searches that level.
-   * If level is omitted, searches project-level first, then user-level.
-   *
-   * @param name - Name of the skill to load
-   * @param level - Optional level to limit search to
-   * @returns SkillConfig or null if not found
-   */
   async loadSkill(
     name: string,
     level?: SkillLevel,
@@ -100,24 +82,14 @@ export class SkillManager {
       return this.findSkillByNameAtLevel(name, level);
     }
 
-    // Try project level first
     const projectSkill = await this.findSkillByNameAtLevel(name, 'project');
     if (projectSkill) {
       return projectSkill;
     }
 
-    // Try user level
     return this.findSkillByNameAtLevel(name, 'user');
   }
 
-  /**
-   * Loads a skill with its full content, ready for runtime use.
-   * This includes loading additional files from the skill directory.
-   *
-   * @param name - Name of the skill to load
-   * @param level - Optional level to limit search to
-   * @returns SkillConfig or null if not found
-   */
   async loadSkillForRuntime(
     name: string,
     level?: SkillLevel,
@@ -130,17 +102,10 @@ export class SkillManager {
     return skill;
   }
 
-  /**
-   * Validates a skill configuration.
-   *
-   * @param config - Configuration to validate
-   * @returns Validation result
-   */
   validateConfig(config: Partial<SkillConfig>): SkillValidationResult {
     const errors: string[] = [];
     const warnings: string[] = [];
 
-    // Check required fields
     if (typeof config.name !== 'string') {
       errors.push('Missing or invalid "name" field');
     } else if (config.name.trim() === '') {
@@ -153,7 +118,6 @@ export class SkillManager {
       errors.push('"description" cannot be empty');
     }
 
-    // Validate allowedTools if present
     if (config.allowedTools !== undefined) {
       if (!Array.isArray(config.allowedTools)) {
         errors.push('"allowedTools" must be an array');
@@ -167,7 +131,6 @@ export class SkillManager {
       }
     }
 
-    // Warn if body is empty
     if (!config.body || config.body.trim() === '') {
       warnings.push('Skill body is empty');
     }
@@ -232,7 +195,6 @@ export class SkillManager {
     level: SkillLevel,
   ): SkillConfig {
     try {
-      // Split frontmatter and content
       const frontmatterRegex = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/;
       const match = content.match(frontmatterRegex);
 
@@ -241,11 +203,8 @@ export class SkillManager {
       }
 
       const [, frontmatterYaml, body] = match;
-
-      // Parse YAML frontmatter
       const frontmatter = parseYaml(frontmatterYaml) as Record<string, unknown>;
 
-      // Extract required fields
       const nameRaw = frontmatter['name'];
       const descriptionRaw = frontmatter['description'];
 
@@ -257,11 +216,8 @@ export class SkillManager {
         throw new Error('Missing "description" in frontmatter');
       }
 
-      // Convert to strings
       const name = String(nameRaw);
       const description = String(descriptionRaw);
-
-      // Extract optional fields
       const allowedToolsRaw = frontmatter['allowedTools'] as
         | unknown[]
         | undefined;
@@ -284,7 +240,6 @@ export class SkillManager {
         body: body.trim(),
       };
 
-      // Validate the parsed configuration
       const validation = this.validateConfig(config);
       if (!validation.isValid) {
         throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
@@ -344,9 +299,7 @@ export class SkillManager {
           );
           skills.push(config);
         } catch (error) {
-          // Skip directories without valid SKILL.md
           if (error instanceof SkillError) {
-            // Parse error was already recorded
             console.warn(
               `Failed to parse skill at ${skillDir}: ${error.message}`,
             );
@@ -357,18 +310,10 @@ export class SkillManager {
 
       return skills;
     } catch (_error) {
-      // Directory doesn't exist or can't be read
       return [];
     }
   }
 
-  /**
-   * Finds a skill by name at a specific level.
-   *
-   * @param name - Name of the skill to find
-   * @param level - Storage level to search
-   * @returns SkillConfig or null if not found
-   */
   private async findSkillByNameAtLevel(
     name: string,
     level: SkillLevel,
@@ -376,14 +321,9 @@ export class SkillManager {
     await this.ensureLevelCache(level);
 
     const levelSkills = this.skillsCache?.get(level) || [];
-
-    // Find the skill with matching name
     return levelSkills.find((skill) => skill.name === name) || null;
   }
 
-  /**
-   * Ensures the cache is populated for a specific level without loading other levels.
-   */
   private async ensureLevelCache(level: SkillLevel): Promise<void> {
     if (!this.skillsCache) {
       this.skillsCache = new Map<SkillLevel, SkillConfig[]>();
