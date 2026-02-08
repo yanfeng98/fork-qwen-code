@@ -2685,11 +2685,45 @@ describe('Settings Loading and Merging', () => {
       expect(process.env['TESTTEST']).toEqual('1234');
     });
 
-    it('does not load env files from untrusted spaces', () => {
-      setup({ isFolderTrustEnabled: true, isWorkspaceTrustedValue: false });
+    it('does not load project .env files from untrusted workspaces', () => {
+      delete process.env['PROJECT_ENV_VAR'];
+      const cwdSpy = vi
+        .spyOn(process, 'cwd')
+        .mockReturnValue(MOCK_WORKSPACE_DIR);
+
+      const projectEnvPath = path.join(MOCK_WORKSPACE_DIR, '.env');
+
+      vi.mocked(isWorkspaceTrusted).mockReturnValue({
+        isTrusted: false,
+        source: 'file',
+      });
+      (mockFsExistsSync as Mock).mockImplementation((p: fs.PathLike) =>
+        [USER_SETTINGS_PATH, projectEnvPath].includes(p.toString()),
+      );
+      const userSettingsContent: Settings = {
+        ui: {
+          theme: 'dark',
+        },
+        security: {
+          folderTrust: {
+            enabled: true,
+          },
+        },
+      };
+      (fs.readFileSync as Mock).mockImplementation(
+        (p: fs.PathOrFileDescriptor) => {
+          if (p === USER_SETTINGS_PATH)
+            return JSON.stringify(userSettingsContent);
+          if (p === projectEnvPath) return 'PROJECT_ENV_VAR=from_project';
+          return '{}';
+        },
+      );
+
       loadEnvironment(loadSettings(MOCK_WORKSPACE_DIR).merged);
 
-      expect(process.env['TESTTEST']).not.toEqual('1234');
+      // Project .env should NOT be loaded when workspace is untrusted
+      expect(process.env['PROJECT_ENV_VAR']).toBeUndefined();
+      cwdSpy.mockRestore();
     });
 
     describe('settings.env field', () => {
@@ -2877,6 +2911,47 @@ describe('Settings Loading and Merging', () => {
         // Both user-level and workspace-level env should be loaded
         expect(process.env['USER_ENV_VAR']).toEqual('user_value');
         expect(process.env['WORKSPACE_ENV_VAR']).toEqual('workspace_value');
+      });
+
+      it('should load user-level settings.env even when workspace is untrusted', () => {
+        const userSettingsContent: Settings = {
+          env: {
+            USER_ENV_VAR: 'user_value',
+          },
+        };
+        const workspaceSettingsContent = {
+          env: {
+            WORKSPACE_ENV_VAR: 'workspace_value',
+          },
+        };
+
+        (mockFsExistsSync as Mock).mockImplementation((p: fs.PathLike) =>
+          [USER_SETTINGS_PATH, MOCK_WORKSPACE_SETTINGS_PATH].includes(
+            p.toString(),
+          ),
+        );
+        (fs.readFileSync as Mock).mockImplementation(
+          (p: fs.PathOrFileDescriptor) => {
+            if (p === USER_SETTINGS_PATH)
+              return JSON.stringify(userSettingsContent);
+            if (p === MOCK_WORKSPACE_SETTINGS_PATH)
+              return JSON.stringify(workspaceSettingsContent);
+            return '{}';
+          },
+        );
+
+        // Workspace is untrusted
+        vi.mocked(isWorkspaceTrusted).mockReturnValue({
+          isTrusted: false,
+          source: 'file',
+        });
+
+        loadSettings(MOCK_WORKSPACE_DIR);
+
+        // User-level settings.env should still be loaded even when untrusted
+        expect(process.env['USER_ENV_VAR']).toEqual('user_value');
+        // Workspace-level settings.env should NOT be loaded (filtered by mergeSettings)
+        expect(process.env['WORKSPACE_ENV_VAR']).toBeUndefined();
       });
     });
   });

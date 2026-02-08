@@ -798,26 +798,48 @@ export function createMinimalSettings(): LoadedSettings {
   );
 }
 
-function findEnvFile(startDir: string): string | null {
+/**
+ * Finds the .env file to load, respecting workspace trust settings.
+ *
+ * When workspace is untrusted, only allow user-level .env files at:
+ * - ~/.qwen/.env
+ * - ~/.env
+ */
+function findEnvFile(settings: Settings, startDir: string): string | null {
+  const homeDir = homedir();
+  const isTrusted = isWorkspaceTrusted(settings).isTrusted;
+
+  // Pre-compute user-level .env paths for fast comparison
+  const userLevelPaths = new Set([
+    path.normalize(path.join(homeDir, '.env')),
+    path.normalize(path.join(homeDir, QWEN_DIR, '.env')),
+  ]);
+
+  // Determine if we can use this .env file based on trust settings
+  const canUseEnvFile = (filePath: string): boolean =>
+    isTrusted !== false || userLevelPaths.has(path.normalize(filePath));
+
   let currentDir = path.resolve(startDir);
   while (true) {
-    // prefer gemini-specific .env under QWEN_DIR
+    // Prefer gemini-specific .env under QWEN_DIR
     const geminiEnvPath = path.join(currentDir, QWEN_DIR, '.env');
-    if (fs.existsSync(geminiEnvPath)) {
+    if (fs.existsSync(geminiEnvPath) && canUseEnvFile(geminiEnvPath)) {
       return geminiEnvPath;
     }
+
     const envPath = path.join(currentDir, '.env');
-    if (fs.existsSync(envPath)) {
+    if (fs.existsSync(envPath) && canUseEnvFile(envPath)) {
       return envPath;
     }
+
     const parentDir = path.dirname(currentDir);
     if (parentDir === currentDir || !parentDir) {
-      // check .env under home as fallback, again preferring gemini-specific .env
-      const homeGeminiEnvPath = path.join(homedir(), QWEN_DIR, '.env');
+      // At home directory - check fallback .env files
+      const homeGeminiEnvPath = path.join(homeDir, QWEN_DIR, '.env');
       if (fs.existsSync(homeGeminiEnvPath)) {
         return homeGeminiEnvPath;
       }
-      const homeEnvPath = path.join(homedir(), '.env');
+      const homeEnvPath = path.join(homeDir, '.env');
       if (fs.existsSync(homeEnvPath)) {
         return homeEnvPath;
       }
@@ -859,11 +881,7 @@ export function setUpCloudShellEnvironment(envFilePath: string | null): void {
  * 5. defaults
  */
 export function loadEnvironment(settings: Settings): void {
-  const envFilePath = findEnvFile(process.cwd());
-
-  if (!isWorkspaceTrusted(settings).isTrusted) {
-    return;
-  }
+  const envFilePath = findEnvFile(settings, process.cwd());
 
   // Cloud Shell environment variable handling
   if (process.env['CLOUD_SHELL'] === 'true') {
