@@ -70,29 +70,19 @@ if (!geminiSandbox) {
 geminiSandbox = (geminiSandbox || '').toLowerCase();
 
 const commandExists = (cmd) => {
-  if (!cmd) {
-    return false;
-  }
-
-  if (os.platform() === 'win32') {
-    // Use PowerShell's Get-Command for reliable detection on Windows
-    // This works in both cmd.exe and PowerShell environments
-    try {
-      execSync(
-        `powershell -NoProfile -Command "if (Get-Command ${cmd} -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"`,
-        { stdio: 'ignore' },
-      );
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  // Unix-like systems use 'command -v'
+  const checkCommand = os.platform() === 'win32' ? 'where.exe' : 'command -v';
   try {
-    execSync(`command -v ${cmd}`, { stdio: 'ignore' });
+    execSync(`${checkCommand} ${cmd}`, { stdio: 'ignore' });
     return true;
   } catch {
+    if (os.platform() === 'win32' && !cmd.endsWith('.exe')) {
+      try {
+        execSync(`${checkCommand} ${cmd}.exe`, { stdio: 'ignore' });
+        return true;
+      } catch {
+        return false;
+      }
+    }
     return false;
   }
 };
