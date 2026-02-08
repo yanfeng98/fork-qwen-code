@@ -70,6 +70,10 @@ if (!geminiSandbox) {
 geminiSandbox = (geminiSandbox || '').toLowerCase();
 
 const commandExists = (cmd) => {
+  if (!cmd) {
+    return false;
+  }
+
   if (os.platform() === 'win32') {
     // Use PowerShell's Get-Command for reliable detection on Windows
     // This works in both cmd.exe and PowerShell environments
