@@ -79,6 +79,38 @@ describe('mcp add command', () => {
     });
   });
 
+  it('should auto-detect http transport when commandOrUrl is an https URL', async () => {
+    await parser.parseAsync('add http-server https://example.com/mcp');
+
+    expect(mockSetValue).toHaveBeenCalledWith(SettingScope.User, 'mcpServers', {
+      'http-server': {
+        httpUrl: 'https://example.com/mcp',
+      },
+    });
+  });
+
+  it('should auto-detect http transport when commandOrUrl is an http URL', async () => {
+    await parser.parseAsync('add http-server http://localhost:8080/mcp');
+
+    expect(mockSetValue).toHaveBeenCalledWith(SettingScope.User, 'mcpServers', {
+      'http-server': {
+        httpUrl: 'http://localhost:8080/mcp',
+      },
+    });
+  });
+
+  it('should respect explicit transport even when commandOrUrl is a URL', async () => {
+    await parser.parseAsync(
+      'add --transport sse sse-server https://example.com/sse-endpoint',
+    );
+
+    expect(mockSetValue).toHaveBeenCalledWith(SettingScope.User, 'mcpServers', {
+      'sse-server': {
+        url: 'https://example.com/sse-endpoint',
+      },
+    });
+  });
+
   it('should add an sse server to user settings', async () => {
     await parser.parseAsync(
       'add --transport sse sse-server https://example.com/sse-endpoint --scope user -H "X-API-Key: your-key"',
