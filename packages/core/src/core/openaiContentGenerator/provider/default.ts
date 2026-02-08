@@ -48,9 +48,8 @@ export class DefaultOpenAICompatibleProvider
     request: OpenAI.Chat.ChatCompletionCreateParams,
     _userPromptId: string,
   ): OpenAI.Chat.ChatCompletionCreateParams {
-    // Default provider doesn't need special enhancements, just pass through all parameters
     return {
-      ...request, // Preserve all original parameters including sampling params
+      ...request,
     };
   }
 

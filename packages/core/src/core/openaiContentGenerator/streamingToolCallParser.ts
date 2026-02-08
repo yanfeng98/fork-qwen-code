@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2025 Qwen
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { safeJsonParse } from '../../utils/safeJsonParse.js';
 
 /**
@@ -20,30 +14,13 @@ export interface ToolCallParseResult {
   repaired?: boolean;
 }
 
-/**
- * StreamingToolCallParser - Handles streaming tool call objects with inconsistent chunk formats
- *
- * Problems this parser addresses:
- * - Tool calls arrive with varying chunk shapes (empty strings, partial JSON, complete objects)
- * - Tool calls may lack IDs, names, or have inconsistent indices
- * - Multiple tool calls can be processed simultaneously with interleaved chunks
- * - Index collisions occur when the same index is reused for different tool calls
- * - JSON arguments are fragmented across multiple chunks and need reconstruction
- */
 export class StreamingToolCallParser {
-  /** Accumulated buffer containing all received chunks for each tool call index */
   private buffers: Map<number, string> = new Map();
-  /** Current nesting depth in JSON structure for each tool call index */
   private depths: Map<number, number> = new Map();
-  /** Whether we're currently inside a string literal for each tool call index */
   private inStrings: Map<number, boolean> = new Map();
-  /** Whether the next character should be treated as escaped for each tool call index */
   private escapes: Map<number, boolean> = new Map();
-  /** Metadata for each tool call index */
   private toolCallMeta: Map<number, { id?: string; name?: string }> = new Map();
-  /** Map from tool call ID to actual index used for storage */
   private idToIndexMap: Map<string, number> = new Map();
-  /** Counter for generating new indices when collisions occur */
   private nextAvailableIndex: number = 0;
 
   /**

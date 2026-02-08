@@ -21,10 +21,6 @@ The `DefaultOpenAICompatibleProvider` is the fallback provider for standard Open
 
 The `DashScopeOpenAICompatibleProvider` handles DashScope (Qwen) specific features like cache control and metadata.
 
-### OpenRouter Provider
-
-The `OpenRouterOpenAICompatibleProvider` handles OpenRouter specific headers and configurations.
-
 ## Adding a New Provider
 
 To add a new provider:
