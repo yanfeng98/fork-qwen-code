@@ -61,12 +61,10 @@ export const ModelSelector: FC<ModelSelectorProps> = ({
       switch (event.key) {
         case 'ArrowDown':
           event.preventDefault();
-          event.stopPropagation();
           setSelected((prev) => Math.min(prev + 1, models.length - 1));
           break;
         case 'ArrowUp':
           event.preventDefault();
-          event.stopPropagation();
           setSelected((prev) => Math.max(prev - 1, 0));
           break;
         case 'Enter':
@@ -81,7 +79,6 @@ export const ModelSelector: FC<ModelSelectorProps> = ({
           break;
         case 'Escape':
           event.preventDefault();
-          event.stopPropagation();
           onClose();
           break;
         default:
@@ -90,10 +87,9 @@ export const ModelSelector: FC<ModelSelectorProps> = ({
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    // Use capture phase so this handler fires BEFORE any bubble-phase
-    // handlers on child elements (e.g. the InputForm's Enter-to-submit).
-    // Combined with stopPropagation this prevents an empty user message
-    // from being created when the user presses Enter to confirm a model.
+    // Use capture phase so Enter is handled before bubble-phase handlers
+    // (e.g. the InputForm's Enter-to-submit) and stopPropagation can
+    // prevent an empty user message.
     document.addEventListener('keydown', handleKeyDown, true);
 
     return () => {

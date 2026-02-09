@@ -12,21 +12,6 @@ import { ACP_ERROR_CODES } from '../../constants/acpSchema.js';
 
 const AUTH_REQUIRED_CODE_PATTERN = `(code: ${ACP_ERROR_CODES.AUTH_REQUIRED})`;
 
-/** Prefix that separates the human-readable ACP error from its JSON data payload. */
-const ACP_ERROR_DATA_PREFIX = '\nData: ';
-
-/**
- * Strip the trailing `\nData: {...}` payload from an ACP error message so that
- * only the human-readable portion is shown to the user.
- */
-function stripAcpErrorData(message: string): string {
-  const idx = message.indexOf(ACP_ERROR_DATA_PREFIX);
-  if (idx === -1) {
-    return message;
-  }
-  return message.slice(0, idx).trim();
-}
-
 /**
  * Session message handler
  * Handles all session-related messages
@@ -1084,12 +1069,11 @@ export class SessionMessageHandler extends BaseMessageHandler {
       );
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      const cleanMsg = stripAcpErrorData(errorMsg);
       console.error('[SessionMessageHandler] Failed to set model:', error);
-      vscode.window.showErrorMessage(`Failed to switch model: ${cleanMsg}`);
+      vscode.window.showErrorMessage(`Failed to switch model: ${errorMsg}`);
       this.sendToWebView({
         type: 'error',
-        data: { message: `Failed to set model: ${cleanMsg}` },
+        data: { message: `Failed to set model: ${errorMsg}` },
       });
     }
   }
