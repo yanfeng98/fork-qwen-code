@@ -53,9 +53,6 @@ export interface ToolCallAccumulator {
   arguments: string;
 }
 
-/**
- * Parsed parts from Gemini content, categorized by type
- */
 interface ParsedParts {
   thoughtParts: string[];
   contentParts: string[];
@@ -235,6 +232,452 @@ export class OpenAIContentConverter {
     return messages;
   }
 
+  private addSystemInstructionMessage(
+    request: GenerateContentParameters,
+    messages: OpenAI.Chat.ChatCompletionMessageParam[],
+  ): void {
+    if (!request.config?.systemInstruction) return;
+
+    const systemText = this.extractTextFromContentUnion(
+      request.config.systemInstruction,
+    );
+
+    if (systemText) {
+      messages.push({
+        role: 'system' as const,
+        content: systemText,
+      });
+    }
+  }
+
+  private extractTextFromContentUnion(contentUnion: unknown): string {
+    if (typeof contentUnion === 'string') {
+      return contentUnion;
+    }
+
+    if (Array.isArray(contentUnion)) {
+      return contentUnion
+        .map((item) => this.extractTextFromContentUnion(item))
+        .filter(Boolean)
+        .join('\n');
+    }
+
+    if (typeof contentUnion === 'object' && contentUnion !== null) {
+      if ('parts' in contentUnion) {
+        const content = contentUnion as Content;
+        return (
+          content.parts
+            ?.map((part: Part) => {
+              if (typeof part === 'string') return part;
+              if ('text' in part) return part.text || '';
+              return '';
+            })
+            .filter(Boolean)
+            .join('\n') || ''
+        );
+      }
+    }
+
+    return '';
+  }
+
+  private processContents(
+    contents: ContentListUnion,
+    messages: ExtendedChatCompletionMessageParam[],
+  ): void {
+    if (Array.isArray(contents)) {
+      for (const content of contents) {
+        this.processContent(content, messages);
+      }
+    } else if (contents) {
+      this.processContent(contents, messages);
+    }
+  }
+
+  private processContent(
+    content: ContentUnion | PartUnion,
+    messages: ExtendedChatCompletionMessageParam[],
+  ): void {
+    if (typeof content === 'string') {
+      messages.push({ role: 'user' as const, content });
+      return;
+    }
+
+    if (!this.isContentObject(content)) return;
+
+    const parsedParts = this.parseParts(content.parts || []);
+
+    if (parsedParts.functionResponses.length > 0) {
+      for (const funcResponse of parsedParts.functionResponses) {
+        messages.push({
+          role: 'tool' as const,
+          tool_call_id: funcResponse.id || '',
+          content: this.extractFunctionResponseContent(funcResponse.response),
+        });
+      }
+      return;
+    }
+
+    if (content.role === 'model' && parsedParts.functionCalls.length > 0) {
+      const toolCalls = parsedParts.functionCalls.map((fc, index) => ({
+        id: fc.id || `call_${index}`,
+        type: 'function' as const,
+        function: {
+          name: fc.name || '',
+          arguments: JSON.stringify(fc.args || {}),
+        },
+      }));
+
+      const assistantMessage: ExtendedChatCompletionAssistantMessageParam = {
+        role: 'assistant' as const,
+        content: parsedParts.contentParts.join('') || null,
+        tool_calls: toolCalls,
+      };
+
+      const reasoningContent = parsedParts.thoughtParts.join('');
+      if (reasoningContent) {
+        assistantMessage.reasoning_content = reasoningContent;
+      }
+
+      messages.push(assistantMessage);
+      return;
+    }
+
+    const role = content.role === 'model' ? 'assistant' : 'user';
+    const openAIMessage = this.createMultimodalMessage(role, parsedParts);
+
+    if (openAIMessage) {
+      messages.push(openAIMessage);
+    }
+  }
+
+  private isContentObject(
+    content: unknown,
+  ): content is { role: string; parts: Part[] } {
+    return (
+      typeof content === 'object' &&
+      content !== null &&
+      'role' in content &&
+      'parts' in content &&
+      Array.isArray((content as Record<string, unknown>)['parts'])
+    );
+  }
+
+  private parseParts(parts: Part[]): ParsedParts {
+    const thoughtParts: string[] = [];
+    const contentParts: string[] = [];
+    const functionCalls: FunctionCall[] = [];
+    const functionResponses: FunctionResponse[] = [];
+    const mediaParts: Array<{
+      type: 'image' | 'audio' | 'file';
+      data: string;
+      mimeType: string;
+      fileUri?: string;
+    }> = [];
+
+    for (const part of parts) {
+      if (typeof part === 'string') {
+        contentParts.push(part);
+      } else if (
+        'text' in part &&
+        part.text &&
+        !('thought' in part && part.thought)
+      ) {
+        contentParts.push(part.text);
+      } else if (
+        'text' in part &&
+        part.text &&
+        'thought' in part &&
+        part.thought
+      ) {
+        thoughtParts.push(part.text);
+      } else if ('functionCall' in part && part.functionCall) {
+        functionCalls.push(part.functionCall);
+      } else if ('functionResponse' in part && part.functionResponse) {
+        functionResponses.push(part.functionResponse);
+      } else if ('inlineData' in part && part.inlineData) {
+        const { data, mimeType } = part.inlineData;
+        if (data && mimeType) {
+          const mediaType = this.getMediaType(mimeType);
+          mediaParts.push({ type: mediaType, data, mimeType });
+        }
+      } else if ('fileData' in part && part.fileData) {
+        const { fileUri, mimeType } = part.fileData;
+        if (fileUri && mimeType) {
+          const mediaType = this.getMediaType(mimeType);
+          mediaParts.push({
+            type: mediaType,
+            data: '',
+            mimeType,
+            fileUri,
+          });
+        }
+      }
+    }
+
+    return {
+      thoughtParts,
+      contentParts,
+      functionCalls,
+      functionResponses,
+      mediaParts,
+    };
+  }
+
+  private getMediaType(mimeType: string): 'image' | 'audio' | 'file' {
+    if (mimeType.startsWith('image/')) return 'image';
+    if (mimeType.startsWith('audio/')) return 'audio';
+    return 'file';
+  }
+
+  private extractFunctionResponseContent(response: unknown): string {
+    if (response === null || response === undefined) {
+      return '';
+    }
+
+    if (typeof response === 'string') {
+      return response;
+    }
+
+    if (typeof response === 'object') {
+      const responseObject = response as Record<string, unknown>;
+      const output = responseObject['output'];
+      if (typeof output === 'string') {
+        return output;
+      }
+
+      const error = responseObject['error'];
+      if (typeof error === 'string') {
+        return error;
+      }
+    }
+
+    try {
+      const serialized = JSON.stringify(response);
+      return serialized ?? String(response);
+    } catch {
+      return String(response);
+    }
+  }
+
+  private createMultimodalMessage(
+    role: 'user' | 'assistant',
+    parsedParts: Pick<
+      ParsedParts,
+      'contentParts' | 'mediaParts' | 'thoughtParts'
+    >,
+  ): ExtendedChatCompletionMessageParam | null {
+    const { contentParts, mediaParts, thoughtParts } = parsedParts;
+    const reasoningContent = thoughtParts.join('');
+    const content = contentParts.map((text) => ({
+      type: 'text' as const,
+      text,
+    }));
+
+    if (mediaParts.length === 0) {
+      if (content.length === 0) return null;
+      const message: ExtendedChatCompletionMessageParam = { role, content };
+      if (reasoningContent) {
+        (
+          message as ExtendedChatCompletionAssistantMessageParam
+        ).reasoning_content = reasoningContent;
+      }
+      return message;
+    }
+
+    if (role === 'assistant') {
+      return content.length > 0
+        ? { role: 'assistant' as const, content }
+        : null;
+    }
+
+    const contentArray: OpenAI.Chat.ChatCompletionContentPart[] = [...content];
+    for (const mediaPart of mediaParts) {
+      if (mediaPart.type === 'image') {
+        if (mediaPart.fileUri) {
+          contentArray.push({
+            type: 'image_url' as const,
+            image_url: { url: mediaPart.fileUri },
+          });
+        } else if (mediaPart.data) {
+          const dataUrl = `data:${mediaPart.mimeType};base64,${mediaPart.data}`;
+          contentArray.push({
+            type: 'image_url' as const,
+            image_url: { url: dataUrl },
+          });
+        }
+      } else if (mediaPart.type === 'audio' && mediaPart.data) {
+        const format = this.getAudioFormat(mediaPart.mimeType);
+        if (format) {
+          contentArray.push({
+            type: 'input_audio' as const,
+            input_audio: {
+              data: mediaPart.data,
+              format: format as 'wav' | 'mp3',
+            },
+          });
+        }
+      }
+    }
+
+    return contentArray.length > 0
+      ? { role: 'user' as const, content: contentArray }
+      : null;
+  }
+
+  private getAudioFormat(mimeType: string): 'wav' | 'mp3' | null {
+    if (mimeType.includes('wav')) return 'wav';
+    if (mimeType.includes('mp3') || mimeType.includes('mpeg')) return 'mp3';
+    return null;
+  }
+
+  private cleanOrphanedToolCalls(
+    messages: OpenAI.Chat.ChatCompletionMessageParam[],
+  ): OpenAI.Chat.ChatCompletionMessageParam[] {
+    const cleaned: OpenAI.Chat.ChatCompletionMessageParam[] = [];
+    const toolCallIds = new Set<string>();
+    const toolResponseIds = new Set<string>();
+
+    for (const message of messages) {
+      if (
+        message.role === 'assistant' &&
+        'tool_calls' in message &&
+        message.tool_calls
+      ) {
+        for (const toolCall of message.tool_calls) {
+          if (toolCall.id) {
+            toolCallIds.add(toolCall.id);
+          }
+        }
+      } else if (
+        message.role === 'tool' &&
+        'tool_call_id' in message &&
+        message.tool_call_id
+      ) {
+        toolResponseIds.add(message.tool_call_id);
+      }
+    }
+
+    // Second pass: filter out orphaned messages
+    for (const message of messages) {
+      if (
+        message.role === 'assistant' &&
+        'tool_calls' in message &&
+        message.tool_calls
+      ) {
+        // Filter out tool calls that don't have corresponding responses
+        const validToolCalls = message.tool_calls.filter(
+          (toolCall) => toolCall.id && toolResponseIds.has(toolCall.id),
+        );
+
+        if (validToolCalls.length > 0) {
+          // Keep the message but only with valid tool calls
+          const cleanedMessage = { ...message };
+          (
+            cleanedMessage as OpenAI.Chat.ChatCompletionMessageParam & {
+              tool_calls?: OpenAI.Chat.ChatCompletionMessageToolCall[];
+            }
+          ).tool_calls = validToolCalls;
+          cleaned.push(cleanedMessage);
+        } else if (
+          typeof message.content === 'string' &&
+          message.content.trim()
+        ) {
+          // Keep the message if it has text content, but remove tool calls
+          const cleanedMessage = { ...message };
+          delete (
+            cleanedMessage as OpenAI.Chat.ChatCompletionMessageParam & {
+              tool_calls?: OpenAI.Chat.ChatCompletionMessageToolCall[];
+            }
+          ).tool_calls;
+          cleaned.push(cleanedMessage);
+        }
+        // If no valid tool calls and no content, skip the message entirely
+      } else if (
+        message.role === 'tool' &&
+        'tool_call_id' in message &&
+        message.tool_call_id
+      ) {
+        // Only keep tool responses that have corresponding tool calls
+        if (toolCallIds.has(message.tool_call_id)) {
+          cleaned.push(message);
+        }
+      } else {
+        // Keep all other messages as-is
+        cleaned.push(message);
+      }
+    }
+
+    // Final validation: ensure every assistant message with tool_calls has corresponding tool responses
+    const finalCleaned: OpenAI.Chat.ChatCompletionMessageParam[] = [];
+    const finalToolCallIds = new Set<string>();
+
+    // Collect all remaining tool call IDs
+    for (const message of cleaned) {
+      if (
+        message.role === 'assistant' &&
+        'tool_calls' in message &&
+        message.tool_calls
+      ) {
+        for (const toolCall of message.tool_calls) {
+          if (toolCall.id) {
+            finalToolCallIds.add(toolCall.id);
+          }
+        }
+      }
+    }
+
+    // Verify all tool calls have responses
+    const finalToolResponseIds = new Set<string>();
+    for (const message of cleaned) {
+      if (
+        message.role === 'tool' &&
+        'tool_call_id' in message &&
+        message.tool_call_id
+      ) {
+        finalToolResponseIds.add(message.tool_call_id);
+      }
+    }
+
+    // Remove any remaining orphaned tool calls
+    for (const message of cleaned) {
+      if (
+        message.role === 'assistant' &&
+        'tool_calls' in message &&
+        message.tool_calls
+      ) {
+        const finalValidToolCalls = message.tool_calls.filter(
+          (toolCall) => toolCall.id && finalToolResponseIds.has(toolCall.id),
+        );
+
+        if (finalValidToolCalls.length > 0) {
+          const cleanedMessage = { ...message };
+          (
+            cleanedMessage as OpenAI.Chat.ChatCompletionMessageParam & {
+              tool_calls?: OpenAI.Chat.ChatCompletionMessageToolCall[];
+            }
+          ).tool_calls = finalValidToolCalls;
+          finalCleaned.push(cleanedMessage);
+        } else if (
+          typeof message.content === 'string' &&
+          message.content.trim()
+        ) {
+          const cleanedMessage = { ...message };
+          delete (
+            cleanedMessage as OpenAI.Chat.ChatCompletionMessageParam & {
+              tool_calls?: OpenAI.Chat.ChatCompletionMessageToolCall[];
+            }
+          ).tool_calls;
+          finalCleaned.push(cleanedMessage);
+        }
+      } else {
+        finalCleaned.push(message);
+      }
+    }
+
+    return finalCleaned;
+  }
+
   /**
    * Convert Gemini response to OpenAI completion format (for logging).
    */
@@ -310,322 +753,6 @@ export class OpenAIContentConverter {
       ],
       usage,
     };
-  }
-
-  private addSystemInstructionMessage(
-    request: GenerateContentParameters,
-    messages: OpenAI.Chat.ChatCompletionMessageParam[],
-  ): void {
-    if (!request.config?.systemInstruction) return;
-
-    const systemText = this.extractTextFromContentUnion(
-      request.config.systemInstruction,
-    );
-
-    if (systemText) {
-      messages.push({
-        role: 'system' as const,
-        content: systemText,
-      });
-    }
-  }
-
-  private processContents(
-    contents: ContentListUnion,
-    messages: ExtendedChatCompletionMessageParam[],
-  ): void {
-    if (Array.isArray(contents)) {
-      for (const content of contents) {
-        this.processContent(content, messages);
-      }
-    } else if (contents) {
-      this.processContent(contents, messages);
-    }
-  }
-
-  private processContent(
-    content: ContentUnion | PartUnion,
-    messages: ExtendedChatCompletionMessageParam[],
-  ): void {
-    if (typeof content === 'string') {
-      messages.push({ role: 'user' as const, content });
-      return;
-    }
-
-    if (!this.isContentObject(content)) return;
-
-    const parsedParts = this.parseParts(content.parts || []);
-
-    if (parsedParts.functionResponses.length > 0) {
-      for (const funcResponse of parsedParts.functionResponses) {
-        messages.push({
-          role: 'tool' as const,
-          tool_call_id: funcResponse.id || '',
-          content: this.extractFunctionResponseContent(funcResponse.response),
-        });
-      }
-      return;
-    }
-
-    if (content.role === 'model' && parsedParts.functionCalls.length > 0) {
-      const toolCalls = parsedParts.functionCalls.map((fc, index) => ({
-        id: fc.id || `call_${index}`,
-        type: 'function' as const,
-        function: {
-          name: fc.name || '',
-          arguments: JSON.stringify(fc.args || {}),
-        },
-      }));
-
-      const assistantMessage: ExtendedChatCompletionAssistantMessageParam = {
-        role: 'assistant' as const,
-        content: parsedParts.contentParts.join('') || null,
-        tool_calls: toolCalls,
-      };
-
-      const reasoningContent = parsedParts.thoughtParts.join('');
-      if (reasoningContent) {
-        assistantMessage.reasoning_content = reasoningContent;
-      }
-
-      messages.push(assistantMessage);
-      return;
-    }
-
-    const role = content.role === 'model' ? 'assistant' : 'user';
-    const openAIMessage = this.createMultimodalMessage(role, parsedParts);
-
-    if (openAIMessage) {
-      messages.push(openAIMessage);
-    }
-  }
-
-  private parseParts(parts: Part[]): ParsedParts {
-    const thoughtParts: string[] = [];
-    const contentParts: string[] = [];
-    const functionCalls: FunctionCall[] = [];
-    const functionResponses: FunctionResponse[] = [];
-    const mediaParts: Array<{
-      type: 'image' | 'audio' | 'file';
-      data: string;
-      mimeType: string;
-      fileUri?: string;
-    }> = [];
-
-    for (const part of parts) {
-      if (typeof part === 'string') {
-        contentParts.push(part);
-      } else if (
-        'text' in part &&
-        part.text &&
-        !('thought' in part && part.thought)
-      ) {
-        contentParts.push(part.text);
-      } else if (
-        'text' in part &&
-        part.text &&
-        'thought' in part &&
-        part.thought
-      ) {
-        thoughtParts.push(part.text);
-      } else if ('functionCall' in part && part.functionCall) {
-        functionCalls.push(part.functionCall);
-      } else if ('functionResponse' in part && part.functionResponse) {
-        functionResponses.push(part.functionResponse);
-      } else if ('inlineData' in part && part.inlineData) {
-        const { data, mimeType } = part.inlineData;
-        if (data && mimeType) {
-          const mediaType = this.getMediaType(mimeType);
-          mediaParts.push({ type: mediaType, data, mimeType });
-        }
-      } else if ('fileData' in part && part.fileData) {
-        const { fileUri, mimeType } = part.fileData;
-        if (fileUri && mimeType) {
-          const mediaType = this.getMediaType(mimeType);
-          mediaParts.push({
-            type: mediaType,
-            data: '',
-            mimeType,
-            fileUri,
-          });
-        }
-      }
-    }
-
-    return {
-      thoughtParts,
-      contentParts,
-      functionCalls,
-      functionResponses,
-      mediaParts,
-    };
-  }
-
-  private extractFunctionResponseContent(response: unknown): string {
-    if (response === null || response === undefined) {
-      return '';
-    }
-
-    if (typeof response === 'string') {
-      return response;
-    }
-
-    if (typeof response === 'object') {
-      const responseObject = response as Record<string, unknown>;
-      const output = responseObject['output'];
-      if (typeof output === 'string') {
-        return output;
-      }
-
-      const error = responseObject['error'];
-      if (typeof error === 'string') {
-        return error;
-      }
-    }
-
-    try {
-      const serialized = JSON.stringify(response);
-      return serialized ?? String(response);
-    } catch {
-      return String(response);
-    }
-  }
-
-  private getMediaType(mimeType: string): 'image' | 'audio' | 'file' {
-    if (mimeType.startsWith('image/')) return 'image';
-    if (mimeType.startsWith('audio/')) return 'audio';
-    return 'file';
-  }
-
-  /**
-   * Create multimodal OpenAI message from parsed parts
-   */
-  private createMultimodalMessage(
-    role: 'user' | 'assistant',
-    parsedParts: Pick<
-      ParsedParts,
-      'contentParts' | 'mediaParts' | 'thoughtParts'
-    >,
-  ): ExtendedChatCompletionMessageParam | null {
-    const { contentParts, mediaParts, thoughtParts } = parsedParts;
-    const reasoningContent = thoughtParts.join('');
-    const content = contentParts.map((text) => ({
-      type: 'text' as const,
-      text,
-    }));
-
-    // If no media parts, return simple text message
-    if (mediaParts.length === 0) {
-      if (content.length === 0) return null;
-      const message: ExtendedChatCompletionMessageParam = { role, content };
-      // Only include reasoning_content if it has actual content
-      if (reasoningContent) {
-        (
-          message as ExtendedChatCompletionAssistantMessageParam
-        ).reasoning_content = reasoningContent;
-      }
-      return message;
-    }
-
-    // For assistant messages with media, convert to text only
-    // since OpenAI assistant messages don't support media content arrays
-    if (role === 'assistant') {
-      return content.length > 0
-        ? { role: 'assistant' as const, content }
-        : null;
-    }
-
-    const contentArray: OpenAI.Chat.ChatCompletionContentPart[] = [...content];
-
-    // Add media content
-    for (const mediaPart of mediaParts) {
-      if (mediaPart.type === 'image') {
-        if (mediaPart.fileUri) {
-          // For file URIs, use the URI directly
-          contentArray.push({
-            type: 'image_url' as const,
-            image_url: { url: mediaPart.fileUri },
-          });
-        } else if (mediaPart.data) {
-          // For inline data, create data URL
-          const dataUrl = `data:${mediaPart.mimeType};base64,${mediaPart.data}`;
-          contentArray.push({
-            type: 'image_url' as const,
-            image_url: { url: dataUrl },
-          });
-        }
-      } else if (mediaPart.type === 'audio' && mediaPart.data) {
-        // Convert audio format from MIME type
-        const format = this.getAudioFormat(mediaPart.mimeType);
-        if (format) {
-          contentArray.push({
-            type: 'input_audio' as const,
-            input_audio: {
-              data: mediaPart.data,
-              format: format as 'wav' | 'mp3',
-            },
-          });
-        }
-      }
-      // Note: File type is not directly supported in OpenAI's current API
-      // Could be extended in the future or handled as text description
-    }
-
-    return contentArray.length > 0
-      ? { role: 'user' as const, content: contentArray }
-      : null;
-  }
-
-  /**
-   * Convert MIME type to OpenAI audio format
-   */
-  private getAudioFormat(mimeType: string): 'wav' | 'mp3' | null {
-    if (mimeType.includes('wav')) return 'wav';
-    if (mimeType.includes('mp3') || mimeType.includes('mpeg')) return 'mp3';
-    return null;
-  }
-
-  private isContentObject(
-    content: unknown,
-  ): content is { role: string; parts: Part[] } {
-    return (
-      typeof content === 'object' &&
-      content !== null &&
-      'role' in content &&
-      'parts' in content &&
-      Array.isArray((content as Record<string, unknown>)['parts'])
-    );
-  }
-
-  private extractTextFromContentUnion(contentUnion: unknown): string {
-    if (typeof contentUnion === 'string') {
-      return contentUnion;
-    }
-
-    if (Array.isArray(contentUnion)) {
-      return contentUnion
-        .map((item) => this.extractTextFromContentUnion(item))
-        .filter(Boolean)
-        .join('\n');
-    }
-
-    if (typeof contentUnion === 'object' && contentUnion !== null) {
-      if ('parts' in contentUnion) {
-        const content = contentUnion as Content;
-        return (
-          content.parts
-            ?.map((part: Part) => {
-              if (typeof part === 'string') return part;
-              if ('text' in part) return part.text || '';
-              return '';
-            })
-            .filter(Boolean)
-            .join('\n') || ''
-        );
-      }
-    }
-
-    return '';
   }
 
   convertOpenAIResponseToGemini(
@@ -891,157 +1018,6 @@ export class OpenAIContentConverter {
         }
         return 'stop';
     }
-  }
-
-  /**
-   * Clean up orphaned tool calls from message history to prevent OpenAI API errors
-   */
-  private cleanOrphanedToolCalls(
-    messages: OpenAI.Chat.ChatCompletionMessageParam[],
-  ): OpenAI.Chat.ChatCompletionMessageParam[] {
-    const cleaned: OpenAI.Chat.ChatCompletionMessageParam[] = [];
-    const toolCallIds = new Set<string>();
-    const toolResponseIds = new Set<string>();
-
-    // First pass: collect all tool call IDs and tool response IDs
-    for (const message of messages) {
-      if (
-        message.role === 'assistant' &&
-        'tool_calls' in message &&
-        message.tool_calls
-      ) {
-        for (const toolCall of message.tool_calls) {
-          if (toolCall.id) {
-            toolCallIds.add(toolCall.id);
-          }
-        }
-      } else if (
-        message.role === 'tool' &&
-        'tool_call_id' in message &&
-        message.tool_call_id
-      ) {
-        toolResponseIds.add(message.tool_call_id);
-      }
-    }
-
-    // Second pass: filter out orphaned messages
-    for (const message of messages) {
-      if (
-        message.role === 'assistant' &&
-        'tool_calls' in message &&
-        message.tool_calls
-      ) {
-        // Filter out tool calls that don't have corresponding responses
-        const validToolCalls = message.tool_calls.filter(
-          (toolCall) => toolCall.id && toolResponseIds.has(toolCall.id),
-        );
-
-        if (validToolCalls.length > 0) {
-          // Keep the message but only with valid tool calls
-          const cleanedMessage = { ...message };
-          (
-            cleanedMessage as OpenAI.Chat.ChatCompletionMessageParam & {
-              tool_calls?: OpenAI.Chat.ChatCompletionMessageToolCall[];
-            }
-          ).tool_calls = validToolCalls;
-          cleaned.push(cleanedMessage);
-        } else if (
-          typeof message.content === 'string' &&
-          message.content.trim()
-        ) {
-          // Keep the message if it has text content, but remove tool calls
-          const cleanedMessage = { ...message };
-          delete (
-            cleanedMessage as OpenAI.Chat.ChatCompletionMessageParam & {
-              tool_calls?: OpenAI.Chat.ChatCompletionMessageToolCall[];
-            }
-          ).tool_calls;
-          cleaned.push(cleanedMessage);
-        }
-        // If no valid tool calls and no content, skip the message entirely
-      } else if (
-        message.role === 'tool' &&
-        'tool_call_id' in message &&
-        message.tool_call_id
-      ) {
-        // Only keep tool responses that have corresponding tool calls
-        if (toolCallIds.has(message.tool_call_id)) {
-          cleaned.push(message);
-        }
-      } else {
-        // Keep all other messages as-is
-        cleaned.push(message);
-      }
-    }
-
-    // Final validation: ensure every assistant message with tool_calls has corresponding tool responses
-    const finalCleaned: OpenAI.Chat.ChatCompletionMessageParam[] = [];
-    const finalToolCallIds = new Set<string>();
-
-    // Collect all remaining tool call IDs
-    for (const message of cleaned) {
-      if (
-        message.role === 'assistant' &&
-        'tool_calls' in message &&
-        message.tool_calls
-      ) {
-        for (const toolCall of message.tool_calls) {
-          if (toolCall.id) {
-            finalToolCallIds.add(toolCall.id);
-          }
-        }
-      }
-    }
-
-    // Verify all tool calls have responses
-    const finalToolResponseIds = new Set<string>();
-    for (const message of cleaned) {
-      if (
-        message.role === 'tool' &&
-        'tool_call_id' in message &&
-        message.tool_call_id
-      ) {
-        finalToolResponseIds.add(message.tool_call_id);
-      }
-    }
-
-    // Remove any remaining orphaned tool calls
-    for (const message of cleaned) {
-      if (
-        message.role === 'assistant' &&
-        'tool_calls' in message &&
-        message.tool_calls
-      ) {
-        const finalValidToolCalls = message.tool_calls.filter(
-          (toolCall) => toolCall.id && finalToolResponseIds.has(toolCall.id),
-        );
-
-        if (finalValidToolCalls.length > 0) {
-          const cleanedMessage = { ...message };
-          (
-            cleanedMessage as OpenAI.Chat.ChatCompletionMessageParam & {
-              tool_calls?: OpenAI.Chat.ChatCompletionMessageToolCall[];
-            }
-          ).tool_calls = finalValidToolCalls;
-          finalCleaned.push(cleanedMessage);
-        } else if (
-          typeof message.content === 'string' &&
-          message.content.trim()
-        ) {
-          const cleanedMessage = { ...message };
-          delete (
-            cleanedMessage as OpenAI.Chat.ChatCompletionMessageParam & {
-              tool_calls?: OpenAI.Chat.ChatCompletionMessageToolCall[];
-            }
-          ).tool_calls;
-          finalCleaned.push(cleanedMessage);
-        }
-      } else {
-        finalCleaned.push(message);
-      }
-    }
-
-    return finalCleaned;
   }
 
   private mergeConsecutiveAssistantMessages(

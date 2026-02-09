@@ -2,14 +2,6 @@
 
 ## 0.0.12
 
-- Added vision model support for Qwen-OAuth authentication.
-- Synced upstream `gemini-cli` to v0.3.4 with numerous improvements and bug fixes.
-- Enhanced subagent functionality with system reminders and improved user experience.
-- Added tool call type coercion for better compatibility.
-- Fixed arrow key navigation issues on Windows.
-- Fixed missing tool call chunks for OpenAI logging.
-- Fixed system prompt issues to avoid malformed tool calls.
-- Fixed terminal flicker when subagent is executing.
 - Fixed duplicate subagents configuration when running in home directory.
 - Fixed Esc key unable to cancel subagent dialog.
 - Added confirmation prompt for `/init` command when context file exists.
@@ -86,17 +78,3 @@
 - Prevented concurrent query submissions in rare cases.
 - Corrected Qwen logger exit-handler setup.
 - Separated static QR code and dynamic spinner components.
-
-## 0.0.6
-
-- Added usage statistics logging for Qwen integration.
-- Made `/init` respect the configured context filename and aligned docs with `QWEN.md`.
-- Fixed `EPERM` error when running `qwen --sandbox` on macOS.
-- Fixed terminal flicker while waiting for login.
-- Fixed `glm-4.5` model request error.
-
-## 0.0.5
-
-- Added Qwen OAuth login and up to 2,000 free requests per day.
-- Synced upstream `gemini-cli` to v0.1.17.
-- Added the `systemPromptMappings` configuration option.
