@@ -798,26 +798,48 @@ export function createMinimalSettings(): LoadedSettings {
   );
 }
 
-function findEnvFile(startDir: string): string | null {
+/**
+ * Finds the .env file to load, respecting workspace trust settings.
+ *
+ * When workspace is untrusted, only allow user-level .env files at:
+ * - ~/.qwen/.env
+ * - ~/.env
+ */
+function findEnvFile(settings: Settings, startDir: string): string | null {
+  const homeDir = homedir();
+  const isTrusted = isWorkspaceTrusted(settings).isTrusted;
+
+  // Pre-compute user-level .env paths for fast comparison
+  const userLevelPaths = new Set([
+    path.normalize(path.join(homeDir, '.env')),
+    path.normalize(path.join(homeDir, QWEN_DIR, '.env')),
+  ]);
+
+  // Determine if we can use this .env file based on trust settings
+  const canUseEnvFile = (filePath: string): boolean =>
+    isTrusted !== false || userLevelPaths.has(path.normalize(filePath));
+
   let currentDir = path.resolve(startDir);
   while (true) {
-    // prefer gemini-specific .env under QWEN_DIR
+    // Prefer gemini-specific .env under QWEN_DIR
     const geminiEnvPath = path.join(currentDir, QWEN_DIR, '.env');
-    if (fs.existsSync(geminiEnvPath)) {
+    if (fs.existsSync(geminiEnvPath) && canUseEnvFile(geminiEnvPath)) {
       return geminiEnvPath;
     }
+
     const envPath = path.join(currentDir, '.env');
-    if (fs.existsSync(envPath)) {
+    if (fs.existsSync(envPath) && canUseEnvFile(envPath)) {
       return envPath;
     }
+
     const parentDir = path.dirname(currentDir);
     if (parentDir === currentDir || !parentDir) {
-      // check .env under home as fallback, again preferring gemini-specific .env
-      const homeGeminiEnvPath = path.join(homedir(), QWEN_DIR, '.env');
+      // At home directory - check fallback .env files
+      const homeGeminiEnvPath = path.join(homeDir, QWEN_DIR, '.env');
       if (fs.existsSync(homeGeminiEnvPath)) {
         return homeGeminiEnvPath;
       }
-      const homeEnvPath = path.join(homedir(), '.env');
+      const homeEnvPath = path.join(homeDir, '.env');
       if (fs.existsSync(homeEnvPath)) {
         return homeEnvPath;
       }
@@ -848,22 +870,27 @@ export function setUpCloudShellEnvironment(envFilePath: string | null): void {
     process.env['GOOGLE_CLOUD_PROJECT'] = 'cloudshell-gca';
   }
 }
-
+/**
+ * Loads environment variables from .env files and settings.env.
+ *
+ * Priority order (highest to lowest):
+ * 1. CLI flags
+ * 2. process.env (system/export/inline environment variables)
+ * 3. .env files (no-override mode)
+ * 4. settings.env (no-override mode)
+ * 5. defaults
+ */
 export function loadEnvironment(settings: Settings): void {
-  const envFilePath = findEnvFile(process.cwd());
-
-  if (!isWorkspaceTrusted(settings).isTrusted) {
-    return;
-  }
+  const envFilePath = findEnvFile(settings, process.cwd());
 
   // Cloud Shell environment variable handling
   if (process.env['CLOUD_SHELL'] === 'true') {
     setUpCloudShellEnvironment(envFilePath);
   }
 
+  // Step 1: Load from .env files (higher priority than settings.env)
+  // Only set if not already present in process.env (no-override mode)
   if (envFilePath) {
-    // Manually parse and load environment variables to handle exclusions correctly.
-    // This avoids modifying environment variables that were already set from the shell.
     try {
       const envFileContent = fs.readFileSync(envFilePath, 'utf-8');
       const parsedEnv = dotenv.parse(envFileContent);
@@ -879,7 +906,7 @@ export function loadEnvironment(settings: Settings): void {
             continue;
           }
 
-          // Load variable only if it's not already set in the environment.
+          // Only set if not already present in process.env (no-override)
           if (!Object.hasOwn(process.env, key)) {
             process.env[key] = parsedEnv[key];
           }
@@ -887,6 +914,16 @@ export function loadEnvironment(settings: Settings): void {
       }
     } catch (_e) {
       // Errors are ignored to match the behavior of `dotenv.config({ quiet: true })`.
+    }
+  }
+
+  // Step 2: Load environment variables from settings.env as fallback (lowest priority)
+  // Only set if not already present (no-override, after .env is loaded)
+  if (settings.env) {
+    for (const [key, value] of Object.entries(settings.env)) {
+      if (!Object.hasOwn(process.env, key) && typeof value === 'string') {
+        process.env[key] = value;
+      }
     }
   }
 }

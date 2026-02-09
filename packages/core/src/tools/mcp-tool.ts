@@ -343,7 +343,8 @@ export class DiscoveredMCPTool extends BaseDeclarativeTool<
     private readonly mcpTimeout?: number,
   ) {
     super(
-      nameOverride ?? generateValidName(serverToolName),
+      nameOverride ??
+        generateValidName(`mcp__${serverName}__${serverToolName}`),
       `${serverToolName} (${serverName} MCP Server)`,
       description,
       Kind.Other,
@@ -361,7 +362,7 @@ export class DiscoveredMCPTool extends BaseDeclarativeTool<
       this.description,
       this.parameterSchema,
       this.trust,
-      `${this.serverName}__${this.serverToolName}`,
+      generateValidName(`mcp__${this.serverName}__${this.serverToolName}`),
       this.cliConfig,
       this.mcpClient,
       this.mcpTimeout,
