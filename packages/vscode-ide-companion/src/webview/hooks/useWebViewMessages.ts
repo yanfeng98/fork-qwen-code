@@ -121,6 +121,8 @@ interface UseWebViewMessagesProps {
   setEditMode?: (mode: ApprovalModeValue) => void;
   // Authentication state setter
   setIsAuthenticated?: (authenticated: boolean | null) => void;
+  // Force login page display
+  setForceLogin?: (value: boolean) => void;
   // Usage stats setter
   setUsageStats?: (stats: UsageStatsPayload | undefined) => void;
   // Model info setter
@@ -147,6 +149,7 @@ export const useWebViewMessages = ({
   setInputText,
   setEditMode,
   setIsAuthenticated,
+  setForceLogin,
   setUsageStats,
   setModelInfo,
   setAvailableCommands,
@@ -168,6 +171,7 @@ export const useWebViewMessages = ({
     setPlanEntries,
     handlePermissionRequest,
     setIsAuthenticated,
+    setForceLogin,
     setUsageStats,
     setModelInfo,
     setAvailableCommands,
@@ -217,6 +221,7 @@ export const useWebViewMessages = ({
       setPlanEntries,
       handlePermissionRequest,
       setIsAuthenticated,
+      setForceLogin,
       setUsageStats,
       setModelInfo,
       setAvailableCommands,
@@ -349,6 +354,14 @@ export const useWebViewMessages = ({
           });
           // Set authentication state to true
           handlers.setIsAuthenticated?.(true);
+          handlers.setForceLogin?.(false);
+          break;
+        }
+
+        case 'loginRequired': {
+          handlers.messageHandling.clearWaitingForResponse();
+          handlers.setIsAuthenticated?.(false);
+          handlers.setForceLogin?.(true);
           break;
         }
 

@@ -9,8 +9,24 @@ import { BaseMessageHandler } from './BaseMessageHandler.js';
 import type { ChatMessage } from '../../services/qwenAgentManager.js';
 import type { ApprovalModeValue } from '../../types/approvalModeValueTypes.js';
 import { ACP_ERROR_CODES } from '../../constants/acpSchema.js';
+import { isAuthenticationRequiredError } from '../../utils/authErrors.js';
 
 const AUTH_REQUIRED_CODE_PATTERN = `(code: ${ACP_ERROR_CODES.AUTH_REQUIRED})`;
+
+/** Prefix that separates the human-readable ACP error from its JSON data payload. */
+export const ACP_ERROR_DATA_PREFIX = '\nData: ';
+
+/**
+ * Strip the trailing `\nData: {...}` payload from an ACP error message so that
+ * only the human-readable portion is shown to the user.
+ */
+export const stripAcpErrorData = (message: string): string => {
+  const idx = message.indexOf(ACP_ERROR_DATA_PREFIX);
+  if (idx === -1) {
+    return message;
+  }
+  return message.slice(0, idx).trim();
+};
 
 /**
  * Session message handler
@@ -246,6 +262,12 @@ export class SessionMessageHandler extends BaseMessageHandler {
     },
   ): Promise<void> {
     console.log('[SessionMessageHandler] handleSendMessage called with:', text);
+
+    const trimmedText = text.replace(/\u200B/g, '').trim();
+    if (!trimmedText) {
+      console.warn('[SessionMessageHandler] Ignoring empty message');
+      return;
+    }
 
     // Format message with file context if present
     let formattedText = text;
@@ -1049,8 +1071,8 @@ export class SessionMessageHandler extends BaseMessageHandler {
    * Displays VSCode native notifications on success or failure.
    */
   private async handleSetModel(data?: { modelId?: string }): Promise<void> {
+    const modelId = data?.modelId;
     try {
-      const modelId = data?.modelId;
       if (!modelId) {
         throw new Error('Model ID is required');
       }
@@ -1060,11 +1082,31 @@ export class SessionMessageHandler extends BaseMessageHandler {
       );
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
+      const cleanMsg = stripAcpErrorData(errorMsg);
+      const requiresAuth =
+        isAuthenticationRequiredError(error) ||
+        cleanMsg.includes(AUTH_REQUIRED_CODE_PATTERN);
+
       console.error('[SessionMessageHandler] Failed to set model:', error);
-      vscode.window.showErrorMessage(`Failed to switch model: ${errorMsg}`);
+      if (requiresAuth) {
+        const authMsg = modelId
+          ? `Authentication required to switch to model "${modelId}". Please login again.`
+          : 'Authentication required. Please login again to switch models.';
+        vscode.window.showErrorMessage(authMsg);
+        this.sendToWebView({
+          type: 'loginRequired',
+          data: { message: authMsg },
+        });
+        return;
+      }
+
+      const failMsg = modelId
+        ? `Failed to switch to model "${modelId}": ${cleanMsg}`
+        : `Failed to switch model: ${cleanMsg}`;
+      vscode.window.showErrorMessage(failMsg);
       this.sendToWebView({
         type: 'error',
-        data: { message: `Failed to set model: ${errorMsg}` },
+        data: { message: failMsg },
       });
     }
   }
