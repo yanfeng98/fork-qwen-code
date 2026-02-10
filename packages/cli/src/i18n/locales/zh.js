@@ -886,6 +886,10 @@ export default {
   'Terms of Services and Privacy Notice for Qwen Code':
     'Qwen Code 的服务条款和隐私声明',
   'Qwen OAuth': 'Qwen OAuth (免费)',
+  'Login with QwenChat account to use daily free quota.':
+    '使用 QwenChat 账号登录，享受每日免费额度。',
+  'Use coding plan credentials or your own api-keys/providers.':
+    '使用 Coding Plan 凭证或您自己的 API 密钥/提供商。',
   OpenAI: 'OpenAI',
   'Failed to login. Message: {{message}}': '登录失败。消息：{{message}}',
   'Authentication is enforced to be {{enforcedType}}, but you are currently using {{currentType}}.':
@@ -1230,7 +1234,11 @@ export default {
   // ============================================================================
   'API-KEY': 'API-KEY',
   'Coding Plan': 'Coding Plan',
+  "Paste your api key of Bailian Coding Plan and you're all set!":
+    '粘贴您的百炼 Coding Plan API Key，即可完成设置！',
   Custom: '自定义',
+  'More instructions about configuring `modelProviders` manually.':
+    '关于手动配置 `modelProviders` 的更多说明。',
   'Select API-KEY configuration mode:': '选择 API-KEY 配置模式：',
   '(Press Escape to go back)': '(按 Escape 键返回)',
   '(Press Enter to submit, Escape to cancel)': '(按 Enter 提交，Escape 取消)',

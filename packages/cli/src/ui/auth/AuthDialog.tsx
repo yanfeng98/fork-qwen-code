@@ -203,6 +203,13 @@ export function AuthDialog(): React.JSX.Element {
           }}
         />
       </Box>
+      <Box marginTop={1} paddingLeft={2}>
+        <Text color={Colors.Gray}>
+          {currentSelectedAuthType === AuthType.QWEN_OAUTH
+            ? t('Login with QwenChat account to use daily free quota.')
+            : t('Use coding plan credentials or your own api-keys/providers.')}
+        </Text>
+      </Box>
     </>
   );
 
@@ -224,6 +231,15 @@ export function AuthDialog(): React.JSX.Element {
             setApiKeySubModeIndex(index);
           }}
         />
+      </Box>
+      <Box marginTop={1} paddingLeft={2}>
+        <Text color={Colors.Gray}>
+          {apiKeySubItems[apiKeySubModeIndex]?.value === 'coding-plan'
+            ? t("Paste your api key of Bailian Coding Plan and you're all set!")
+            : t(
+                'More instructions about configuring `modelProviders` manually.',
+              )}
+        </Text>
       </Box>
       <Box marginTop={1}>
         <Text color={Colors.Gray}>{t('(Press Escape to go back)')}</Text>

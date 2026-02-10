@@ -958,6 +958,11 @@ export default {
   'Terms of Services and Privacy Notice for Qwen Code':
     'Termos de Serviço e Aviso de Privacidade do Qwen Code',
   'Qwen OAuth': 'Qwen OAuth',
+  'Login with QwenChat account to use daily free quota.':
+    'Faça login com sua conta QwenChat para usar a cota gratuita diária.',
+  'API-KEY': 'API-KEY',
+  'Use coding plan credentials or your own api-keys/providers.':
+    'Use credenciais do Coding Plan ou suas próprias chaves API/provedores.',
   OpenAI: 'OpenAI',
   'Failed to login. Message: {{message}}':
     'Falha ao fazer login. Mensagem: {{message}}',
@@ -1403,4 +1408,19 @@ export default {
     'Use o comando /model para selecionar seu modelo preferido da lista configurada',
   'Supported auth types: openai, anthropic, gemini, vertex-ai, etc.':
     'Tipos de autenticação suportados: openai, anthropic, gemini, vertex-ai, etc.',
+
+  // ============================================================================
+  // Auth Dialog - View Titles and Labels
+  // ============================================================================
+  'Coding Plan': 'Coding Plan',
+  "Paste your api key of Bailian Coding Plan and you're all set!":
+    'Cole sua chave de API do Bailian Coding Plan e pronto!',
+  Custom: 'Personalizado',
+  'More instructions about configuring `modelProviders` manually.':
+    'Mais instruções sobre como configurar `modelProviders` manualmente.',
+  'Select API-KEY configuration mode:':
+    'Selecione o modo de configuração da API-KEY:',
+  '(Press Escape to go back)': '(Pressione Escape para voltar)',
+  '(Press Enter to submit, Escape to cancel)':
+    '(Pressione Enter para enviar, Escape para cancelar)',
 };

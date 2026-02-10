@@ -937,6 +937,11 @@ export default {
   'Terms of Services and Privacy Notice for Qwen Code':
     'Terms of Services and Privacy Notice for Qwen Code',
   'Qwen OAuth': 'Qwen OAuth',
+  'Login with QwenChat account to use daily free quota.':
+    'Login with QwenChat account to use daily free quota.',
+  'API-KEY': 'API-KEY',
+  'Use coding plan credentials or your own api-keys/providers.':
+    'Use coding plan credentials or your own api-keys/providers.',
   OpenAI: 'OpenAI',
   'Failed to login. Message: {{message}}':
     'Failed to login. Message: {{message}}',
@@ -1392,9 +1397,12 @@ export default {
   // ============================================================================
   // Auth Dialog - View Titles and Labels
   // ============================================================================
-  'API-KEY': 'API-KEY',
   'Coding Plan': 'Coding Plan',
+  "Paste your api key of Bailian Coding Plan and you're all set!":
+    "Paste your api key of Bailian Coding Plan and you're all set!",
   Custom: 'Custom',
+  'More instructions about configuring `modelProviders` manually.':
+    'More instructions about configuring `modelProviders` manually.',
   'Select API-KEY configuration mode:': 'Select API-KEY configuration mode:',
   '(Press Escape to go back)': '(Press Escape to go back)',
   '(Press Enter to submit, Escape to cancel)':
