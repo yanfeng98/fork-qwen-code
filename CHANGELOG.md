@@ -1,17 +1,5 @@
 # Changelog
 
-## 0.0.12
-
-- Fixed duplicate subagents configuration when running in home directory.
-- Fixed Esc key unable to cancel subagent dialog.
-- Added confirmation prompt for `/init` command when context file exists.
-- Added `skipLoopDetection` configuration option.
-- Fixed `is_background` parameter reset issues.
-- Enhanced Windows compatibility with multi-line paste handling.
-- Improved subagent documentation and branding consistency.
-- Fixed various linting errors and improved code quality.
-- Miscellaneous improvements and bug fixes.
-
 ## 0.0.11
 
 - Added subagents feature with file-based configuration system for specialized AI assistants.
@@ -29,11 +17,6 @@
 - Updated multilingual documentation links in README.
 - Fixed various Windows compatibility issues.
 - Miscellaneous improvements and bug fixes.
-
-## 0.0.10
-
-- Synced upstream `gemini-cli` to v0.2.1.
-- Add todo write tool for task management and progress tracking.
 
 ## 0.0.9
 

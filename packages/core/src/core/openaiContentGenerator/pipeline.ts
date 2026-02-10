@@ -77,6 +77,144 @@ export class ContentGenerationPipeline {
     );
   }
 
+  private async executeWithErrorHandling<T>(
+    request: GenerateContentParameters,
+    userPromptId: string,
+    isStreaming: boolean,
+    executor: (
+      openaiRequest: OpenAI.Chat.ChatCompletionCreateParams,
+      context: RequestContext,
+    ) => Promise<T>,
+  ): Promise<T> {
+    const context = this.createRequestContext(userPromptId, isStreaming);
+
+    try {
+      const openaiRequest = await this.buildRequest(
+        request,
+        userPromptId,
+        isStreaming,
+      );
+
+      const result = await executor(openaiRequest, context);
+
+      context.duration = Date.now() - context.startTime;
+      return result;
+    } catch (error) {
+      return await this.handleError(error, context, request);
+    }
+  }
+
+  private createRequestContext(
+    userPromptId: string,
+    isStreaming: boolean,
+  ): RequestContext {
+    return {
+      userPromptId,
+      model: this.contentGeneratorConfig.model,
+      authType: this.contentGeneratorConfig.authType || 'unknown',
+      startTime: Date.now(),
+      duration: 0,
+      isStreaming,
+    };
+  }
+
+  private async buildRequest(
+    request: GenerateContentParameters,
+    userPromptId: string,
+    streaming: boolean = false,
+  ): Promise<OpenAI.Chat.ChatCompletionCreateParams> {
+    const messages = this.converter.convertGeminiRequestToOpenAI(request);
+
+    const baseRequest: OpenAI.Chat.ChatCompletionCreateParams = {
+      model: this.contentGeneratorConfig.model,
+      messages,
+      ...this.buildGenerateContentConfig(request),
+    };
+
+    if (streaming) {
+      (
+        baseRequest as unknown as OpenAI.Chat.ChatCompletionCreateParamsStreaming
+      ).stream = true;
+      baseRequest.stream_options = { include_usage: true };
+    }
+
+    if (request.config?.tools) {
+      baseRequest.tools = await this.converter.convertGeminiToolsToOpenAI(
+        request.config.tools,
+      );
+    }
+
+    return this.config.provider.buildRequest(baseRequest, userPromptId);
+  }
+
+  private buildGenerateContentConfig(
+    request: GenerateContentParameters,
+  ): Record<string, unknown> {
+    const defaultSamplingParams =
+      this.config.provider.getDefaultGenerationConfig();
+    const configSamplingParams = this.contentGeneratorConfig.samplingParams;
+
+    const getParameterValue = <T>(
+      configKey: keyof NonNullable<typeof configSamplingParams>,
+      requestKey?: keyof NonNullable<typeof request.config>,
+    ): T | undefined => {
+      const configValue = configSamplingParams?.[configKey] as T | undefined;
+      const requestValue = requestKey
+        ? (request.config?.[requestKey] as T | undefined)
+        : undefined;
+      const defaultValue = requestKey
+        ? (defaultSamplingParams[requestKey] as T)
+        : undefined;
+
+      if (configValue !== undefined) return configValue;
+      if (requestValue !== undefined) return requestValue;
+      return defaultValue;
+    };
+
+    const addParameterIfDefined = <T>(
+      key: string,
+      configKey: keyof NonNullable<typeof configSamplingParams>,
+      requestKey?: keyof NonNullable<typeof request.config>,
+    ): Record<string, T | undefined> => {
+      const value = getParameterValue<T>(configKey, requestKey);
+
+      return value !== undefined ? { [key]: value } : {};
+    };
+
+    const params: Record<string, unknown> = {
+      ...addParameterIfDefined('temperature', 'temperature', 'temperature'),
+      ...addParameterIfDefined('top_p', 'top_p', 'topP'),
+      ...addParameterIfDefined('max_tokens', 'max_tokens', 'maxOutputTokens'),
+      ...addParameterIfDefined('top_k', 'top_k', 'topK'),
+      ...addParameterIfDefined('repetition_penalty', 'repetition_penalty'),
+      ...addParameterIfDefined(
+        'presence_penalty',
+        'presence_penalty',
+        'presencePenalty',
+      ),
+      ...addParameterIfDefined(
+        'frequency_penalty',
+        'frequency_penalty',
+        'frequencyPenalty',
+      ),
+      ...this.buildReasoningConfig(),
+    };
+
+    return params;
+  }
+
+  private buildReasoningConfig(): Record<string, unknown> {
+    const reasoning = this.contentGeneratorConfig.reasoning;
+
+    if (reasoning === false) {
+      return {};
+    }
+
+    return {
+      reasoning_effort: reasoning?.effort ?? 'medium',
+    };
+  }
+
   /**
    * Stage 2: Process OpenAI stream with conversion and logging
    * This method handles the complete stream processing pipeline:
@@ -214,137 +352,6 @@ export class ContentGenerationPipeline {
     return true;
   }
 
-  private async buildRequest(
-    request: GenerateContentParameters,
-    userPromptId: string,
-    streaming: boolean = false,
-  ): Promise<OpenAI.Chat.ChatCompletionCreateParams> {
-    const messages = this.converter.convertGeminiRequestToOpenAI(request);
-
-    const baseRequest: OpenAI.Chat.ChatCompletionCreateParams = {
-      model: this.contentGeneratorConfig.model,
-      messages,
-      ...this.buildGenerateContentConfig(request),
-    };
-
-    if (streaming) {
-      (
-        baseRequest as unknown as OpenAI.Chat.ChatCompletionCreateParamsStreaming
-      ).stream = true;
-      baseRequest.stream_options = { include_usage: true };
-    }
-
-    if (request.config?.tools) {
-      baseRequest.tools = await this.converter.convertGeminiToolsToOpenAI(
-        request.config.tools,
-      );
-    }
-
-    return this.config.provider.buildRequest(baseRequest, userPromptId);
-  }
-
-  private buildGenerateContentConfig(
-    request: GenerateContentParameters,
-  ): Record<string, unknown> {
-    const defaultSamplingParams =
-      this.config.provider.getDefaultGenerationConfig();
-    const configSamplingParams = this.contentGeneratorConfig.samplingParams;
-
-    // Helper function to get parameter value with priority: config > request > default
-    const getParameterValue = <T>(
-      configKey: keyof NonNullable<typeof configSamplingParams>,
-      requestKey?: keyof NonNullable<typeof request.config>,
-    ): T | undefined => {
-      const configValue = configSamplingParams?.[configKey] as T | undefined;
-      const requestValue = requestKey
-        ? (request.config?.[requestKey] as T | undefined)
-        : undefined;
-      const defaultValue = requestKey
-        ? (defaultSamplingParams[requestKey] as T)
-        : undefined;
-
-      if (configValue !== undefined) return configValue;
-      if (requestValue !== undefined) return requestValue;
-      return defaultValue;
-    };
-
-    // Helper function to conditionally add parameter if it has a value
-    const addParameterIfDefined = <T>(
-      key: string,
-      configKey: keyof NonNullable<typeof configSamplingParams>,
-      requestKey?: keyof NonNullable<typeof request.config>,
-    ): Record<string, T | undefined> => {
-      const value = getParameterValue<T>(configKey, requestKey);
-
-      return value !== undefined ? { [key]: value } : {};
-    };
-
-    const params: Record<string, unknown> = {
-      // Parameters with request fallback but no defaults
-      ...addParameterIfDefined('temperature', 'temperature', 'temperature'),
-      ...addParameterIfDefined('top_p', 'top_p', 'topP'),
-
-      // Max tokens (special case: different property names)
-      ...addParameterIfDefined('max_tokens', 'max_tokens', 'maxOutputTokens'),
-
-      // Config-only parameters (no request fallback)
-      ...addParameterIfDefined('top_k', 'top_k', 'topK'),
-      ...addParameterIfDefined('repetition_penalty', 'repetition_penalty'),
-      ...addParameterIfDefined(
-        'presence_penalty',
-        'presence_penalty',
-        'presencePenalty',
-      ),
-      ...addParameterIfDefined(
-        'frequency_penalty',
-        'frequency_penalty',
-        'frequencyPenalty',
-      ),
-      ...this.buildReasoningConfig(),
-    };
-
-    return params;
-  }
-
-  private buildReasoningConfig(): Record<string, unknown> {
-    const reasoning = this.contentGeneratorConfig.reasoning;
-
-    if (reasoning === false) {
-      return {};
-    }
-
-    return {
-      reasoning_effort: reasoning?.effort ?? 'medium',
-    };
-  }
-
-  private async executeWithErrorHandling<T>(
-    request: GenerateContentParameters,
-    userPromptId: string,
-    isStreaming: boolean,
-    executor: (
-      openaiRequest: OpenAI.Chat.ChatCompletionCreateParams,
-      context: RequestContext,
-    ) => Promise<T>,
-  ): Promise<T> {
-    const context = this.createRequestContext(userPromptId, isStreaming);
-
-    try {
-      const openaiRequest = await this.buildRequest(
-        request,
-        userPromptId,
-        isStreaming,
-      );
-
-      const result = await executor(openaiRequest, context);
-
-      context.duration = Date.now() - context.startTime;
-      return result;
-    } catch (error) {
-      return await this.handleError(error, context, request);
-    }
-  }
-
   /**
    * Shared error handling logic for both executeWithErrorHandling and processStreamWithLogging
    * This centralizes the common error processing steps to avoid duplication
@@ -356,19 +363,5 @@ export class ContentGenerationPipeline {
   ): Promise<never> {
     context.duration = Date.now() - context.startTime;
     this.config.errorHandler.handle(error, context, request);
-  }
-
-  private createRequestContext(
-    userPromptId: string,
-    isStreaming: boolean,
-  ): RequestContext {
-    return {
-      userPromptId,
-      model: this.contentGeneratorConfig.model,
-      authType: this.contentGeneratorConfig.authType || 'unknown',
-      startTime: Date.now(),
-      duration: 0,
-      isStreaming,
-    };
   }
 }

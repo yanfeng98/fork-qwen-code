@@ -1,8 +1,5 @@
 export type SchemaComplianceMode = 'auto' | 'openapi_30';
 
-/**
- * Converts a JSON Schema to be compatible with the specified compliance mode.
- */
 export function convertSchema(
   schema: Record<string, unknown>,
   mode: SchemaComplianceMode = 'auto',
@@ -11,14 +8,9 @@ export function convertSchema(
     return toOpenAPI30(schema);
   }
 
-  // Default ('auto') mode now does nothing.
   return schema;
 }
 
-/**
- * Converts Modern JSON Schema to OpenAPI 3.0 Schema Object.
- * Attempts to preserve semantics where possible through transformations.
- */
 function toOpenAPI30(schema: Record<string, unknown>): Record<string, unknown> {
   const convert = (obj: unknown): unknown => {
     if (typeof obj !== 'object' || obj === null) {
@@ -32,17 +24,12 @@ function toOpenAPI30(schema: Record<string, unknown>): Record<string, unknown> {
     const source = obj as Record<string, unknown>;
     const target: Record<string, unknown> = {};
 
-    // 1. Type Handling
     if (Array.isArray(source['type'])) {
       const types = source['type'] as string[];
-      // Handle ["string", "null"] pattern common in modern schemas
       if (types.length === 2 && types.includes('null')) {
         target['type'] = types.find((t) => t !== 'null');
         target['nullable'] = true;
       } else {
-        // Fallback for other unions: take the first non-null type
-        // OpenAPI 3.0 doesn't support type arrays.
-        // Ideal fix would be anyOf, but simple fallback is safer for now.
         target['type'] = types[0];
       }
     } else if (source['type'] !== undefined) {

@@ -86,78 +86,6 @@ export class OpenAIContentConverter {
     this.streamingToolCallParser.reset();
   }
 
-  /**
-   * Convert Gemini tool parameters to OpenAI JSON Schema format
-   */
-  convertGeminiToolParametersToOpenAI(
-    parameters: Record<string, unknown>,
-  ): Record<string, unknown> | undefined {
-    if (!parameters || typeof parameters !== 'object') {
-      return parameters;
-    }
-
-    const converted = JSON.parse(JSON.stringify(parameters));
-
-    const convertTypes = (obj: unknown): unknown => {
-      if (typeof obj !== 'object' || obj === null) {
-        return obj;
-      }
-
-      if (Array.isArray(obj)) {
-        return obj.map(convertTypes);
-      }
-
-      const result: Record<string, unknown> = {};
-      for (const [key, value] of Object.entries(obj)) {
-        if (key === 'type' && typeof value === 'string') {
-          // Convert Gemini types to OpenAI JSON Schema types
-          const lowerValue = value.toLowerCase();
-          if (lowerValue === 'integer') {
-            result[key] = 'integer';
-          } else if (lowerValue === 'number') {
-            result[key] = 'number';
-          } else {
-            result[key] = lowerValue;
-          }
-        } else if (
-          key === 'minimum' ||
-          key === 'maximum' ||
-          key === 'multipleOf'
-        ) {
-          // Ensure numeric constraints are actual numbers, not strings
-          if (typeof value === 'string' && !isNaN(Number(value))) {
-            result[key] = Number(value);
-          } else {
-            result[key] = value;
-          }
-        } else if (
-          key === 'minLength' ||
-          key === 'maxLength' ||
-          key === 'minItems' ||
-          key === 'maxItems'
-        ) {
-          // Ensure length constraints are integers, not strings
-          if (typeof value === 'string' && !isNaN(Number(value))) {
-            result[key] = parseInt(value, 10);
-          } else {
-            result[key] = value;
-          }
-        } else if (typeof value === 'object') {
-          result[key] = convertTypes(value);
-        } else {
-          result[key] = value;
-        }
-      }
-      return result;
-    };
-
-    return convertTypes(converted) as Record<string, unknown> | undefined;
-  }
-
-  /**
-   * Convert Gemini tools to OpenAI format for API compatibility.
-   * Handles both Gemini tools (using 'parameters' field) and MCP tools (using 'parametersJsonSchema' field).
-   */
   async convertGeminiToolsToOpenAI(
     geminiTools: ToolListUnion,
   ): Promise<OpenAI.Chat.ChatCompletionTool[]> {
@@ -166,12 +94,9 @@ export class OpenAIContentConverter {
     for (const tool of geminiTools) {
       let actualTool: Tool;
 
-      // Handle CallableTool vs Tool
       if ('tool' in tool) {
-        // This is a CallableTool
         actualTool = await (tool as CallableTool).tool();
       } else {
-        // This is already a Tool
         actualTool = tool as Tool;
       }
 
@@ -180,16 +105,12 @@ export class OpenAIContentConverter {
           if (func.name && func.description) {
             let parameters: Record<string, unknown> | undefined;
 
-            // Handle both Gemini tools (parameters) and MCP tools (parametersJsonSchema)
             if (func.parametersJsonSchema) {
-              // MCP tool format - use parametersJsonSchema directly
-              // Create a shallow copy to avoid mutating the original object
               const paramsCopy = {
                 ...(func.parametersJsonSchema as Record<string, unknown>),
               };
               parameters = paramsCopy;
             } else if (func.parameters) {
-              // Gemini tool format - convert parameters to OpenAI format
               parameters = this.convertGeminiToolParametersToOpenAI(
                 func.parameters as Record<string, unknown>,
               );
@@ -213,6 +134,68 @@ export class OpenAIContentConverter {
     }
 
     return openAITools;
+  }
+
+  convertGeminiToolParametersToOpenAI(
+    parameters: Record<string, unknown>,
+  ): Record<string, unknown> | undefined {
+    if (!parameters || typeof parameters !== 'object') {
+      return parameters;
+    }
+
+    const converted = JSON.parse(JSON.stringify(parameters));
+
+    const convertTypes = (obj: unknown): unknown => {
+      if (typeof obj !== 'object' || obj === null) {
+        return obj;
+      }
+
+      if (Array.isArray(obj)) {
+        return obj.map(convertTypes);
+      }
+
+      const result: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(obj)) {
+        if (key === 'type' && typeof value === 'string') {
+          const lowerValue = value.toLowerCase();
+          if (lowerValue === 'integer') {
+            result[key] = 'integer';
+          } else if (lowerValue === 'number') {
+            result[key] = 'number';
+          } else {
+            result[key] = lowerValue;
+          }
+        } else if (
+          key === 'minimum' ||
+          key === 'maximum' ||
+          key === 'multipleOf'
+        ) {
+          if (typeof value === 'string' && !isNaN(Number(value))) {
+            result[key] = Number(value);
+          } else {
+            result[key] = value;
+          }
+        } else if (
+          key === 'minLength' ||
+          key === 'maxLength' ||
+          key === 'minItems' ||
+          key === 'maxItems'
+        ) {
+          if (typeof value === 'string' && !isNaN(Number(value))) {
+            result[key] = parseInt(value, 10);
+          } else {
+            result[key] = value;
+          }
+        } else if (typeof value === 'object') {
+          result[key] = convertTypes(value);
+        } else {
+          result[key] = value;
+        }
+      }
+      return result;
+    };
+
+    return convertTypes(converted) as Record<string, unknown> | undefined;
   }
 
   convertGeminiRequestToOpenAI(
@@ -558,20 +541,17 @@ export class OpenAIContentConverter {
       }
     }
 
-    // Second pass: filter out orphaned messages
     for (const message of messages) {
       if (
         message.role === 'assistant' &&
         'tool_calls' in message &&
         message.tool_calls
       ) {
-        // Filter out tool calls that don't have corresponding responses
         const validToolCalls = message.tool_calls.filter(
           (toolCall) => toolCall.id && toolResponseIds.has(toolCall.id),
         );
 
         if (validToolCalls.length > 0) {
-          // Keep the message but only with valid tool calls
           const cleanedMessage = { ...message };
           (
             cleanedMessage as OpenAI.Chat.ChatCompletionMessageParam & {
@@ -583,7 +563,6 @@ export class OpenAIContentConverter {
           typeof message.content === 'string' &&
           message.content.trim()
         ) {
-          // Keep the message if it has text content, but remove tool calls
           const cleanedMessage = { ...message };
           delete (
             cleanedMessage as OpenAI.Chat.ChatCompletionMessageParam & {
@@ -592,27 +571,22 @@ export class OpenAIContentConverter {
           ).tool_calls;
           cleaned.push(cleanedMessage);
         }
-        // If no valid tool calls and no content, skip the message entirely
       } else if (
         message.role === 'tool' &&
         'tool_call_id' in message &&
         message.tool_call_id
       ) {
-        // Only keep tool responses that have corresponding tool calls
         if (toolCallIds.has(message.tool_call_id)) {
           cleaned.push(message);
         }
       } else {
-        // Keep all other messages as-is
         cleaned.push(message);
       }
     }
 
-    // Final validation: ensure every assistant message with tool_calls has corresponding tool responses
     const finalCleaned: OpenAI.Chat.ChatCompletionMessageParam[] = [];
     const finalToolCallIds = new Set<string>();
 
-    // Collect all remaining tool call IDs
     for (const message of cleaned) {
       if (
         message.role === 'assistant' &&
@@ -627,7 +601,6 @@ export class OpenAIContentConverter {
       }
     }
 
-    // Verify all tool calls have responses
     const finalToolResponseIds = new Set<string>();
     for (const message of cleaned) {
       if (
@@ -639,7 +612,6 @@ export class OpenAIContentConverter {
       }
     }
 
-    // Remove any remaining orphaned tool calls
     for (const message of cleaned) {
       if (
         message.role === 'assistant' &&
@@ -676,6 +648,85 @@ export class OpenAIContentConverter {
     }
 
     return finalCleaned;
+  }
+
+  private mergeConsecutiveAssistantMessages(
+    messages: OpenAI.Chat.ChatCompletionMessageParam[],
+  ): OpenAI.Chat.ChatCompletionMessageParam[] {
+    const merged: OpenAI.Chat.ChatCompletionMessageParam[] = [];
+
+    for (const message of messages) {
+      if (message.role === 'assistant' && merged.length > 0) {
+        const lastMessage = merged[merged.length - 1];
+
+        if (lastMessage.role === 'assistant') {
+          const lastContent = lastMessage.content;
+          const currentContent = message.content;
+          const useArrayFormat =
+            Array.isArray(lastContent) || Array.isArray(currentContent);
+
+          let combinedContent:
+            | string
+            | OpenAI.Chat.ChatCompletionContentPart[]
+            | null;
+
+          if (useArrayFormat) {
+            const lastParts = Array.isArray(lastContent)
+              ? lastContent
+              : typeof lastContent === 'string' && lastContent
+                ? [{ type: 'text' as const, text: lastContent }]
+                : [];
+
+            const currentParts = Array.isArray(currentContent)
+              ? currentContent
+              : typeof currentContent === 'string' && currentContent
+                ? [{ type: 'text' as const, text: currentContent }]
+                : [];
+
+            combinedContent = [
+              ...lastParts,
+              ...currentParts,
+            ] as OpenAI.Chat.ChatCompletionContentPart[];
+          } else {
+            const lastText = typeof lastContent === 'string' ? lastContent : '';
+            const currentText =
+              typeof currentContent === 'string' ? currentContent : '';
+            const mergedText = [lastText, currentText].filter(Boolean).join('');
+            combinedContent = mergedText || null;
+          }
+
+          const lastToolCalls =
+            'tool_calls' in lastMessage ? lastMessage.tool_calls || [] : [];
+          const currentToolCalls =
+            'tool_calls' in message ? message.tool_calls || [] : [];
+          const combinedToolCalls = [...lastToolCalls, ...currentToolCalls];
+
+          (
+            lastMessage as OpenAI.Chat.ChatCompletionMessageParam & {
+              content: string | OpenAI.Chat.ChatCompletionContentPart[] | null;
+              tool_calls?: OpenAI.Chat.ChatCompletionMessageToolCall[];
+            }
+          ).content = combinedContent || null;
+          if (combinedToolCalls.length > 0) {
+            (
+              lastMessage as OpenAI.Chat.ChatCompletionMessageParam & {
+                content:
+                  | string
+                  | OpenAI.Chat.ChatCompletionContentPart[]
+                  | null;
+                tool_calls?: OpenAI.Chat.ChatCompletionMessageToolCall[];
+              }
+            ).tool_calls = combinedToolCalls;
+          }
+
+          continue;
+        }
+      }
+
+      merged.push(message);
+    }
+
+    return merged;
   }
 
   /**
@@ -1018,84 +1069,5 @@ export class OpenAIContentConverter {
         }
         return 'stop';
     }
-  }
-
-  private mergeConsecutiveAssistantMessages(
-    messages: OpenAI.Chat.ChatCompletionMessageParam[],
-  ): OpenAI.Chat.ChatCompletionMessageParam[] {
-    const merged: OpenAI.Chat.ChatCompletionMessageParam[] = [];
-
-    for (const message of messages) {
-      if (message.role === 'assistant' && merged.length > 0) {
-        const lastMessage = merged[merged.length - 1];
-
-        if (lastMessage.role === 'assistant') {
-          const lastContent = lastMessage.content;
-          const currentContent = message.content;
-          const useArrayFormat =
-            Array.isArray(lastContent) || Array.isArray(currentContent);
-
-          let combinedContent:
-            | string
-            | OpenAI.Chat.ChatCompletionContentPart[]
-            | null;
-
-          if (useArrayFormat) {
-            const lastParts = Array.isArray(lastContent)
-              ? lastContent
-              : typeof lastContent === 'string' && lastContent
-                ? [{ type: 'text' as const, text: lastContent }]
-                : [];
-
-            const currentParts = Array.isArray(currentContent)
-              ? currentContent
-              : typeof currentContent === 'string' && currentContent
-                ? [{ type: 'text' as const, text: currentContent }]
-                : [];
-
-            combinedContent = [
-              ...lastParts,
-              ...currentParts,
-            ] as OpenAI.Chat.ChatCompletionContentPart[];
-          } else {
-            const lastText = typeof lastContent === 'string' ? lastContent : '';
-            const currentText =
-              typeof currentContent === 'string' ? currentContent : '';
-            const mergedText = [lastText, currentText].filter(Boolean).join('');
-            combinedContent = mergedText || null;
-          }
-
-          const lastToolCalls =
-            'tool_calls' in lastMessage ? lastMessage.tool_calls || [] : [];
-          const currentToolCalls =
-            'tool_calls' in message ? message.tool_calls || [] : [];
-          const combinedToolCalls = [...lastToolCalls, ...currentToolCalls];
-
-          (
-            lastMessage as OpenAI.Chat.ChatCompletionMessageParam & {
-              content: string | OpenAI.Chat.ChatCompletionContentPart[] | null;
-              tool_calls?: OpenAI.Chat.ChatCompletionMessageToolCall[];
-            }
-          ).content = combinedContent || null;
-          if (combinedToolCalls.length > 0) {
-            (
-              lastMessage as OpenAI.Chat.ChatCompletionMessageParam & {
-                content:
-                  | string
-                  | OpenAI.Chat.ChatCompletionContentPart[]
-                  | null;
-                tool_calls?: OpenAI.Chat.ChatCompletionMessageToolCall[];
-              }
-            ).tool_calls = combinedToolCalls;
-          }
-
-          continue;
-        }
-      }
-
-      merged.push(message);
-    }
-
-    return merged;
   }
 }
