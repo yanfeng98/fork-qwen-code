@@ -8,6 +8,8 @@ import type React from 'react';
 import { useState } from 'react';
 import { AuthType } from '@qwen-code/qwen-code-core';
 import { Box, Text } from 'ink';
+import Link from 'ink-link';
+import { theme } from '../semantic-colors.js';
 import { Colors } from '../colors.js';
 import { useKeypress } from '../hooks/useKeypress.js';
 import { RadioButtonSelect } from '../components/shared/RadioButtonSelect.js';
@@ -16,6 +18,9 @@ import { useUIState } from '../contexts/UIStateContext.js';
 import { useUIActions } from '../contexts/UIActionsContext.js';
 import { useConfig } from '../contexts/ConfigContext.js';
 import { t } from '../../i18n/index.js';
+
+const MODEL_PROVIDERS_DOCUMENTATION_URL =
+  'https://qwenlm.github.io/qwen-code-docs/en/users/configuration/settings/#modelproviders';
 
 function parseDefaultAuthType(
   defaultAuthType: string | undefined,
@@ -242,7 +247,9 @@ export function AuthDialog(): React.JSX.Element {
         </Text>
       </Box>
       <Box marginTop={1}>
-        <Text color={Colors.Gray}>{t('(Press Escape to go back)')}</Text>
+        <Text color={theme?.text?.secondary}>
+          {t('(Press Escape to go back)')}
+        </Text>
       </Box>
     </>
   );
@@ -298,14 +305,26 @@ export function AuthDialog(): React.JSX.Element {
         </Text>
       </Box>
       <Box marginTop={1}>
-        <Text color={Colors.Gray}>
+        <Text color={theme?.text?.secondary}>
           {t(
             'Supported auth types: openai, anthropic, gemini, vertex-ai, etc.',
           )}
         </Text>
       </Box>
       <Box marginTop={1}>
-        <Text color={Colors.Gray}>{t('(Press Escape to go back)')}</Text>
+        <Text color={theme?.text?.secondary} underline>
+          {t('More instructions please check:')}
+        </Text>
+        <Link url={MODEL_PROVIDERS_DOCUMENTATION_URL} fallback={false}>
+          <Text color={Colors.AccentGreen} underline>
+            {MODEL_PROVIDERS_DOCUMENTATION_URL}
+          </Text>
+        </Link>
+      </Box>
+      <Box marginTop={1}>
+        <Text color={theme?.text?.secondary}>
+          {t('(Press Escape to go back)')}
+        </Text>
       </Box>
     </>
   );
@@ -328,7 +347,7 @@ export function AuthDialog(): React.JSX.Element {
   return (
     <Box
       borderStyle="round"
-      borderColor={Colors.Gray}
+      borderColor={theme?.border?.default}
       flexDirection="column"
       padding={1}
       width="100%"
@@ -355,7 +374,7 @@ export function AuthDialog(): React.JSX.Element {
           </Box>
           {hasApiKey && currentSelectedAuthType === AuthType.QWEN_OAUTH && (
             <Box marginTop={1}>
-              <Text color={Colors.Gray}>
+              <Text color={theme?.text?.secondary}>
                 {t(
                   'Note: Your existing API key in settings.json will not be cleared when using Qwen OAuth. You can switch back to OpenAI authentication later if needed.',
                 )}
