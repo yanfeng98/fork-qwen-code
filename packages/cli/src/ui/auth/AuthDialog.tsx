@@ -315,6 +315,8 @@ export function AuthDialog(): React.JSX.Element {
         <Text color={theme?.text?.secondary} underline>
           {t('More instructions please check:')}
         </Text>
+      </Box>
+      <Box marginTop={0}>
         <Link url={MODEL_PROVIDERS_DOCUMENTATION_URL} fallback={false}>
           <Text color={Colors.AccentGreen} underline>
             {MODEL_PROVIDERS_DOCUMENTATION_URL}

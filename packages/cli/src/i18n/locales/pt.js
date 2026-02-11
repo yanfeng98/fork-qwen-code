@@ -1423,4 +1423,5 @@ export default {
   '(Press Escape to go back)': '(Pressione Escape para voltar)',
   '(Press Enter to submit, Escape to cancel)':
     '(Pressione Enter para enviar, Escape para cancelar)',
+  'More instructions please check:': 'Mais instruções, consulte:',
 };

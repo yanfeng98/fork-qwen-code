@@ -1228,6 +1228,7 @@ export default {
     '使用 /model 命令从配置列表中选择您偏好的模型',
   'Supported auth types: openai, anthropic, gemini, vertex-ai, etc.':
     '支持的认证类型：openai、anthropic、gemini、vertex-ai 等',
+  'More instructions please check:': '更多说明请查看：',
 
   // ============================================================================
   // Auth Dialog - View Titles and Labels

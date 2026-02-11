@@ -1412,4 +1412,5 @@ export default {
   '(Press Escape to go back)': '(Нажмите Escape для возврата)',
   '(Press Enter to submit, Escape to cancel)':
     '(Нажмите Enter для отправки, Escape для отмены)',
+  'More instructions please check:': 'Дополнительные инструкции см.:',
 };

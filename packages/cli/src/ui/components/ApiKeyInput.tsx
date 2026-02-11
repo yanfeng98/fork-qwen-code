@@ -45,7 +45,7 @@ export function ApiKeyInput({
       <Box marginBottom={1}>
         <Text>{t('Please enter your API key:')}</Text>
       </Box>
-      <TextInput value={apiKey} onChange={setApiKey} placeholder="sk-..." />
+      <TextInput value={apiKey} onChange={setApiKey} placeholder="sk-sp-..." />
       {error && (
         <Box marginTop={1}>
           <Text color={Colors.AccentRed}>{error}</Text>

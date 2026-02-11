@@ -919,4 +919,5 @@ export default {
   '(Press Escape to go back)': '(Escapeキーで戻る)',
   '(Press Enter to submit, Escape to cancel)':
     '(Enterで送信、Escapeでキャンセル)',
+  'More instructions please check:': '詳細な手順はこちらをご確認ください：',
 };

@@ -1393,6 +1393,7 @@ export default {
     'Use /model command to select your preferred model from the configured list',
   'Supported auth types: openai, anthropic, gemini, vertex-ai, etc.':
     'Supported auth types: openai, anthropic, gemini, vertex-ai, etc.',
+  'More instructions please check:': 'More instructions please check:',
 
   // ============================================================================
   // Auth Dialog - View Titles and Labels
