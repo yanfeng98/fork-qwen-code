@@ -119,6 +119,8 @@ export default {
     'Vollständige Qwen Code Dokumentation im Browser öffnen',
   'Configuration not available.': 'Konfiguration nicht verfügbar.',
   'change the auth method': 'Authentifizierungsmethode ändern',
+  'Configure authentication information for login':
+    'Authentifizierungsinformationen für die Anmeldung konfigurieren',
   'Copy the last result or code snippet to clipboard':
     'Letztes Ergebnis oder Codeausschnitt in die Zwischenablage kopieren',
 

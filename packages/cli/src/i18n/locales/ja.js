@@ -110,6 +110,8 @@ export default {
     'ブラウザで Qwen Code のドキュメントを開く',
   'Configuration not available.': '設定が利用できません',
   'change the auth method': '認証方式を変更',
+  'Configure authentication information for login':
+    'ログイン用の認証情報を設定',
   'Copy the last result or code snippet to clipboard':
     '最後の結果またはコードスニペットをクリップボードにコピー',
 

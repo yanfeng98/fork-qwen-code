@@ -143,6 +143,8 @@ export default {
     'Открытие полной документации Qwen Code в браузере',
   'Configuration not available.': 'Конфигурация недоступна.',
   'change the auth method': 'Изменение метода авторизации',
+  'Configure authentication information for login':
+    'Настройка аутентификационной информации для входа',
   'Copy the last result or code snippet to clipboard':
     'Копирование последнего результата или фрагмента кода в буфер обмена',
 
