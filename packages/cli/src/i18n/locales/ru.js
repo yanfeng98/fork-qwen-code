@@ -1400,6 +1400,18 @@ export default {
     'Поддерживаемые типы аутентификации: openai, anthropic, gemini, vertex-ai и др.',
 
   // ============================================================================
+  // Coding Plan Authentication
+  // ============================================================================
+  'New model configurations are available for Bailian Coding Plan. Update now?':
+    'Доступны новые конфигурации моделей для Bailian Coding Plan. Обновить сейчас?',
+  'Coding Plan configuration updated successfully. New models are now available.':
+    'Конфигурация Coding Plan успешно обновлена. Новые модели теперь доступны.',
+  'Coding Plan API key not found. Please re-authenticate with Coding Plan.':
+    'API-ключ Coding Plan не найден. Пожалуйста, повторно авторизуйтесь с Coding Plan.',
+  'Failed to update Coding Plan configuration: {{message}}':
+    'Не удалось обновить конфигурацию Coding Plan: {{message}}',
+
+  // ============================================================================
   // Auth Dialog - View Titles and Labels
   // ============================================================================
   'Coding Plan': 'Coding Plan',

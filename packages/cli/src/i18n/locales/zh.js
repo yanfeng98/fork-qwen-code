@@ -1210,6 +1210,14 @@ export default {
   'API key cannot be empty.': 'API Key 不能为空。',
   'API key is stored in settings.env. You can migrate it to a .env file for better security.':
     'API Key 已存储在 settings.env 中。您可以将其迁移到 .env 文件以获得更好的安全性。',
+  'New model configurations are available for Bailian Coding Plan. Update now?':
+    '百炼 Coding Plan 有新模型配置可用。是否立即更新？',
+  'Coding Plan configuration updated successfully. New models are now available.':
+    'Coding Plan 配置更新成功。新模型现已可用。',
+  'Coding Plan API key not found. Please re-authenticate with Coding Plan.':
+    '未找到 Coding Plan API Key。请重新通过 Coding Plan 认证。',
+  'Failed to update Coding Plan configuration: {{message}}':
+    '更新 Coding Plan 配置失败：{{message}}',
 
   // ============================================================================
   // Custom API-KEY Configuration

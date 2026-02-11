@@ -907,6 +907,18 @@ export default {
     'サポートされている認証タイプ：openai、anthropic、gemini、vertex-ai など',
 
   // ============================================================================
+  // Coding Plan Authentication
+  // ============================================================================
+  'New model configurations are available for Bailian Coding Plan. Update now?':
+    'Bailian Coding Plan の新しいモデル設定が利用可能です。今すぐ更新しますか？',
+  'Coding Plan configuration updated successfully. New models are now available.':
+    'Coding Plan の設定が正常に更新されました。新しいモデルが利用可能になりました。',
+  'Coding Plan API key not found. Please re-authenticate with Coding Plan.':
+    'Coding Plan の API キーが見つかりません。Coding Plan で再認証してください。',
+  'Failed to update Coding Plan configuration: {{message}}':
+    'Coding Plan の設定更新に失敗しました: {{message}}',
+
+  // ============================================================================
   // Auth Dialog - View Titles and Labels
   // ============================================================================
   'Coding Plan': 'Coding Plan',

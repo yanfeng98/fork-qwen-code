@@ -1375,6 +1375,14 @@ export default {
   'API key cannot be empty.': 'API key cannot be empty.',
   'API key is stored in settings.env. You can migrate it to a .env file for better security.':
     'API key is stored in settings.env. You can migrate it to a .env file for better security.',
+  'New model configurations are available for Bailian Coding Plan. Update now?':
+    'New model configurations are available for Bailian Coding Plan. Update now?',
+  'Coding Plan configuration updated successfully. New models are now available.':
+    'Coding Plan configuration updated successfully. New models are now available.',
+  'Coding Plan API key not found. Please re-authenticate with Coding Plan.':
+    'Coding Plan API key not found. Please re-authenticate with Coding Plan.',
+  'Failed to update Coding Plan configuration: {{message}}':
+    'Failed to update Coding Plan configuration: {{message}}',
 
   // ============================================================================
   // Custom API-KEY Configuration
