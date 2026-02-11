@@ -1373,6 +1373,8 @@ export default {
   // ============================================================================
   'Please enter your API key:': 'Please enter your API key:',
   'API key cannot be empty.': 'API key cannot be empty.',
+  'You can get your exclusive Coding Plan API-KEY here:':
+    'You can get your exclusive Coding Plan API-KEY here:',
   'API key is stored in settings.env. You can migrate it to a .env file for better security.':
     'API key is stored in settings.env. You can migrate it to a .env file for better security.',
   'New model configurations are available for Bailian Coding Plan. Update now?':

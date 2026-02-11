@@ -909,6 +909,10 @@ export default {
   // ============================================================================
   // Coding Plan Authentication
   // ============================================================================
+  'Please enter your API key:': 'APIキーを入力してください：',
+  'API key cannot be empty.': 'APIキーは空にできません。',
+  'You can get your exclusive Coding Plan API-KEY here:':
+    'Coding Plan の API-KEY はこちらで取得できます：',
   'New model configurations are available for Bailian Coding Plan. Update now?':
     'Bailian Coding Plan の新しいモデル設定が利用可能です。今すぐ更新しますか？',
   'Coding Plan configuration updated successfully. New models are now available.':

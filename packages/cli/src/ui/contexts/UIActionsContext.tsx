@@ -42,7 +42,7 @@ export interface UIActions {
   ) => Promise<void>;
   handleCodingPlanSubmit: (apiKey: string) => Promise<void>;
   setAuthState: (state: AuthState) => void;
-  onAuthError: (error: string) => void;
+  onAuthError: (error: string | null) => void;
   cancelAuthentication: () => void;
   handleEditorSelect: (
     editorType: EditorType | undefined,

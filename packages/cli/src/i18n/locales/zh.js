@@ -1208,6 +1208,8 @@ export default {
   // ============================================================================
   'Please enter your API key:': '请输入您的 API Key：',
   'API key cannot be empty.': 'API Key 不能为空。',
+  'You can get your exclusive Coding Plan API-KEY here:':
+    '您可以在这里获取专属的 Coding Plan API-KEY：',
   'API key is stored in settings.env. You can migrate it to a .env file for better security.':
     'API Key 已存储在 settings.env 中。您可以将其迁移到 .env 文件以获得更好的安全性。',
   'New model configurations are available for Bailian Coding Plan. Update now?':

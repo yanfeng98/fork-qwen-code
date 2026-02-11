@@ -11,11 +11,15 @@ import { TextInput } from './shared/TextInput.js';
 import { Colors } from '../colors.js';
 import { useKeypress } from '../hooks/useKeypress.js';
 import { t } from '../../i18n/index.js';
+import Link from 'ink-link';
 
 interface ApiKeyInputProps {
   onSubmit: (apiKey: string) => void;
   onCancel: () => void;
 }
+
+const CODING_PLAN_API_KEY_URL =
+  'https://bailian.console.aliyun.com/?tab=model#/efm/coding_plan';
 
 export function ApiKeyInput({
   onSubmit,
@@ -51,6 +55,16 @@ export function ApiKeyInput({
           <Text color={Colors.AccentRed}>{error}</Text>
         </Box>
       )}
+      <Box marginTop={1}>
+        <Text>{t('You can get your exclusive Coding Plan API-KEY here:')}</Text>
+      </Box>
+      <Box marginTop={0}>
+        <Link url={CODING_PLAN_API_KEY_URL} fallback={false}>
+          <Text color={Colors.AccentGreen} underline>
+            {CODING_PLAN_API_KEY_URL}
+          </Text>
+        </Link>
+      </Box>
       <Box marginTop={1}>
         <Text color={Colors.Gray}>
           {t('(Press Enter to submit, Escape to cancel)')}

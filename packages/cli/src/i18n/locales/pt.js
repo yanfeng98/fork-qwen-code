@@ -1412,6 +1412,10 @@ export default {
   // ============================================================================
   // Coding Plan Authentication
   // ============================================================================
+  'Please enter your API key:': 'Por favor, digite sua chave de API:',
+  'API key cannot be empty.': 'A chave de API não pode estar vazia.',
+  'You can get your exclusive Coding Plan API-KEY here:':
+    'Você pode obter sua chave de API exclusiva do Coding Plan aqui:',
   'New model configurations are available for Bailian Coding Plan. Update now?':
     'Novas configurações de modelo estão disponíveis para o Bailian Coding Plan. Atualizar agora?',
   'Coding Plan configuration updated successfully. New models are now available.':
