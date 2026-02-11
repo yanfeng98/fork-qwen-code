@@ -24,9 +24,9 @@ Qwen Code is an open-source AI agent for the terminal, optimized for [Qwen3-Code
 
 ## Why Qwen Code?
 
-- **OpenAI-compatible, OAuth free tier**: use an OpenAI-compatible API, or sign in with Qwen OAuth to get 1,000 free requests/day.
+- **Multi-protocol, OAuth free tier**: use OpenAI / Anthropic / Gemini-compatible APIs, or sign in with Qwen OAuth for 1,000 free requests/day.
 - **Open-source, co-evolving**: both the framework and the Qwen3-Coder model are open-source—and they ship and evolve together.
-- **Agentic workflow, feature-rich**: rich built-in tools (Skills, SubAgents, Plan Mode) for a full agentic workflow and a Claude Code-like experience.
+- **Agentic workflow, feature-rich**: rich built-in tools (Skills, SubAgents) for a full agentic workflow and a Claude Code-like experience.
 - **Terminal-first, IDE-friendly**: built for developers who live in the command line, with optional integration for VS Code, Zed, and JetBrains IDEs.
 
 ## Installation
@@ -51,10 +51,7 @@ curl -fsSL -o %TEMP%\install-qwen.bat https://qwen-code-assets.oss-cn-hangzhou.a
 
 #### Prerequisites
 
-```bash
-# Node.js 20+
-curl -qL https://www.npmjs.com/install.sh | sh
-```
+Make sure you have Node.js 20 or later installed. Download it from [nodejs.org](https://nodejs.org/en/download).
 
 #### NPM
 
@@ -104,7 +101,7 @@ Your browser does not support the video tag.
 Qwen Code supports two authentication methods:
 
 - **Qwen OAuth (recommended & free)**: sign in with your `qwen.ai` account in a browser.
-- **OpenAI-compatible API**: use `OPENAI_API_KEY` (and optionally a custom base URL / model).
+- **API-KEY**: use an API key to connect to any supported provider (OpenAI, Anthropic, Google GenAI, Alibaba Cloud Bailian, and other compatible endpoints).
 
 #### Qwen OAuth (recommended)
 
@@ -116,17 +113,17 @@ Start `qwen`, then run:
 
 Choose **Qwen OAuth** and complete the browser flow. Your credentials are cached locally so you usually won't need to log in again.
 
-#### OpenAI-compatible API (API key)
+> **Note:** In non-interactive or headless environments (e.g., CI, SSH, containers), you typically **cannot** complete the OAuth browser login flow. In these cases, please use the API-KEY authentication method.
 
-Environment variables (recommended for CI / headless environments):
+#### API-KEY (flexible)
 
-```bash
-export OPENAI_API_KEY="your-api-key-here"
-export OPENAI_BASE_URL="https://api.openai.com/v1"  # optional
-export OPENAI_MODEL="gpt-4o"                        # optional
-```
+Use this if you want more flexibility over which provider and model to use. Supports multiple protocols:
 
-For details (including `.qwen/.env` loading and security notes), see the [authentication guide](https://qwenlm.github.io/qwen-code-docs/en/users/configuration/auth/).
+- **OpenAI-compatible**: Alibaba Cloud Bailian, ModelScope, OpenAI, OpenRouter, and other OpenAI-compatible providers
+- **Anthropic**: Claude models
+- **Google GenAI**: Gemini models
+
+For full details (including `modelProviders` configuration, `.env` file loading, environment variable priorities, and security notes), see the [authentication guide](https://qwenlm.github.io/qwen-code-docs/en/users/configuration/auth/).
 
 ## Usage
 
