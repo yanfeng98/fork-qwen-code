@@ -122,6 +122,15 @@ export const DialogManager = ({
       />
     );
   }
+  if (uiState.codingPlanUpdateRequest) {
+    return (
+      <ConsentPrompt
+        prompt={uiState.codingPlanUpdateRequest.prompt}
+        onConfirm={uiState.codingPlanUpdateRequest.onConfirm}
+        terminalWidth={terminalWidth}
+      />
+    );
+  }
   if (uiState.settingInputRequests.length > 0) {
     const request = uiState.settingInputRequests[0];
     // Use settingName as key to force re-mount when switching between different settings

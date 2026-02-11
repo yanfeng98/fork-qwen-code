@@ -42,8 +42,11 @@ type ViewLevel = 'main' | 'api-key-sub' | 'api-key-input' | 'custom-info';
 
 export function AuthDialog(): React.JSX.Element {
   const { pendingAuthType, authError } = useUIState();
-  const { handleAuthSelect: onAuthSelect, handleCodingPlanSubmit } =
-    useUIActions();
+  const {
+    handleAuthSelect: onAuthSelect,
+    handleCodingPlanSubmit,
+    onAuthError,
+  } = useUIActions();
   const config = useConfig();
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -69,7 +72,7 @@ export function AuthDialog(): React.JSX.Element {
   const apiKeySubItems = [
     {
       key: 'coding-plan',
-      label: t('Coding Plan'),
+      label: t('Coding Plan (Bailian)'),
       value: 'coding-plan' as ApiKeySubMode,
     },
     {
@@ -116,6 +119,7 @@ export function AuthDialog(): React.JSX.Element {
     value: (typeof mainItems)[number]['value'],
   ) => {
     setErrorMessage(null);
+    onAuthError(null);
 
     if (value === 'API-KEY') {
       // Navigate to API-KEY sub-mode selection
@@ -129,6 +133,7 @@ export function AuthDialog(): React.JSX.Element {
 
   const handleApiKeySubSelect = async (subMode: ApiKeySubMode) => {
     setErrorMessage(null);
+    onAuthError(null);
 
     if (subMode === 'coding-plan') {
       setViewLevel('api-key-input');
@@ -151,6 +156,7 @@ export function AuthDialog(): React.JSX.Element {
 
   const handleGoBack = () => {
     setErrorMessage(null);
+    onAuthError(null);
 
     if (viewLevel === 'api-key-sub') {
       setViewLevel('main');
@@ -390,7 +396,9 @@ export function AuthDialog(): React.JSX.Element {
           </Box>
           <Box marginTop={1}>
             <Text color={Colors.AccentBlue}>
-              {'https://github.com/QwenLM/Qwen3-Coder/blob/main/README.md'}
+              {
+                'https://qwenlm.github.io/qwen-code-docs/en/users/support/tos-privacy/'
+              }
             </Text>
           </Box>
         </>

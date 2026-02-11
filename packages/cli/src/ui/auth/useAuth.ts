@@ -30,9 +30,10 @@ import { AuthState, MessageType } from '../types.js';
 import type { HistoryItem } from '../types.js';
 import { t } from '../../i18n/index.js';
 import {
-  CODING_PLAN_TEMPLATE,
+  CODING_PLAN_MODELS,
   CODING_PLAN_ENV_KEY,
-} from '../../constants/codingPlanTemplates.js';
+  CODING_PLAN_VERSION,
+} from '../../constants/codingPlan.js';
 
 export type { QwenAuthState } from '../hooks/useQwenAuth.js';
 
@@ -303,7 +304,7 @@ export const useAuthCommand = (
         process.env[envKeyName] = apiKey;
 
         // Generate model configs from template
-        const newConfigs: ProviderModelConfig[] = CODING_PLAN_TEMPLATE.map(
+        const newConfigs: ProviderModelConfig[] = CODING_PLAN_MODELS.map(
           (templateConfig) => ({
             ...templateConfig,
             envKey: envKeyName,
@@ -316,22 +317,21 @@ export const useAuthCommand = (
             settings.merged.modelProviders as ModelProvidersConfig | undefined
           )?.[AuthType.USE_OPENAI] || [];
 
-        // Deduplicate: check if config with same id, baseUrl, and envKey exists
-        const isDuplicate = (config: ProviderModelConfig) =>
-          existingConfigs.some(
-            (existing) =>
-              existing.id === config.id &&
-              existing.baseUrl === config.baseUrl &&
-              existing.envKey === config.envKey,
+        // Identify Coding Plan configs by baseUrl + envKey
+        // Remove existing Coding Plan configs to ensure template changes are applied
+        const isCodingPlanConfig = (config: ProviderModelConfig) =>
+          config.envKey === envKeyName &&
+          CODING_PLAN_MODELS.some(
+            (template) => template.baseUrl === config.baseUrl,
           );
 
-        // Filter out duplicates and replace existing ones
-        const uniqueNewConfigs = newConfigs.filter(
-          (config) => !isDuplicate(config),
+        // Filter out existing Coding Plan configs, keep user custom configs
+        const nonCodingPlanConfigs = existingConfigs.filter(
+          (existing) => !isCodingPlanConfig(existing),
         );
 
-        // Unshift new configs to the beginning
-        const updatedConfigs = [...uniqueNewConfigs, ...existingConfigs];
+        // Add new Coding Plan configs at the beginning
+        const updatedConfigs = [...newConfigs, ...nonCodingPlanConfigs];
 
         // Persist to modelProviders
         settings.setValue(
@@ -345,6 +345,13 @@ export const useAuthCommand = (
           persistScope,
           'security.auth.selectedType',
           AuthType.USE_OPENAI,
+        );
+
+        // Persist coding plan version for future update detection
+        settings.setValue(
+          persistScope,
+          'codingPlan.version',
+          CODING_PLAN_VERSION,
         );
 
         // If there are configs, use the first one as the model

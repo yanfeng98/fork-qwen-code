@@ -140,6 +140,8 @@ export default {
     'open full Qwen Code documentation in your browser',
   'Configuration not available.': 'Configuration not available.',
   'change the auth method': 'change the auth method',
+  'Configure authentication information for login':
+    'Configure authentication information for login',
   'Copy the last result or code snippet to clipboard':
     'Copy the last result or code snippet to clipboard',
 
@@ -1373,8 +1375,18 @@ export default {
   // ============================================================================
   'Please enter your API key:': 'Please enter your API key:',
   'API key cannot be empty.': 'API key cannot be empty.',
+  'You can get your exclusive Coding Plan API-KEY here:':
+    'You can get your exclusive Coding Plan API-KEY here:',
   'API key is stored in settings.env. You can migrate it to a .env file for better security.':
     'API key is stored in settings.env. You can migrate it to a .env file for better security.',
+  'New model configurations are available for Bailian Coding Plan. Update now?':
+    'New model configurations are available for Bailian Coding Plan. Update now?',
+  'Coding Plan configuration updated successfully. New models are now available.':
+    'Coding Plan configuration updated successfully. New models are now available.',
+  'Coding Plan API key not found. Please re-authenticate with Coding Plan.':
+    'Coding Plan API key not found. Please re-authenticate with Coding Plan.',
+  'Failed to update Coding Plan configuration: {{message}}':
+    'Failed to update Coding Plan configuration: {{message}}',
 
   // ============================================================================
   // Custom API-KEY Configuration

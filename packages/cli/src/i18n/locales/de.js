@@ -119,6 +119,8 @@ export default {
     'Vollständige Qwen Code Dokumentation im Browser öffnen',
   'Configuration not available.': 'Konfiguration nicht verfügbar.',
   'change the auth method': 'Authentifizierungsmethode ändern',
+  'Configure authentication information for login':
+    'Authentifizierungsinformationen für die Anmeldung konfigurieren',
   'Copy the last result or code snippet to clipboard':
     'Letztes Ergebnis oder Codeausschnitt in die Zwischenablage kopieren',
 
@@ -1394,6 +1396,22 @@ export default {
     'Verwenden Sie den /model-Befehl, um Ihr bevorzugtes Modell aus der konfigurierten Liste auszuwählen',
   'Supported auth types: openai, anthropic, gemini, vertex-ai, etc.':
     'Unterstützte Authentifizierungstypen: openai, anthropic, gemini, vertex-ai, usw.',
+
+  // ============================================================================
+  // Coding Plan Authentication
+  // ============================================================================
+  'Please enter your API key:': 'Bitte geben Sie Ihren API-Schlüssel ein:',
+  'API key cannot be empty.': 'API-Schlüssel darf nicht leer sein.',
+  'You can get your exclusive Coding Plan API-KEY here:':
+    'Hier können Sie Ihren exklusiven Coding Plan API-KEY erhalten:',
+  'New model configurations are available for Bailian Coding Plan. Update now?':
+    'Neue Modellkonfigurationen sind für Bailian Coding Plan verfügbar. Jetzt aktualisieren?',
+  'Coding Plan configuration updated successfully. New models are now available.':
+    'Coding Plan-Konfiguration erfolgreich aktualisiert. Neue Modelle sind jetzt verfügbar.',
+  'Coding Plan API key not found. Please re-authenticate with Coding Plan.':
+    'Coding Plan API-Schlüssel nicht gefunden. Bitte authentifizieren Sie sich erneut mit Coding Plan.',
+  'Failed to update Coding Plan configuration: {{message}}':
+    'Fehler beim Aktualisieren der Coding Plan-Konfiguration: {{message}}',
 
   // ============================================================================
   // Auth Dialog - View Titles and Labels

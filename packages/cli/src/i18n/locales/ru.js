@@ -143,6 +143,8 @@ export default {
     'Открытие полной документации Qwen Code в браузере',
   'Configuration not available.': 'Конфигурация недоступна.',
   'change the auth method': 'Изменение метода авторизации',
+  'Configure authentication information for login':
+    'Настройка аутентификационной информации для входа',
   'Copy the last result or code snippet to clipboard':
     'Копирование последнего результата или фрагмента кода в буфер обмена',
 
@@ -1398,6 +1400,22 @@ export default {
     'Используйте команду /model, чтобы выбрать предпочитаемую модель из настроенного списка',
   'Supported auth types: openai, anthropic, gemini, vertex-ai, etc.':
     'Поддерживаемые типы аутентификации: openai, anthropic, gemini, vertex-ai и др.',
+
+  // ============================================================================
+  // Coding Plan Authentication
+  // ============================================================================
+  'Please enter your API key:': 'Пожалуйста, введите ваш API-ключ:',
+  'API key cannot be empty.': 'API-ключ не может быть пустым.',
+  'You can get your exclusive Coding Plan API-KEY here:':
+    'Получите свой эксклюзивный API-KEY Coding Plan здесь:',
+  'New model configurations are available for Bailian Coding Plan. Update now?':
+    'Доступны новые конфигурации моделей для Bailian Coding Plan. Обновить сейчас?',
+  'Coding Plan configuration updated successfully. New models are now available.':
+    'Конфигурация Coding Plan успешно обновлена. Новые модели теперь доступны.',
+  'Coding Plan API key not found. Please re-authenticate with Coding Plan.':
+    'API-ключ Coding Plan не найден. Пожалуйста, повторно авторизуйтесь с Coding Plan.',
+  'Failed to update Coding Plan configuration: {{message}}':
+    'Не удалось обновить конфигурацию Coding Plan: {{message}}',
 
   // ============================================================================
   // Auth Dialog - View Titles and Labels

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { createHash } from 'node:crypto';
 import type { ProviderModelConfig as ModelConfig } from '@qwen-code/qwen-code-core';
 
 /**
@@ -18,9 +19,9 @@ export type CodingPlanTemplate = ModelConfig[];
 export const CODING_PLAN_ENV_KEY = 'BAILIAN_CODING_PLAN_API_KEY';
 
 /**
- * CODING_PLAN_TEMPLATE defines the model configurations for coding-plan mode.
+ * CODING_PLAN_MODELS defines the model configurations for coding-plan mode.
  */
-export const CODING_PLAN_TEMPLATE: CodingPlanTemplate = [
+export const CODING_PLAN_MODELS: CodingPlanTemplate = [
   {
     id: 'qwen3-coder-plus',
     name: 'qwen3-coder-plus',
@@ -32,7 +33,7 @@ export const CODING_PLAN_TEMPLATE: CodingPlanTemplate = [
     id: 'qwen3-max-2026-01-23',
     name: 'qwen3-max-2026-01-23',
     description:
-      'qwen3 max model from Bailian Coding Plan with thinking enabled',
+      'qwen3-max model with thinking enabled from Bailian Coding Plan',
     baseUrl: 'https://coding.dashscope.aliyuncs.com/v1',
     envKey: CODING_PLAN_ENV_KEY,
     generationConfig: {
@@ -42,3 +43,19 @@ export const CODING_PLAN_TEMPLATE: CodingPlanTemplate = [
     },
   },
 ];
+
+/**
+ * Computes the version hash for the coding plan template.
+ * Uses SHA256 of the JSON-serialized template for deterministic versioning.
+ * @returns Hexadecimal string representing the template version
+ */
+export function computeCodingPlanVersion(): string {
+  const templateString = JSON.stringify(CODING_PLAN_MODELS);
+  return createHash('sha256').update(templateString).digest('hex');
+}
+
+/**
+ * Current version of the coding plan template.
+ * Computed at runtime from the template content.
+ */
+export const CODING_PLAN_VERSION = computeCodingPlanVersion();

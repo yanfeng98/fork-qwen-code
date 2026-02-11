@@ -110,6 +110,8 @@ export default {
     'ブラウザで Qwen Code のドキュメントを開く',
   'Configuration not available.': '設定が利用できません',
   'change the auth method': '認証方式を変更',
+  'Configure authentication information for login':
+    'ログイン用の認証情報を設定',
   'Copy the last result or code snippet to clipboard':
     '最後の結果またはコードスニペットをクリップボードにコピー',
 
@@ -905,6 +907,22 @@ export default {
     '/model コマンドを使用して、設定済みリストからお好みのモデルを選択してください',
   'Supported auth types: openai, anthropic, gemini, vertex-ai, etc.':
     'サポートされている認証タイプ：openai、anthropic、gemini、vertex-ai など',
+
+  // ============================================================================
+  // Coding Plan Authentication
+  // ============================================================================
+  'Please enter your API key:': 'APIキーを入力してください：',
+  'API key cannot be empty.': 'APIキーは空にできません。',
+  'You can get your exclusive Coding Plan API-KEY here:':
+    'Coding Plan の API-KEY はこちらで取得できます：',
+  'New model configurations are available for Bailian Coding Plan. Update now?':
+    'Bailian Coding Plan の新しいモデル設定が利用可能です。今すぐ更新しますか？',
+  'Coding Plan configuration updated successfully. New models are now available.':
+    'Coding Plan の設定が正常に更新されました。新しいモデルが利用可能になりました。',
+  'Coding Plan API key not found. Please re-authenticate with Coding Plan.':
+    'Coding Plan の API キーが見つかりません。Coding Plan で再認証してください。',
+  'Failed to update Coding Plan configuration: {{message}}':
+    'Coding Plan の設定更新に失敗しました: {{message}}',
 
   // ============================================================================
   // Auth Dialog - View Titles and Labels
