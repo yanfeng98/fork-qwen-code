@@ -36,17 +36,11 @@ export class OpenAIContentGenerator implements ContentGenerator {
     this.pipeline = new ContentGenerationPipeline(pipelineConfig);
   }
 
-  /**
-   * Hook for subclasses to customize error handling behavior
-   * @param error The error that occurred
-   * @param request The original request
-   * @returns true if error logging should be suppressed, false otherwise
-   */
   protected shouldSuppressErrorLogging(
     _error: unknown,
     _request: GenerateContentParameters,
   ): boolean {
-    return false; // Default behavior: never suppress error logging
+    return false;
   }
 
   async generateContent(

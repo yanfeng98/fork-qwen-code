@@ -63,7 +63,6 @@ export class ContentGenerationPipeline {
       userPromptId,
       true,
       async (openaiRequest, context) => {
-        // Stage 1: Create OpenAI stream
         const stream = (await this.client.chat.completions.create(
           openaiRequest,
           {
@@ -71,7 +70,6 @@ export class ContentGenerationPipeline {
           },
         )) as AsyncIterable<OpenAI.Chat.ChatCompletionChunk>;
 
-        // Stage 2: Process stream with conversion and logging
         return this.processStreamWithLogging(stream, context, request);
       },
     );
@@ -215,15 +213,15 @@ export class ContentGenerationPipeline {
     };
   }
 
-  /**
-   * Stage 2: Process OpenAI stream with conversion and logging
-   * This method handles the complete stream processing pipeline:
-   * 1. Convert OpenAI chunks to Gemini format while preserving original chunks
-   * 2. Filter empty responses
-   * 3. Handle chunk merging for providers that send finishReason and usageMetadata separately
-   * 4. Collect both formats for logging
-   * 5. Handle success/error logging
-   */
+  private async handleError(
+    error: unknown,
+    context: RequestContext,
+    request: GenerateContentParameters,
+  ): Promise<never> {
+    context.duration = Date.now() - context.startTime;
+    this.config.errorHandler.handle(error, context, request);
+  }
+
   private async *processStreamWithLogging(
     stream: AsyncIterable<OpenAI.Chat.ChatCompletionChunk>,
     context: RequestContext,
@@ -231,14 +229,10 @@ export class ContentGenerationPipeline {
   ): AsyncGenerator<GenerateContentResponse> {
     const collectedGeminiResponses: GenerateContentResponse[] = [];
 
-    // Reset streaming tool calls to prevent data pollution from previous streams
     this.converter.resetStreamingToolCalls();
-
-    // State for handling chunk merging
     let pendingFinishResponse: GenerateContentResponse | null = null;
 
     try {
-      // Stage 2a: Convert and yield each chunk while preserving original
       for await (const chunk of stream) {
         const response = this.converter.convertOpenAIChunkToGemini(chunk);
 
@@ -350,18 +344,5 @@ export class ContentGenerationPipeline {
     // Normal chunk - collect and yield
     collectedGeminiResponses.push(response);
     return true;
-  }
-
-  /**
-   * Shared error handling logic for both executeWithErrorHandling and processStreamWithLogging
-   * This centralizes the common error processing steps to avoid duplication
-   */
-  private async handleError(
-    error: unknown,
-    context: RequestContext,
-    request: GenerateContentParameters,
-  ): Promise<never> {
-    context.duration = Date.now() - context.startTime;
-    this.config.errorHandler.handle(error, context, request);
   }
 }

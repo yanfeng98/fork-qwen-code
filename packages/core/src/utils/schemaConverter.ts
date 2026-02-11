@@ -36,14 +36,11 @@ function toOpenAPI30(schema: Record<string, unknown>): Record<string, unknown> {
       target['type'] = source['type'];
     }
 
-    // 2. Const Handling (Draft 6+) -> Enum (OpenAPI 3.0)
     if (source['const'] !== undefined) {
       target['enum'] = [source['const']];
       delete target['const'];
     }
 
-    // 3. Exclusive Limits (Draft 6+ number) -> (Draft 4 boolean)
-    // exclusiveMinimum: 10 -> minimum: 10, exclusiveMinimum: true
     if (typeof source['exclusiveMinimum'] === 'number') {
       target['minimum'] = source['exclusiveMinimum'];
       target['exclusiveMinimum'] = true;
@@ -53,15 +50,7 @@ function toOpenAPI30(schema: Record<string, unknown>): Record<string, unknown> {
       target['exclusiveMaximum'] = true;
     }
 
-    // 4. Array Items (Tuple -> Single Schema)
-    // OpenAPI 3.0 items must be a schema object, not an array of schemas
     if (Array.isArray(source['items'])) {
-      // Tuple support is tricky.
-      // Best effort: Use the first item's schema as a generic array type
-      // or convert to an empty object (any type) if mixed.
-      // For now, we'll strip it to allow validation to pass (accepts any items)
-      // This matches the legacy behavior but is explicit.
-      // Ideally, we could use `oneOf` on the items if we wanted to be stricter.
       delete target['items'];
     } else if (
       typeof source['items'] === 'object' &&
@@ -70,15 +59,11 @@ function toOpenAPI30(schema: Record<string, unknown>): Record<string, unknown> {
       target['items'] = convert(source['items']);
     }
 
-    // 5. Enum Stringification
-    // Gemini strictly requires enums to be strings
     if (Array.isArray(source['enum'])) {
       target['enum'] = source['enum'].map(String);
     }
 
-    // 6. Recursively process other properties
     for (const [key, value] of Object.entries(source)) {
-      // Skip fields we've already handled or want to remove
       if (
         key === 'type' ||
         key === 'const' ||
@@ -88,7 +73,7 @@ function toOpenAPI30(schema: Record<string, unknown>): Record<string, unknown> {
         key === 'enum' ||
         key === '$schema' ||
         key === '$id' ||
-        key === 'default' || // Optional: Gemini sometimes complains about defaults conflicting with types
+        key === 'default' ||
         key === 'dependencies' ||
         key === 'patternProperties'
       ) {
@@ -97,11 +82,6 @@ function toOpenAPI30(schema: Record<string, unknown>): Record<string, unknown> {
 
       target[key] = convert(value);
     }
-
-    // Preserve default if it doesn't conflict (simple pass-through)
-    // if (source['default'] !== undefined) {
-    //   target['default'] = source['default'];
-    // }
 
     return target;
   };

@@ -77,15 +77,6 @@ export class OpenAIContentConverter {
     this.schemaCompliance = schemaCompliance;
   }
 
-  /**
-   * Reset streaming tool calls parser for new stream processing
-   * This should be called at the beginning of each stream to prevent
-   * data pollution from previous incomplete streams
-   */
-  resetStreamingToolCalls(): void {
-    this.streamingToolCallParser.reset();
-  }
-
   async convertGeminiToolsToOpenAI(
     geminiTools: ToolListUnion,
   ): Promise<OpenAI.Chat.ChatCompletionTool[]> {
@@ -729,6 +720,10 @@ export class OpenAIContentConverter {
     return merged;
   }
 
+  resetStreamingToolCalls(): void {
+    this.streamingToolCallParser.reset();
+  }
+
   /**
    * Convert Gemini response to OpenAI completion format (for logging).
    */
@@ -895,9 +890,6 @@ export class OpenAIContentConverter {
     return response;
   }
 
-  /**
-   * Convert OpenAI stream chunk to Gemini format
-   */
   convertOpenAIChunkToGemini(
     chunk: OpenAI.Chat.ChatCompletionChunk,
   ): GenerateContentResponse {
@@ -913,19 +905,16 @@ export class OpenAIContentConverter {
         parts.push({ text: reasoningText, thought: true });
       }
 
-      // Handle text content
       if (choice.delta?.content) {
         if (typeof choice.delta.content === 'string') {
           parts.push({ text: choice.delta.content });
         }
       }
 
-      // Handle tool calls using the streaming parser
       if (choice.delta?.tool_calls) {
         for (const toolCall of choice.delta.tool_calls) {
           const index = toolCall.index ?? 0;
 
-          // Process the tool call chunk through the streaming parser
           if (toolCall.function?.arguments) {
             this.streamingToolCallParser.addChunk(
               index,
@@ -934,10 +923,9 @@ export class OpenAIContentConverter {
               toolCall.function.name,
             );
           } else {
-            // Handle metadata-only chunks (id and/or name without arguments)
             this.streamingToolCallParser.addChunk(
               index,
-              '', // Empty chunk for metadata-only updates
+              '',
               toolCall.id,
               toolCall.function?.name,
             );
