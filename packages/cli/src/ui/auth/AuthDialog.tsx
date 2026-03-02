@@ -75,7 +75,7 @@ export function AuthDialog(): React.JSX.Element {
       title: t('Alibaba Cloud Coding Plan'),
       label: t('Alibaba Cloud Coding Plan'),
       description: t(
-        'Paid \u00B7 Up to 6,000 requests/5 hrs \u00B7 Qwen, GLM, Kimi, Minimax and more',
+        'Paid \u00B7 Up to 6,000 requests/5 hrs \u00B7 All Alibaba Cloud Coding Plan Models',
       ),
       value: 'CODING_PLAN' as MainOption,
     },

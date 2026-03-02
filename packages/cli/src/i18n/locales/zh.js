@@ -894,8 +894,8 @@ export default {
     '免费 \u00B7 每天最多 1,000 次请求 \u00B7 Qwen 最新模型',
   'Login with QwenChat account to use daily free quota.':
     '使用 QwenChat 账号登录，享受每日免费额度。',
-  'Paid \u00B7 Up to 6,000 requests/5 hrs \u00B7 Qwen, GLM, Kimi, Minimax and more':
-    '付费 \u00B7 每 5 小时最多 6,000 次请求 \u00B7 Qwen、GLM、Kimi、Minimax 等',
+  'Paid \u00B7 Up to 6,000 requests/5 hrs \u00B7 All Alibaba Cloud Coding Plan Models':
+    '付费 \u00B7 每 5 小时最多 6,000 次请求 \u00B7 支持阿里云百炼 Coding Plan 全部模型',
   'Alibaba Cloud Coding Plan': '阿里云百炼 Coding Plan',
   'Bring your own API key': '使用自己的 API 密钥',
   'Use coding plan credentials or your own api-keys/providers.':

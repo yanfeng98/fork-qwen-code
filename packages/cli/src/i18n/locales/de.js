@@ -957,8 +957,8 @@ export default {
     'Kostenlos \u00B7 Bis zu 1.000 Anfragen/Tag \u00B7 Qwen neueste Modelle',
   'Login with QwenChat account to use daily free quota.':
     'Melden Sie sich mit Ihrem QwenChat-Konto an, um das tägliche kostenlose Kontingent zu nutzen.',
-  'Paid \u00B7 Up to 6,000 requests/5 hrs \u00B7 Qwen, GLM, Kimi, Minimax and more':
-    'Kostenpflichtig \u00B7 Bis zu 6.000 Anfragen/5 Std. \u00B7 Qwen, GLM, Kimi, Minimax und mehr',
+  'Paid \u00B7 Up to 6,000 requests/5 hrs \u00B7 All Alibaba Cloud Coding Plan Models':
+    'Kostenpflichtig \u00B7 Bis zu 6.000 Anfragen/5 Std. \u00B7 Alle Alibaba Cloud Coding Plan Modelle',
   'Alibaba Cloud Coding Plan': 'Alibaba Cloud Coding Plan',
   'Bring your own API key': 'Eigenen API-Schlüssel verwenden',
   'API-KEY': 'API-KEY',

@@ -963,8 +963,8 @@ export default {
     'Gratuito \u00B7 Até 1.000 solicitações/dia \u00B7 Modelos Qwen mais recentes',
   'Login with QwenChat account to use daily free quota.':
     'Faça login com sua conta QwenChat para usar a cota gratuita diária.',
-  'Paid \u00B7 Up to 6,000 requests/5 hrs \u00B7 Qwen, GLM, Kimi, Minimax and more':
-    'Pago \u00B7 Até 6.000 solicitações/5 hrs \u00B7 Qwen, GLM, Kimi, Minimax e mais',
+  'Paid \u00B7 Up to 6,000 requests/5 hrs \u00B7 All Alibaba Cloud Coding Plan Models':
+    'Pago \u00B7 Até 6.000 solicitações/5 hrs \u00B7 Todos os modelos Alibaba Cloud Coding Plan',
   'Alibaba Cloud Coding Plan': 'Alibaba Cloud Coding Plan',
   'Bring your own API key': 'Traga sua própria chave API',
   'API-KEY': 'API-KEY',

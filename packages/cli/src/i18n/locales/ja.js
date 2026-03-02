@@ -683,8 +683,8 @@ export default {
     '無料 \u00B7 1日最大1,000リクエスト \u00B7 Qwen最新モデル',
   'Login with QwenChat account to use daily free quota.':
     'QwenChatアカウントでログインして、毎日の無料クォータをご利用ください。',
-  'Paid \u00B7 Up to 6,000 requests/5 hrs \u00B7 Qwen, GLM, Kimi, Minimax and more':
-    '有料 \u00B7 5時間最大6,000リクエスト \u00B7 Qwen, GLM, Kimi, Minimaxなど',
+  'Paid \u00B7 Up to 6,000 requests/5 hrs \u00B7 All Alibaba Cloud Coding Plan Models':
+    '有料 \u00B7 5時間最大6,000リクエスト \u00B7 すべての Alibaba Cloud Coding Plan モデル',
   'Alibaba Cloud Coding Plan': 'Alibaba Cloud Coding Plan',
   'Bring your own API key': '自分のAPIキーを使用',
   'API-KEY': 'API-KEY',
