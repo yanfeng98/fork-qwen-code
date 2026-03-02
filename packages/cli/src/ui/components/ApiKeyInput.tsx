@@ -49,6 +49,18 @@ export function ApiKeyInput({
           setError(t('API key cannot be empty.'));
           return;
         }
+        // Only validate sk-sp- prefix for China region (aliyun.com)
+        if (
+          region === CodingPlanRegion.CHINA &&
+          !trimmedKey.startsWith('sk-sp-')
+        ) {
+          setError(
+            t(
+              'Invalid API key. Coding Plan API keys start with "sk-sp-". Please check.',
+            ),
+          );
+          return;
+        }
         onSubmit(trimmedKey);
       }
     },

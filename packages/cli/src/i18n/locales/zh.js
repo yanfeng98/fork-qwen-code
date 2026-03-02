@@ -1242,6 +1242,8 @@ export default {
   // Coding Plan Authentication
   // ============================================================================
   'API key cannot be empty.': 'API Key 不能为空。',
+  'Invalid API key. Coding Plan API keys start with "sk-sp-". Please check.':
+    '无效的 API Key，Coding Plan API Key 均以 "sk-sp-" 开头，请检查',
   'You can get your Coding Plan API key here':
     '您可以在这里获取 Coding Plan API Key',
   'API key is stored in settings.env. You can migrate it to a .env file for better security.':
