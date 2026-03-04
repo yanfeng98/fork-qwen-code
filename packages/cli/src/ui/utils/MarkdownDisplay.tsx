@@ -328,6 +328,7 @@ const RenderCodeBlockInternal: React.FC<RenderCodeBlockProps> = ({
       const colorizedTruncatedCode = colorizeCode(
         truncatedContent.join('\n'),
         lang,
+        4,
         availableTerminalHeight,
         contentWidth - CODE_BLOCK_PREFIX_PADDING,
         undefined,
@@ -346,6 +347,7 @@ const RenderCodeBlockInternal: React.FC<RenderCodeBlockProps> = ({
   const colorizedCode = colorizeCode(
     fullContent,
     lang,
+    4,
     availableTerminalHeight,
     contentWidth - CODE_BLOCK_PREFIX_PADDING,
     undefined,

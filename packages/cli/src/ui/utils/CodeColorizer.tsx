@@ -125,17 +125,21 @@ export function colorizeLine(
  *
  * @param code The code string to highlight.
  * @param language The language identifier (e.g., 'javascript', 'css', 'html')
+ * @param tabWidth The tabWidth of the language, default is 4
  * @returns A React.ReactNode containing Ink <Text> elements for the highlighted code.
  */
 export function colorizeCode(
   code: string,
   language: string | null,
+  tabWidth = 4,
   availableHeight?: number,
   maxWidth?: number,
   theme?: Theme,
   settings?: LoadedSettings,
 ): React.ReactNode {
-  const codeToHighlight = code.replace(/\n$/, '');
+  const codeToHighlight = code
+    .replace(/\n$/, '')
+    .replace(/\t/g, ' '.repeat(tabWidth));
   const activeTheme = theme || themeManager.getActiveTheme();
   const showLineNumbers = settings?.merged.ui?.showLineNumbers ?? true;
 
