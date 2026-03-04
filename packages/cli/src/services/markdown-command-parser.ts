@@ -5,7 +5,10 @@
  */
 
 import { z } from 'zod';
-import { parse as parseYaml } from '@qwen-code/qwen-code-core';
+import {
+  parse as parseYaml,
+  normalizeContent,
+} from '@qwen-code/qwen-code-core';
 
 /**
  * Defines the Zod schema for a Markdown command definition file.
@@ -31,10 +34,7 @@ export type MarkdownCommandDef = z.infer<typeof MarkdownCommandDefSchema>;
  * @returns Parsed command definition with frontmatter and prompt
  */
 export function parseMarkdownCommand(content: string): MarkdownCommandDef {
-  // Normalize line endings and strip UTF-8 BOM so Windows-authored files parse correctly.
-  const normalizedContent = content
-    .replace(/^\uFEFF/, '')
-    .replace(/\r\n/g, '\n');
+  const normalizedContent = normalizeContent(content);
 
   // Match YAML frontmatter pattern: ---\n...\n---\n
   // Allow empty frontmatter: ---\n---\n

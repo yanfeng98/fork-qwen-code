@@ -109,6 +109,20 @@ Prompt content.`;
     });
   });
 
+  it('should parse frontmatter in CR-only files', () => {
+    const content =
+      '---\rdescription: Old mac command\r---\r\rLine 1\rLine 2\r';
+
+    const result = parseMarkdownCommand(content);
+
+    expect(result).toEqual({
+      frontmatter: {
+        description: 'Old mac command',
+      },
+      prompt: 'Line 1\nLine 2',
+    });
+  });
+
   it('should parse frontmatter when content starts with UTF-8 BOM', () => {
     const content = `\uFEFF---
 description: BOM command
