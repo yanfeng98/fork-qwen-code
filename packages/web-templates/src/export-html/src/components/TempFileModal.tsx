@@ -15,6 +15,17 @@ export const TempFileModal = ({
   state: ModalState;
   onClose: () => void;
 }) => {
+  // Lock body scroll when modal is visible
+  React.useEffect(() => {
+    if (state.visible) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [state.visible]);
+
   if (!state.visible) return null;
 
   return (
