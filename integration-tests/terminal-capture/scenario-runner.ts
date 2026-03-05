@@ -261,13 +261,7 @@ export async function runScenario(
                 ...streamingShots,
                 resultShot,
               ];
-              const gifPath = generateGif(
-                gifFrames,
-                outputDir,
-                intervalMs,
-                inputShot ? 2000 : 0, // Hold input for 2s
-                2000, // Hold result for 2s
-              );
+              const gifPath = generateGif(gifFrames, outputDir);
               if (gifPath) {
                 console.log(`         🎞️  GIF: ${gifPath}`);
               }
@@ -407,14 +401,11 @@ function resolveKey(key: string): string {
 }
 
 /** Generate animated GIF from PNG frames using ffmpeg (concat demuxer). */
-function generateGif(
-  frames: string[],
-  outputDir: string,
-  intervalMs: number,
-  holdFirstMs: number = 0,
-  holdLastMs: number = 0,
-): string | null {
+function generateGif(frames: string[], outputDir: string): string | null {
   if (frames.length === 0) return null;
+
+  const FRAME_DURATION = 0.3; // 300ms per frame
+  const EDGE_DURATION = 1.0; // 600ms for first/last frame
 
   const gifPath = join(outputDir, 'streaming.gif');
   const listFile = join(outputDir, 'frames.txt');
@@ -422,12 +413,11 @@ function generateGif(
   try {
     const lines: string[] = [];
     for (let i = 0; i < frames.length; i++) {
-      const absPath = resolve(frames[i]);
-      let duration = intervalMs / 1000;
-      if (i === 0 && holdFirstMs > 0) duration = holdFirstMs / 1000;
-      else if (i === frames.length - 1 && holdLastMs > 0)
-        duration = holdLastMs / 1000;
-      lines.push(`file '${absPath}'`, `duration ${duration}`);
+      const isEdge = i === 0 || i === frames.length - 1;
+      lines.push(
+        `file '${resolve(frames[i])}'`,
+        `duration ${isEdge ? EDGE_DURATION : FRAME_DURATION}`,
+      );
     }
     // Concat demuxer requires last frame repeated without duration
     lines.push(`file '${resolve(frames[frames.length - 1])}'`);
